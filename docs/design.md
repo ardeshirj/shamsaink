@@ -1,0 +1,205 @@
+# Indium's components, and where a page's time goes (2026-10-23)
+
+A map of the parts, for finding your way around: what each one is, how a page flows through each engine, what the
+device measurements say about each step, and which layer every speed-up lives in. Why the engine interface keeps
+state (and the outside design discussion it was checked against) is in `engine-design.md`; the numbers come from the
+experiments' NOTES.md files, mostly 06 (the reMarkable 2).
+
+## 1. The reader, top to bottom
+
+```mermaid
+flowchart TB
+  subgraph read ["1 · reading the book"]
+    direction LR
+    epub[book.epub] --> tk["readium/go-toolkit, Go<br/>manifest, spine, contents,<br/>media-overlay timings (SMIL)"]
+    tk --> reader["the reader, Go<br/>library, touch, narration<br/><i>not built: experiments only</i>"]
+  end
+  subgraph lay ["2 · layout and drawing"]
+    direction LR
+    subgraph engines ["one layout engine"]
+      direction TB
+      gotext["Go engine, gotext<br/>Go, ours"]
+      blitz["Blitz engine, blitz<br/>Rust through cgo"]
+      cre["crengine, cre<br/>C++ through cgo, reference only"]
+    end
+    engines -- "a grey buffer<br/>the reader owns" --> screen["the e-ink screen<br/>FBInk, partial refresh<br/><i>not built</i>"]
+  end
+  read -- "engine.Document: Open · Pages · Draw · Find · Close" --> lay
+```
+
+| Part | What it is | Language, licence | In the repo | State |
+|---|---|---|---|---|
+| readium/go-toolkit | Readium's EPUB reader library | Go, BSD | used by `experiments/engine/epub` (trimmed: 02's `trim-gotoolkit.sh`) | works |
+| `engine.Document` | the seam between reader and engine | Go | `experiments/engine/engine.go` | works; hit-testing not yet |
+| Go engine, "gotext" | our layout on go-text, rtlbook's CSS subset | Go, ours | `experiments/03-own-layout/layout` | works |
+| Blitz engine, "blitz" | Blitz's CSS and layout, our pagination | Rust (cgo), MIT/Apache | `experiments/04-rust-engine/blitz-engine` | works |
+| crengine, "cre" | KOReader's engine | C++ (cgo), GPL-2.0 | `experiments/02-crengine-go` | the reference only |
+| read-along test | words highlighted from the SMIL timings | Go | `experiments/engine/cmd/readalong` | passes on all three |
+
+## 2. Inside each engine
+
+Every engine does the same four jobs. They differ in who does each one and in what the drawing ends in.
+
+```mermaid
+flowchart LR
+  j1["parse XHTML"] --> j2["style (CSS)"] --> j3["lay out<br/>boxes, lines"] --> j4["paginate"] --> j5["draw a page"]
+```
+
+**Go engine (03):** all ours except the shaper, all Go, one static binary.
+```
+  XHTML ─ layout/book.go ─▶ blocks ─ layout/css.go (small cascade) ─▶ styles
+        ─ layout/text.go: go-text (a HarfBuzz port) shapes, bidi, lines, justification
+        ─ layout/page.go: pages (orphans, widows, headings kept with what follows)
+  draw: glyphs drawn once and cached between pages (raster/), straight into grey
+```
+
+**Blitz engine (04):** Blitz does everything up to one long laid-out document; we cut it into pages and convert the
+drawing to grey. Go reaches it through cgo (`src/capi.rs`, `blitz_engine.h`), and it asks Go for the book's files
+through a callback.
+```mermaid
+flowchart TB
+  subgraph open ["1 · at open, per chapter"]
+    direction LR
+    x[XHTML] --> h["html5ever (blitz-html)<br/>DOM (blitz-dom)"]
+    h --> st["Stylo, Firefox's CSS engine<br/>computed styles"]
+    st --> tp["Taffy (boxes) + Parley (text:<br/>HarfRust shaping, ICU4X bidi, lines)<br/>one long page per chapter"]
+    tp --> pg["our pagination (src/lib.rs)<br/>each page a slice of a chapter"]
+  end
+  subgraph drawn ["2 · each page drawn"]
+    direction LR
+    bp["blitz-paint<br/>walks the DOM, skips<br/>what is off the page"] --> ar["anyrender<br/>Blitz's drawing interface"]
+    ar --> sc["vello_cpu: paths and glyph<br/>outlines into strips<br/><b>scene: 132 ms</b>"]
+    sc --> rd["vello_cpu: strips into<br/>a colour page (RGBA)<br/><b>render: 43 ms</b>"]
+    rd --> gr["ours: RGBA to grey,<br/>margins blanked<br/><b>grey: 23 ms</b>"]
+    gr --> buf["the reader's grey buffer,<br/>through cgo"]
+  end
+  open --> drawn
+```
+
+**crengine (KOReader, 02):** one C++ engine with its own HTML, CSS and pagination, FreeType and HarfBuzz for glyphs.
+It keeps each glyph once drawn, draws straight into grey, and saves a laid-out book to disk so it reopens at once.
+GPL-2.0 and cgo (a C toolchain per device's firmware) keep it out; it is the bar to measure against.
+
+## 3. What the device says (reMarkable 2: Cortex-A7, 1.2 GHz, 1 GB)
+
+| | crengine (KOReader) | Go engine | Blitz (NEON) |
+|---|---|---|---|
+| draw a page: *Buried Alive*, Holmes | **17, 19 ms** | 63, 103 ms | 207, 257 ms |
+| open, first time | **0.5, 2.2 s** | 1.5, 4.9 s | 0.7, 2.5 s |
+| reopen | **57, 68 ms** (its cache) | as first time | as first time |
+| peak memory | **18, 29 MB** | 34, 71 MB | 39, 68 MB |
+
+```mermaid
+---
+config:
+  xyChart:
+    showDataLabel: true
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#2a78d6"
+---
+xychart-beta horizontal
+  title "Draw a page: Buried Alive, reMarkable 2 (ms)"
+  x-axis ["crengine (KOReader)", "Go engine", "Blitz with NEON", "Blitz without NEON"]
+  y-axis "milliseconds" 0 --> 300
+  bar [17, 63, 207, 267]
+```
+
+```mermaid
+---
+config:
+  xyChart:
+    showDataLabel: true
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#2a78d6"
+---
+xychart-beta horizontal
+  title "Open Holmes: whole book laid out, reMarkable 2 (s)"
+  x-axis ["crengine, reopened from its cache", "crengine, first time", "Blitz with NEON", "Go engine"]
+  y-axis "seconds" 0 --> 5
+  bar [0.07, 2.25, 2.51, 4.85]
+```
+
+```mermaid
+---
+config:
+  xyChart:
+    showDataLabel: true
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#2a78d6"
+---
+xychart-beta horizontal
+  title "Peak memory: Holmes, reMarkable 2 (MB)"
+  x-axis ["crengine (KOReader)", "Blitz with NEON", "Go engine"]
+  y-axis "megabytes" 0 --> 80
+  bar [29, 68, 71]
+```
+
+What the numbers mean for reading:
+- **A page turn** is the drawing plus the screen's own refresh, about 200–500 ms. crengine and the Go engine hide
+  behind the refresh; Blitz adds as much again, unless the reader draws the next page ahead.
+- **Opening a book** waits for the layout. Seconds are too long; crengine's answer is its disk cache.
+- **Read-along** does not redraw the page per word: the highlight is a box inverted on the page already drawn, so it
+  does not depend on drawing speed.
+
+Blitz's ~200 ms, one page of *Buried Alive* (06, `run-scene.sh`):
+```mermaid
+---
+config:
+  xyChart:
+    showDataLabel: true
+  themeVariables:
+    xyChart:
+      plotColorPalette: "#2a78d6"
+---
+xychart-beta horizontal
+  title "Blitz: one page of Buried Alive, step by step, reMarkable 2 (ms)"
+  x-axis ["glyphs into outlines and strips", "the rest of the scene", "vello_cpu render", "RGBA to grey (ours)"]
+  y-axis "milliseconds" 0 --> 140
+  bar [127, 6, 43, 23]
+```
+The glyphs are redone for every glyph on every page; 34 ms of the render is the same for a blank page.
+Hinting costs nothing (the same 132 ms without it).
+
+## 4. The levers for Blitz, and whose code each is in
+
+| Lever | Layer | Whose code | Gain | State |
+|---|---|---|---|---|
+| Skip the lines off the page | blitz-paint | a patch to Blitz (`blitz-cull-lines.patch`) | Mac 4.7 → 3.6 ms | done |
+| Grey from one channel | our `Book::draw` | ours | Mac 1.3 ms | done |
+| NEON on | the build | a flag (`engine/build-armv7.sh`) | device −23% | done |
+| Keep one renderer between pages (now a new one, and a new 6 MB buffer, per page) | our `Book::draw` | ours | needed for the next one | to try |
+| Switch vello_cpu's glyph cache on (it has one, off by default; anyrender never turns it on) | anyrender_vello_cpu | a one-line patch to a crates.io crate; worth proposing upstream | most of the 127 ms, guessed | to try |
+| No white background: leave empty areas transparent, blend onto white while converting, a fast path for blank pixels | our `Book::draw` | ours | part of the 57 ms, guessed | to try |
+| Lay out only the chapter being read, page counts kept from last time | our `Book::open` | ours | opening; memory (Blitz now keeps every chapter laid out) | to try |
+
+Everything up to the glyph cache together is guessed at 60–80 ms a page, and 30–40 ms with the background change:
+guesses until the device measures them. The cached glyphs may sit on slightly different sub-pixel positions, so
+pages are checked with `pagediff.sh` at each step.
+
+## 5. What we carry on top of others' code
+
+| Patch | On | Why | Where |
+|---|---|---|---|
+| line culling | Blitz at 21edc92 | its painter drew every line of a paragraph crossing the page's edge | `experiments/04-rust-engine/blitz-cull-lines.patch` |
+| measuring switches | Blitz | `BLITZ_NO_HINT`, `BLITZ_NO_GLYPHS`, for one profiling build only | `experiments/06-device-timing/blitz-knobs.patch` |
+| justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
+| trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |
+
+## 6. Words used here
+- **Scene:** the list of drawing commands for a page (fill this shape, draw these glyphs), built before anything is drawn.
+- **Outline, strips:** a glyph is stored as curves (its outline); vello_cpu cuts outlines into strips of pixel
+  coverage, which rendering then paints.
+- **Glyph cache (atlas):** each glyph drawn once at a size into a small image, then copied wherever it appears.
+- **Hinting:** nudging a glyph's outline onto the pixel grid for sharper small text.
+- **Render, rasterise:** turning the scene into pixels.
+- **RGBA, premultiplied:** four bytes a pixel, colour already multiplied by opacity; on white, a pixel shows
+  `colour + (255 − opacity)`.
+- **NEON:** ARM's instructions working on several numbers at once; every chip we target has them; Rust's 32-bit ARM
+  target leaves them off unless asked.
+- **cgo:** Go calling C (and so Rust or C++ behind a C interface); it brings a C toolchain into the build.
+- **Static binary:** one file with everything inside, so it runs on any ARM Linux with nothing installed.
+- **SMIL, media overlay:** an EPUB's timings of recorded narration, word by word; what read-along plays.
+- **Inline root, line box:** in Blitz, an element holding text and its lines, which our pagination cuts between.
