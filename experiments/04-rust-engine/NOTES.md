@@ -125,6 +125,9 @@ time to draw a page, before and after each step:
   lines culled, a viewport ending at the page's last line (same buffer): within noise.
 - **What is left** is Blitz's: building the scene (mostly glyph outlines, in vello_cpu) and vello_cpu's rendering. On
   Holmes, Blitz now draws a page faster than the Go engine.
+- **On a device** (experiment 06, a reMarkable 2) Blitz draws a page in 266–332 ms, 73–81× the Mac where everything
+  else is 10–25×; built with NEON (`-C target-feature=+neon`, which Rust's ARMv7 target leaves off), 206–257 ms.
+  `engine/build-armv7.sh` builds with it since.
 
 ## Running it again
 ```sh
@@ -145,7 +148,8 @@ C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
 ./go.sh ./bench.sh NAME; ./go.sh ./pagediff.sh NAME1 NAME2
 # through the Go interface (in experiments/engine): IMAGE=eink-rust ./go.sh go build -tags blitz -o bin/blitz/ ./cmd/...
 # and IMAGE=eink-rust ./go.sh sh build-armv7.sh for the static ARMv7 binaries
-# ARMv7 builds of the first two: CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=rust-lld cargo build --release \
+# ARMv7 builds of the first two (with RUSTFLAGS="-C target-feature=+neon" for NEON: see 06):
+#   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=rust-lld cargo build --release \
 #   --target armv7-unknown-linux-musleabihf; run under emulation: docker run --platform linux/arm/v7 busybox:1.36 ...
 ```
 `out/`, `target/`, `probes/blitz/` (a clone) and the built probes are git-ignored.

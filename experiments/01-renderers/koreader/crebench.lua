@@ -3,6 +3,7 @@
 -- margins, 34 px text, the book's own CSS and font). Run from KOReader's directory:
 --   ./luajit crebench.lua BOOK.epub OUT_DIR [CACHE_DIR]
 -- Without CACHE_DIR, every run is cold (KOReader keeps a cache of laid-out books to reopen them faster).
+-- LANG_MAIN is the book's language for hyphenation and line breaking (fa by default).
 io.stdout:setvbuf("no")
 require("setupkoenv")
 local Blitbuffer = require("ffi/blitbuffer")
@@ -63,7 +64,7 @@ d:setIntProperty("crengine.style.space.width.scale.percent", tonumber(scale))
 d:setIntProperty("crengine.style.space.condensing.percent", tonumber(condense))
 d:setDefaultInterlineSpace(100)
 d:setStringProperty("window.status.line", "1") -- no crengine header (KOReader draws its own footer)
-d:setStringProperty("crengine.textlang.main.lang", "fa")
+d:setStringProperty("crengine.textlang.main.lang", os.getenv("LANG_MAIN") or "fa")
 d:setStringProperty("crengine.textlang.embedded.langs.enabled", 1)
 d:setStringProperty("crengine.textlang.hyphenation.enabled", 1)
 d:setFontSize(34)
@@ -93,6 +94,9 @@ for p = 1, pages do
 end
 local rest = 0
 for p = 2, pages do rest = rest + draw[p] end
+local sorted = {}
+for p = 1, pages do sorted[p] = draw[p] end
+table.sort(sorted)
 
 local f = io.open(out_dir .. "/timings.json", "w")
 f:write(string.format([[{
@@ -105,9 +109,10 @@ f:write(string.format([[{
   "layout_ms": %.1f,
   "draw_first_ms": %.3f,
   "draw_avg_rest_ms": %.3f,
+  "draw_page_median_ms": %.3f,
   "max_rss_mb": %.1f
 }
 ]], cold and "cold" or "warm", scale, condense, pages, ms(t_init), ms(t_load), ms(t_render), ms(draw[1]),
-    pages > 1 and ms(rest) / (pages - 1) or 0, peak_rss_mb()))
+    pages > 1 and ms(rest) / (pages - 1) or 0, ms(sorted[math.floor(pages / 2) + 1]), peak_rss_mb()))
 f:close()
 for line in io.lines(out_dir .. "/timings.json") do print(line) end

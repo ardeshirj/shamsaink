@@ -73,8 +73,10 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 2. Timing on a device: `experiments/06-device-timing` (NOTES.md), on a reMarkable 2 (Cortex-A7, as slow as a Kobo;
    the maintainer's, used instead of buying a Pi Zero 2 W). First run: a page in 63–105 ms (Go) and 266–332 ms
    (Blitz, 73–81× the Mac where all else is 10–25×); the whole book laid out in 0.7–2.6 s (Blitz) and 1.5–4.9 s (Go).
-   With NEON on (`+neon`, which Rust's ARMv7 target leaves off) Blitz draws in 206–257 ms; most of that is building
-   the scene (glyph outlines every page, 130 ms), which a glyph cache would address. Not decided.
+   With NEON on (`+neon`, which Rust's ARMv7 target leaves off) Blitz draws in 206–257 ms: glyphs redrawn every page
+   (127 ms; hinting costs nothing) and a fixed 57 ms (a blank RGBA page, then grey). **KOReader's crengine on the same
+   device** is the bar: a page in 17–19 ms, a book opened in 0.5–2.2 s the first time and ~60 ms reopened from its
+   cache of laid-out books, 18–29 MB. Not decided what to chase.
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their
    GitHub account).

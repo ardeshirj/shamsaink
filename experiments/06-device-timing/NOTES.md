@@ -9,8 +9,8 @@ experiment 01's: 1072×1448, 60 px margins, 34 px text.
 slow end of what Kobos use, so it is a fair bench. It is not a display target: its screen is driven in software by
 its own app.
 
-- `pack.sh` (Mac) builds the static ARMv7 binaries and gathers them in `out/bundle` (62 MB) with the books and the
-  DejaVu fallback fonts.
+- `pack.sh` (Mac) builds the static ARMv7 binaries and gathers them in `out/bundle` (158 MB) with the books, the
+  DejaVu fallback fonts and KOReader.
 - `run.sh` (device) prints the device's chip, clock and memory and each run's timings, appends them to `results.txt`,
   and leaves the last run's pages in `pages/` (about 230 MB) to compare with the Mac's.
 - Blitz runs as the Rust tool rather than through the Go interface because only the tool takes fallback fonts; the Go
@@ -81,6 +81,51 @@ three runs agree within 2%.
 - **The grey conversion is 29 ms on the device**, not negligible here; the engine's own (one channel, the page's
   slice) is cheaper but not measured on the device.
 
+### KOReader on the same device: the reference (`out/results-ko.txt`)
+`run-ko.sh`: crengine from KOReader's own reMarkable release (v2026.07.1, the version experiment 01 measured;
+`koreader-remarkable-v2026.07.1.zip`, sha256 f3576f15…68daa), driven headless by 01's `crebench.lua` with KOReader's
+defaults and our page settings; both books three times opened cold and three times reopened from KOReader's cache of
+laid-out books. `crebench.lua` now also gives the median page and takes the book's language (`LANG_MAIN`, Farsi by
+default as 01 ran it). Runs agree within 1% (cold layout of *Buried Alive* within 10%).
+
+| reMarkable 2 | crengine (KOReader) | Go engine | Blitz (NEON) |
+|---|---|---|---|
+| *Buried Alive*: open, first time (read + lay out) | **0.47–0.51 s** | 1.48–1.52 s | 0.72–0.73 s |
+| reopened from its cache | **57 ms** | (no cache) | (no cache) |
+| draw a page (median) | **16.6–16.8 ms** | 63–65 ms | 206–211 ms |
+| peak memory | **18 MB** | 33–35 MB | 39 MB |
+| Holmes: open, first time | **2.24–2.25 s** | 4.84–4.86 s | 2.51 s |
+| reopened from its cache | **68 ms** | | |
+| draw a page (median) | **18.9 ms** | 101–105 ms | 257 ms |
+| peak memory | **29 MB** | 71–72 MB | 68 MB |
+
+crengine's open is `load_ms` + `layout_ms`; its engine start-up (`init_ms`, 54–61 ms: fonts, hyphenation) comes on
+top, once per session. Its pages differ a little from ours (111 and 405 pages against 119 and 387): KOReader's
+default word spacing (01's NOTES.md).
+- **Drawing:** crengine draws a page 4–5× faster than the Go engine and 12–14× faster than Blitz, in 8-bit grey
+  directly, with a cache of glyphs drawn.
+- **Opening:** first time, crengine is ahead of Blitz by a little and of Go by 3×; reopened from its cache (the
+  layout kept on disk), 57–68 ms whatever the book's length. That is the answer to slow opening, and neither of our
+  engines has it.
+- **Memory:** crengine holds half of what either of ours does.
+
+### Blitz's scene time split (`out/results-scene.txt`)
+`run-scene.sh`: the profiler built with NEON and `blitz-knobs.patch` (measuring switches in Blitz's painter, applied
+for that build only), one page of *Buried Alive* three ways, three times each (all within 1%):
+
+| | scene | render | grey (the engine's, one channel) | total |
+|---|---|---|---|---|
+| as drawn | 132 ms | 43 ms | 23 ms | 198 ms |
+| glyphs unhinted (`BLITZ_NO_HINT`) | 132 ms | 43 ms | 23 ms | 198 ms |
+| glyphs not drawn (`BLITZ_NO_GLYPHS`) | 5.6 ms | 34 ms | 23 ms | 62 ms |
+
+- **The glyphs are 96% of the scene (127 of 132 ms); hinting costs nothing.** Every glyph is turned into an outline and
+  then into vello_cpu's strips, on every page drawn: what a glyph cache saves.
+- **Without any text, the page still takes 62 ms**, as long as the Go engine's whole page: vello_cpu rendering a blank
+  1072×1448 RGBA page (34 ms) and our conversion to grey (23 ms, 15 ns a pixel, branching per pixel). A glyph cache
+  alone would leave Blitz at about 60–80 ms a page; reaching crengine's 17 ms also needs these two cut (rendering only
+  where there is text, a cheaper conversion), or drawing grey directly.
+
 ### Running it
 In a terminal of your own (the session's sandbox keeps SSH out), with the device on USB; its root password is under
 Settings → Help → Copyrights and licenses:
@@ -92,8 +137,9 @@ scp root@10.11.99.1:/home/root/indium-bench/results.txt out/remarkable2.txt
 scp -r root@10.11.99.1:/home/root/indium-bench/pages out/rm2-pages # optional: to compare with out/mac/pages
 ssh root@10.11.99.1 'rm -rf /home/root/indium-bench'               # leaves the device as it was
 ```
-Everything stays in `/home/root/indium-bench`: nothing on the system changes. `run-neon.sh` runs the same way, and
-its results are in `results-neon.txt`.
+Everything stays in `/home/root/indium-bench`: nothing on the system changes. `run-neon.sh`, `run-ko.sh` and
+`run-scene.sh` run the same way; their results are in `results-neon.txt`, `results-ko.txt` and `results-scene.txt`
+(`run-ko.sh` needs the system's libraries: under emulation, a bare 32-bit Debian rather than busybox).
 
 ## Running the Mac reference again
 ```sh

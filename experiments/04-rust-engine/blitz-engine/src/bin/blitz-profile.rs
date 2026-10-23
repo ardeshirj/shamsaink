@@ -149,9 +149,13 @@ fn main() {
         );
         let total = ms(t);
         let s = Instant::now();
+        // as Book::draw does it: one channel where all three are the same
         let grey: Vec<u8> = rgba
             .chunks_exact(4)
-            .map(|p| ((p[0] as u32 * 299 + p[1] as u32 * 587 + p[2] as u32 * 114) / 1000) as u8)
+            .map(|p| {
+                let (r, g, b) = (p[0], p[1], p[2]);
+                if r == g && g == b { g } else { ((r as u32 * 299 + g as u32 * 587 + b as u32 * 114) / 1000) as u8 }
+            })
             .collect();
         let grey_ms = ms(s);
         println!("draw: scene {scene_ms:.1} ms, render {:.1} ms, grey {grey_ms:.1} ms ({} px)", total - scene_ms, grey.len());

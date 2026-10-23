@@ -1,0 +1,39 @@
+diff --git a/packages/blitz-paint/src/text.rs b/packages/blitz-paint/src/text.rs
+index 7746eec..2acf074 100644
+--- a/packages/blitz-paint/src/text.rs
++++ b/packages/blitz-paint/src/text.rs
+@@ -563,6 +563,13 @@ fn flush_line_decorations(
+     }
+ }
+ 
++/// Measuring switches (experiment 06 of indium-reader, not for use): BLITZ_NO_HINT draws glyphs unhinted,
++/// BLITZ_NO_GLYPHS does not draw them.
++fn knob(i: usize) -> bool {
++    static K: std::sync::OnceLock<[bool; 2]> = std::sync::OnceLock::new();
++    K.get_or_init(|| [std::env::var_os("BLITZ_NO_HINT").is_some(), std::env::var_os("BLITZ_NO_GLYPHS").is_some()])[i]
++}
++
+ pub(crate) fn stroke_text<'a>(
+     scene: &mut impl PaintScene,
+     lines: impl Iterator<Item = Line<'a, TextBrush>>,
+@@ -646,10 +653,11 @@ pub(crate) fn stroke_text<'a>(
+                 };
+ 
+                 let normalized_coords: &[i16] = bytemuck::cast_slice(run.normalized_coords());
++                if !knob(1) {
+                 scene.draw_glyphs(
+                     font,
+                     font_size,
+-                    !FONT_EMBOLDEN_ENABLED, // hint
++                    !FONT_EMBOLDEN_ENABLED && !knob(0), // hint
+                     normalized_coords,
+                     embolden,
+                     Fill::NonZero,
+@@ -663,6 +671,7 @@ pub(crate) fn stroke_text<'a>(
+                         y: glyph.y,
+                     }),
+                 );
++                }
+ 
+                 // Accumulate this run's contribution to each decorating box on its ancestor
+                 // path. The decoration is drawn once per box after the whole line has been
