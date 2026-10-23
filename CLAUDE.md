@@ -29,6 +29,16 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   highlighted from the SMIL. Not chosen because it is GPL-2.0 (Readium and Thorium are BSD) and cgo brings back
   cross-compiling per device (a C toolchain matching each firmware's glibc, C libraries built per target); pure Go is
   one static binary for all ARM devices. C HarfBuzz likewise: only if a measurement on the device says so.
+  **`experiments/03-own-layout` (NOTES.md) built it:** on four rtlbook books 94–100% of line starts and nearly all
+  pages the same as Chromium's (crengine: 42–67%), whole book in 61 ms, 35 MB, a static ARMv7 binary in one command.
+  Its `compare.sh` (every word in a span, then ours, crengine and Chromium say where it went) is how any engine is
+  judged.
+- **Engines sit behind one Go interface,** `experiments/engine` (`Document`: pages, draw into a Go-owned buffer, an
+  id's page and boxes): "gotext" (03) and "cre" (02, `-tags cre`). Why stateful and not one call per page:
+  `docs/engine-design.md`, which also checks an outside Go + Rust design discussion against our measurements.
+- **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
+  same harness. Blitz's renderer does not build for 32-bit ARM (Kobo is 32-bit) and it has no paged media; Parley is
+  the realistic Rust text layer. Stage 0 probes come first.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
@@ -39,9 +49,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
 ## Next steps (1 agreed, the rest not decided)
-1. Experiment 03 (agreed 2026-10-22): our own go-text layout of the whole book, compared with crengine and Chromium
-   on line breaks, speed and memory, with experiment 02's read-along test on top.
-2. Time it on a Pi Zero 2 W (one static ARM binary; experiment 01's go-text renderer cross-compiles in seconds).
+1. Experiment 04's Stage 0 probes (agreed 2026-10-22): Rust (Parley, Blitz) on 32-bit ARM, Blitz on Farsi, a Go
+   build calling Rust cross-compiled for ARMv7.
+2. Time the engines on a Pi Zero 2 W (03's binary is one static file).
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their
    GitHub account).
