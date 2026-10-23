@@ -1,4 +1,9 @@
-# inkreader — context for Claude
+# Indium — context for Claude
+
+**The name** (2026-10-23): Indium, after indium tin oxide, the transparent front electrode of every E Ink screen; an
+element like Thorium, next to Readium. The repo is `indium-reader` (plain "indium" is a well-known Emacs debugger on
+GitHub, and a placeholder crate on crates.io). It was "inkreader" until then; Go module and Docker image names
+(`einkengine`, `eink-*`) stay as they are.
 
 Local git only (started 2026-10-22, no remote yet; public or private decided once it does something). A side project
 of the maintainer of **FarsiEPUB** (`~/Github/farsiepub`, private: a website converting Farsi PDFs to EPUB and a
