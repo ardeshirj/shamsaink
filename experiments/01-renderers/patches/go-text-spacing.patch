@@ -1,0 +1,11 @@
+--- a/shaping/spacing.go
++++ b/shaping/spacing.go
+@@ -18,7 +18,7 @@
+ 		// find the corresponding runes :
+ 		// to simplify, we assume a simple one to one rune/glyph mapping
+ 		// which should be common in practice for word separators
+-		if !(g.RuneCount == 1 && g.GlyphCount == 1) {
++		if !(g.RuneCount == 1 && g.GlyphCount == 1) || g.ClusterIndex >= len(text) { // TRIAL PATCH: bounds guard
+ 			continue
+ 		}
+ 		r := text[g.ClusterIndex]

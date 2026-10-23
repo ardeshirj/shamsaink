@@ -1,0 +1,10 @@
+# Books and anything drawn from them stay out of git (test books are copied in locally).
+*.epub
+book/
+out/
+bench/
+index.html
+# Built or fetched
+bin/
+patched/
+.DS_Store
