@@ -167,18 +167,15 @@ impl Book {
             w,
             h,
         );
-        // the page's slice only: blank above the top margin's end and below the page's last line
-        let (from, to) = (m as usize, (m + p.bottom - p.top).ceil() as usize);
-        for y in 0..h as usize {
-            for x in 0..w as usize {
-                let i = y * w as usize + x;
-                out[i] = if y < from || y >= to {
-                    255
-                } else {
-                    let (r, g, b) = (rgba[4 * i] as u32, rgba[4 * i + 1] as u32, rgba[4 * i + 2] as u32);
-                    ((r * 299 + g * 587 + b * 114) / 1000) as u8
-                };
-            }
+        // the page's slice only: blank above the top margin's end and below the page's last line; inside it the
+        // grey is one channel where all three are the same (black text on white), weighted only for colour
+        let (from, to) = (m as usize, ((m + p.bottom - p.top).ceil() as usize).min(h as usize));
+        let w = w as usize;
+        out[..from * w].fill(255);
+        out[to * w..].fill(255);
+        for (o, px) in out[from * w..to * w].iter_mut().zip(rgba[4 * from * w..].chunks_exact(4)) {
+            let (r, g, b) = (px[0], px[1], px[2]);
+            *o = if r == g && g == b { g } else { ((r as u32 * 299 + g as u32 * 587 + b as u32 * 114) / 1000) as u8 };
         }
     }
 

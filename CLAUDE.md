@@ -5,7 +5,8 @@ element like Thorium, next to Readium. The repo is `indium-reader` (plain "indiu
 GitHub, and a placeholder crate on crates.io). It was "inkreader" until then; Go module and Docker image names
 (`einkengine`, `eink-*`) stay as they are.
 
-Local git only (started 2026-10-22, no remote yet; public or private decided once it does something). A side project
+Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, `ardeshirj/indium-reader` (public or not decided
+once it does something). A side project
 of the maintainer of **FarsiEPUB** (`~/Github/farsiepub`, private: a website converting Farsi PDFs to EPUB and a
 library of public-domain Farsi classics) and **rtlbook** (`~/Github/rtlbook`, public: the engine that makes those
 EPUBs). It overlaps with them but is neither: don't add it to their repos or docs, and ask before mentioning it
@@ -45,7 +46,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
   all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
   paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, as fast to lay
-  out and lighter (60–75 ms, 36 MB for *Buried Alive*), twice the time to draw a page, a 34 MB static ARMv7 binary.
+  out and lighter (60–75 ms, 36 MB for *Buried Alive*), a 34 MB static ARMv7 binary. Drawing a page: 3.6 ms against
+  Go's 3.0 (Holmes: 4–4.9 against 4.5), since a one-channel grey and a patch that has Blitz's painter skip the lines
+  off the page (04's NOTES.md, "Drawing faster"; worth proposing to Blitz).
   (Timings on the comparison copies, every word in a span, overstate Blitz and webrender a lot: time the books as
   they are.)
 - **Real CSS (experiment 05, `experiments/05-real-css/NOTES.md`):** a Standard Ebooks book (English, their house CSS)

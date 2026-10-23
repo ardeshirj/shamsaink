@@ -68,7 +68,7 @@ Against experiment 03's Go engine, the same four books, the same comparison with
 | Lay out *Buried Alive* (119 pages), the comparison copy (every word a span) | 61 ms | 138 ms |
 | Draw a page, the same | 3.0 ms | 7.1 ms |
 | Peak memory, the same | 35 MB | 74 MB after layout (all documents kept), 137 MB with every page drawn |
-| **The book as it is (no spans)**: lay out, draw, peak with every page drawn | 64–80 ms, 3.0 ms, 41–43 MB | **60–75 ms, 6.0 ms, 36 MB** |
+| **The book as it is (no spans)**: lay out, draw, peak with every page drawn | 64–80 ms, 3.0 ms, 41–43 MB | **60–75 ms, 6.0 ms, 36 MB**; 3.6 ms since "Drawing faster" below |
 | ARMv7 build | 10.4 MB static, 8 s, Go alone | 33.7 MB static, 194 s, Rust and zig (`engine/build-armv7.sh`) |
 | CSS | the subset rtlbook uses | Stylo, Firefox's CSS engine |
 
@@ -87,7 +87,8 @@ pixels of anti-aliasing (all identical within 40 grey levels): rounding in vello
 **What it shows:** on rtlbook's books Blitz is as good as the Go engine on pages and a little behind on lines (word
 boxes, not drawing). The "about 2× slower, 2–4× heavier" first written here came from the comparison copies: every
 word in its own `<span>` is an element Blitz styles and keeps, which our Go engine mostly merges away. On the books
-as they are, Blitz lays out as fast as the Go engine and holds less memory; it draws a page in twice the time, and its
+as they are, Blitz lays out as fast as the Go engine and holds less memory; it drew a page in twice the time (since
+"Drawing faster" below, 1.2×), and its
 build is much larger and slower. Experiment 05 then compared it on a book with real CSS.
 
 ## Profiling (2026-10-23, `src/bin/blitz-profile.rs`)
@@ -99,10 +100,37 @@ Where Blitz's time goes on *Buried Alive* (Mac, Docker):
   1.2–2 ms. The conversion is ours and could nearly go (black text on white: one channel is the grey); the scene and
   rendering are Blitz's.
 
+## Drawing faster (2026-10-23)
+Every page of *Buried Alive* and Holmes (experiment 05's book, with its DejaVu fallback fonts), both as they are, drawn
+three times (`bench.sh NAME`, Mac, Docker); `pagediff.sh A B` compares the pages of two runs pixel for pixel. Median
+time to draw a page, before and after each step:
+
+| | *Buried Alive* (119 pages) | Holmes (387 pages) | Pages |
+|---|---|---|---|
+| Before | 5.6–5.9 ms | 7.5–8.1 ms | |
+| 1. Grey from one channel | 4.5–4.7 ms | 6.4–6.7 ms | identical |
+| 2. Then Blitz skips the lines off the page (patch) | **3.6–3.75 ms** | **4.0–4.85 ms** | identical |
+| Go engine (03), for comparison | 3.0 ms | 4.5 ms (05) | |
+
+- **Grey from one channel** (`Book::draw`): green is the grey where red, green and blue are the same, the weighted sum
+  only where they are not; only the page's slice is converted, the margins filled. Green alone everywhere was as fast
+  but not exact: Holmes's imprint and colophon (4 pages) have links in colour, up to 27 grey levels off.
+- **Blitz's painter culls elements but not lines.** It skips an element whose box is wholly outside the viewport, but
+  of a paragraph it draws every line: on a page that starts or ends mid-paragraph, the lines belonging to the pages
+  before and after were drawn and then blanked by us. `blitz-cull-lines.patch` (to Blitz at 21edc92, 18 lines in
+  `blitz-paint/src/render.rs`) passes the clip rectangle to the paragraph and skips lines wholly outside it, with a
+  line's height of slack each side for glyphs that reach beyond their line box. Worth proposing to Blitz.
+- **Tried, no gain, not kept:** painting only the page's slice (a viewport and buffer the slice's height): the same
+  time, 7 MB more held (the buffer's size changes every page) and pages 1 grey level off from the shifted rows; with
+  lines culled, a viewport ending at the page's last line (same buffer): within noise.
+- **What is left** is Blitz's: building the scene (mostly glyph outlines, in vello_cpu) and vello_cpu's rendering. On
+  Holmes, Blitz now draws a page faster than the Go engine.
+
 ## Running it again
 ```sh
 (cd docker && docker build -t eink-rust .)
-./go.sh sh -c 'cd probes && git clone https://github.com/DioxusLabs/blitz.git && cd blitz && git checkout 21edc92'
+./go.sh sh -c 'cd probes && git clone https://github.com/DioxusLabs/blitz.git && cd blitz && git checkout 21edc92 \
+  && git apply ../../blitz-cull-lines.patch'   # Blitz's painter skips lines off the page ("Drawing faster")
 C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
 ./go.sh sh -c "cd probes/parley-probe && cargo run --release -- $C/spanned/OEBPS/text/sec002.xhtml \
   $C/spanned/OEBPS/fonts $C/chrome/sec002.json /x/04-rust-engine/out/parley-sec002"
@@ -113,6 +141,8 @@ C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
   $C/spanned out/bpages/buried-alive $C/spanned/words.json"
 (cd ../03-own-layout && ./go.sh go run ./tools/linecmp out/cmp/buried-alive/spanned/words.json \
   ../04-rust-engine/out/bpages/buried-alive - out/cmp/buried-alive/chrome)
+# drawing times on the books as they are, and pages compared between two runs
+./go.sh ./bench.sh NAME; ./go.sh ./pagediff.sh NAME1 NAME2
 # through the Go interface (in experiments/engine): IMAGE=eink-rust ./go.sh go build -tags blitz -o bin/blitz/ ./cmd/...
 # and IMAGE=eink-rust ./go.sh sh build-armv7.sh for the static ARMv7 binaries
 # ARMv7 builds of the first two: CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=rust-lld cargo build --release \

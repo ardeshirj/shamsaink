@@ -35,7 +35,7 @@ Line starts the same as Chromium's, of 12,255 lines:
 | Pages with Chromium's lines (388) | **383** | 323 (389 pages) | 89 (400 pages) |
 | **The book as it is** (no spans): lay out the whole book | **0.22–0.32 s** | 0.94–1.08 s | 0.22–0.27 s |
 | Peak memory, the same | **71 MB**, every page drawn | 270–283 MB the book; 72–75 MB one 33-page chapter (90–130 ms) | 88 MB |
-| Draw a page, the same | 7.7–8.7 ms | not drawn here (01: 2.5–5 ms) | 4.5 ms |
+| Draw a page, the same | 7.7–8.7 ms (4.0–4.85 ms since 04's "Drawing faster") | not drawn here (01: 2.5–5 ms) | 4.5 ms |
 | The comparison copy (every word a span): lay out | 550–620 ms | 6.6–7.0 s | 465 ms |
 | Peak memory, the same | 252 MB, every page drawn | 440 MB one chapter; 800–875 MB the book | 114 MB |
 

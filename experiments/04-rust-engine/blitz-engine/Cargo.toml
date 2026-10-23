@@ -3,7 +3,8 @@ name = "blitz-engine"
 version = "0.1.0"
 edition = "2024"
 
-# Blitz from its repository (cloned into ../probes/blitz at a pinned commit; its crates.io releases lag behind), without
+# Blitz from its repository (cloned into ../probes/blitz at a pinned commit, with ../blitz-cull-lines.patch applied; its
+# crates.io releases lag behind), without
 # system fonts (fontconfig, C), accessibility or the network layer: files only.
 # rlib for the blitz-pages tool, staticlib for Go (cgo) through the C interface in capi.rs
 [lib]
