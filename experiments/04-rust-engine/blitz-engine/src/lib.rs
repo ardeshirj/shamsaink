@@ -309,6 +309,15 @@ fn blocks(doc: &BaseDocument) -> Vec<Block> {
 
 fn collect(doc: &BaseDocument, id: blitz_dom::NodeId, out: &mut Vec<Block>) {
     let Some(node) = doc.get_node(id) else { return };
+    // a picture outside any line (an <img> straight in the body, an <svg>): a block of one line without text, its box
+    if node.element_data().is_some_and(|e| matches!(&*e.name.local, "img" | "svg" | "video" | "canvas")) {
+        let (pos, l) = (node.absolute_position(0.0, 0.0), node.final_layout());
+        if l.size.height > 0.0 {
+            let line = LineBox { top: pos.y as f64, bottom: (pos.y + l.size.height) as f64, text: false };
+            out.push(Block { lines: vec![line], avoid_after: false, avoid_inside: false });
+        }
+        return;
+    }
     if node.flags.is_inline_root() {
         if let Some(tl) = node.element_data().and_then(|e| e.inline_layout_data.as_ref()) {
             let pos = node.absolute_position(0.0, 0.0);
@@ -398,7 +407,8 @@ fn paginate(blocks: &[Block], doc: usize, start: f64, o: &Options, pages: &mut V
                 }
             }
             for l in &b.lines[k..k + room] {
-                cur.bottom = l.bottom;
+                // blocks can overlap (Holmes's title page: a heading under its picture), so a page never ends higher
+                cur.bottom = cur.bottom.max(l.bottom);
                 if l.text {
                     cur.lines += 1;
                 }
@@ -411,7 +421,8 @@ fn paginate(blocks: &[Block], doc: usize, start: f64, o: &Options, pages: &mut V
             }
         }
     }
-    if placed > 0 || !pages.iter().any(|p| p.doc == doc) {
+    // a document with nothing to show (Haji Agha's navigation document) gets no page
+    if placed > 0 {
         pages.push(cur);
     }
 }

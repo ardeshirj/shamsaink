@@ -22,6 +22,9 @@ peniko = "0.6"
 bytes = "1"
 url = "2"
 png = "0.17"
+# Blitz takes the image crate with every format off, so no picture was ever decoded (found in 08): ours switch the
+# common ones on (pure Rust)
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }
 
 [profile.release]
 strip = true

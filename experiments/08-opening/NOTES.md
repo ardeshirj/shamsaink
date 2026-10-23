@@ -1,0 +1,47 @@
+# Experiment 08: opening a book, and memory (2026-10-23)
+
+After 07 Blitz draws a page as fast as crengine (20 ms on the reMarkable 2). What is left behind crengine is opening a
+book (0.73 s and 2.5 s the first time, crengine 0.5 and 2.2 s, and 57–68 ms reopened from its cache of laid-out books)
+and memory (35 and 68 MB, crengine 18 and 29 MB). Blitz lays out every chapter before showing anything and keeps them
+all laid out.
+
+## A third book: Haji Agha, from the Internet Archive
+`book/haji-agha` (not committed): Hedayat's *Haji Agha*, an Internet Archive EPUB made automatically from scans (OCR,
+"hocr-to-epub"): 143 documents, one per scanned page, each a paragraph of OCR text, some with a banner giving the
+OCR's estimated accuracy, four with the scan (JPEG, 3625×5250). No `dir`, `lang="None"`, no fonts; the reader's font
+stands in (`book/fonts`: rtlbook's Parastoo for Farsi, DejaVu for Latin). The first Farsi book here not made by
+rtlbook.
+
+- **Direction without `dir`:** Blitz takes each paragraph's direction from its first letters, so the Farsi lines are
+  right-aligned and right to left. (Chromium would keep CSS's left-to-right base and left-align them.)
+- **It found three bugs, now fixed** (`04-rust-engine/blitz-engine`):
+  - **No picture was ever decoded.** Blitz takes the `image` crate with every format off; since experiment 04 every
+    JPEG and PNG was blank (Holmes's cover and logo too). `Cargo.toml` now switches on JPEG, PNG, GIF, WebP.
+  - **A picture outside any line was not on any page.** Pagination only knew lines of text, so an `<img>` straight in
+    the body (each scan) gave an empty page. Pictures (`img`, `svg`, `video`, `canvas`) outside lines are now blocks
+    of their own.
+  - **Overlapping blocks cut a page short.** Holmes's title page has a heading under its picture; the page's bottom
+    followed the last line placed and moved up, leaving a strip. A page's bottom now never moves up. A document with
+    nothing to show (this book's navigation document) gets no page.
+  *Buried Alive* and Holmes keep their page counts (119, 387).
+- **Mac, as it is:** 180 pages, laid out in 0.41 s, a page drawn in 0.76 ms, **284 MB**.
+
+## Where opening goes (Mac, `blitz-profile`)
+
+| | documents | parse | style + layout | memory after layout |
+|---|---|---|---|---|
+| *Buried Alive* | 10 | 20 ms | 40 ms | 21 MB |
+| Holmes | 16 | 19 ms | 48 ms | 39 MB |
+| Haji Agha | 144 | **262 ms** | 17 ms | **156 MB** |
+
+- **Haji Agha's time and memory are its four scans:** each is decoded at full size while its document is read (23–75
+  ms each), and kept: 3625×5250 in RGBA is 76 MB a scan, to be drawn 936 px wide. The other 140 documents cost
+  about 1 ms each just to set up.
+- On the device (×10–25) that would be several seconds to open, and 284 MB is too much for a 512 MB Kobo.
+
+## The plan
+1. **The chapter opened first:** lay out the document holding the page to show, draw it, then the rest (for page
+   counts) after. Measure time to first page.
+2. **Pictures decoded when drawn, at the size drawn,** not at open and at full size.
+3. **Chapters far from the reader let go,** laid out again when reached. Measure peak memory.
+4. Later, maybe: page counts (and positions) kept on disk, as crengine's cache, so a reopened book needs no layout.
