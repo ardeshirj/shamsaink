@@ -33,12 +33,15 @@ Line starts the same as Chromium's, of 12,255 lines:
 | As the book is (`text-wrap: pretty`) | 92.1% | 50.9% (91.0% with hyphenation off) | 91.2% |
 | Chromium without `text-wrap: pretty` | **99.2%** | 98.2% (hyphenation off) | 98.2% |
 | Pages with Chromium's lines (388) | **383** | 323 (389 pages) | 89 (400 pages) |
-| Lay out the whole book | 550–620 ms | 6.6–7.0 s | 465 ms |
-| Draw a page | 10.6 ms | not drawn here (01: 2.5–5 ms) | 4.5 ms |
-| Peak memory | 252 MB, every page drawn | 440 MB for one 33-page chapter; 800–875 MB the book | 85 MB after layout, 114 MB |
+| **The book as it is** (no spans): lay out the whole book | **0.22–0.32 s** | 0.94–1.08 s | 0.22–0.27 s |
+| Peak memory, the same | **71 MB**, every page drawn | 270–283 MB the book; 72–75 MB one 33-page chapter (90–130 ms) | 88 MB |
+| Draw a page, the same | 7.7–8.7 ms | not drawn here (01: 2.5–5 ms) | 4.5 ms |
+| The comparison copy (every word a span): lay out | 550–620 ms | 6.6–7.0 s | 465 ms |
+| Peak memory, the same | 252 MB, every page drawn | 440 MB one chapter; 800–875 MB the book | 114 MB |
 
-(Mac, arm64 Linux in Docker; Blitz three runs, webrender three runs of one chapter; an e-reader is roughly 10–20×
-slower.)
+(Mac, arm64 Linux in Docker; two or three runs each; an e-reader is roughly 10–20× slower.) The first numbers
+written here were the comparison copies'; every word in its own element costs Blitz and above all webrender far more
+than a real book does.
 
 What the differences are:
 - **`text-wrap: pretty`** is Chromium's alone: it re-balances the last lines of each paragraph. None of the three
@@ -53,9 +56,9 @@ What the differences are:
 
 ## What it shows
 - **Blitz is the engine for other books.** It is the closest to Chromium on both lines and pages with nothing
-  tuned, it takes the whole book in about half a second, and its 252 MB (every document kept, every page drawn) is
-  the most that would need work. webrender is as good on lines, worse on pages, about 11× slower and needs 440 MB for
-  one chapter: it does not fit a 512 MB device.
+  tuned, and on the real book it is as fast as the Go engine (a quarter of a second) and lighter (71 MB, every
+  document kept, every page drawn). webrender is as good on lines, worse on pages, about 4× slower, and takes 72 MB
+  for one chapter where Blitz holds the whole book in about the same.
 - **The Go engine** gets the lines right on this book too (go-text breaks like Chromium), but its CSS is rtlbook's
   subset: it is for rtlbook's books, as decided.
 - One book, in English. A Farsi book that is not rtlbook's would be the next test of Blitz's right-to-left CSS.

@@ -39,13 +39,17 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
   all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
-  paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, ~2× slower,
-  2–4× the memory, a 34 MB static ARMv7 binary.
+  paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, as fast to lay
+  out and lighter (60–75 ms, 36 MB for *Buried Alive*), twice the time to draw a page, a 34 MB static ARMv7 binary.
+  (Timings on the comparison copies, every word in a span, overstate Blitz and webrender a lot: time the books as
+  they are.)
 - **Real CSS (experiment 05, `experiments/05-real-css/NOTES.md`):** a Standard Ebooks book (English, their house CSS)
   through Blitz, webrender and the Go engine against Chromium. Lines: all three 98–99% Chromium's (once Chromium's
   own `text-wrap: pretty` is set aside, and webrender's hyphenation). Pages: Blitz 383 of 388, webrender 323, Go 89
-  (rtlbook's CSS subset). Whole book: Blitz ~0.6 s and 252 MB; webrender ~7 s and 440 MB for one chapter, too much
-  for a 512 MB device. So Blitz, not webrender, looks like the engine for other books (to decide).
+  (rtlbook's CSS subset). Whole book as it is: Blitz ~0.25 s and 71 MB, the Go engine the same time and 88 MB,
+  webrender ~1 s and 72 MB for each chapter. So Blitz, not webrender, looks like the engine for other books (to decide). The maintainer
+  also wants Blitz considered for FarsiEPUB's books (2026-10-23): one engine for all; its cost is close to Go's; on
+  those books its line differences from Chromium are word-box widths, not visible (04's NOTES.md).
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is

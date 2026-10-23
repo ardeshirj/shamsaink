@@ -65,23 +65,39 @@ Against experiment 03's Go engine, the same four books, the same comparison with
 |---|---|---|
 | Line starts as Chromium's: *Buried Alive*, *Blind Owl*, *Tomorrow*, *Three Drops* | 100, 99.9, 98.9, 94.3% (tuned on the first) | 99.5, 98.6, 98.4, 88.4% (untuned) |
 | Pages with Chromium's lines | 119/119, 118/121, 21/21, 159/162 | 119/119, 118/121, 21/21, 157/162 |
-| Lay out *Buried Alive* (119 pages) | 61 ms | 138 ms |
-| Draw a page | 3.0 ms | 7.1 ms |
-| Peak memory | 35 MB | 74 MB after layout (all documents kept), 137 MB with every page drawn |
+| Lay out *Buried Alive* (119 pages), the comparison copy (every word a span) | 61 ms | 138 ms |
+| Draw a page, the same | 3.0 ms | 7.1 ms |
+| Peak memory, the same | 35 MB | 74 MB after layout (all documents kept), 137 MB with every page drawn |
+| **The book as it is (no spans)**: lay out, draw, peak with every page drawn | 64–80 ms, 3.0 ms, 41–43 MB | **60–75 ms, 6.0 ms, 36 MB** |
 | ARMv7 build | 10.4 MB static, 8 s, Go alone | 33.7 MB static, 194 s, Rust and zig (`engine/build-armv7.sh`) |
 | CSS | the subset rtlbook uses | Stylo, Firefox's CSS engine |
 
-Blitz's remaining line differences look like the two 03 fixed in Go: lines full to within a fraction of a pixel,
-and Unicode's no-break before punctuation after a space. Neither is fixed here yet.
+Blitz's remaining line differences are not the punctuation rule 03 fixed in Go: on *Three Drops* none of the 41
+places where they start is punctuation after a space. They come from word widths: about 4,400 of 34,653 words are
+1–3 px wider or narrower than in Chromium and Go, so nearly full lines break a word earlier (30 of 41) or later.
+Seen up close (2026-10-23, the 12 words that differ most), the words look the same in all three engines, Blitz
+only slightly off in a few: the difference is in the boxes Blitz reports (a word ending in tanween gets a box 8 px
+narrower than its drawing), not a Farsi rendering bug. What it could still touch: a read-along highlight a few px
+tight on such words.
 
 **On 32-bit ARM** (emulated, nothing installed), the Go program with the Blitz engine runs the read-along test fully:
 119 pages; all 834 words found, at exactly the native positions. Pages differ from the native build by at most 2
 pixels of anti-aliasing (all identical within 40 grey levels): rounding in vello_cpu's 32-bit path.
 
-**What it shows:** on rtlbook's books Blitz is as good as the Go engine on pages, a little behind on lines, about 2×
-slower, 2–4× heavier, and a much larger and slower build. Its case is the books the Go engine is not for: real CSS.
-That is the comparison still to make: a book that is not rtlbook's, against webrender (01's fallback: 23 ms a
-chapter, 55–130 MB) and Chromium.
+**What it shows:** on rtlbook's books Blitz is as good as the Go engine on pages and a little behind on lines (word
+boxes, not drawing). The "about 2× slower, 2–4× heavier" first written here came from the comparison copies: every
+word in its own `<span>` is an element Blitz styles and keeps, which our Go engine mostly merges away. On the books
+as they are, Blitz lays out as fast as the Go engine and holds less memory; it draws a page in twice the time, and its
+build is much larger and slower. Experiment 05 then compared it on a book with real CSS.
+
+## Profiling (2026-10-23, `src/bin/blitz-profile.rs`)
+Where Blitz's time goes on *Buried Alive* (Mac, Docker):
+- **The second `resolve` costs nothing and moves nothing** (0 of 23,775 word boxes): the file provider answers at
+  once, so stylesheets and fonts are in after the first. Dropping it gains nothing.
+- **The spans:** with them, parsing 85 ms and the first resolve 84 ms, 56 MB held; without, 20 ms and 49 ms, 21 MB.
+- **Drawing a page** (6 ms): building the scene about 3 ms, vello_cpu rendering 1–2 ms, our RGBA-to-grey conversion
+  1.2–2 ms. The conversion is ours and could nearly go (black text on white: one channel is the grey); the scene and
+  rendering are Blitz's.
 
 ## Running it again
 ```sh
