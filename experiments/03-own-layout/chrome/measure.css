@@ -1,0 +1,4 @@
+/* Chromium with the shared page settings: 1072×1448 px pages, 60 px margins, 34 px text */
+@page { size: 1072px 1448px; margin: 60px; }
+html { font-size: 34px; }
+@media screen { html { padding: 0 60px; } }
