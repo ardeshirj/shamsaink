@@ -91,7 +91,7 @@ CPU at 1200 MHz. Runs agree within 3%. KOReader's crengine from 06's `results-ko
 
 ## Seeing it
 `demo.sh` draws one page of each book each way with `blitz-demo` (04's blitz-engine; `Book::draw_layer` gives one
-layer at a time) and makes `out/demo/index.html` from `demo.html`: the page as before and now, what goes to vello_cpu
+layer at a time) and makes the pictures in `out/demo/` that `demo.html` shows (open it in a browser): the page as before and now, what goes to vello_cpu
 and what to the masks, the masks one page needs, one glyph's four quarter-pixel masks, the glyphs placed, and where
 old and new differ. It holds book text, so it stays in `out/`.
 

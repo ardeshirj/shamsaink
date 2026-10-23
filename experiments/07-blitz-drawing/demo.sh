@@ -1,6 +1,6 @@
 #!/bin/sh
 # On the Mac: shows how a page is drawn, step by step. blitz-demo (04's blitz-engine) draws one page of each book each
-# way, ImageMagick cuts and enlarges the pieces, and demo.html becomes out/demo/index.html (open it in a browser).
+# way and ImageMagick cuts and enlarges the pieces into out/demo/, which demo.html shows (open it in a browser).
 # Pages hold book text: out/ stays out of git. Needs eink-rust and the books of experiments 03 and 05.
 set -e
 cd "$(dirname "$0")"
@@ -26,5 +26,4 @@ docker run --rm -v "$X":/x -v eink-cargo:/cargo -w /x/04-rust-engine/blitz-engin
   convert holmes-2/after.png -crop 740x220+160+200 +repage holmes-2/crop-after.png
   convert holmes-8/rest.png -crop 960x340+60+980 +repage holmes-8/crop-rest.png
   convert holmes-8/after.png -crop 960x340+60+980 +repage holmes-8/crop-after.png'
-cp demo.html out/demo/index.html
 cat out/demo/*/timings.json

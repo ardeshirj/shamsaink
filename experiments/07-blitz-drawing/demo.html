@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blitz Page Drawing</title>
-<!-- Experiment 07, step by step. demo.sh copies this to out/demo/index.html next to the images it makes. -->
+<!-- Experiment 07, step by step: the images are made by demo.sh, in out/demo/ (not committed). -->
 <style>
   :root {
     --bg: #f7f6f2; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a65; --line: #e3e1da;
@@ -91,9 +91,9 @@ scratch.</p>
   (experiment 06's split). Even a blank page took 57 ms: the colour page and its conversion.</p>
 </div>
 <div class="row">
-  <figure><img src="buried/small-before.png" alt="The page drawn the old way"><figcaption><b>The page, drawn the old way.</b> Everything
+  <figure><img src="out/demo/buried/small-before.png" alt="The page drawn the old way"><figcaption><b>The page, drawn the old way.</b> Everything
   through vello_cpu.</figcaption></figure>
-  <figure><img src="buried/small-after.png" alt="The page drawn the new way"><figcaption><b>The same page, drawn now.</b> To the eye, the
+  <figure><img src="out/demo/buried/small-after.png" alt="The page drawn the new way"><figcaption><b>The same page, drawn now.</b> To the eye, the
   same.</figcaption></figure>
 </div>
 
@@ -127,26 +127,26 @@ record draws anything.</p>
   </div>
 </div>
 <div class="row">
-  <figure><img src="buried/small-rest.png" alt="What goes to vello_cpu: nothing"><figcaption><b>What goes to vello_cpu: nothing.</b> On
+  <figure><img src="out/demo/buried/small-rest.png" alt="What goes to vello_cpu: nothing"><figcaption><b>What goes to vello_cpu: nothing.</b> On
   <i>Buried Alive</i> no page needs it at all. Blitz did send one thing on every page: the whole page filled with a
   fully transparent colour, which draws nothing. That fill alone used to cost a full render. The layer now drops
   it.</figcaption></figure>
-  <figure><img src="buried/text.png" alt="What our layer copies: all the text"><figcaption><b>What our layer copies: all the
+  <figure><img src="out/demo/buried/text.png" alt="What our layer copies: all the text"><figcaption><b>What our layer copies: all the
   text.</b> 1,165 glyphs on this page.</figcaption></figure>
 </div>
 <p>Holmes has pages where vello_cpu still has work. On the left is what vello_cpu draws, on the right the finished
 piece:</p>
 <div class="row">
-  <figure><img src="holmes-2/crop-rest.png" alt="Link underlines drawn by vello_cpu"><figcaption><b>Holmes p. 2, vello_cpu's part:</b> the links'
+  <figure><img src="out/demo/holmes-2/crop-rest.png" alt="Link underlines drawn by vello_cpu"><figcaption><b>Holmes p. 2, vello_cpu's part:</b> the links'
   underlines (lines, not glyphs).</figcaption></figure>
-  <figure><img src="holmes-2/crop-after.png" alt="Finished piece of page 2"><figcaption><b>Finished:</b> the text from our masks, the underlines
+  <figure><img src="out/demo/holmes-2/crop-after.png" alt="Finished piece of page 2"><figcaption><b>Finished:</b> the text from our masks, the underlines
   from vello_cpu.</figcaption></figure>
 </div>
 <div class="row">
-  <figure><img src="holmes-8/crop-rest.png" alt="Single italic letters drawn by vello_cpu"><figcaption><b>Holmes p. 8, vello_cpu's part:</b> single
+  <figure><img src="out/demo/holmes-8/crop-rest.png" alt="Single italic letters drawn by vello_cpu"><figcaption><b>Holmes p. 8, vello_cpu's part:</b> single
   italic letters (<code>&lt;i&gt;E&lt;/i&gt;</code>). These glyph runs come with a transform of their own (probably a
   slant Blitz adds because the font has no italic), and the layer passes such runs on.</figcaption></figure>
-  <figure><img src="holmes-8/crop-after.png" alt="Finished piece of page 8"><figcaption><b>Finished:</b> both layers together.</figcaption></figure>
+  <figure><img src="out/demo/holmes-8/crop-after.png" alt="Finished piece of page 8"><figcaption><b>Finished:</b> both layers together.</figcaption></figure>
 </div>
 <p style="font-size:14px;color:var(--muted)">92 of Holmes's 387 pages need vello_cpu, which costs about 1 ms more on the
 Mac. The median page doesn't.</p>
@@ -155,9 +155,9 @@ Mac. The median page doesn't.</p>
 <p>The first time a glyph is needed, vello_cpu draws it alone and black on a small square (the same code that drew it
 before, so the shapes match). The square is cut to the ink and kept. A mask is kept per font, size and quarter-pixel
 position across. This is every mask this page needed, 237 in all, shown 2× (later pages mostly reuse them):</p>
-<div class="card scroll"><img class="pixel" src="buried/masks-2x.png" alt="Sheet of glyph masks"></div>
+<div class="card scroll"><img class="pixel" src="out/demo/buried/masks-2x.png" alt="Sheet of glyph masks"></div>
 <div class="row">
-  <figure><img class="pixel" src="buried/quarters-6x.png" alt="One glyph at four quarter-pixel positions" style="max-width:520px"><figcaption><b>One glyph, four
+  <figure><img class="pixel" src="out/demo/buried/quarters-6x.png" alt="One glyph at four quarter-pixel positions" style="max-width:520px"><figcaption><b>One glyph, four
   masks, 6×:</b> drawn at 0, ¼, ½ and ¾ of a pixel across, so words keep their spacing. The edges shift by a quarter of
   a pixel from one to the next. Down, glyphs sit on whole pixels.</figcaption></figure>
 </div>
@@ -165,15 +165,15 @@ position across. This is every mask this page needed, 237 in all, shown 2× (lat
 <h2><span class="n">5</span>Placing them</h2>
 <p>Each glyph on the page is a lookup and a copy: the mask is blended onto the grey page at the glyph's position. Here
 is a piece of the page at 3×, each copied mask boxed:</p>
-<div class="card scroll"><img class="pixel" src="buried/zoom-boxes.png" alt="Copied glyphs with their boxes"></div>
+<div class="card scroll"><img class="pixel" src="out/demo/buried/zoom-boxes.png" alt="Copied glyphs with their boxes"></div>
 
 <h2><span class="n">6</span>Old and new, pixel for pixel</h2>
 <p>The same piece at 3×. Glyphs now sit on the nearest quarter pixel across and the nearest whole pixel down, so every
 page differs a little from before.</p>
 <div class="row">
-  <figure><img class="pixel" src="buried/zoom-before.png" alt="Old rendering zoomed"><figcaption><b>Before</b>, through vello_cpu.</figcaption></figure>
-  <figure><img class="pixel" src="buried/zoom-after.png" alt="New rendering zoomed"><figcaption><b>Now</b>, from the masks.</figcaption></figure>
-  <figure><img class="pixel" src="buried/zoom-diff.png" alt="Where they differ"><figcaption><b>Where they differ</b> (darker means
+  <figure><img class="pixel" src="out/demo/buried/zoom-before.png" alt="Old rendering zoomed"><figcaption><b>Before</b>, through vello_cpu.</figcaption></figure>
+  <figure><img class="pixel" src="out/demo/buried/zoom-after.png" alt="New rendering zoomed"><figcaption><b>Now</b>, from the masks.</figcaption></figure>
+  <figure><img class="pixel" src="out/demo/buried/zoom-diff.png" alt="Where they differ"><figcaption><b>Where they differ</b> (darker means
   more): only at the glyphs' edges, shifted by less than half a pixel. The read-along test finds every word at the
   same box as before.</figcaption></figure>
 </div>
