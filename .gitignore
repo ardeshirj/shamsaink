@@ -8,3 +8,8 @@ index.html
 bin/
 patched/
 .DS_Store
+# Rust builds, and clones fetched by experiment scripts
+target/
+experiments/04-rust-engine/probes/blitz/
+experiments/04-rust-engine/probes/cgo-probe/lib/
+experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*

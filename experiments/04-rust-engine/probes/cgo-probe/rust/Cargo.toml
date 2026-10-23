@@ -1,0 +1,15 @@
+[package]
+name = "probelayout"
+version = "0.1.0"
+edition = "2024"
+
+# a static library with a C interface, for Go through cgo
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+parley = { version = "0.12", default-features = false, features = ["std"] }
+
+[profile.release]
+strip = true
+panic = "abort"

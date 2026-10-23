@@ -1,4 +1,4 @@
-# 04: a Rust layout engine behind the same interface (plan, 2026-10-22; not started)
+# 04: a Rust layout engine behind the same interface (plan, 2026-10-22; Stage 0 done: NOTES.md)
 
 The question: does a layout engine in Rust do better than experiment 03's pure-Go one on these devices, by enough to
 pay for a second toolchain? Better means more of the book drawn right (real CSS, for books that aren't rtlbook's), or
@@ -14,9 +14,9 @@ one static 10.4 MB ARMv7 binary from one command.
 - **Blitz** (DioxusLabs: Stylo for CSS, Taffy for boxes, Parley for text; MIT/Apache) is the integrated one and
   would bring real CSS. But it is beta, pre-1.0, and on its own CSS status page `direction` is "supported for
   block-level but not inline-level boxes", `unicode-bidi` is not supported, and paged media (`break-before`,
-  `break-after`, `break-inside`, `@page size`) is not supported. **Its renderer does not build for 32-bit ARM**:
-  blitz-py ships no armv7l wheels because "the rendering stack (anyrender 0.11) does not compile on 32-bit targets".
-  Kobo's toolchains target `arm-kobo-linux-gnueabihf`, 32-bit.
+  `break-after`, `break-inside`, `@page size`) is not supported. blitz-py ships no armv7l wheels because "the
+  rendering stack (anyrender 0.11) does not compile on 32-bit targets"; Kobo's toolchains target
+  `arm-kobo-linux-gnueabihf`, 32-bit. (Stage 0 found that out of date: current Blitz builds for ARMv7.)
 - **Parley** (Linebender; MIT/Apache) alone: rich text layout with HarfRust (a Rust port of HarfBuzz), ICU4X for
   bidi, Fontique and Skrifa for fonts. This is the same job go-text does for experiment 03.
 - Not used: `harfbuzz-rs`, which binds C HarfBuzz and so brings back C cross-compiling.

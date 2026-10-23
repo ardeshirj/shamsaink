@@ -37,8 +37,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   id's page and boxes): "gotext" (03) and "cre" (02, `-tags cre`). Why stateful and not one call per page:
   `docs/engine-design.md`, which also checks an outside Go + Rust design discussion against our measurements.
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
-  same harness. Blitz's renderer does not build for 32-bit ARM (Kobo is 32-bit) and it has no paged media; Parley is
-  the realistic Rust text layer. Stage 0 probes come first.
+  same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
+  all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Blitz has no pagination.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
@@ -49,8 +49,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
 ## Next steps (1 agreed, the rest not decided)
-1. Experiment 04's Stage 0 probes (agreed 2026-10-22): Rust (Parley, Blitz) on 32-bit ARM, Blitz on Farsi, a Go
-   build calling Rust cross-compiled for ARMv7.
+1. Experiment 04 Stage 1 (to decide): Blitz layout with our own pagination, or Parley with a port of 03, behind the
+   engine interface and through 03's comparison.
 2. Time the engines on a Pi Zero 2 W (03's binary is one static file).
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their

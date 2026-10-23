@@ -47,8 +47,9 @@ page pixel for pixel, all 23,775 word boxes, all 834 read-along words). Hit-test
 yet.
 
 ## What a Rust engine (experiment 04) would have to show
-Planned in `experiments/04-rust-engine/PLAN.md`. Since this note was first written: Blitz's renderer does not build
-for 32-bit ARM (Kobo is 32-bit), and its CSS status page lists inline `direction` and paged media as not supported.
+Planned in `experiments/04-rust-engine/PLAN.md`; Stage 0 done (its NOTES.md): Parley and Blitz both build as static
+32-bit ARM binaries (Kobo is 32-bit) and draw Farsi right; Parley's line starts on a chapter are all Chromium's; a Go
+program calling Rust through cgo cross-builds for ARMv7 with zig in one script. Blitz has no pagination.
 
 The same tests as experiment 03 (`compare.sh`, `tools/linecmp`): line and page agreement with Chromium on the four
 books, the read-along test, layout and draw time, memory, and the ARM build. The Go engine is the bar: 94–100% of line

@@ -1,0 +1,21 @@
+[package]
+name = "blitz-probe"
+version = "0.1.0"
+edition = "2024"
+
+# Blitz from its repository (cloned into ../blitz at a pinned commit; its crates.io releases lag behind), without
+# system fonts (fontconfig, C), accessibility or the network layer: files only.
+[dependencies]
+blitz-dom = { path = "../blitz/packages/blitz-dom", default-features = false, features = ["woff"] }
+blitz-html = { path = "../blitz/packages/blitz-html", default-features = false }
+blitz-paint = { path = "../blitz/packages/blitz-paint", default-features = false }
+blitz-traits = { path = "../blitz/packages/blitz-traits" }
+anyrender = "0.14"
+anyrender_vello_cpu = "0.18"
+peniko = "0.6"
+bytes = "1"
+url = "2"
+png = "0.17"
+
+[profile.release]
+strip = true
