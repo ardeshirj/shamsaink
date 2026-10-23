@@ -1,4 +1,4 @@
-# 04: a Rust layout engine: Stage 0 probes (2026-10-22)
+# 04: a Rust layout engine: Stage 0 probes, Stage 1 Blitz engine (2026-10-22)
 
 The plan is in PLAN.md. Stage 0 asked, before any engine code: does Rust text layout build and run on 32-bit ARM
 (Kobo), does Blitz draw Farsi, and what does a Go program calling Rust take to build? All in Docker (`docker/`, image
@@ -44,6 +44,45 @@ Two questions are left for Stage 1:
 - **Is Blitz right word by word, across all four books?** That means its line starts against Chromium, as in
   experiment 03.
 
+## Stage 1: the Blitz engine, paginated (`blitz-engine/`)
+- **What it is:**
+  - Blitz lays each spine document out as one long page. `src/lib.rs` (about 330 lines) collects its line boxes in
+    document order and cuts pages between them with experiment 03's rules: orphans, widows giving way to orphans,
+    headings kept with what follows and never split, margins dropped at the top of a page after an unforced break.
+  - A page is drawn by scrolling Blitz's painter to it and blanking what is outside its slice. An element is found
+    through `getClientRects` (`node_client_rects`) and mapped onto its page.
+  - It reads the book through a `Source`. In Go that is a callback (`src/capi.rs`, `blitz_engine.h`), so go-toolkit
+    keeps the EPUB.
+  - `src/bin/blitz-pages.rs` writes the same files as 03's `cmd/pages`. Through the Go interface it is the engine
+    `"blitz"` (`experiments/engine/blitz`, `-tags blitz`).
+- **Through the Go interface it reproduces the Rust tool exactly** (119 of 119 pages pixel for pixel, all 23,775
+  word boxes). Experiment 02's read-along test passes: all 834 words, 4 page turns, every word on the same page as
+  with the Go engine.
+
+Against experiment 03's Go engine, the same four books, the same comparison with Chromium (Mac, Docker):
+
+| | Go engine (03) | Blitz engine |
+|---|---|---|
+| Line starts as Chromium's: *Buried Alive*, *Blind Owl*, *Tomorrow*, *Three Drops* | 100, 99.9, 98.9, 94.3% (tuned on the first) | 99.5, 98.6, 98.4, 88.4% (untuned) |
+| Pages with Chromium's lines | 119/119, 118/121, 21/21, 159/162 | 119/119, 118/121, 21/21, 157/162 |
+| Lay out *Buried Alive* (119 pages) | 61 ms | 138 ms |
+| Draw a page | 3.0 ms | 7.1 ms |
+| Peak memory | 35 MB | 74 MB after layout (all documents kept), 137 MB with every page drawn |
+| ARMv7 build | 10.4 MB static, 8 s, Go alone | 33.7 MB static, 194 s, Rust and zig (`engine/build-armv7.sh`) |
+| CSS | the subset rtlbook uses | Stylo, Firefox's CSS engine |
+
+Blitz's remaining line differences look like the two 03 fixed in Go: lines full to within a fraction of a pixel,
+and Unicode's no-break before punctuation after a space. Neither is fixed here yet.
+
+**On 32-bit ARM** (emulated, nothing installed), the Go program with the Blitz engine runs the read-along test fully:
+119 pages; all 834 words found, at exactly the native positions. Pages differ from the native build by at most 2
+pixels of anti-aliasing (all identical within 40 grey levels): rounding in vello_cpu's 32-bit path.
+
+**What it shows:** on rtlbook's books Blitz is as good as the Go engine on pages, a little behind on lines, about 2×
+slower, 2–4× heavier, and a much larger and slower build. Its case is the books the Go engine is not for: real CSS.
+That is the comparison still to make: a book that is not rtlbook's, against webrender (01's fallback: 23 ms a
+chapter, 55–130 MB) and Chromium.
+
 ## Running it again
 ```sh
 (cd docker && docker build -t eink-rust .)
@@ -53,6 +92,13 @@ C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
   $C/spanned/OEBPS/fonts $C/chrome/sec002.json /x/04-rust-engine/out/parley-sec002"
 ./go.sh sh -c "cd probes/blitz-probe && cargo run --release -- $C/src/OEBPS/text/sec002.xhtml /x/04-rust-engine/out/blitz.png"
 ./go.sh sh probes/cgo-probe/build.sh armv7
+# Stage 1: the Blitz engine on a spanned book (03's compare.sh makes them), then 03's linecmp
+./go.sh sh -c "cd blitz-engine && cargo build --release && cd .. && blitz-engine/target/release/blitz-pages \
+  $C/spanned out/bpages/buried-alive $C/spanned/words.json"
+(cd ../03-own-layout && ./go.sh go run ./tools/linecmp out/cmp/buried-alive/spanned/words.json \
+  ../04-rust-engine/out/bpages/buried-alive - out/cmp/buried-alive/chrome)
+# through the Go interface (in experiments/engine): IMAGE=eink-rust ./go.sh go build -tags blitz -o bin/blitz/ ./cmd/...
+# and IMAGE=eink-rust ./go.sh sh build-armv7.sh for the static ARMv7 binaries
 # ARMv7 builds of the first two: CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=rust-lld cargo build --release \
 #   --target armv7-unknown-linux-musleabihf; run under emulation: docker run --platform linux/arm/v7 busybox:1.36 ...
 ```

@@ -1,4 +1,4 @@
-# 04: a Rust layout engine behind the same interface (plan, 2026-10-22; Stage 0 done: NOTES.md)
+# 04: a Rust layout engine behind the same interface (plan, 2026-10-22; Stages 0 and 1 done: NOTES.md)
 
 The question: does a layout engine in Rust do better than experiment 03's pure-Go one on these devices, by enough to
 pay for a second toolchain? Better means more of the book drawn right (real CSS, for books that aren't rtlbook's), or

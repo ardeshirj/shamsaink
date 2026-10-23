@@ -38,7 +38,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   `docs/engine-design.md`, which also checks an outside Go + Rust design discussion against our measurements.
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
-  all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Blitz has no pagination.
+  all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
+  paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, ~2× slower,
+  2–4× the memory, a 34 MB static ARMv7 binary. Its case is real CSS for other books, still to be measured.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
@@ -49,8 +51,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
 ## Next steps (1 agreed, the rest not decided)
-1. Experiment 04 Stage 1 (to decide): Blitz layout with our own pagination, or Parley with a port of 03, behind the
-   engine interface and through 03's comparison.
+1. Compare Blitz with webrender and Chromium on books that are not rtlbook's (real CSS), to decide which engine
+   takes the books the Go engine is not for (to decide).
 2. Time the engines on a Pi Zero 2 W (03's binary is one static file).
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their

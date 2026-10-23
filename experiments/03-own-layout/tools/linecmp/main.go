@@ -3,7 +3,9 @@
 // (chrome/run.sh: per spine document, word positions on one long screen page, and the printed PDF's text). Pages are
 // checked against Chromium by the lines of text on each (ours from pages.json).
 //
-//	linecmp WORDS.json OURS_DIR CRE.json CHROME_DIR
+//	linecmp WORDS.json OURS_DIR CRE.json CHROME_DIR [NAME]
+//
+// NAME labels the third engine's boxes (default crengine), so the same comparison serves another engine.
 package main
 
 import (
@@ -99,6 +101,10 @@ func agree(a, b map[int]bool) (both, onlyA, onlyB int) {
 }
 
 func main() {
+	third := "crengine"
+	if len(os.Args) > 5 {
+		third = os.Args[5]
+	}
 	var words []word
 	load(os.Args[1], &words)
 	ours := boxes(path.Join(os.Args[2], "boxes.json"))
@@ -132,7 +138,7 @@ func main() {
 		engines = append(engines, struct {
 			name string
 			at   map[string]pos
-		}{"crengine", cre})
+		}{third, cre})
 	}
 	L := map[string]map[int]bool{}
 	P := map[string]map[int]bool{}
@@ -144,7 +150,7 @@ func main() {
 	fmt.Println("\nLine starts in common (same word begins a line in both):")
 	pairs := [][2]string{{"ours", "Chromium"}}
 	if len(cre) > 0 {
-		pairs = append(pairs, [2]string{"crengine", "Chromium"}, [2]string{"ours", "crengine"})
+		pairs = append(pairs, [2]string{third, "Chromium"}, [2]string{"ours", third})
 	}
 	for _, pair := range pairs {
 		both, a, b := agree(L[pair[0]], L[pair[1]])
@@ -152,8 +158,8 @@ func main() {
 			pair[0], pair[1], both, a, pair[0], b, pair[1], 100*float64(both)/float64(both+a+b))
 	}
 	if len(cre) > 0 {
-		both, a, b := agree(P["ours"], P["crengine"])
-		fmt.Printf("\nPage starts, ours vs crengine: %d in common, %d only ours, %d only crengine\n", both, a, b)
+		both, a, b := agree(P["ours"], P[third])
+		fmt.Printf("\nPage starts, ours vs %s: %d in common, %d only ours, %d only %s\n", third, both, a, b, third)
 	}
 
 	// pages: the lines of text on each, ours against Chromium's printed PDF, per spine document
@@ -211,7 +217,7 @@ func main() {
 			if w.Spine != spine {
 				continue
 			}
-			for k, e := range []string{"ours", "crengine", "Chromium"} {
+			for k, e := range []string{"ours", third, "Chromium"} {
 				if L[e][i] {
 					n[k]++
 				}
