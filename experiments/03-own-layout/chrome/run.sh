@@ -1,12 +1,13 @@
 #!/bin/sh
 # Inside eink-chrome: for each spine document of a book made by spanwords, the word positions (screen, at the page's
 # text width; NAME.json), the printed PDF (NAME.pdf) and its text (NAME.txt, for lines per page).
+# MEASURE is the folder with measure.css and measure.js (default: this one).
 # Usage: run.sh SPANNED_DIR OUT_DIR
 set -e
-S=$1; O=$2; mkdir -p "$O"
+S=$1; O=$2; M=${MEASURE:-/x/03-own-layout/chrome}; mkdir -p "$O"
 while read -r f; do
   d=$S/$(dirname "$f"); n=$(basename "$f" .xhtml)
-  cp /x/03-own-layout/chrome/measure.css /x/03-own-layout/chrome/measure.js "$d/"
+  cp "$M/measure.css" "$M/measure.js" "$d/"
   sed -e 's#</head>#<link rel="stylesheet" href="measure.css"/></head>#' \
       -e 's#</body>#<script src="measure.js"></script></body>#' "$S/$f" > "$d/measure-$n.xhtml"
   chromium --headless --no-sandbox --disable-gpu --hide-scrollbars --window-size=1072,1448 \

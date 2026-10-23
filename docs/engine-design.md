@@ -51,7 +51,9 @@ Planned in `experiments/04-rust-engine/PLAN.md`; Stage 0 done (its NOTES.md): Pa
 32-bit ARM binaries (Kobo is 32-bit) and draw Farsi right; Parley's line starts on a chapter are all Chromium's; a Go
 program calling Rust through cgo cross-builds for ARMv7 with zig in one script. Blitz has no pagination: Stage 1
 added it, and Blitz is now the engine "blitz" behind the interface (read-along test passing, static ARMv7 build
-running). On rtlbook's books it matches the Go engine on pages, at about 2× the time and 2–4× the memory.
+running). On rtlbook's books it matches the Go engine on pages, at about 2× the time and 2–4× the memory. On a book
+with real CSS (experiment 05, a Standard Ebooks title) it is the closest of the three engines to Chromium (383 of 388
+pages; webrender 323, the Go engine 89), in about half a second; webrender takes 7 s and 440 MB a chapter.
 
 The same tests as experiment 03 (`compare.sh`, `tools/linecmp`): line and page agreement with Chromium on the four
 books, the read-along test, layout and draw time, memory, and the ARM build. The Go engine is the bar: 94–100% of line

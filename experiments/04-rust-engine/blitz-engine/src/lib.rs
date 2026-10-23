@@ -114,6 +114,13 @@ pub struct Book {
 impl Book {
     /// Lays out every spine document (paths from the EPUB's root) and paginates it.
     pub fn open(src: Arc<dyn Source>, spine: &[String], opts: Options) -> Book {
+        Book::open_with_fonts(src, spine, opts, &[])
+    }
+
+    /// The same, with fonts for text the book's own fonts do not cover: each file is (generic family, bytes), the
+    /// family being "serif", "sans-serif" or "monospace" (and "sans-serif" also serves system-ui).
+    pub fn open_with_fonts(src: Arc<dyn Source>, spine: &[String], opts: Options, fonts: &[(&str, Vec<u8>)]) -> Book {
+        let fctx = font_context(fonts);
         let mut docs = vec![];
         let mut pages = vec![];
         for (i, path) in spine.iter().enumerate() {
@@ -133,6 +140,7 @@ impl Book {
                     base_url: Some(format!("{ROOT}{path}")),
                     net_provider: Some(Arc::new(Files(Arc::clone(&src))) as _),
                     viewport: Some(Viewport::new(opts.width, opts.height, 1.0, ColorScheme::Light)),
+                    font_ctx: fctx.clone(),
                     ..Default::default()
                 },
             );
@@ -199,6 +207,35 @@ impl Book {
     fn page_at(&self, doc: usize, y: f64) -> Option<usize> {
         self.pages.iter().position(|p| p.doc == doc && y >= p.top && y < p.bottom)
     }
+}
+
+/// A font context holding the given fallback fonts as the generic families (None: Blitz's own).
+fn font_context(fonts: &[(&str, Vec<u8>)]) -> Option<parley::FontContext> {
+    use parley::fontique::{Blob, GenericFamily as G};
+    if fonts.is_empty() {
+        return None;
+    }
+    let mut ctx = parley::FontContext::default();
+    let mut families: Vec<(G, parley::fontique::FamilyId)> = vec![];
+    for (generic, data) in fonts {
+        let gs: &[G] = match *generic {
+            "serif" => &[G::Serif],
+            "sans-serif" => &[G::SansSerif, G::SystemUi, G::UiSansSerif],
+            "monospace" => &[G::Monospace, G::UiMonospace],
+            _ => &[],
+        };
+        for (id, _) in ctx.collection.register_fonts(Blob::new(Arc::new(data.clone())), None) {
+            for &g in gs {
+                if !families.contains(&(g, id)) {
+                    families.push((g, id));
+                }
+            }
+        }
+    }
+    for g in [G::Serif, G::SansSerif, G::SystemUi, G::UiSansSerif, G::Monospace, G::UiMonospace] {
+        ctx.collection.set_generic_families(g, families.iter().filter(|(h, _)| *h == g).map(|(_, id)| *id));
+    }
+    Some(ctx)
 }
 
 /// The line boxes of a laid-out document, block by block, in document order.

@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -23,6 +24,7 @@ var (
 	itemref   = regexp.MustCompile(`<itemref\s+idref="([^"]+)"`)
 	manItem   = regexp.MustCompile(`<item\s[^>]*>`)
 	attrRe    = regexp.MustCompile(`(\w[\w-]*)="([^"]*)"`)
+	rootfile  = regexp.MustCompile(`full-path="([^"]+)"`)
 )
 
 type word struct {
@@ -63,9 +65,12 @@ func wrap(body string, next func() string) string {
 
 func main() {
 	src, out := os.Args[1], os.Args[2]
-	opfPath := filepath.Join(src, "OEBPS", "content.opf")
-	opf, err := os.ReadFile(opfPath)
+	container, err := os.ReadFile(filepath.Join(src, "META-INF", "container.xml"))
 	check(err)
+	opfRel := rootfile.FindStringSubmatch(string(container))[1] // e.g. OEBPS/content.opf
+	opf, err := os.ReadFile(filepath.Join(src, opfRel))
+	check(err)
+	base := strings.TrimPrefix(path.Dir(opfRel)+"/", "./")
 	hrefs := map[string]string{}
 	for _, it := range manItem.FindAllString(string(opf), -1) {
 		a := map[string]string{}
@@ -78,7 +83,7 @@ func main() {
 	var words []word
 	var spine []string
 	for si, m := range itemref.FindAllStringSubmatch(string(opf), -1) {
-		file := "OEBPS/" + hrefs[m[1]]
+		file := base + hrefs[m[1]]
 		spine = append(spine, file)
 		raw, err := os.ReadFile(filepath.Join(src, file))
 		check(err)

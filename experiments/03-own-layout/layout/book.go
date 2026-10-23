@@ -10,6 +10,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
@@ -414,8 +415,10 @@ func Build(src Source, opts Options) (*Book, error) {
 		opts.Widows = 2
 	}
 	b := &Book{opts: opts, fonts: &fonts{src: src, byPath: map[string]*font.Face{}}}
-	if opts.Fallback != "" {
-		b.fonts.fallback = b.fonts.load(opts.Fallback)
+	if opts.Fallback != "" { // a file on disk, not in the book
+		if raw, err := os.ReadFile(opts.Fallback); err == nil {
+			b.fonts.fallback, _ = font.ParseTTF(bytes.NewReader(raw))
+		}
 	}
 	ua := ParseSheet(uaCSS, "", 0)
 	cache := map[string]*Sheet{}

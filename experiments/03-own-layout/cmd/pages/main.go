@@ -46,9 +46,12 @@ func main() {
 	check(err)
 	t["readium_open_ms"] = ms(time.Since(t0))
 
+	fallback := "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+	if f := os.Getenv("FALLBACK"); f != "" { // another font file for text the book's fonts lack
+		fallback = f
+	}
 	t1 := time.Now()
-	b, err := layout.Build(src, layout.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34,
-		Fallback: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"})
+	b, err := layout.Build(src, layout.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34, Fallback: fallback})
 	check(err)
 	t["read_and_style_ms"] = ms(time.Since(t1))
 	t2 := time.Now()

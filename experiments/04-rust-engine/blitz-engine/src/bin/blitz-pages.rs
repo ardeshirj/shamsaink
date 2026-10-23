@@ -2,7 +2,9 @@
 //! timings.json, pages.json (each page's spine item and lines of text) and, with WORDS.json (from experiment 03's
 //! spanwords), boxes.json: the same files as experiment 03's cmd/pages, for its tools/linecmp.
 //!
-//!     blitz-pages BOOK_DIR OUT_DIR [WORDS.json]
+//! FONTS_DIR, if given, holds fallback fonts for the generic families: files named *Serif*, *Sans*, *Mono*.
+//!
+//!     blitz-pages BOOK_DIR OUT_DIR [WORDS.json|-] [FONTS_DIR]
 
 use blitz_engine::{Book, Dir, Options};
 use std::sync::Arc;
@@ -39,7 +41,8 @@ fn main() {
     let opts = Options::default();
     let t = Instant::now();
     let files = spine(&dir);
-    let mut book = Book::open(Arc::new(Dir(dir.clone())), &files, opts);
+    let fonts = args.get(4).map(|d| fallback_fonts(d)).unwrap_or_default();
+    let mut book = Book::open_with_fonts(Arc::new(Dir(dir.clone())), &files, opts, &fonts);
     let layout_ms = t.elapsed().as_secs_f64() * 1e3;
 
     let (w, h) = (opts.width as usize, opts.height as usize);
@@ -61,7 +64,7 @@ fn main() {
         book.pages.iter().map(|p| format!("{{\"spine\":{},\"lines\":{}}}", p.doc, p.lines)).collect();
     std::fs::write(format!("{out}/pages.json"), format!("[{}]", pages.join(","))).unwrap();
 
-    if let Some(words) = args.get(3) {
+    if let Some(words) = args.get(3).filter(|w| *w != "-") {
         // [{"spine":N,"file":"...","id":"wNNNNN"}, ...]
         let raw = std::fs::read_to_string(words).unwrap();
         let mut boxes = vec![];
@@ -86,6 +89,25 @@ fn main() {
     );
     std::fs::write(format!("{out}/timings.json"), &t).unwrap();
     println!("{t}");
+}
+
+/// The fonts in a folder, each as its generic family by its file name.
+fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
+    let mut out = vec![];
+    for e in std::fs::read_dir(dir).unwrap().flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let generic = if name.contains("Mono") {
+            "monospace"
+        } else if name.contains("Serif") {
+            "serif"
+        } else if name.contains("Sans") {
+            "sans-serif"
+        } else {
+            continue;
+        };
+        out.push((generic, std::fs::read(e.path()).unwrap()));
+    }
+    out
 }
 
 /// Peak resident memory, from /proc (Linux).

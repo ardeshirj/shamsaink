@@ -40,7 +40,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
   all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
   paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, ~2× slower,
-  2–4× the memory, a 34 MB static ARMv7 binary. Its case is real CSS for other books, still to be measured.
+  2–4× the memory, a 34 MB static ARMv7 binary.
+- **Real CSS (experiment 05, `experiments/05-real-css/NOTES.md`):** a Standard Ebooks book (English, their house CSS)
+  through Blitz, webrender and the Go engine against Chromium. Lines: all three 98–99% Chromium's (once Chromium's
+  own `text-wrap: pretty` is set aside, and webrender's hyphenation). Pages: Blitz 383 of 388, webrender 323, Go 89
+  (rtlbook's CSS subset). Whole book: Blitz ~0.6 s and 252 MB; webrender ~7 s and 440 MB for one chapter, too much
+  for a 512 MB device. So Blitz, not webrender, looks like the engine for other books (to decide).
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
@@ -50,9 +55,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
-## Next steps (1 agreed, the rest not decided)
-1. Compare Blitz with webrender and Chromium on books that are not rtlbook's (real CSS), to decide which engine
-   takes the books the Go engine is not for (to decide).
+## Next steps (not decided)
+1. Decide which engine takes the books the Go engine is not for: experiment 05 points to Blitz over webrender.
+   Not yet tried: a Farsi book that is not rtlbook's, and Blitz's memory (it keeps every document laid out).
 2. Time the engines on a Pi Zero 2 W (03's binary is one static file).
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their
