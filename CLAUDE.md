@@ -70,7 +70,11 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 ## Next steps (not decided)
 1. Decide which engine takes the books the Go engine is not for: experiment 05 points to Blitz over webrender.
    Not yet tried: a Farsi book that is not rtlbook's, and Blitz's memory (it keeps every document laid out).
-2. Time the engines on a Pi Zero 2 W (03's binary is one static file).
+2. Timing on a device: `experiments/06-device-timing` (NOTES.md), on a reMarkable 2 (Cortex-A7, as slow as a Kobo;
+   the maintainer's, used instead of buying a Pi Zero 2 W). First run: a page in 63–105 ms (Go) and 266–332 ms
+   (Blitz, 73–81× the Mac where all else is 10–25×); the whole book laid out in 0.7–2.6 s (Blitz) and 1.5–4.9 s (Go).
+   With NEON on (`+neon`, which Rust's ARMv7 target leaves off) Blitz draws in 206–257 ms; most of that is building
+   the scene (glyph outlines every page, 130 ms), which a glyph cache would address. Not decided.
 3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
 4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their
    GitHub account).

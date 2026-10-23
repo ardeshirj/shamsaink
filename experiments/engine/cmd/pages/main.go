@@ -3,7 +3,7 @@
 // tools/linecmp; and pages.json (each page's spine item and lines of text) when the engine can say.
 // Settings are experiment 01's: 1072×1448, 60 px margins, 34 px text.
 //
-//	pages [-engine gotext|cre] BOOK.epub OUT_DIR [WORDS.json]
+//	pages [-engine gotext|cre] [-fallback FONT] BOOK.epub OUT_DIR [WORDS.json]
 package main
 
 import (
@@ -45,6 +45,7 @@ type box struct {
 
 func main() {
 	name := flag.String("engine", "gotext", fmt.Sprint("layout engine: ", engine.Names()))
+	fallback := flag.String("fallback", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", "font for characters the book's fonts lack")
 	flag.Parse()
 	in, outDir := flag.Arg(0), flag.Arg(1)
 	check(os.MkdirAll(outDir, 0o755))
@@ -56,7 +57,7 @@ func main() {
 	t["readium_open_ms"] = ms(time.Since(t0))
 	t1 := time.Now()
 	d, err := engine.Open(*name, src, engine.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34,
-		Fallback: "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"})
+		Fallback: *fallback})
 	check(err)
 	defer d.Close()
 	t["layout_ms"] = ms(time.Since(t1))
