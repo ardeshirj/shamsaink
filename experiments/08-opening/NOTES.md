@@ -45,3 +45,37 @@ rtlbook.
 2. **Pictures decoded when drawn, at the size drawn,** not at open and at full size.
 3. **Chapters far from the reader let go,** laid out again when reached. Measure peak memory.
 4. Later, maybe: page counts (and positions) kept on disk, as crengine's cache, so a reopened book needs no layout.
+
+## 1. The chapter opened first (Mac, `blitz-open`)
+`Book` now lays documents out on demand: `Book::new` lays out nothing, `layout(doc)` lays out one document and gives
+its pages, `layout_rest()` the others (`open` is both, as before: pages byte-identical on *Buried Alive* and Holmes).
+Page numbers after a document shift as it is laid out, so they are final only once the rest is done; the reader
+works in (document, page in it) until then. `find` answers only for documents laid out. The Go interface and C API
+are unchanged (they still open the whole book).
+
+`blitz-open BOOK [FONTS] DOC`: a fresh process opens the book at a document, draws its first page, then lays out the
+rest; memory is the peak. Two runs each after a warm-up (they agree within ~20%, the first run of all is slower):
+
+| | opened at | first page | memory then | then the rest | memory then | whole book before |
+|---|---|---|---|---|---|---|
+| *Buried Alive* | chapter 1 (30 pages) | 23–38 ms | 17 MB | 32–43 ms | 28 MB | 72 ms |
+| | chapter 9 (30 pages) | 22–26 ms | 17 MB | 33–40 ms | 28 MB | |
+| Holmes | title page | 11–14 ms | 30 MB | 131–162 ms | 72 MB | 159 ms |
+| | last story (36 pages) | 25 ms | 30 MB | 117–129 ms | 70 MB | |
+| Haji Agha | a text page | 15 ms | 20 MB | 225–261 ms | 180 MB | 523 ms |
+| | the first scan | **116–250 ms** | **171 MB** | 162–204 ms | 258 MB | |
+
+- **The first page comes 3–10× sooner** than the whole book, and with half the memory or less: on the device (layout
+  ×10–25) that should be a few hundred ms instead of 0.7–2.6 s. To measure there.
+- Within one process (the other documents' files cached, Parley's caches warm) a document's first page is 3–18 ms for
+  every document without a scan: its own layout is 1–12 ms and its first page 2–11 ms to draw. A fresh process adds
+  ~10–20 ms of setup (fonts, the first shaping).
+- **The scans are what is left:** a document with a scan takes 75 ms to lay out (the decode) and 38 ms to draw (the
+  3625×5250 picture scaled down), and one scan alone is 150 MB. Step 2.
+- Laying out the rest still holds everything (Haji Agha 180–258 MB): step 3.
+- **KOReader (crengine) for reference:** it lays out the whole book before the first page on a first open, and
+  reopens from its cache file. Laying out only the chapter being read is what it does after a setting changes
+  ("partial rerendering"), with approximate page numbers until the rest is done. Pictures: sized from their headers
+  for layout and decoded only when drawn, into a cache of limited size (step 2). Memory: the book and its layout
+  kept in packed chunks that can be swapped to the cache file, where step 3 drops far chapters and lays them out
+  again.
