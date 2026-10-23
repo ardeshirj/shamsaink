@@ -139,12 +139,12 @@ xychart-beta horizontal
 
 What the numbers mean for reading:
 - **A page turn** is the drawing plus the screen's own refresh, about 200–500 ms. crengine and the Go engine hide
-  behind the refresh; Blitz adds as much again, unless the reader draws the next page ahead.
+  behind the refresh; so does Blitz since experiment 07 (20 ms a page, below); before, it added as much again.
 - **Opening a book** waits for the layout. Seconds are too long; crengine's answer is its disk cache.
 - **Read-along** does not redraw the page per word: the highlight is a box inverted on the page already drawn, so it
   does not depend on drawing speed.
 
-Blitz's ~200 ms, one page of *Buried Alive* (06, `run-scene.sh`):
+Blitz's ~200 ms, one page of *Buried Alive* (06, `run-scene.sh`), before experiment 07 took it to 20 ms:
 ```mermaid
 ---
 config:
@@ -170,14 +170,14 @@ Hinting costs nothing (the same 132 ms without it).
 | Skip the lines off the page | blitz-paint | a patch to Blitz (`blitz-cull-lines.patch`) | Mac 4.7 → 3.6 ms | done |
 | Grey from one channel | our `Book::draw` | ours | Mac 1.3 ms | done |
 | NEON on | the build | a flag (`engine/build-armv7.sh`) | device −23% | done |
-| Keep one renderer between pages (now a new one, and a new 6 MB buffer, per page) | our `Book::draw` | ours | needed for the next one | to try |
-| Switch vello_cpu's glyph cache on (it has one, off by default; anyrender never turns it on) | anyrender_vello_cpu | a one-line patch to a crates.io crate; worth proposing upstream | most of the 127 ms, guessed | to try |
-| No white background: leave empty areas transparent, blend onto white while converting, a fast path for blank pixels | our `Book::draw` | ours | part of the 57 ms, guessed | to try |
-| Lay out only the chapter being read, page counts kept from last time | our `Book::open` | ours | opening; memory (Blitz now keeps every chapter laid out) | to try |
+| Keep one renderer between pages | our `Book::draw` | ours | Mac 3.7 → 3.5 ms | done (07) |
+| Switch vello_cpu's glyph cache on (off by default; anyrender never turns it on) | anyrender_vello_cpu | a one-line patch | none: render time up as much as scene time down, and a 64 MB atlas | dropped (07) |
+| No white background: transparent, white added while converting | our `Book::draw` | ours | Mac 3.5 → 3.3 ms | done (07) |
+| **Our glyph layer:** glyphs drawn once into masks and copied straight onto the grey page; vello_cpu only for what is not text, only on pages that have any | ours (`blitz-engine/src/glyphs.rs`) | ours | **device 206–258 → 20 ms**, crengine's speed | done (07) |
+| Lay out only the chapter being read, page counts kept from last time; or a disk cache of the laid-out book, as crengine | our `Book::open` | ours | opening; memory (Blitz keeps every chapter laid out) | to try |
 
-Everything up to the glyph cache together is guessed at 60–80 ms a page, and 30–40 ms with the background change:
-guesses until the device measures them. The cached glyphs may sit on slightly different sub-pixel positions, so
-pages are checked with `pagediff.sh` at each step.
+Drawing is done (experiment 07's NOTES.md): 20 ms a page on the reMarkable 2, against crengine's 17–19 ms. What is
+left against crengine is opening (0.7–2.5 s, crengine 57–68 ms from its cache) and memory (2× crengine's).
 
 ## 5. What we carry on top of others' code
 

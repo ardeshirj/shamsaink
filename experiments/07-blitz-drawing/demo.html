@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blitz Page Drawing</title>
+<!-- Experiment 07, step by step. demo.sh copies this to out/demo/index.html next to the images it makes. -->
+<style>
+  :root {
+    --bg: #f7f6f2; --card: #ffffff; --ink: #1d1d1b; --muted: #6b6a65; --line: #e3e1da;
+    --before: #c4553b; --after: #2a78d6; --go: #8a8a85; --ko: #3f8f5a; --paper: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #161615; --card: #20201e; --ink: #ecebe6; --muted: #a09f99; --line: #34332f;
+      --before: #e07a5f; --after: #5b9ee8; --go: #8f8e88; --ko: #62b27d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #161615; --card: #20201e; --ink: #ecebe6; --muted: #a09f99; --line: #34332f;
+    --before: #e07a5f; --after: #5b9ee8; --go: #8f8e88; --ko: #62b27d;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; padding: 32px 16px 80px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 48px 0 6px; }
+  h2 .n { color: var(--muted); font-weight: 500; margin-right: 6px; }
+  p { margin: 6px 0 12px; max-width: 72ch; }
+  .sub { color: var(--muted); margin-bottom: 24px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 12px 0; }
+  .row { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+  figure { margin: 0; }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  img { display: block; max-width: 100%; height: auto; background: var(--paper);
+        border: 1px solid var(--line); border-radius: 4px; }
+  img.pixel { image-rendering: pixelated; }
+  .scroll { overflow-x: auto; }
+  .scroll img { max-width: none; }
+  .bars { display: grid; grid-template-columns: max-content 1fr max-content; gap: 6px 12px; align-items: center; font-size: 14px; }
+  .bars .label { color: var(--muted); }
+  .bar { height: 14px; border-radius: 3px; min-width: 2px; }
+  .bars .v { font-variant-numeric: tabular-nums; }
+  .group { grid-column: 1 / -1; font-weight: 600; margin-top: 10px; }
+  .key { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .key span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+                      margin-right: 6px; background: var(--c); vertical-align: -1px; }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
+  .flow .box { border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; background: var(--bg); }
+  .flow .hot { border-color: var(--before); }
+  .flow .ours { border-color: var(--after); }
+  .flow .arrow { color: var(--muted); }
+  table { border-collapse: collapse; font-size: 14px; }
+  td, th { padding: 4px 12px 4px 0; text-align: left; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 500; }
+  td.num { font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<main>
+<h1>How Blitz draws a page, before and after</h1>
+<p class="sub">Experiment 07. One page of <i>Buried Alive</i> (Farsi) and two of Holmes (English), at the e-reader's
+size, 1072×1448. Numbers are from the reMarkable 2 unless marked Mac.</p>
+
+<h2><span class="n">0</span>The result</h2>
+<div class="card">
+  <div class="bars" id="bars"></div>
+  <div class="key">
+    <span style="--c: var(--before)">Blitz before</span>
+    <span style="--c: var(--after)">Blitz now</span>
+    <span style="--c: var(--go)">our Go engine</span>
+    <span style="--c: var(--ko)">KOReader (crengine)</span>
+  </div>
+</div>
+
+<h2><span class="n">1</span>Before: everything through vello_cpu</h2>
+<p>Blitz's painter handed every drawing command to vello_cpu, its drawing library. vello_cpu made a 6 MB colour page,
+and we converted that to grey. Every glyph on every page was turned from its outline into strips of coverage, from
+scratch.</p>
+<div class="card">
+  <div class="flow">
+    <span class="box">Blitz's painter</span><span class="arrow">→</span>
+    <span class="box hot">vello_cpu: every glyph outlined, <b>127 ms</b></span><span class="arrow">→</span>
+    <span class="box hot">colour page rendered, <b>43 ms</b></span><span class="arrow">→</span>
+    <span class="box hot">colour to grey, <b>23 ms</b></span><span class="arrow">→</span>
+    <span class="box">grey page</span>
+  </div>
+  <p style="margin-top:12px;font-size:14px;color:var(--muted)">One page of <i>Buried Alive</i>, about 200 ms in all
+  (experiment 06's split). Even a blank page took 57 ms: the colour page and its conversion.</p>
+</div>
+<div class="row">
+  <figure><img src="buried/small-before.png" alt="The page drawn the old way"><figcaption><b>The page, drawn the old way.</b> Everything
+  through vello_cpu.</figcaption></figure>
+  <figure><img src="buried/small-after.png" alt="The page drawn the new way"><figcaption><b>The same page, drawn now.</b> To the eye, the
+  same.</figcaption></figure>
+</div>
+
+<h2><span class="n">2</span>Tried first: vello_cpu's own glyph cache</h2>
+<p>vello_cpu has a glyph cache, switched off. Turned on (a one-line patch), it made things worse. Each cached glyph is
+drawn as a small picture copied pixel by pixel through vello_cpu's general image path, and its cache is one 4096×4096
+colour image.</p>
+<div class="card">
+  <table>
+    <tr><th>Mac, one page of <i>Buried Alive</i></th><th>cache off</th><th>cache on</th></tr>
+    <tr><td>building the scene (glyphs)</td><td class="num">2.2 ms</td><td class="num">0.5 ms</td></tr>
+    <tr><td>rendering</td><td class="num">0.7 ms</td><td class="num">6.4 ms</td></tr>
+    <tr><td>memory</td><td class="num">38 MB</td><td class="num">105 MB</td></tr>
+  </table>
+  <p style="margin-top:10px;font-size:14px;color:var(--muted)">The time moved instead of going away, and the cache
+  image alone is 64 MB: three times all of KOReader's memory. Dropped.</p>
+</div>
+
+<h2><span class="n">3</span>Now: Blitz paints into our layer, which splits the page</h2>
+<p>Blitz's painter accepts any drawing target, so ours sits in between. Plain glyph runs go to our glyph cache. Anything
+else (lines, borders, images, and glyph runs we don't take) is recorded for vello_cpu. vello_cpu runs only if that
+record draws anything.</p>
+<div class="card">
+  <div class="flow">
+    <span class="box">Blitz's painter</span><span class="arrow">→</span>
+    <span class="box ours">our layer</span><span class="arrow">→</span>
+    <span class="box ours">glyphs: copied from masks</span>
+    <span class="arrow">+</span>
+    <span class="box">the rest: vello_cpu, only if any</span><span class="arrow">→</span>
+    <span class="box">grey page</span>
+  </div>
+</div>
+<div class="row">
+  <figure><img src="buried/small-rest.png" alt="What goes to vello_cpu: nothing"><figcaption><b>What goes to vello_cpu: nothing.</b> On
+  <i>Buried Alive</i> no page needs it at all. Blitz did send one thing on every page: the whole page filled with a
+  fully transparent colour, which draws nothing. That fill alone used to cost a full render. The layer now drops
+  it.</figcaption></figure>
+  <figure><img src="buried/text.png" alt="What our layer copies: all the text"><figcaption><b>What our layer copies: all the
+  text.</b> 1,165 glyphs on this page.</figcaption></figure>
+</div>
+<p>Holmes has pages where vello_cpu still has work. On the left is what vello_cpu draws, on the right the finished
+piece:</p>
+<div class="row">
+  <figure><img src="holmes-2/crop-rest.png" alt="Link underlines drawn by vello_cpu"><figcaption><b>Holmes p. 2, vello_cpu's part:</b> the links'
+  underlines (lines, not glyphs).</figcaption></figure>
+  <figure><img src="holmes-2/crop-after.png" alt="Finished piece of page 2"><figcaption><b>Finished:</b> the text from our masks, the underlines
+  from vello_cpu.</figcaption></figure>
+</div>
+<div class="row">
+  <figure><img src="holmes-8/crop-rest.png" alt="Single italic letters drawn by vello_cpu"><figcaption><b>Holmes p. 8, vello_cpu's part:</b> single
+  italic letters (<code>&lt;i&gt;E&lt;/i&gt;</code>). These glyph runs come with a transform of their own (probably a
+  slant Blitz adds because the font has no italic), and the layer passes such runs on.</figcaption></figure>
+  <figure><img src="holmes-8/crop-after.png" alt="Finished piece of page 8"><figcaption><b>Finished:</b> both layers together.</figcaption></figure>
+</div>
+<p style="font-size:14px;color:var(--muted)">92 of Holmes's 387 pages need vello_cpu, which costs about 1 ms more on the
+Mac. The median page doesn't.</p>
+
+<h2><span class="n">4</span>The masks: each glyph drawn once</h2>
+<p>The first time a glyph is needed, vello_cpu draws it alone and black on a small square (the same code that drew it
+before, so the shapes match). The square is cut to the ink and kept. A mask is kept per font, size and quarter-pixel
+position across. This is every mask this page needed, 237 in all, shown 2× (later pages mostly reuse them):</p>
+<div class="card scroll"><img class="pixel" src="buried/masks-2x.png" alt="Sheet of glyph masks"></div>
+<div class="row">
+  <figure><img class="pixel" src="buried/quarters-6x.png" alt="One glyph at four quarter-pixel positions" style="max-width:520px"><figcaption><b>One glyph, four
+  masks, 6×:</b> drawn at 0, ¼, ½ and ¾ of a pixel across, so words keep their spacing. The edges shift by a quarter of
+  a pixel from one to the next. Down, glyphs sit on whole pixels.</figcaption></figure>
+</div>
+
+<h2><span class="n">5</span>Placing them</h2>
+<p>Each glyph on the page is a lookup and a copy: the mask is blended onto the grey page at the glyph's position. Here
+is a piece of the page at 3×, each copied mask boxed:</p>
+<div class="card scroll"><img class="pixel" src="buried/zoom-boxes.png" alt="Copied glyphs with their boxes"></div>
+
+<h2><span class="n">6</span>Old and new, pixel for pixel</h2>
+<p>The same piece at 3×. Glyphs now sit on the nearest quarter pixel across and the nearest whole pixel down, so every
+page differs a little from before.</p>
+<div class="row">
+  <figure><img class="pixel" src="buried/zoom-before.png" alt="Old rendering zoomed"><figcaption><b>Before</b>, through vello_cpu.</figcaption></figure>
+  <figure><img class="pixel" src="buried/zoom-after.png" alt="New rendering zoomed"><figcaption><b>Now</b>, from the masks.</figcaption></figure>
+  <figure><img class="pixel" src="buried/zoom-diff.png" alt="Where they differ"><figcaption><b>Where they differ</b> (darker means
+  more): only at the glyphs' edges, shifted by less than half a pixel. The read-along test finds every word at the
+  same box as before.</figcaption></figure>
+</div>
+
+<h2><span class="n">7</span>This page, timed on the Mac</h2>
+<div class="card">
+  <table>
+    <tr><th>Mac, this page, warm (two runs; the Mac's timings of single pages vary)</th><th>before</th><th>now</th></tr>
+    <tr><td><i>Buried Alive</i> p. 10 (no vello_cpu)</td><td class="num">3.1 ms</td><td class="num">0.6 ms</td></tr>
+    <tr><td>Holmes p. 2 (underlines)</td><td class="num">2.8 ms</td><td class="num">1.0 ms</td></tr>
+    <tr><td>Holmes p. 8 (italic letters)</td><td class="num">3.3–3.5 ms</td><td class="num">1.3–2.4 ms</td></tr>
+  </table>
+  <p style="margin-top:10px;font-size:14px;color:var(--muted)">A page that still needs vello_cpu pays for the whole
+  colour page again. Rendering only the area that has something on it would be the next saving there.</p>
+</div>
+</main>
+<script>
+  const rows = [
+    ["Buried Alive: one page", [["before", 206], ["after", 20.4], ["go", 62], ["ko", 16.7]]],
+    ["Holmes: one page", [["before", 258], ["after", 19.8], ["go", 102], ["ko", 18.9]]],
+  ];
+  const names = { before: "Blitz before", after: "Blitz now", go: "Go engine", ko: "KOReader" };
+  const el = document.getElementById("bars");
+  for (const [title, vals] of rows) {
+    const g = document.createElement("div"); g.className = "group"; g.textContent = title; el.append(g);
+    for (const [k, v] of vals) {
+      const l = document.createElement("div"); l.className = "label"; l.textContent = names[k];
+      const b = document.createElement("div");
+      const bar = document.createElement("div"); bar.className = "bar";
+      bar.style.width = (v / 260 * 100) + "%"; bar.style.background = `var(--${k})`; b.append(bar);
+      const n = document.createElement("div"); n.className = "v"; n.textContent = v + " ms";
+      el.append(l, b, n);
+    }
+  }
+</script>
+</body>
+</html>

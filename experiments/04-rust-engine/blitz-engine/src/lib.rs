@@ -3,17 +3,17 @@
 //! matches Chromium on, draws a page by scrolling Blitz's painter to it, and finds an element's page and boxes. It
 //! reads the book through a `Source`, so the reader (Go, with readium/go-toolkit) stays in charge of the EPUB.
 
-use anyrender::{PaintScene as _, render_to_buffer};
+use anyrender::{ImageRenderer as _, PaintScene as _};
 use anyrender_vello_cpu::VelloCpuImageRenderer;
-use blitz_dom::{BaseDocument, DocumentConfig, util::Color};
+use blitz_dom::{BaseDocument, DocumentConfig};
 use blitz_html::HtmlDocument;
 use blitz_paint::paint_scene;
 use blitz_traits::net::{NetHandler, NetProvider, Request};
 use blitz_traits::shell::{ColorScheme, Viewport};
-use peniko::{Fill, kurbo::Rect};
 use std::sync::Arc;
 
 pub mod capi;
+mod glyphs;
 
 /// The book's files, by path from the EPUB's root.
 pub trait Source: Send + Sync + 'static {
@@ -65,6 +65,17 @@ fn percent_decode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+/// What `Book::draw_layer` draws.
+#[derive(Clone, Copy, Debug)]
+pub enum Layer {
+    /// the glyphs our layer copies from its masks
+    Text,
+    /// what goes to vello_cpu: all but plain text
+    Rest,
+    /// the whole page through vello_cpu, as before the glyph layer
+    AllVello,
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Options {
     pub width: u32,
@@ -109,6 +120,10 @@ pub struct Book {
     docs: Vec<HtmlDocument>,
     pub pages: Vec<Page>,
     pub(crate) opts: Options,
+    // kept between pages: the glyph masks, vello_cpu's renderer (its caches) and the colour page for what is not text
+    glyphs: glyphs::Cache,
+    renderer: VelloCpuImageRenderer,
+    rgba: Vec<u8>,
 }
 
 impl Book {
@@ -150,32 +165,82 @@ impl Book {
             paginate(&blocks, i, opts.margin as f64, &opts, &mut pages);
             docs.push(doc);
         }
-        Book { docs, pages, opts }
+        let renderer = VelloCpuImageRenderer::new(opts.width, opts.height);
+        Book { docs, pages, opts, glyphs: Default::default(), renderer, rgba: vec![] }
     }
 
     /// Draws page n into `out` (width × height bytes, 8-bit grey, black on white).
     pub fn draw(&mut self, n: usize, out: &mut [u8]) {
+        self.draw_parts(n, out, true, true, None);
+    }
+
+    /// For showing how a page is drawn (07's `blitz-demo`): one layer of page n, or the page the way it was drawn
+    /// before the glyph layer (everything through vello_cpu on a white page); the glyph layer's boxes go to `boxes`.
+    pub fn draw_layer(&mut self, n: usize, out: &mut [u8], layer: Layer, boxes: &mut Vec<[i32; 4]>) {
+        match layer {
+            Layer::Text => self.draw_parts(n, out, false, true, Some(boxes)),
+            Layer::Rest => self.draw_parts(n, out, true, false, Some(boxes)),
+            Layer::AllVello => {
+                let p = self.pages[n];
+                let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
+                let doc = self.docs[p.doc].as_mut();
+                doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
+                self.renderer.reset();
+                self.renderer.render_to_vec(
+                    |scene| {
+                        let page = peniko::kurbo::Rect::new(0.0, 0.0, w as f64, h as f64);
+                        scene.fill(peniko::Fill::NonZero, Default::default(), peniko::Color::WHITE, None, &page);
+                        paint_scene(scene, doc, 1.0, w, h, 0, 0);
+                    },
+                    &mut self.rgba,
+                );
+                let (from, to) = (m as usize, ((m + p.bottom - p.top).ceil() as usize).min(h as usize));
+                let w = w as usize;
+                out.fill(255);
+                for (o, px) in out[from * w..to * w].iter_mut().zip(self.rgba[4 * from * w..].chunks_exact(4)) {
+                    *o = px[1];
+                }
+            }
+        }
+    }
+
+    /// The glyph masks drawn so far: glyph id, quarter-pixel position, width, height, coverage.
+    pub fn glyph_masks(&self) -> Vec<(u32, u8, usize, usize, &[u8])> {
+        self.glyphs.masks()
+    }
+
+    fn draw_parts(&mut self, n: usize, out: &mut [u8], rest: bool, text: bool, boxes: Option<&mut Vec<[i32; 4]>>) {
         let p = self.pages[n];
         let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
         let doc = self.docs[p.doc].as_mut();
         doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
-        let rgba = render_to_buffer::<VelloCpuImageRenderer, _>(
-            |scene| {
-                scene.fill(Fill::NonZero, Default::default(), Color::WHITE, Default::default(), &Rect::new(0.0, 0.0, w as f64, h as f64));
-                paint_scene(scene, doc, 1.0, w, h, 0, 0);
-            },
-            w,
-            h,
-        );
-        // the page's slice only: blank above the top margin's end and below the page's last line; inside it the
-        // grey is one channel where all three are the same (black text on white), weighted only for colour
+        let mut split = glyphs::Split::new(&mut self.glyphs);
+        paint_scene(&mut split, doc, 1.0, w, h, 0, 0);
+        // the page's slice only: blank above the top margin's end and below the page's last line
         let (from, to) = (m as usize, ((m + p.bottom - p.top).ceil() as usize).min(h as usize));
         let w = w as usize;
         out[..from * w].fill(255);
         out[to * w..].fill(255);
-        for (o, px) in out[from * w..to * w].iter_mut().zip(rgba[4 * from * w..].chunks_exact(4)) {
-            let (r, g, b) = (px[0], px[1], px[2]);
-            *o = if r == g && g == b { g } else { ((r as u32 * 299 + g as u32 * 587 + b as u32 * 114) / 1000) as u8 };
+        if rest && split.rest_draws {
+            // what is not plain text (backgrounds, rules, images) through vello_cpu, on transparent; inside the slice
+            // the grey is one channel where all three are the same, weighted only for colour
+            let rest = std::mem::take(&mut split.rest);
+            self.renderer.reset();
+            self.renderer.render_to_vec(|scene| scene.append_scene(rest, Default::default()), &mut self.rgba);
+            for (o, px) in out[from * w..to * w].iter_mut().zip(self.rgba[4 * from * w..].chunks_exact(4)) {
+                let (r, g, b, a) = (px[0], px[1], px[2], px[3]);
+                // premultiplied: on white a pixel is its colour plus what it lets through
+                let c = if r == g && g == b { g as u32 } else { (r as u32 * 299 + g as u32 * 587 + b as u32 * 114) / 1000 };
+                *o = (c + 255 - a as u32).min(255) as u8;
+            }
+        } else {
+            out[from * w..to * w].fill(255);
+        }
+        if text {
+            split.blit(out, w, from, to);
+        }
+        if let Some(b) = boxes {
+            *b = split.boxes();
         }
     }
 
