@@ -252,6 +252,24 @@ Three runs agreeing within 2%. In ms, before → after:
 - **No warm-up on the device either:** a second book at the same chapter pays the same (155 against 161 ms).
 - **What is left of a first open:** the chapter's layout 94–132 ms, the glyph masks 66–129 ms (the most now in
   *Buried Alive* and Haji Agha), parse 10–21 ms, the rest 20–30 ms.
+
+### Glyph masks on both cores too (`out/remarkable2-par2.txt`)
+`glyphs.rs`: the masks a page still needs are collected while Blitz paints and made after, all together, on rayon's
+threads with "parallel" (in order without). Pages byte-identical either way; on the Mac a first page's masks
+4.4–4.7 → 2.6–2.8 ms on two threads. On the device, three runs, in ms, one core → both (layout and masks):
+
+| | glyph masks | **first page** | crengine's first open |
+|---|---|---|---|
+| *Buried Alive*, chapter 1 | 123–124 → 70–78 | 326 → **209–219** | 470–510 |
+| Holmes, last story | 68–69 → 37–40 | 382–383 → **281–284** | 2240–2250 |
+| Haji Agha, a text page | 131–132 → 73–88 | 176–182 → **122–134** | 1090–1150 |
+
+- **Masks 1.7–1.8× faster on two cores**; with the layout, a first page is a third faster than on one core. Memory
+  +1 MB, median page unchanged (13–20 ms).
+- **A first open is now 0.12–0.28 s,** 2–8× faster than crengine's. Reopening is still the same as a first open,
+  against crengine's 57–85 ms from its cache.
+- What is left of *Buried Alive*'s 210 ms: the chapter's layout ~93, masks ~74, parse 17, page painted and blitted
+  ~13, paginate 8.5.
 - (Also in the profile, reading the whole book through: blitting glyph masks onto the page, `glyphs::Split::blit`,
   is a quarter of all the time; it is most of a 13–20 ms page.)
 
