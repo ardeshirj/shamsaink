@@ -51,8 +51,9 @@ impl Cache {
     }
 }
 
-/// Decodes a picture at width × height: a JPEG already scaled down while decoded (1/2, 1/4 or 1/8, the nearest at
-/// least as big), anything else at full size, then each pixel the average of those it covers.
+/// Decodes a picture at width × height: a JPEG already scaled down while decoded (1/2, 1/4 or 1/8: the smallest at
+/// least nine tenths of the size, as the time goes with the decoded size), anything else at full size, then each pixel
+/// the average of those it covers (or, up to a tenth larger, the nearest).
 fn decode(file: &[u8], width: u32, height: u32) -> Option<ImageData> {
     let (w, h, channels, px) = jpeg(file, width, height).or_else(|| {
         let img = image::load_from_memory(file).ok()?;
@@ -73,7 +74,8 @@ fn jpeg(file: &[u8], width: u32, height: u32) -> Option<(u32, u32, usize, Vec<u8
         return None;
     }
     let mut d = jpeg_decoder::Decoder::new(file);
-    let (w, h) = d.scale(width.min(u16::MAX as u32) as u16, height.min(u16::MAX as u32) as u16).ok()?;
+    let near = |n: u32| (n * 9).div_ceil(10).min(u16::MAX as u32) as u16;
+    let (w, h) = d.scale(near(width), near(height)).ok()?;
     let px = d.decode().ok()?;
     let channels = match d.info()?.pixel_format {
         jpeg_decoder::PixelFormat::L8 => 1,
@@ -83,7 +85,7 @@ fn jpeg(file: &[u8], width: u32, height: u32) -> Option<(u32, u32, usize, Vec<u8
     Some((w as u32, h as u32, channels, px))
 }
 
-/// RGBA at width × height (no larger than the source) from 1, 3 or 4 channels: each pixel the average of the source
+/// RGBA at width × height (no more than a little larger than the source) from 1, 3 or 4 channels: each pixel the average of the source
 /// pixels it covers, colours weighted by their opacity (a transparent pixel's colour counts for nothing), one row of
 /// sums at a time.
 fn shrink(px: &[u8], w: u32, h: u32, channels: usize, width: u32, height: u32) -> Vec<u8> {

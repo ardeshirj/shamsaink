@@ -41,6 +41,11 @@ struct Mask {
 #[derive(Default)]
 pub struct Cache {
     masks: HashMap<Key, Option<Arc<Mask>>>,
+    // a font file's key by its blob: every document loads the book's fonts again, as new blobs (experiment 08)
+    fonts: HashMap<u64, u64>,
+    /// masks drawn so far, and the time it took (ms)
+    pub made: usize,
+    pub made_ms: f64,
     renderers: HashMap<u16, (VelloCpuImageRenderer, Vec<u8>)>,
 }
 
@@ -53,6 +58,20 @@ impl Cache {
             .collect()
     }
 
+    /// A key for a font file that is the same in every document: its length and its first and last 16 KB, hashed once
+    /// per blob.
+    fn font_key(&mut self, font: &FontData) -> u64 {
+        *self.fonts.entry(font.data.id()).or_insert_with(|| {
+            use std::hash::{Hash, Hasher};
+            let d = font.data.data();
+            let mut h = std::collections::hash_map::DefaultHasher::new();
+            d.len().hash(&mut h);
+            d[..d.len().min(16384)].hash(&mut h);
+            d[d.len().saturating_sub(16384)..].hash(&mut h);
+            h.finish()
+        })
+    }
+
     /// The glyph drawn alone, black, by vello_cpu (the same code that drew it in the page before), on a square of
     /// three times the text size with the origin a quarter in and five eighths down, and cut to its ink.
     #[allow(clippy::too_many_arguments)]
@@ -60,6 +79,7 @@ impl Cache {
         if let Some(m) = self.masks.get(key) {
             return m.clone();
         }
+        let t = std::time::Instant::now();
         let s = (((3.0 * size).ceil() as u16).div_ceil(32) * 32).max(64);
         let (ox, oy) = (s as i32 / 4, s as i32 * 5 / 8);
         let (r, buf) = self.renderers.entry(s).or_insert_with(|| (VelloCpuImageRenderer::new(s as u32, s as u32), vec![]));
@@ -71,12 +91,18 @@ impl Cache {
             },
             buf,
         );
+        // the ink's bounds, in one pass row by row
         let s = s as usize;
-        let ink = |x: usize, y: usize| buf[4 * (y * s + x) + 3] != 0;
-        let rows: Vec<usize> = (0..s).filter(|&y| (0..s).any(|x| ink(x, y))).collect();
-        let cols: Vec<usize> = (0..s).filter(|&x| (0..s).any(|y| ink(x, y))).collect();
-        let m = match (rows.first(), rows.last(), cols.first(), cols.last()) {
-            (Some(&y0), Some(&y1), Some(&x0), Some(&x1)) => {
+        let (mut x0, mut x1, mut y0, mut y1) = (s, 0, s, 0);
+        for (y, row) in buf.chunks_exact(4 * s).enumerate() {
+            let mut inked = row.chunks_exact(4).enumerate().filter(|(_, p)| p[3] != 0).map(|(x, _)| x);
+            if let Some(first) = inked.next() {
+                let last = inked.last().unwrap_or(first);
+                (x0, x1, y0, y1) = (x0.min(first), x1.max(last), y0.min(y), y);
+            }
+        }
+        let m = match y0 < s {
+            true => {
                 let (width, height) = (x1 - x0 + 1, y1 - y0 + 1);
                 let mut alpha = Vec::with_capacity(width * height);
                 for y in y0..=y1 {
@@ -84,9 +110,11 @@ impl Cache {
                 }
                 Some(Arc::new(Mask { left: x0 as i32 - ox, top: y0 as i32 - oy, width, height, alpha }))
             }
-            _ => None,
+            false => None,
         };
         self.masks.insert(key.clone(), m.clone());
+        self.made += 1;
+        self.made_ms += t.elapsed().as_secs_f64() * 1e3;
         m
     }
 }
@@ -247,7 +275,7 @@ impl PaintScene for Split<'_> {
         };
         let alpha = (rgba.a as f32 * brush_alpha.clamp(0.0, 1.0)).round() as u32;
         let mut key = Key {
-            font: font.data.id(),
+            font: self.cache.font_key(font),
             index: font.index,
             glyph: 0,
             size: font_size.to_bits(),

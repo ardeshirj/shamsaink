@@ -67,6 +67,7 @@ fn main() {
         let s = Instant::now();
         book.draw(r.start, &mut px);
         let draw = ms(s);
+        let (masks, masks_ms) = book.glyph_work();
         let (first, mem) = (ms(t), max_rss_mb());
         let show = |lt: blitz_engine::LoadTimes| {
             format!(
@@ -76,7 +77,8 @@ fn main() {
         };
         let once = format!(
             "  first page, ms: process start {age:.0} (to 10 ms), spine read {:.1}, fallback fonts read \
-             {fonts_ms:.1}, Book::new {new_ms:.1}; document {i}: {}; draw {draw:.1}",
+             {fonts_ms:.1}, Book::new {new_ms:.1}; document {i}: {}; draw {draw:.1} ({masks} glyph masks made, \
+             {masks_ms:.1})",
             ms(start) - ms(t) - fonts_ms,
             show(lt)
         );
@@ -90,7 +92,9 @@ fn main() {
             let r = book.layout(j);
             let s = Instant::now();
             book.draw(r.start, &mut px);
-            format!("  then document {j}: {}; draw {:.1}", show(lt), ms(s))
+            let d = ms(s);
+            let (m, m_ms) = book.glyph_work();
+            format!("  then document {j}: {}; draw {d:.1} ({} more glyph masks, {:.1})", show(lt), m - masks, m_ms - masks_ms)
         });
         let s = Instant::now();
         book.layout_rest();

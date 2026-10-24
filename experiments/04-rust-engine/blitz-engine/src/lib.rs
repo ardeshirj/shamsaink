@@ -319,6 +319,11 @@ impl Book {
     }
 
     /// The glyph masks drawn so far: glyph id, quarter-pixel position, width, height, coverage.
+    /// The glyph masks drawn so far, and the time they took (ms).
+    pub fn glyph_work(&self) -> (usize, f64) {
+        (self.glyphs.made, self.glyphs.made_ms)
+    }
+
     pub fn glyph_masks(&self) -> Vec<(u32, u8, usize, usize, &[u8])> {
         self.glyphs.masks()
     }

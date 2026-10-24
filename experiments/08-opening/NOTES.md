@@ -173,6 +173,36 @@ the whole process: start, fonts, the document laid out and its first page drawn.
 3. Then step 4, page counts and positions kept on disk: reopening goes from the whole layout to the current chapter
    only, which after 1 is what matters.
 
+## Where a first open's time goes (reMarkable 2, `out/remarkable2-split.txt`)
+`run-split.sh`: `blitz-open` printing each step, three runs agreeing within a few ms. In ms:
+
+| | fonts read + `Book::new` | parse | files | first style + layout | paginate | **draw** | total |
+|---|---|---|---|---|---|---|---|
+| *Buried Alive*, chapter 1 | 0 + 0.4 | 17–22 | 1.5 | 154–165 | 8 | **225–238** | 410–435 |
+| then chapter 2, same process | | 3.4 | 1.3 | 44 | 1.8 | **226** | |
+| Holmes, title page | 9 + 8 | 11 | 4 | 6 | 0 | **284–287** (its picture) | 313–316 |
+| Holmes, last story | 9 + 8 | 21 | 3 | 203–208 | 12.5 | **191** | 440–446 |
+| then the colophon, same process | | 3 | 3.4 | 11 | 0.2 | **120** | |
+| Haji Agha, a text page | 8 + 8 | 10–12 | 1 | 11–12 | 0.2 | **255–258** | 285–293 |
+| then the next page, same process | | 0.9 | 0.6 | 9 | 0.2 | **83** | |
+| Haji Agha, the first scan | 8 + 8 | 11 | 8 | 6 | 0 | **1956–2008** | 1991–2040 |
+
+The process starts in under 10 ms. **The draw is most of it:** a chapter's first page 190–290 ms against 20 ms for
+any other page. Counting on the Mac (`blitz-open` now prints the glyph masks made): a first page makes 140–280 glyph
+masks, each a glyph drawn alone by vello_cpu (0.9 ms each on the device), and *Buried Alive*'s second chapter made
+as many again (252) as its first: the masks were keyed by the font's blob, and every document loads the book's fonts
+again as new blobs. Blitz's first style and layout of a full chapter (155–208 ms; the next one 44 ms) is the other
+cost: a warm-up paid once, not yet split.
+
+Fixed (Mac; pages byte-identical unless said):
+- **Masks keyed by the font file** (its length and its first and last 16 KB, hashed once per blob): *Buried Alive*'s
+  second chapter makes 58 masks instead of 252.
+- **A mask's ink found in one pass** row by row (it was two scans of the 128×128 square, one by columns): 25 → 14.5 µs
+  a mask. vello_cpu drawing the glyph was only 30% of it.
+- **Scans decoded at a quarter** when that is at least nine tenths of the size drawn (the last tenth filled by the
+  nearest pixel): the 3625×5250 scans decode at 906 px for 936. Opened at the first scan: 92 → 49–61 ms. One page
+  changed, the same to the eye.
+
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
 ```sh
