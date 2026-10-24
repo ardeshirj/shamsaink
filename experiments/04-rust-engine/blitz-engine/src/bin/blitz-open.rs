@@ -60,7 +60,7 @@ fn main() {
 
     if let Some(i) = args.get(3).map(|d| d.parse::<usize>().unwrap()) {
         let t = Instant::now();
-        let mut book = Book::new(src, &files, opts, &fonts);
+        let mut book = Book::new(src.clone(), &files, opts, &fonts);
         let new_ms = ms(t);
         let r = book.layout(i);
         let lt = book.last_load;
@@ -96,6 +96,18 @@ fn main() {
             let (m, m_ms) = book.glyph_work();
             format!("  then document {j}: {}; draw {d:.1} ({} more glyph masks, {:.1})", show(lt), m - masks, m_ms - masks_ms)
         });
+        // a second book in the same process, opened at the same document: what of the first open is paid once a
+        // process (statics, caches) and what again for every book
+        let second = {
+            let t = Instant::now();
+            let mut b = Book::new(src.clone(), &files, opts, &fonts);
+            let r = b.layout(i);
+            let lt = b.last_load;
+            let s = Instant::now();
+            b.draw(r.start, &mut px);
+            let (d, (m, m_ms)) = (ms(s), b.glyph_work());
+            format!("  a second book at document {i}: {:.1} in all; {}; draw {d:.1} ({m} glyph masks, {m_ms:.1})", ms(t), show(lt))
+        };
         let s = Instant::now();
         book.layout_rest();
         let rest = ms(s);
@@ -119,6 +131,7 @@ fn main() {
         if let Some(a) = again {
             println!("{a}");
         }
+        println!("{second}");
         return;
     }
 

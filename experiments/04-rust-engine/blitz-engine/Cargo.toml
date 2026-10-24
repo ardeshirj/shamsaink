@@ -30,3 +30,9 @@ jpeg-decoder = { version = "0.3", default-features = false }
 
 [profile.release]
 strip = true
+
+[features]
+# Blitz's own timings of each step of a resolve (style, layout, ...), printed to stdout (experiment 08)
+phase-times = ["blitz-dom/log-phase-times"]
+# Blitz builds the paragraphs' text layouts on several threads (rayon)
+parallel = ["blitz-dom/parallel-construct"]
