@@ -182,3 +182,11 @@ ssh root@10.11.99.1 'sh /home/root/indium-08/run.sh'
 scp root@10.11.99.1:/home/root/indium-08/results.txt out/remarkable2.txt
 ssh root@10.11.99.1 'rm -rf /home/root/indium-08'
 ```
+Where a first open's time goes (`run-split.sh`, after `./pack.sh`; only the new `blitz-open` and the script need
+copying if the bundle is still on the device):
+```sh
+scp out/bundle/bin/blitz-open root@10.11.99.1:/home/root/indium-08/bin/
+scp out/bundle/run-split.sh root@10.11.99.1:/home/root/indium-08/
+ssh root@10.11.99.1 'sh /home/root/indium-08/run-split.sh'
+scp root@10.11.99.1:/home/root/indium-08/results-split.txt out/remarkable2-split.txt
+```

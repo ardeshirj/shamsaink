@@ -11,6 +11,8 @@ use blitz_paint::paint_scene;
 use blitz_traits::net::{NetHandler, NetProvider, Request};
 use blitz_traits::shell::{ColorScheme, Viewport};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Instant;
 
 pub mod capi;
 mod glyphs;
@@ -33,17 +35,20 @@ impl Source for Dir {
 /// Documents get URLs under this root, so that relative links resolve to paths in the book.
 const ROOT: &str = "file:///book/";
 
-/// Gives Blitz the book's files (stylesheets, fonts, images) from the Source, at once.
-struct Files(Arc<dyn Source>);
+/// Gives Blitz the book's files (stylesheets, fonts, images) from the Source, at once; adds the time spent, Blitz's
+/// handling of each file included (parsing a stylesheet, decoding a font), to the counter in microseconds.
+struct Files(Arc<dyn Source>, Arc<AtomicU64>);
 
 impl NetProvider for Files {
     fn fetch(&self, _doc_id: usize, request: Request, handler: Box<dyn NetHandler>) {
         let url = request.url.as_str();
         if let Some(path) = url.strip_prefix(ROOT) {
             let path = percent_decode(path.split(['#', '?']).next().unwrap_or(""));
+            let t = Instant::now();
             if let Some(data) = self.0.read(&path) {
                 handler.bytes(request.url.to_string(), bytes::Bytes::from(data));
             }
+            self.1.fetch_add(t.elapsed().as_micros() as u64, Ordering::Relaxed);
         }
     }
 }
@@ -110,6 +115,23 @@ struct Block {
     avoid_inside: bool, // a heading: never split
 }
 
+/// Where the time of the last document laid out went, in ms (experiment 08's `blitz-open`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct LoadTimes {
+    /// the document's file read
+    pub read: f64,
+    /// parsing the HTML into Blitz's document, less `files`
+    pub parse: f64,
+    /// its stylesheets, fonts and pictures: read and handed to Blitz (which parses or decodes them)
+    pub files: f64,
+    /// Blitz's first style and layout, less `files`
+    pub resolve: f64,
+    /// the second, once the stylesheets and fonts are in, less `files`
+    pub resolve2: f64,
+    /// cutting it into pages
+    pub paginate: f64,
+}
+
 /// A page: a slice [top, bottom) of one document.
 #[derive(Clone, Copy, Debug)]
 pub struct Page {
@@ -126,6 +148,9 @@ pub struct Book {
     docs: Vec<Option<HtmlDocument>>, // None: not laid out, or let go
     paged: Vec<bool>,                // its pages are in `pages` (kept when the document is let go)
     used: Vec<usize>,                // the documents the reader used, the last first
+    fetched: Arc<AtomicU64>,         // time in Files, microseconds
+    /// where the time of the last document laid out went
+    pub last_load: LoadTimes,
     /// the pages of the documents paginated so far, in spine order
     pub pages: Vec<Page>,
     pub(crate) opts: Options,
@@ -160,6 +185,8 @@ impl Book {
             docs: spine.iter().map(|_| None).collect(),
             paged: vec![false; spine.len()],
             used: vec![],
+            fetched: Default::default(),
+            last_load: Default::default(),
             pages: vec![],
             opts,
             glyphs: Default::default(),
@@ -201,7 +228,13 @@ impl Book {
             return;
         }
         let (opts, path) = (self.opts, &self.spine[doc]);
+        let ms = |t: Instant| t.elapsed().as_secs_f64() * 1e3;
+        let files = |f: &AtomicU64| f.swap(0, Ordering::Relaxed) as f64 / 1e3;
+        files(&self.fetched);
+        let mut lt = LoadTimes::default();
+        let t = Instant::now();
         let html = self.src.read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
+        lt.read = ms(t);
         // the shared page settings: text size and margins (the top one as the first page's), and padding below so
         // the painter can scroll the last page to the top
         let css = format!(
@@ -211,18 +244,28 @@ impl Book {
             m = opts.margin
         );
         let html = html.replacen("</head>", &css, 1);
+        let t = Instant::now();
         let mut d = HtmlDocument::from_html(
             &html,
             DocumentConfig {
                 base_url: Some(format!("{ROOT}{path}")),
-                net_provider: Some(Arc::new(Files(Arc::clone(&self.src))) as _),
+                net_provider: Some(Arc::new(Files(Arc::clone(&self.src), Arc::clone(&self.fetched))) as _),
                 viewport: Some(Viewport::new(opts.width, opts.height, 1.0, ColorScheme::Light)),
                 font_ctx: self.fctx.clone(),
                 ..Default::default()
             },
         );
+        let f = files(&self.fetched);
+        (lt.parse, lt.files) = (ms(t) - f, f);
+        let t = Instant::now();
         d.as_mut().resolve(0.0);
+        let f = files(&self.fetched);
+        (lt.resolve, lt.files) = (ms(t) - f, lt.files + f);
+        let t = Instant::now();
         d.as_mut().resolve(0.0); // again, once the stylesheets and fonts are in
+        let f = files(&self.fetched);
+        (lt.resolve2, lt.files) = (ms(t) - f, lt.files + f);
+        let t = Instant::now();
         if !self.paged[doc] {
             let mut pages = vec![];
             paginate(&blocks(d.as_ref()), doc, opts.margin as f64, &opts, &mut pages);
@@ -230,6 +273,8 @@ impl Book {
             self.pages.splice(at..at, pages);
             self.paged[doc] = true;
         }
+        lt.paginate = ms(t);
+        self.last_load = lt;
         self.docs[doc] = Some(d);
     }
 

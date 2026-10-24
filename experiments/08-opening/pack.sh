@@ -24,6 +24,6 @@ mkdir $O/fonts/holmes $O/fonts/haji-agha
 cp ../05-real-css/out/fonts/*.ttf $O/fonts/holmes/
 cp book/fonts/*.ttf $O/fonts/haji-agha/
 cp -R ../06-device-timing/out/ko/koreader $O/
-cp run.sh ../01-renderers/koreader/crebench.lua $O/
+cp run.sh run-split.sh ../01-renderers/koreader/crebench.lua $O/
 file $O/bin/* | sed 's/,.*stripped//'
 du -sh $O

@@ -2,8 +2,10 @@
 //! For each spine document in turn, a fresh book: lay out that document, draw its first page; then, opened at the
 //! first document with pages, the rest of the book. Memory is the peak so far (Linux).
 //!
-//! With DOC, only one book, opened at that document: its first page, then the rest, with the peak memory after
-//! each; then every page drawn in order, as a reader going through the book (the slowest page includes laying a
+//! With DOC, only one book, opened at that document: its first page (split into steps: the process's start, the
+//! fallback fonts read, `Book::new`, the document's steps, the draw; then the same steps for the next document, to
+//! tell what is paid once from what is paid for every document), then the rest, with the peak memory after each;
+//! then every page drawn in order, as a reader going through the book (the slowest page includes laying a
 //! document out again), and the memory held at the end. KEEP is how many documents stay laid out (2).
 //!
 //!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC [KEEP]]
@@ -41,9 +43,13 @@ fn ms(t: Instant) -> f64 {
 }
 
 fn main() {
+    let start = Instant::now();
+    let age = process_age_ms();
     let args: Vec<String> = std::env::args().collect();
     let dir = std::path::PathBuf::from(&args[1]);
+    let t = Instant::now();
     let fonts = args.get(2).filter(|d| *d != "-").map(|d| fallback_fonts(d)).unwrap_or_default();
+    let fonts_ms = ms(t);
     let files = spine(&dir);
     let mut opts = Options::default();
     if let Some(k) = args.get(4) {
@@ -55,9 +61,37 @@ fn main() {
     if let Some(i) = args.get(3).map(|d| d.parse::<usize>().unwrap()) {
         let t = Instant::now();
         let mut book = Book::new(src, &files, opts, &fonts);
+        let new_ms = ms(t);
         let r = book.layout(i);
+        let lt = book.last_load;
+        let s = Instant::now();
         book.draw(r.start, &mut px);
+        let draw = ms(s);
         let (first, mem) = (ms(t), max_rss_mb());
+        let show = |lt: blitz_engine::LoadTimes| {
+            format!(
+                "read {:.1}, parse {:.1}, files {:.1}, resolve {:.1} + {:.1}, paginate {:.1}",
+                lt.read, lt.parse, lt.files, lt.resolve, lt.resolve2, lt.paginate
+            )
+        };
+        let once = format!(
+            "  first page, ms: process start {age:.0} (to 10 ms), spine read {:.1}, fallback fonts read \
+             {fonts_ms:.1}, Book::new {new_ms:.1}; document {i}: {}; draw {draw:.1}",
+            ms(start) - ms(t) - fonts_ms,
+            show(lt)
+        );
+        // the next document with pages, in the same process
+        let next = (i + 1..files.len()).find(|&j| {
+            let r = book.layout(j);
+            !r.is_empty()
+        });
+        let again = next.map(|j| {
+            let lt = book.last_load;
+            let r = book.layout(j);
+            let s = Instant::now();
+            book.draw(r.start, &mut px);
+            format!("  then document {j}: {}; draw {:.1}", show(lt), ms(s))
+        });
         let s = Instant::now();
         book.layout_rest();
         let rest = ms(s);
@@ -77,6 +111,10 @@ fn main() {
             max_rss_mb(),
             rss_mb()
         );
+        println!("{once}");
+        if let Some(a) = again {
+            println!("{a}");
+        }
         return;
     }
 
@@ -167,4 +205,12 @@ fn rss_mb() -> f64 {
         .and_then(|l| l.split_whitespace().nth(1)?.parse::<f64>().ok())
         .map(|kb| kb / 1024.0)
         .unwrap_or(0.0)
+}
+
+/// How long ago the process started, from /proc (Linux; in clock ticks, 10 ms).
+fn process_age_ms() -> f64 {
+    let stat = std::fs::read_to_string("/proc/self/stat").unwrap_or_default();
+    let start: f64 = stat.rsplit(')').next().and_then(|r| r.split_whitespace().nth(19)?.parse().ok()).unwrap_or(0.0);
+    let up: f64 = std::fs::read_to_string("/proc/uptime").ok().and_then(|u| u.split_whitespace().next()?.parse().ok()).unwrap_or(0.0);
+    (up * 1e3 - start * 10.0).max(0.0)
 }
