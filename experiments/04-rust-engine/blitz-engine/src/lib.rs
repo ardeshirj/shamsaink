@@ -85,11 +85,13 @@ pub struct Options {
     pub font_size: f32,
     pub orphans: usize,
     pub widows: usize,
+    /// documents kept laid out: the ones the reader used last (others are laid out again when reached)
+    pub keep: usize,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, orphans: 2, widows: 2 }
+        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, orphans: 2, widows: 2, keep: 2 }
     }
 }
 
@@ -121,8 +123,10 @@ pub struct Book {
     src: Arc<dyn Source>,
     spine: Vec<String>,
     fctx: Option<parley::FontContext>,
-    docs: Vec<Option<HtmlDocument>>, // None: not laid out yet
-    /// the pages of the documents laid out so far, in spine order
+    docs: Vec<Option<HtmlDocument>>, // None: not laid out, or let go
+    paged: Vec<bool>,                // its pages are in `pages` (kept when the document is let go)
+    used: Vec<usize>,                // the documents the reader used, the last first
+    /// the pages of the documents paginated so far, in spine order
     pub pages: Vec<Page>,
     pub(crate) opts: Options,
     // kept between pages: the glyph masks, the pictures decoded, vello_cpu's renderer (its caches) and the colour page
@@ -154,6 +158,8 @@ impl Book {
             spine: spine.to_vec(),
             fctx: font_context(fonts),
             docs: spine.iter().map(|_| None).collect(),
+            paged: vec![false; spine.len()],
+            used: vec![],
             pages: vec![],
             opts,
             glyphs: Default::default(),
@@ -163,48 +169,68 @@ impl Book {
         }
     }
 
-    /// Lays out and paginates spine document `doc` if it is not yet; its pages are `pages[range]`. Page numbers
-    /// after it shift by its page count: they are final once every document is laid out.
+    /// Lays out spine document `doc` for the reader (paginating it the first time); its pages are `pages[range]`.
+    /// Page numbers after it shift by its page count the first time: they are final once every document is
+    /// paginated. Only the `keep` documents used last stay laid out.
     pub fn layout(&mut self, doc: usize) -> std::ops::Range<usize> {
-        if self.docs[doc].is_none() {
-            let (opts, path) = (self.opts, &self.spine[doc]);
-            let html = self.src.read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
-            // the shared page settings: text size and margins (the top one as the first page's), and padding below
-            // so the painter can scroll the last page to the top
-            let css = format!(
-                "<style>html {{ font-size: {}px; padding: {m}px {m}px {}px {m}px; }}</style></head>",
-                opts.font_size,
-                opts.height,
-                m = opts.margin
-            );
-            let html = html.replacen("</head>", &css, 1);
-            let mut d = HtmlDocument::from_html(
-                &html,
-                DocumentConfig {
-                    base_url: Some(format!("{ROOT}{path}")),
-                    net_provider: Some(Arc::new(Files(Arc::clone(&self.src))) as _),
-                    viewport: Some(Viewport::new(opts.width, opts.height, 1.0, ColorScheme::Light)),
-                    font_ctx: self.fctx.clone(),
-                    ..Default::default()
-                },
-            );
-            d.as_mut().resolve(0.0);
-            d.as_mut().resolve(0.0); // again, once the stylesheets and fonts are in
-            let mut pages = vec![];
-            paginate(&blocks(d.as_ref()), doc, opts.margin as f64, &opts, &mut pages);
-            let at = self.pages.partition_point(|p| p.doc < doc);
-            self.pages.splice(at..at, pages);
-            self.docs[doc] = Some(d);
+        self.load(doc);
+        self.used.retain(|&d| d != doc);
+        self.used.insert(0, doc);
+        for d in self.used.split_off(self.opts.keep.max(1).min(self.used.len())) {
+            self.docs[d] = None;
         }
         let from = self.pages.partition_point(|p| p.doc < doc);
         from..self.pages.partition_point(|p| p.doc <= doc)
     }
 
-    /// Lays out every document not laid out yet.
+    /// Paginates every document not paginated yet, letting each go after unless the reader is using it.
     pub fn layout_rest(&mut self) {
         for doc in 0..self.docs.len() {
-            self.layout(doc);
+            if !self.paged[doc] {
+                self.load(doc);
+                if !self.used.contains(&doc) {
+                    self.docs[doc] = None;
+                }
+            }
         }
+    }
+
+    /// Lays out `doc` if it is not, and paginates it the first time.
+    fn load(&mut self, doc: usize) {
+        if self.docs[doc].is_some() {
+            return;
+        }
+        let (opts, path) = (self.opts, &self.spine[doc]);
+        let html = self.src.read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
+        // the shared page settings: text size and margins (the top one as the first page's), and padding below so
+        // the painter can scroll the last page to the top
+        let css = format!(
+            "<style>html {{ font-size: {}px; padding: {m}px {m}px {}px {m}px; }}</style></head>",
+            opts.font_size,
+            opts.height,
+            m = opts.margin
+        );
+        let html = html.replacen("</head>", &css, 1);
+        let mut d = HtmlDocument::from_html(
+            &html,
+            DocumentConfig {
+                base_url: Some(format!("{ROOT}{path}")),
+                net_provider: Some(Arc::new(Files(Arc::clone(&self.src))) as _),
+                viewport: Some(Viewport::new(opts.width, opts.height, 1.0, ColorScheme::Light)),
+                font_ctx: self.fctx.clone(),
+                ..Default::default()
+            },
+        );
+        d.as_mut().resolve(0.0);
+        d.as_mut().resolve(0.0); // again, once the stylesheets and fonts are in
+        if !self.paged[doc] {
+            let mut pages = vec![];
+            paginate(&blocks(d.as_ref()), doc, opts.margin as f64, &opts, &mut pages);
+            let at = self.pages.partition_point(|p| p.doc < doc);
+            self.pages.splice(at..at, pages);
+            self.paged[doc] = true;
+        }
+        self.docs[doc] = Some(d);
     }
 
     /// Draws page n into `out` (width × height bytes, 8-bit grey, black on white).
@@ -220,8 +246,9 @@ impl Book {
             Layer::Rest => self.draw_parts(n, out, true, false, Some(boxes)),
             Layer::AllVello => {
                 let p = self.pages[n];
+                self.layout(p.doc);
                 let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
-                let doc = self.docs[p.doc].as_mut().expect("a page's document is laid out").as_mut();
+                let doc = self.docs[p.doc].as_mut().expect("laid out just now").as_mut();
                 doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
                 let mut split = glyphs::Split::new(&mut self.glyphs, &mut self.pictures);
                 split.text_to_rest = true;
@@ -253,8 +280,9 @@ impl Book {
 
     fn draw_parts(&mut self, n: usize, out: &mut [u8], rest: bool, text: bool, boxes: Option<&mut Vec<[i32; 4]>>) {
         let p = self.pages[n];
+        self.layout(p.doc);
         let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
-        let doc = self.docs[p.doc].as_mut().expect("a page's document is laid out").as_mut();
+        let doc = self.docs[p.doc].as_mut().expect("laid out just now").as_mut();
         doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
         let mut split = glyphs::Split::new(&mut self.glyphs, &mut self.pictures);
         paint_scene(&mut split, doc, 1.0, w, h, 0, 0);
@@ -287,9 +315,13 @@ impl Book {
     }
 
     /// Where the element with this id in spine document `doc` is: its page (None if not found) and its boxes on that
-    /// page, one per line, in page pixels.
+    /// page, one per line, in page pixels. Lays the document out if it is not.
     pub fn find(&mut self, doc: usize, id: &str) -> Option<(usize, Vec<[i32; 4]>)> {
-        let d = self.docs.get_mut(doc)?.as_mut()?.as_mut();
+        if doc >= self.docs.len() {
+            return None;
+        }
+        self.layout(doc);
+        let d = self.docs[doc].as_mut()?.as_mut();
         d.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: 0.0 });
         let node = d.get_element_by_id(id)?;
         let rects = d.node_client_rects(node);

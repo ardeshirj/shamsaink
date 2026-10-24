@@ -2,9 +2,11 @@
 //! For each spine document in turn, a fresh book: lay out that document, draw its first page; then, opened at the
 //! first document with pages, the rest of the book. Memory is the peak so far (Linux).
 //!
-//! With DOC, only one book, opened at that document: its first page, then the rest, with the memory after each.
+//! With DOC, only one book, opened at that document: its first page, then the rest, with the peak memory after
+//! each; then every page drawn in order, as a reader going through the book (the slowest page includes laying a
+//! document out again), and the memory held at the end. KEEP is how many documents stay laid out (2).
 //!
-//!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC]
+//!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC [KEEP]]
 
 use blitz_engine::{Book, Dir, Options};
 use std::sync::Arc;
@@ -43,7 +45,10 @@ fn main() {
     let dir = std::path::PathBuf::from(&args[1]);
     let fonts = args.get(2).filter(|d| *d != "-").map(|d| fallback_fonts(d)).unwrap_or_default();
     let files = spine(&dir);
-    let opts = Options::default();
+    let mut opts = Options::default();
+    if let Some(k) = args.get(4) {
+        opts.keep = k.parse().unwrap();
+    }
     let mut px = vec![0u8; (opts.width * opts.height) as usize];
     let src: Arc<Dir> = Arc::new(Dir(dir.clone()));
 
@@ -56,9 +61,21 @@ fn main() {
         let s = Instant::now();
         book.layout_rest();
         let rest = ms(s);
+        let mem_rest = max_rss_mb();
+        let mut turns = vec![];
+        for n in 0..book.pages.len() {
+            let s = Instant::now();
+            book.draw(n, &mut px);
+            turns.push(ms(s));
+        }
+        turns.sort_by(|a, b| a.partial_cmp(b).unwrap());
         println!(
-            "at document {i}: first page {first:.1} ms, {mem:.0} MB; then the rest {rest:.0} ms, {:.0} MB",
-            max_rss_mb()
+            "at document {i}: first page {first:.1} ms, {mem:.0} MB; then the rest {rest:.0} ms, {mem_rest:.0} MB; \
+             read through: median page {:.1} ms, slowest {:.1} ms, peak {:.0} MB, held at the end {:.0} MB",
+            turns[turns.len() / 2],
+            turns[turns.len() - 1],
+            max_rss_mb(),
+            rss_mb()
         );
         return;
     }
@@ -137,6 +154,16 @@ fn max_rss_mb() -> f64 {
     let s = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
     s.lines()
         .find(|l| l.starts_with("VmHWM:"))
+        .and_then(|l| l.split_whitespace().nth(1)?.parse::<f64>().ok())
+        .map(|kb| kb / 1024.0)
+        .unwrap_or(0.0)
+}
+
+/// Resident memory now, from /proc (Linux).
+fn rss_mb() -> f64 {
+    let s = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
+    s.lines()
+        .find(|l| l.starts_with("VmRSS:"))
         .and_then(|l| l.split_whitespace().nth(1)?.parse::<f64>().ok())
         .map(|kb| kb / 1024.0)
         .unwrap_or(0.0)

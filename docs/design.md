@@ -176,7 +176,8 @@ Hinting costs nothing (the same 132 ms without it).
 | **Our glyph layer:** glyphs drawn once into masks and copied straight onto the grey page; vello_cpu only for what is not text, only on pages that have any | ours (`blitz-engine/src/glyphs.rs`) | ours | **device 206–258 → 20 ms**, crengine's speed | done (07) |
 | Lay out the chapter being opened first, the rest after | our `Book` (`layout`, `layout_rest`) | ours | first page 3–10× sooner, half the memory | done (08) |
 | Pictures decoded when drawn, at the size drawn (only their size read for layout) | Blitz's image loading; our `pictures.rs` | a patch to Blitz (`blitz-lazy-images.patch`) and ours | Haji Agha: open at a scan 116–250 → 64–104 ms, 171 → 40 MB | done (08) |
-| Chapters far from the reader let go; page counts kept on disk, as crengine's cache | our `Book` | ours | memory; reopening | to try (08) |
+| Chapters let go: only the two the reader used last stay laid out | our `Book` (`Options::keep`) | ours | memory read through: Holmes 71 → 41 MB, Haji Agha 89 → 60 MB | done (08) |
+| Page counts and positions kept on disk, as crengine's cache | our `Book` | ours | reopening | to try (08) |
 
 Drawing is done (experiment 07's NOTES.md): 20 ms a page on the reMarkable 2, against crengine's 17–19 ms. What is
 left against crengine is opening (0.7–2.5 s, crengine 57–68 ms from its cache) and memory (2× crengine's).

@@ -50,7 +50,7 @@ rtlbook.
 `Book` now lays documents out on demand: `Book::new` lays out nothing, `layout(doc)` lays out one document and gives
 its pages, `layout_rest()` the others (`open` is both, as before: pages byte-identical on *Buried Alive* and Holmes).
 Page numbers after a document shift as it is laid out, so they are final only once the rest is done; the reader
-works in (document, page in it) until then. `find` answers only for documents laid out. The Go interface and C API
+works in (document, page in it) until then. The Go interface and C API
 are unchanged (they still open the whole book).
 
 `blitz-open BOOK [FONTS] DOC`: a fresh process opens the book at a document, draws its first page, then lays out the
@@ -103,3 +103,28 @@ rest; memory is the peak. Two runs each after a warm-up (they agree within ~20%,
 - Opening Haji Agha is now like the other books: its time and memory were the scans. What is left of a scan is
   decoding it when its page is first drawn (15–29 ms here, more on the device; a page ahead could be drawn early).
 - Laying out the rest still holds every document (52–69 MB here): step 3.
+
+## 3. Chapters let go (Mac)
+A book keeps every document's pages, but only the `keep` documents the reader used last (`Options::keep`, 2) stay laid
+out; drawing a page of one let go, or `find` in it, lays it out again. `layout_rest` lets each document go once it is
+paginated, unless the reader is on it. Every page of the three books is byte-identical, drawn with documents laid out
+again along the way.
+
+`blitz-open BOOK FONTS DOC KEEP` now also reads the book through after opening: every page drawn in order. Two runs
+each, agreeing within a few MB and ms:
+
+| | after the rest: before → now | read through: all kept → keep 2 | slowest page turn, keep 2 |
+|---|---|---|---|
+| *Buried Alive* | 28 → **21 MB** | 31 → **24 MB** | 16–18 ms (a chapter laid out again) |
+| Holmes | 70 → **34 MB** | 71 → **41 MB** | 12–13 ms |
+| Haji Agha | 52 → **23 MB** | 89 → **60 MB** | 60 ms (a scan decoded) |
+
+- **Memory is now about one chapter's** on top of what any page needs: fonts (Holmes's own and the fallbacks,
+  ~30 MB on the Mac with its first page), the glyph masks, and for Haji Agha the decoded pictures (up to 24 MB, then
+  the oldest let go). crengine on the device: 18–29 MB; Blitz there was within 1 MB of the Mac (39 and 68 MB for
+  *Buried Alive* and Holmes), so these should land near 24 and 41 MB: to measure.
+- Memory once taken is not given back to the system (the allocator keeps it): the held figure is the peak. What
+  matters is that the peak no longer grows with the book.
+- **The cost is a page turn into a chapter let go:** that chapter laid out again, 12–18 ms on the Mac, about the same as
+  a first page with new glyphs. On the device it would be ~0.1–0.3 s once a chapter; the next chapter could be laid
+  out ahead while the reader is on the last page.
