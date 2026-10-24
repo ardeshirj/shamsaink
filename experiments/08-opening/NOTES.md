@@ -129,6 +129,50 @@ each, agreeing within a few MB and ms:
   a first page with new glyphs. On the device it would be ~0.1–0.3 s once a chapter; the next chapter could be laid
   out ahead while the reader is on the last page.
 
+## On the reMarkable 2 (2026-10-24, `out/remarkable2.txt`)
+`run.sh`, three runs, agreeing within 3%; CPU at 1200 MHz. Blitz built with NEON. crengine for *Buried Alive* and
+Holmes from 06 (same device); its open is `load_ms` + `layout_ms`, its start-up (`init_ms`, 54–96 ms) on top. Ours is
+the whole process: start, fonts, the document laid out and its first page drawn.
+
+| reMarkable 2 | Blitz 07 (whole book) | **Blitz 08** | crengine (KOReader) |
+|---|---|---|---|
+| *Buried Alive*: open, first time | 0.71–0.73 s | **0.41–0.43 s** | 0.47–0.51 s |
+| reopened | the same | the same | **57 ms** (its cache) |
+| peak memory, read through | 30 MB | **22 MB** | 18 MB |
+| Holmes: open, first time | 2.52–2.63 s | **0.32–0.44 s** | 2.24–2.25 s |
+| reopened | the same | the same | **68 ms** |
+| peak memory, read through | 68 MB | **39 MB** | 29 MB |
+| Haji Agha: open at a text page | (no pictures then) | **0.28–0.29 s** | 1.09–1.15 s (147 pages) |
+| open at the first scan | | 2.0 s | |
+| reopened | | the same | **84–85 ms** |
+| peak memory, read through | | 55 MB | 20 MB |
+| a page (median) | 20 ms | 20–21 ms | 16.4–18.9 ms |
+| slowest page turn, read through | | Buried 0.38–0.40 s, Holmes 0.28–0.36 s, Haji Agha **1.3–2.0 s** | |
+
+- **A first open is now faster than crengine's on all three books:** Holmes 6× faster than before and 5–7× than
+  crengine; *Buried Alive* a little ahead; Haji Agha's text pages 4× ahead (crengine lays out the whole book).
+  Laying out the whole book after, in the background, takes 0.5 s, 2.3–2.6 s and 1.4 s.
+- **Memory fell by a quarter to a half** and stays flat as the book is read (*Buried Alive* 22 MB, Holmes 39 MB).
+  crengine is still lower: 18, 29 and 20 MB.
+- **Reopening is where crengine is far ahead:** 57–85 ms from its cache, ours the same as a first open (0.3–0.4 s).
+- **About 0.3 s of every open is not the chapter:** Holmes's title page (a one-page document) takes 0.32 s; a
+  chapter's own layout is a fraction of that. Not yet split: process start, fonts (Holmes: its own and the DejaVu
+  fallbacks, Haji Agha: Parastoo and DejaVu), Blitz's per-document set-up (its user-agent stylesheet), the first draw.
+- **The scans are slow here:** a scan's page takes 1.3–2.0 s the first time it is drawn (Mac 15–60 ms, ×30); opened at
+  the scan, 2.0 s. The JPEG is decoded at half size (1813×2625) because a quarter (906) is just under the 936 px it
+  is drawn at. crengine draws Haji Agha's pages at 24 ms on average against a 16.5 ms median, about 0.3 s more per
+  scan.
+- **A page turn into a chapter let go is 0.3–0.4 s,** as expected; laying out the next chapter ahead (the device has
+  two cores) would hide it.
+
+## What next
+1. **Split the 0.3 s fixed cost of opening** on the device (`blitz-open` printing each step) and cut what can be cut:
+   it is most of a first open now, and would be most of a reopen even with page counts on disk.
+2. **Scans:** decode at a quarter when that is within a few percent of the size drawn, and decode the next page's
+   pictures ahead, on the second core.
+3. Then step 4, page counts and positions kept on disk: reopening goes from the whole layout to the current chapter
+   only, which after 1 is what matters.
+
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
 ```sh
