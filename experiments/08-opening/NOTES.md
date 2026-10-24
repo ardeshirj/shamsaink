@@ -128,3 +128,13 @@ each, agreeing within a few MB and ms:
 - **The cost is a page turn into a chapter let go:** that chapter laid out again, 12–18 ms on the Mac, about the same as
   a first page with new glyphs. On the device it would be ~0.1–0.3 s once a chapter; the next chapter could be laid
   out ahead while the reader is on the last page.
+
+## Running it on the device
+In a terminal of your own, the reMarkable on USB (as 06 and 07):
+```sh
+cd experiments/08-opening && ./pack.sh     # needs 07's out/bundle (the before binary) and 06's out/ko (KOReader)
+scp -r out/bundle root@10.11.99.1:/home/root/indium-08
+ssh root@10.11.99.1 'sh /home/root/indium-08/run.sh'
+scp root@10.11.99.1:/home/root/indium-08/results.txt out/remarkable2.txt
+ssh root@10.11.99.1 'rm -rf /home/root/indium-08'
+```
