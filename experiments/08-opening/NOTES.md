@@ -273,6 +273,28 @@ threads with "parallel" (in order without). Pages byte-identical either way; on 
 - (Also in the profile, reading the whole book through: blitting glyph masks onto the page, `glyphs::Split::blit`,
   is a quarter of all the time; it is most of a 13–20 ms page.)
 
+## 4. A cache file (Mac)
+`Book::save` gives the book's cache: every document's pages (once all are paginated) and the glyph masks drawn so
+far, in our own little-endian format (`blitz-engine/src/saved.rs`) with its version, the page settings and the spine at
+the top. `Book::restore` takes it on a book just made: no document is paginated after, only laid out when shown, and
+pages draw without making masks. A cache for other settings, another book's spine, another version or a damaged file
+is refused (tried: Holmes's cache on *Buried Alive*, a cut file). Which book a cache belongs to (its file's name, size,
+date) is the reader's to check, as crengine does.
+
+`blitz-open BOOK FONTS DOC KEEP CACHE` reads the cache if it is there and writes it after reading the book through.
+Mac, two threads:
+
+| | cache | first open → reopened: first page | its masks | then the rest |
+|---|---|---|---|---|
+| *Buried Alive*, chapter 1 | 348 KB, read and restored in 1.0–1.2 ms | 25 → 15–17 ms | 258 → 0 | 24 → 0 ms |
+| Holmes, last story | 324 KB, 0.6 ms | 117 (a slow first run) → 17–23 ms | 143 → 0 | 84 → 0 ms |
+| Haji Agha, a text page | 437 KB, 0.7–0.9 ms | 14 → 8–12 ms | 282 → 0 | 271 → 0 ms |
+
+- Every page of a book read from its cache is the same as without (a hash of every page's pixels, all three books,
+  and Haji Agha opened at a scan).
+- What a reopen still pays is the chapter's own parse and layout. The cache holds every mask the book needed, which is
+  the whole book's alphabet: a few thousand masks, 0.3–0.4 MB.
+
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
 ```sh
@@ -297,4 +319,11 @@ scp out/bundle/bin/blitz-open out/bundle/bin/blitz-open-par root@10.11.99.1:/hom
 scp out/bundle/run-par.sh root@10.11.99.1:/home/root/indium-08/
 ssh root@10.11.99.1 'sh /home/root/indium-08/run-par.sh'
 scp root@10.11.99.1:/home/root/indium-08/results-par.txt out/remarkable2-par.txt
+```
+A book opened again from its cache (`run-cache.sh`, after `./pack.sh`):
+```sh
+scp out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/indium-08/bin/
+scp out/bundle/run-cache.sh root@10.11.99.1:/home/root/indium-08/
+ssh root@10.11.99.1 'sh /home/root/indium-08/run-cache.sh'
+scp root@10.11.99.1:/home/root/indium-08/results-cache.txt out/remarkable2-cache.txt
 ```

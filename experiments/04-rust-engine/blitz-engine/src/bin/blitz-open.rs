@@ -6,9 +6,10 @@
 //! fallback fonts read, `Book::new`, the document's steps, the draw; then the same steps for the next document, to
 //! tell what is paid once from what is paid for every document), then the rest, with the peak memory after each;
 //! then every page drawn in order, as a reader going through the book (the slowest page includes laying a
-//! document out again), and the memory held at the end. KEEP is how many documents stay laid out (2).
+//! document out again), and the memory held at the end. KEEP is how many documents stay laid out (2). With CACHE,
+//! the book's cache file: read before laying out if it is there (a book opened again), written after reading through.
 //!
-//!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC [KEEP]]
+//!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC [KEEP [CACHE]]]
 
 use blitz_engine::{Book, Dir, Options};
 use std::sync::Arc;
@@ -62,6 +63,10 @@ fn main() {
         let t = Instant::now();
         let mut book = Book::new(src.clone(), &files, opts, &fonts);
         let new_ms = ms(t);
+        let cache = args.get(5);
+        let s = Instant::now();
+        let restored = cache.and_then(|c| std::fs::read(c).ok()).map(|d| (d.len(), book.restore(&d)));
+        let restore_ms = ms(s);
         let r = book.layout(i);
         let lt = book.last_load;
         let s = Instant::now();
@@ -78,9 +83,14 @@ fn main() {
         let once = format!(
             "  first page, ms: process start {age:.0} (to 10 ms), spine read {:.1}, fallback fonts read \
              {fonts_ms:.1}, Book::new {new_ms:.1}; document {i}: {}; draw {draw:.1} ({masks} glyph masks made, \
-             {masks_ms:.1})",
+             {masks_ms:.1}){}",
             ms(start) - ms(t) - fonts_ms,
-            show(lt)
+            show(lt),
+            match restored {
+                Some((n, true)) => format!("; from the cache ({} KB, read and restored in {restore_ms:.1})", n / 1024),
+                Some((_, false)) => "; cache not used".into(),
+                None => String::new(),
+            }
         );
         // the next document with pages, in the same process
         let next = (i + 1..files.len()).find(|&j| {
@@ -113,12 +123,22 @@ fn main() {
         let rest = ms(s);
         let mem_rest = max_rss_mb();
         let mut turns = vec![];
+        // every page's pixels hashed, to tell a book read from its cache drew the same pages
+        let mut sum = std::collections::hash_map::DefaultHasher::new();
         for n in 0..book.pages.len() {
             let s = Instant::now();
             book.draw(n, &mut px);
             turns.push(ms(s));
+            std::hash::Hash::hash(&px, &mut sum);
         }
+        let sum = std::hash::Hasher::finish(&sum);
         turns.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let saved = cache.map(|c| {
+            let s = Instant::now();
+            let data = book.save().expect("every document paginated");
+            std::fs::write(c, &data).unwrap();
+            format!("  cache written: {} KB in {:.1} ms; pages {:016x}", data.len() / 1024, ms(s), sum)
+        });
         println!(
             "at document {i}: first page {first:.1} ms, {mem:.0} MB; then the rest {rest:.0} ms, {mem_rest:.0} MB; \
              read through: median page {:.1} ms, slowest {:.1} ms, peak {:.0} MB, held at the end {:.0} MB",
@@ -132,6 +152,9 @@ fn main() {
             println!("{a}");
         }
         println!("{second}");
+        if let Some(s) = saved {
+            println!("{s}");
+        }
         return;
     }
 

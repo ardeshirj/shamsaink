@@ -72,6 +72,55 @@ impl Cache {
             .collect()
     }
 
+    /// Every mask drawn so far, for the book's cache file.
+    pub(crate) fn save(&self, w: &mut crate::saved::W) {
+        w.u32(self.masks.len() as u32);
+        for (k, m) in &self.masks {
+            w.u64(k.font);
+            w.u32(k.index);
+            w.u32(k.glyph);
+            w.u32(k.size);
+            w.u8(k.hint as u8);
+            w.u16(k.coords.len() as u16);
+            k.coords.iter().for_each(|&c| w.u16(c as u16));
+            w.u64(k.embolden.0);
+            w.u64(k.embolden.1);
+            w.u8(k.subpixel);
+            match m {
+                Some(m) => {
+                    w.u8(1);
+                    w.i32(m.left);
+                    w.i32(m.top);
+                    w.u32(m.width as u32);
+                    w.u32(m.height as u32);
+                    w.0.extend(&m.alpha);
+                }
+                None => w.u8(0),
+            }
+        }
+    }
+
+    /// The masks of a cache file, added to those drawn so far (None: the file is damaged).
+    pub(crate) fn load(&mut self, r: &mut crate::saved::R) -> Option<()> {
+        let n = r.u32()?;
+        self.masks.reserve(n as usize);
+        for _ in 0..n {
+            let (font, index, glyph, size, hint) = (r.u64()?, r.u32()?, r.u32()?, r.u32()?, r.u8()? != 0);
+            let coords = (0..r.u16()?).map(|_| r.u16().map(|c| c as i16)).collect::<Option<_>>()?;
+            let (embolden, subpixel) = ((r.u64()?, r.u64()?), r.u8()?);
+            let m = match r.u8()? {
+                1 => {
+                    let (left, top, width, height) = (r.i32()?, r.i32()?, r.u32()? as usize, r.u32()? as usize);
+                    let alpha = r.take(width * height)?.to_vec();
+                    Some(Arc::new(Mask { left, top, width, height, alpha }))
+                }
+                _ => None,
+            };
+            self.masks.insert(Key { font, index, glyph, size, hint, coords, embolden, subpixel }, m);
+        }
+        Some(())
+    }
+
     /// A key for a font file that is the same in every document: its length and its first and last 16 KB, hashed once
     /// per blob.
     fn font_key(&mut self, font: &FontData) -> u64 {

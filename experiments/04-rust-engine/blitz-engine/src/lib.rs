@@ -17,6 +17,7 @@ use std::time::Instant;
 pub mod capi;
 mod glyphs;
 mod pictures;
+mod saved;
 
 /// The book's files, by path from the EPUB's root.
 pub trait Source: Send + Sync + 'static {
@@ -208,6 +209,68 @@ impl Book {
         }
         let from = self.pages.partition_point(|p| p.doc < doc);
         from..self.pages.partition_point(|p| p.doc <= doc)
+    }
+
+    /// The book's cache: every document's pages (once all are paginated: None before) and the glyph masks drawn so far.
+    /// The reader keeps it by the book's file (its name, size, date) and gives it to `restore` when the book opens again.
+    pub fn save(&self) -> Option<Vec<u8>> {
+        if self.paged.contains(&false) {
+            return None;
+        }
+        let mut w = saved::W(saved::MAGIC.to_vec());
+        w.u32(saved::VERSION);
+        let o = self.opts;
+        for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.orphans as u32, o.widows as u32] {
+            w.u32(v);
+        }
+        w.u32(self.spine.len() as u32);
+        self.spine.iter().for_each(|p| w.bytes(p.as_bytes()));
+        w.u32(self.pages.len() as u32);
+        for p in &self.pages {
+            w.u32(p.doc as u32);
+            w.f64(p.top);
+            w.f64(p.bottom);
+            w.u32(p.lines as u32);
+        }
+        self.glyphs.save(&mut w);
+        Some(w.0)
+    }
+
+    /// Takes the pages and glyph masks of a cache from `save`, on a book just made (`new`): no document is
+    /// paginated after, only laid out when shown. False, and the book unchanged, if the cache is for other page
+    /// settings, another spine or another version, or damaged.
+    pub fn restore(&mut self, data: &[u8]) -> bool {
+        if self.paged.contains(&true) {
+            return false;
+        }
+        let mut r = saved::R(data);
+        let pages = (|| {
+            if r.take(4)? != saved::MAGIC || r.u32()? != saved::VERSION {
+                return None;
+            }
+            let o = self.opts;
+            for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.orphans as u32, o.widows as u32] {
+                if r.u32()? != v {
+                    return None;
+                }
+            }
+            if r.u32()? as usize != self.spine.len() || !self.spine.iter().all(|p| r.bytes() == Some(p.as_bytes())) {
+                return None;
+            }
+            let n = r.u32()?;
+            let page = |r: &mut saved::R| Some(Page { doc: r.u32()? as usize, top: r.f64()?, bottom: r.f64()?, lines: r.u32()? as usize });
+            let pages: Vec<Page> = (0..n).map(|_| page(&mut r)).collect::<Option<_>>()?;
+            pages.iter().all(|p| p.doc < self.spine.len()).then_some(pages)
+        })();
+        let Some(pages) = pages else { return false };
+        let mut glyphs = glyphs::Cache::default();
+        if glyphs.load(&mut r).is_none() {
+            return false;
+        }
+        self.pages = pages;
+        self.paged.fill(true);
+        self.glyphs = glyphs;
+        true
     }
 
     /// Paginates every document not paginated yet, letting each go after unless the reader is using it.
