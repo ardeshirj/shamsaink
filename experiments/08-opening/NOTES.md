@@ -203,6 +203,26 @@ Fixed (Mac; pages byte-identical unless said):
   nearest pixel): the 3625×5250 scans decode at 906 px for 936. Opened at the first scan: 92 → 49–61 ms. One page
   changed, the same to the eye.
 
+### After the fixes, on the device (`out/remarkable2-split2.txt`)
+Three runs agreeing within 2%. In ms, before → after:
+
+| | first page | its draw (glyph masks: number, time) | next document's draw | median page | slowest turn |
+|---|---|---|---|---|---|
+| *Buried Alive*, chapter 1 | 410–435 → **304–325** | 225–238 → 121–133 (245–258, 110–121) | 226 → **41** (58, 30) | 20 → **13** | 0.38–0.40 s → 0.18–0.23 s |
+| Holmes, title page | 313–316 → 313–321 | 284 → 284 (none: an SVG through vello_cpu) | 129 → 109 | 20 → 20 | 0.36 → 0.31 s |
+| Holmes, last story | 440–446 → **381–384** | 191 → 132 (143, 66) | 120 → 98 | 20 → 20 | 0.29 s |
+| Haji Agha, a text page | 285–293 → **172–175** | 256 → 145 (282, 130) | 83 → 52 | 21 → 21 | |
+| Haji Agha, the first scan | 1991–2040 → **1504–1519** | 1976 → 1476 | 1134 → 1133 (the next scan) | | 1.9 s → 1.3–1.5 s |
+
+- **Every first open is now 0.17–0.38 s** (but at a scan), against crengine's 0.47–2.24 s; *Buried Alive*'s pages draw
+  in 13 ms (crengine 16.6): its masks now serve every chapter.
+- **A glyph mask costs 0.45 ms on the device** (14.5 µs on the Mac, ×31): 110–130 ms of a book's first page.
+- **Blitz's first style and layout is unchanged:** 152–203 ms on a full chapter, 44 ms for the next one. With the
+  masks, it is most of what is left of a first open.
+- **Holmes's title page** is an SVG, drawn through vello_cpu (284 ms; 07 drew no pictures at all). One page.
+- **A scan still takes 1.1–1.5 s** to draw the first time: jpeg-decoder on ARMv7 has no SIMD, and decoding at a quarter
+  saves only the inverse DCT, not the reading of the whole file. crengine spends about 0.3 s a scan.
+
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
 ```sh
