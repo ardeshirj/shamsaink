@@ -336,6 +336,7 @@ impl Book {
         doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
         let mut split = glyphs::Split::new(&mut self.glyphs, &mut self.pictures);
         paint_scene(&mut split, doc, 1.0, w, h, 0, 0);
+        split.finish();
         // the page's slice only: blank above the top margin's end and below the page's last line
         let (from, to) = (m as usize, ((m + p.bottom - p.top).ceil() as usize).min(h as usize));
         let w = w as usize;

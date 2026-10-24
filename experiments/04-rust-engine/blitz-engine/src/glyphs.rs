@@ -8,6 +8,7 @@ use anyrender::{Filter, Glyph, ImageRenderer as _, NormalizedCoord, Paint, Paint
 use anyrender_vello_cpu::VelloCpuImageRenderer;
 use peniko::kurbo::{Affine, Rect, Shape, Stroke, Vec2};
 use peniko::{BlendMode, Color, Fill, FontData, ImageBrush, StyleRef};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -37,16 +38,29 @@ struct Mask {
     alpha: Vec<u8>,
 }
 
-/// The masks drawn so far (None: the glyph has no ink, a space), and a renderer for each mask size.
+/// The masks drawn so far (None: the glyph has no ink, a space).
 #[derive(Default)]
 pub struct Cache {
     masks: HashMap<Key, Option<Arc<Mask>>>,
     // a font file's key by its blob: every document loads the book's fonts again, as new blobs (experiment 08)
     fonts: HashMap<u64, u64>,
-    /// masks drawn so far, and the time it took (ms)
+    /// masks drawn so far, and the time it took (ms; with "parallel", the time on the clock)
     pub made: usize,
     pub made_ms: f64,
-    renderers: HashMap<u16, (VelloCpuImageRenderer, Vec<u8>)>,
+}
+
+/// A glyph a page needs that has no mask yet: made once the page is painted, with the others (experiment 08).
+struct Pending {
+    key: Key,
+    font: FontData,
+    size: f32,
+    coords: Vec<NormalizedCoord>,
+    embolden: Vec2,
+}
+
+thread_local! {
+    // a renderer for each mask size, on each thread that makes masks
+    static RENDERERS: RefCell<HashMap<u16, (VelloCpuImageRenderer, Vec<u8>)>> = RefCell::new(HashMap::new());
 }
 
 impl Cache {
@@ -71,23 +85,20 @@ impl Cache {
             h.finish()
         })
     }
+}
 
-    /// The glyph drawn alone, black, by vello_cpu (the same code that drew it in the page before), on a square of
-    /// three times the text size with the origin a quarter in and five eighths down, and cut to its ink.
-    #[allow(clippy::too_many_arguments)]
-    fn mask(&mut self, key: &Key, font: &FontData, size: f32, hint: bool, coords: &[NormalizedCoord], embolden: Vec2) -> Option<Arc<Mask>> {
-        if let Some(m) = self.masks.get(key) {
-            return m.clone();
-        }
-        let t = std::time::Instant::now();
-        let s = (((3.0 * size).ceil() as u16).div_ceil(32) * 32).max(64);
-        let (ox, oy) = (s as i32 / 4, s as i32 * 5 / 8);
-        let (r, buf) = self.renderers.entry(s).or_insert_with(|| (VelloCpuImageRenderer::new(s as u32, s as u32), vec![]));
+/// The glyph drawn alone, black, by vello_cpu (the same code that drew it in the page before), on a square of three
+/// times the text size with the origin a quarter in and five eighths down, and cut to its ink.
+fn make(p: &Pending) -> Option<Arc<Mask>> {
+    let s = (((3.0 * p.size).ceil() as u16).div_ceil(32) * 32).max(64);
+    let (ox, oy) = (s as i32 / 4, s as i32 * 5 / 8);
+    RENDERERS.with_borrow_mut(|renderers| {
+        let (r, buf) = renderers.entry(s).or_insert_with(|| (VelloCpuImageRenderer::new(s as u32, s as u32), vec![]));
         r.reset();
-        let glyph = Glyph { id: key.glyph, x: ox as f32 + key.subpixel as f32 / SUBPIXEL, y: oy as f32 };
+        let glyph = Glyph { id: p.key.glyph, x: ox as f32 + p.key.subpixel as f32 / SUBPIXEL, y: oy as f32 };
         r.render_to_vec(
             |scene| {
-                scene.draw_glyphs(font, size, hint, coords, embolden, Fill::NonZero, Color::BLACK, 1.0, Affine::IDENTITY, None, std::iter::once(glyph));
+                scene.draw_glyphs(&p.font, p.size, p.key.hint, &p.coords, p.embolden, Fill::NonZero, Color::BLACK, 1.0, Affine::IDENTITY, None, std::iter::once(glyph));
             },
             buf,
         );
@@ -101,27 +112,21 @@ impl Cache {
                 (x0, x1, y0, y1) = (x0.min(first), x1.max(last), y0.min(y), y);
             }
         }
-        let m = match y0 < s {
-            true => {
-                let (width, height) = (x1 - x0 + 1, y1 - y0 + 1);
-                let mut alpha = Vec::with_capacity(width * height);
-                for y in y0..=y1 {
-                    alpha.extend((x0..=x1).map(|x| buf[4 * (y * s + x) + 3]));
-                }
-                Some(Arc::new(Mask { left: x0 as i32 - ox, top: y0 as i32 - oy, width, height, alpha }))
+        (y0 < s).then(|| {
+            let (width, height) = (x1 - x0 + 1, y1 - y0 + 1);
+            let mut alpha = Vec::with_capacity(width * height);
+            for y in y0..=y1 {
+                alpha.extend((x0..=x1).map(|x| buf[4 * (y * s + x) + 3]));
             }
-            false => None,
-        };
-        self.masks.insert(key.clone(), m.clone());
-        self.made += 1;
-        self.made_ms += t.elapsed().as_secs_f64() * 1e3;
-        m
-    }
+            Arc::new(Mask { left: x0 as i32 - ox, top: y0 as i32 - oy, width, height, alpha })
+        })
+    })
 }
 
-/// A mask placed on the page: its glyph's origin on whole pixels, and the grey and opacity it is drawn in.
+/// A mask placed on the page: its glyph's origin on whole pixels, and the grey and opacity it is drawn in. Err: the
+/// mask is still to be made, `pending[i]`.
 struct Placed {
-    mask: Arc<Mask>,
+    mask: Result<Arc<Mask>, usize>,
     x: i32,
     y: i32,
     grey: u32,
@@ -138,28 +143,59 @@ pub struct Split<'c> {
     /// whether `rest` draws anything (layers alone do not)
     pub rest_draws: bool,
     placed: Vec<Placed>,
+    pending: Vec<Pending>,
+    waiting: HashMap<Key, usize>,
 }
 
 impl<'c> Split<'c> {
     pub fn new(cache: &'c mut Cache, pictures: &'c mut crate::pictures::Cache) -> Self {
-        Split { cache, pictures, text_to_rest: false, rest: Scene::new(), rest_draws: false, placed: vec![] }
+        Split { cache, pictures, text_to_rest: false, rest: Scene::new(), rest_draws: false, placed: vec![], pending: vec![], waiting: HashMap::new() }
+    }
+
+    /// Makes the masks the page still needs, all together: on every core with the feature "parallel". After painting,
+    /// before `blit` and `boxes`.
+    pub fn finish(&mut self) {
+        if self.pending.is_empty() {
+            return;
+        }
+        let t = std::time::Instant::now();
+        let pending = std::mem::take(&mut self.pending);
+        #[cfg(feature = "parallel")]
+        let made: Vec<_> = {
+            use rayon::prelude::*;
+            pending.par_iter().map(make).collect()
+        };
+        #[cfg(not(feature = "parallel"))]
+        let made: Vec<_> = pending.iter().map(make).collect();
+        self.placed.retain_mut(|p| match p.mask {
+            Err(i) => made[i].clone().map(|m| p.mask = Ok(m)).is_some(),
+            Ok(_) => true,
+        });
+        self.cache.made += made.len();
+        for (p, m) in pending.into_iter().zip(made) {
+            self.cache.masks.insert(p.key, m);
+        }
+        self.waiting.clear();
+        self.cache.made_ms += t.elapsed().as_secs_f64() * 1e3;
     }
 
     /// Each placed glyph's ink box on the page: x0, y0, x1, y1.
     pub fn boxes(&self) -> Vec<[i32; 4]> {
         self.placed
             .iter()
-            .map(|p| {
-                let (x, y) = (p.x + p.mask.left, p.y + p.mask.top);
-                [x, y, x + p.mask.width as i32, y + p.mask.height as i32]
+            .filter_map(|p| {
+                let m = p.mask.as_ref().ok()?;
+                let (x, y) = (p.x + m.left, p.y + m.top);
+                Some([x, y, x + m.width as i32, y + m.height as i32])
             })
             .collect()
     }
 
     /// Draws the placed glyphs over `out` (8-bit grey, `width` wide), rows [from, to) only.
     pub fn blit(&self, out: &mut [u8], width: usize, from: usize, to: usize) {
+        debug_assert!(self.pending.is_empty(), "finish first");
         for p in &self.placed {
-            let m = &p.mask;
+            let Ok(m) = &p.mask else { continue };
             let (x0, y0) = (p.x + m.left, p.y + m.top);
             for my in 0..m.height {
                 let y = y0 + my as i32;
@@ -189,6 +225,8 @@ impl PaintScene for Split<'_> {
         self.rest.reset();
         self.rest_draws = false;
         self.placed.clear();
+        self.pending.clear();
+        self.waiting.clear();
     }
 
     fn push_layer(
@@ -291,9 +329,16 @@ impl PaintScene for Split<'_> {
             let (ix, sub) = (q.div_euclid(SUBPIXEL as i64) as i32, q.rem_euclid(SUBPIXEL as i64) as u8);
             key.glyph = g.id;
             key.subpixel = sub;
-            if let Some(mask) = self.cache.mask(&key, font, font_size, hint, normalized_coords, embolden) {
-                self.placed.push(Placed { mask, x: ix, y: y.round() as i32, grey, alpha });
-            }
+            let mask = match self.cache.masks.get(&key) {
+                Some(Some(m)) => Ok(m.clone()),
+                Some(None) => continue, // no ink
+                None => Err(*self.waiting.entry(key.clone()).or_insert_with(|| {
+                    let coords = normalized_coords.to_vec();
+                    self.pending.push(Pending { key: key.clone(), font: font.clone(), size: font_size, coords, embolden });
+                    self.pending.len() - 1
+                })),
+            };
+            self.placed.push(Placed { mask, x: ix, y: y.round() as i32, grey, alpha });
         }
     }
 

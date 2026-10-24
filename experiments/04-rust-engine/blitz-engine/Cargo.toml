@@ -27,6 +27,8 @@ png = "0.17"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }
 # JPEGs decoded already scaled down (1/2, 1/4, 1/8), which the image crate's decoder cannot (pure Rust)
 jpeg-decoder = { version = "0.3", default-features = false }
+# glyph masks made on every core with "parallel" (already in Blitz's tree, through Stylo)
+rayon = { version = "1", optional = true }
 
 [profile.release]
 strip = true
@@ -34,5 +36,5 @@ strip = true
 [features]
 # Blitz's own timings of each step of a resolve (style, layout, ...), printed to stdout (experiment 08)
 phase-times = ["blitz-dom/log-phase-times"]
-# Blitz builds the paragraphs' text layouts on several threads (rayon)
-parallel = ["blitz-dom/parallel-construct"]
+# Blitz builds the paragraphs' text layouts on several threads, and ours a page's new glyph masks (rayon)
+parallel = ["blitz-dom/parallel-construct", "dep:rayon"]

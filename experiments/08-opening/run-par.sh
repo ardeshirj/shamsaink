@@ -1,7 +1,7 @@
 #!/bin/sh
-# On the device: a chapter's text layout on one core and on both. blitz-open (one thread) and blitz-open-par (Blitz's
-# parallel-construct: the paragraphs' text layouts built on rayon's threads, one a core) at the same documents as
-# run-split.sh, three times each. Appends to results-par.txt.
+# On the device: a first page on one core and on both. blitz-open (one thread) and blitz-open-par (feature
+# "parallel": Blitz's paragraphs' text layouts, and a page's new glyph masks, made on rayon's threads, one a core) at
+# the same documents as run-split.sh, three times each. Appends to results-par.txt.
 #
 #     sh run-par.sh        (RUNS=1 for one run)
 cd "$(dirname "$0")"
