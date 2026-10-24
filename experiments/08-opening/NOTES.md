@@ -79,3 +79,27 @@ rest; memory is the peak. Two runs each after a warm-up (they agree within ~20%,
   for layout and decoded only when drawn, into a cache of limited size (step 2). Memory: the book and its layout
   kept in packed chunks that can be swapped to the cache file, where step 3 drops far chapters and lays them out
   again.
+
+## 2. Pictures decoded when drawn, at the size drawn (Mac)
+- **Blitz** (`04-rust-engine/blitz-lazy-images.patch`, 16 lines changed): a raster picture's size is read from its header
+  and the file kept as it is, instead of decoded to RGBA at full size while the document loads.
+- **Ours** (`blitz-engine/src/pictures.rs`): the scene Blitz paints into (`Split`) finds a picture still in its file
+  form and decodes it at the pixels it covers on the page: a JPEG scaled down while it is decoded (`jpeg-decoder`'s
+  1/2, 1/4, 1/8: the 3625×5250 scans decode at 1813×2625), then each pixel the average of those it covers (colours
+  weighted by opacity, or a transparent PNG gets light halos: Holmes's title). Kept for later pages up to 24 MB.
+- Layout is untouched (it only needs the size); pages without pictures are byte-identical. The five picture pages
+  (Holmes's title, Haji Agha's scans) look the same, a little smoother: vello_cpu had sampled the full-size scans at a
+  quarter, skipping pixels. (Each pixel averages whole source pixels, so between 1× and 2× the weights are uneven.)
+  A first try, the image crate's own decode and resize, peaked at 154 MB: a full decode plus its float buffers.
+
+| | before | after |
+|---|---|---|
+| Haji Agha, opened at the first scan: first page | 116–250 ms, 171 MB | **64–104 ms, 40 MB** |
+| opened at a text page: first page; then the rest | 15 ms, 20 MB; 225–261 ms, 180 MB | 14 ms, 20 MB; **86 ms, 52 MB** |
+| whole book laid out; peak with every page drawn | 523 ms; 284 MB | **95–101 ms; 90 MB** |
+| a scan's page drawn the first time (in one process) | 38 ms (+75 ms decoding at open) | 15–29 ms (61 ms the very first, cold) |
+| Holmes: whole book; first page; median page | 159 ms; 9.4 ms; 0.9 ms | 140–164 ms; 5.6–7.2 ms; 1.0 ms |
+
+- Opening Haji Agha is now like the other books: its time and memory were the scans. What is left of a scan is
+  decoding it when its page is first drawn (15–29 ms here, more on the device; a page ahead could be drawn early).
+- Laying out the rest still holds every document (52–69 MB here): step 3.

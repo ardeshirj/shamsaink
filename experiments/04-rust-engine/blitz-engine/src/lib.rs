@@ -14,6 +14,7 @@ use std::sync::Arc;
 
 pub mod capi;
 mod glyphs;
+mod pictures;
 
 /// The book's files, by path from the EPUB's root.
 pub trait Source: Send + Sync + 'static {
@@ -124,8 +125,10 @@ pub struct Book {
     /// the pages of the documents laid out so far, in spine order
     pub pages: Vec<Page>,
     pub(crate) opts: Options,
-    // kept between pages: the glyph masks, vello_cpu's renderer (its caches) and the colour page for what is not text
+    // kept between pages: the glyph masks, the pictures decoded, vello_cpu's renderer (its caches) and the colour page
+    // for what is not text
     glyphs: glyphs::Cache,
+    pictures: pictures::Cache,
     renderer: VelloCpuImageRenderer,
     rgba: Vec<u8>,
 }
@@ -154,6 +157,7 @@ impl Book {
             pages: vec![],
             opts,
             glyphs: Default::default(),
+            pictures: Default::default(),
             renderer: VelloCpuImageRenderer::new(opts.width, opts.height),
             rgba: vec![],
         }
@@ -219,12 +223,16 @@ impl Book {
                 let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
                 let doc = self.docs[p.doc].as_mut().expect("a page's document is laid out").as_mut();
                 doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
+                let mut split = glyphs::Split::new(&mut self.glyphs, &mut self.pictures);
+                split.text_to_rest = true;
+                paint_scene(&mut split, doc, 1.0, w, h, 0, 0);
+                let rest = split.rest;
                 self.renderer.reset();
                 self.renderer.render_to_vec(
                     |scene| {
                         let page = peniko::kurbo::Rect::new(0.0, 0.0, w as f64, h as f64);
                         scene.fill(peniko::Fill::NonZero, Default::default(), peniko::Color::WHITE, None, &page);
-                        paint_scene(scene, doc, 1.0, w, h, 0, 0);
+                        scene.append_scene(rest, Default::default());
                     },
                     &mut self.rgba,
                 );
@@ -248,7 +256,7 @@ impl Book {
         let (w, h, m) = (self.opts.width, self.opts.height, self.opts.margin as f64);
         let doc = self.docs[p.doc].as_mut().expect("a page's document is laid out").as_mut();
         doc.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: p.top - m });
-        let mut split = glyphs::Split::new(&mut self.glyphs);
+        let mut split = glyphs::Split::new(&mut self.glyphs, &mut self.pictures);
         paint_scene(&mut split, doc, 1.0, w, h, 0, 0);
         // the page's slice only: blank above the top margin's end and below the page's last line
         let (from, to) = (m as usize, ((m + p.bottom - p.top).ceil() as usize).min(h as usize));

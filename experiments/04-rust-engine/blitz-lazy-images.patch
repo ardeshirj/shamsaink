@@ -1,0 +1,31 @@
+diff --git a/packages/blitz-dom/src/net.rs b/packages/blitz-dom/src/net.rs
+index 786b5bd..5e7cc7d 100644
+--- a/packages/blitz-dom/src/net.rs
++++ b/packages/blitz-dom/src/net.rs
+@@ -569,21 +569,15 @@ impl NetHandler for ResourceHandler<ImageHandler> {
+ 
+ impl ImageHandler {
+     fn parse(&self, bytes: Bytes) -> Result<Resource, String> {
++        // Only the size, from the header; the data is the file as it is, decoded by the scene the page is painted
++        // into, at the size it is drawn (indium-reader: experiment 08)
+         let image_err = match image::ImageReader::new(Cursor::new(&bytes))
+             .with_guessed_format()
+             .expect("IO errors impossible with Cursor")
+-            .decode()
++            .into_dimensions()
+         {
+-            Ok(image) => {
+-                let width = image.width();
+-                let height = image.height();
+-                let raw_rgba8_data = image.into_rgba8().into_raw();
+-                return Ok(Resource::Image(
+-                    self.kind,
+-                    width,
+-                    height,
+-                    Arc::new(raw_rgba8_data),
+-                ));
++            Ok((width, height)) => {
++                return Ok(Resource::Image(self.kind, width, height, Arc::new(bytes.to_vec())));
+             }
+             Err(e) => e.to_string(),
+         };

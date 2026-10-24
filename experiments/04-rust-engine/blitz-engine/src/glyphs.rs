@@ -1,12 +1,13 @@
 //! Glyphs drawn straight into the grey page from a cache of masks, as crengine and the Go engine do, instead of
 //! vello_cpu turning every glyph into an outline and strips on every page (experiment 07). `Split` is the scene Blitz's
 //! painter draws into: plain glyph runs (a solid colour, no skew, not huge) become placed masks; everything else is
-//! recorded for vello_cpu, which then runs only on pages that have something else on them.
+//! recorded for vello_cpu, which then runs only on pages that have something else on them. Pictures still in their
+//! files are decoded on the way, at the size drawn (`pictures`).
 
 use anyrender::{Filter, Glyph, ImageRenderer as _, NormalizedCoord, Paint, PaintRef, PaintScene, recording::Scene};
 use anyrender_vello_cpu::VelloCpuImageRenderer;
 use peniko::kurbo::{Affine, Rect, Shape, Stroke, Vec2};
-use peniko::{BlendMode, Color, Fill, FontData, StyleRef};
+use peniko::{BlendMode, Color, Fill, FontData, ImageBrush, StyleRef};
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -102,6 +103,9 @@ struct Placed {
 /// The scene Blitz's painter draws a page into.
 pub struct Split<'c> {
     cache: &'c mut Cache,
+    pictures: &'c mut crate::pictures::Cache,
+    /// all text to vello_cpu too, as before the glyph layer
+    pub text_to_rest: bool,
     pub rest: Scene,
     /// whether `rest` draws anything (layers alone do not)
     pub rest_draws: bool,
@@ -109,8 +113,8 @@ pub struct Split<'c> {
 }
 
 impl<'c> Split<'c> {
-    pub fn new(cache: &'c mut Cache) -> Self {
-        Split { cache, rest: Scene::new(), rest_draws: false, placed: vec![] }
+    pub fn new(cache: &'c mut Cache, pictures: &'c mut crate::pictures::Cache) -> Self {
+        Split { cache, pictures, text_to_rest: false, rest: Scene::new(), rest_draws: false, placed: vec![] }
     }
 
     /// Each placed glyph's ink box on the page: x0, y0, x1, y1.
@@ -194,6 +198,15 @@ impl PaintScene for Split<'_> {
             return;
         }
         self.rest_draws = true;
+        if let Paint::Image(img) = brush
+            && crate::pictures::is_file(img.image)
+        {
+            let to_brush = brush_transform.unwrap_or(Affine::IDENTITY);
+            let Some((pic, scale)) = self.pictures.get(img.image, transform * to_brush) else { return };
+            let brush = ImageBrush { image: &pic, sampler: img.sampler };
+            self.rest.fill(style, transform, Paint::Image(brush), Some(to_brush * scale), shape);
+            return;
+        }
         self.rest.fill(style, transform, brush, brush_transform, shape);
     }
 
@@ -216,7 +229,8 @@ impl PaintScene for Split<'_> {
         let plain = matches!(style, StyleRef::Fill(_))
             && glyph_transform.is_none_or(|g| g == Affine::IDENTITY)
             && (a, b, c, d) == (1.0, 0.0, 0.0, 1.0)
-            && font_size <= MAX_SIZE;
+            && font_size <= MAX_SIZE
+            && !self.text_to_rest;
         let colour = match brush {
             Paint::Solid(colour) if plain => colour,
             _ => {

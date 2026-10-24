@@ -133,7 +133,8 @@ time to draw a page, before and after each step:
 ```sh
 (cd docker && docker build -t eink-rust .)
 ./go.sh sh -c 'cd probes && git clone https://github.com/DioxusLabs/blitz.git && cd blitz && git checkout 21edc92 \
-  && git apply ../../blitz-cull-lines.patch'   # Blitz's painter skips lines off the page ("Drawing faster")
+  && git apply ../../blitz-cull-lines.patch ../../blitz-lazy-images.patch'
+# the first: Blitz's painter skips lines off the page ("Drawing faster"); the second: pictures decoded when drawn (08)
 C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
 ./go.sh sh -c "cd probes/parley-probe && cargo run --release -- $C/spanned/OEBPS/text/sec002.xhtml \
   $C/spanned/OEBPS/fonts $C/chrome/sec002.json /x/04-rust-engine/out/parley-sec002"

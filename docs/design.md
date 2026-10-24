@@ -174,7 +174,9 @@ Hinting costs nothing (the same 132 ms without it).
 | Switch vello_cpu's glyph cache on (off by default; anyrender never turns it on) | anyrender_vello_cpu | a one-line patch | none: render time up as much as scene time down, and a 64 MB atlas | dropped (07) |
 | No white background: transparent, white added while converting | our `Book::draw` | ours | Mac 3.5 → 3.3 ms | done (07) |
 | **Our glyph layer:** glyphs drawn once into masks and copied straight onto the grey page; vello_cpu only for what is not text, only on pages that have any | ours (`blitz-engine/src/glyphs.rs`) | ours | **device 206–258 → 20 ms**, crengine's speed | done (07) |
-| Lay out only the chapter being read, page counts kept from last time; or a disk cache of the laid-out book, as crengine | our `Book::open` | ours | opening; memory (Blitz keeps every chapter laid out) | to try |
+| Lay out the chapter being opened first, the rest after | our `Book` (`layout`, `layout_rest`) | ours | first page 3–10× sooner, half the memory | done (08) |
+| Pictures decoded when drawn, at the size drawn (only their size read for layout) | Blitz's image loading; our `pictures.rs` | a patch to Blitz (`blitz-lazy-images.patch`) and ours | Haji Agha: open at a scan 116–250 → 64–104 ms, 171 → 40 MB | done (08) |
+| Chapters far from the reader let go; page counts kept on disk, as crengine's cache | our `Book` | ours | memory; reopening | to try (08) |
 
 Drawing is done (experiment 07's NOTES.md): 20 ms a page on the reMarkable 2, against crengine's 17–19 ms. What is
 left against crengine is opening (0.7–2.5 s, crengine 57–68 ms from its cache) and memory (2× crengine's).
@@ -184,6 +186,7 @@ left against crengine is opening (0.7–2.5 s, crengine 57–68 ms from its cach
 | Patch | On | Why | Where |
 |---|---|---|---|
 | line culling | Blitz at 21edc92 | its painter drew every line of a paragraph crossing the page's edge | `experiments/04-rust-engine/blitz-cull-lines.patch` |
+| pictures left undecoded | Blitz at 21edc92 | it decoded every picture at full size while loading and kept it (a scan: 76 MB); now only the size, the file kept for our `pictures.rs` to decode when drawn | `experiments/04-rust-engine/blitz-lazy-images.patch` |
 | measuring switches | Blitz | `BLITZ_NO_HINT`, `BLITZ_NO_GLYPHS`, for one profiling build only | `experiments/06-device-timing/blitz-knobs.patch` |
 | justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
 | trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |

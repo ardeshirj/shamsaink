@@ -3,7 +3,7 @@ name = "blitz-engine"
 version = "0.1.0"
 edition = "2024"
 
-# Blitz from its repository (cloned into ../probes/blitz at a pinned commit, with ../blitz-cull-lines.patch applied; its
+# Blitz from its repository (cloned into ../probes/blitz at a pinned commit, with ../blitz-cull-lines.patch and ../blitz-lazy-images.patch applied; its
 # crates.io releases lag behind), without
 # system fonts (fontconfig, C), accessibility or the network layer: files only.
 # rlib for the blitz-pages tool, staticlib for Go (cgo) through the C interface in capi.rs
@@ -25,6 +25,8 @@ png = "0.17"
 # Blitz takes the image crate with every format off, so no picture was ever decoded (found in 08): ours switch the
 # common ones on (pure Rust)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }
+# JPEGs decoded already scaled down (1/2, 1/4, 1/8), which the image crate's decoder cannot (pure Rust)
+jpeg-decoder = { version = "0.3", default-features = false }
 
 [profile.release]
 strip = true
