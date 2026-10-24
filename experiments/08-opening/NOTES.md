@@ -192,7 +192,7 @@ any other page. Counting on the Mac (`blitz-open` now prints the glyph masks mad
 masks, each a glyph drawn alone by vello_cpu (0.9 ms each on the device), and *Buried Alive*'s second chapter made
 as many again (252) as its first: the masks were keyed by the font's blob, and every document loads the book's fonts
 again as new blobs. Blitz's first style and layout of a full chapter (155–208 ms; the next one 44 ms) is the other
-cost: a warm-up paid once, not yet split.
+cost (not a warm-up, as first read: see below).
 
 Fixed (Mac; pages byte-identical unless said):
 - **Masks keyed by the font file** (its length and its first and last 16 KB, hashed once per blob): *Buried Alive*'s
@@ -217,11 +217,43 @@ Three runs agreeing within 2%. In ms, before → after:
 - **Every first open is now 0.17–0.38 s** (but at a scan), against crengine's 0.47–2.24 s; *Buried Alive*'s pages draw
   in 13 ms (crengine 16.6): its masks now serve every chapter.
 - **A glyph mask costs 0.45 ms on the device** (14.5 µs on the Mac, ×31): 110–130 ms of a book's first page.
-- **Blitz's first style and layout is unchanged:** 152–203 ms on a full chapter, 44 ms for the next one. With the
-  masks, it is most of what is left of a first open.
+- **Blitz's first style and layout is unchanged:** 152–203 ms on a full chapter, 44 ms for the next one (a shorter
+  one: below). With the masks, it is most of what is left of a first open.
 - **Holmes's title page** is an SVG, drawn through vello_cpu (284 ms; 07 drew no pictures at all). One page.
 - **A scan still takes 1.1–1.5 s** to draw the first time: jpeg-decoder on ARMv7 has no SIMD, and decoding at a quarter
   saves only the inverse DCT, not the reading of the whole file. crengine spends about 0.3 s a scan.
+
+## A chapter's layout: what it is (Mac, 2026-10-24)
+- **Not a warm-up.** `blitz-open` now also opens a second book in the same process at the same document: it pays the
+  same (*Buried Alive* chapter 1: 8.4–8.8 ms against 8.9–11.3; Holmes's last story 9.8–10.0 against 10.4–10.5). The
+  "next document" of the table above was cheaper because it is shorter: *Buried Alive*'s chapter 2 has 9 pages,
+  chapter 1 30. On the device both are ~5 ms a page (154 ms / 30, 44 ms / 9). A first page pays for its whole chapter.
+- **Where it goes** (Blitz's own phase timers, `--features phase-times`, then probes in Blitz and a copy of Parley, now
+  removed): ~85% is building the paragraphs' text layouts (Parley's `build_into`: 8–10 ms for *Buried Alive*'s
+  60 KB chapter, as much for Holmes's 54 KB), the CSS cascade 0.5–2 ms, Taffy's layout and line breaking under 1 ms.
+  Of `build_into` (`perf`, *Buried Alive*): HarfRust's shaping ~45%, text analysis (bidi, break points) ~22%, a font
+  picked for every grapheme (fontique query, charmaps) ~14%, glyphs copied into runs and the rest ~19%.
+- **Both cores:** Blitz builds the text layouts on rayon's threads with its `parallel-construct` (our feature
+  `parallel`). On the Mac with two threads, a chapter's layout 9.4–13.3 → 6–8 ms (one run of nine 22.7: noise);
+  every page of the three books byte-identical.
+
+### On the device (`out/remarkable2-par.txt`)
+`run-par.sh`, three runs agreeing within a few ms (but one second book). In ms, one core → both:
+
+| | chapter's layout (resolve) | first page | then the rest | a second book, same document |
+|---|---|---|---|---|
+| *Buried Alive*, chapter 1 | 160–161 → **94** | 324–329 → **253–258** | 471–476 → 334–351 | 300–301 → 235–277 |
+| Holmes, last story | 202–203 → **132** | 382–388 → **310** | 2302–2306 → 1635–1725 | 367–374 → 292–294 |
+| Haji Agha, a text page | 10.6–10.8 → 12.2–12.3 | 173–174 → 174–180 | 1353–1361 → 1234–1236 | 160 → 158–160 |
+
+- **Both cores take 70–75 ms off a chapter's first page** (layout 1.5–1.7× faster) and 0.1–0.7 s off laying out the
+  rest; memory the same (16–29 MB at the first page), every page the same as on one core, median page unchanged.
+  Haji Agha's pages are one paragraph each, so nothing to share between threads.
+- **No warm-up on the device either:** a second book at the same chapter pays the same (155 against 161 ms).
+- **What is left of a first open:** the chapter's layout 94–132 ms, the glyph masks 66–129 ms (the most now in
+  *Buried Alive* and Haji Agha), parse 10–21 ms, the rest 20–30 ms.
+- (Also in the profile, reading the whole book through: blitting glyph masks onto the page, `glyphs::Split::blit`,
+  is a quarter of all the time; it is most of a 13–20 ms page.)
 
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
@@ -239,4 +271,12 @@ scp out/bundle/bin/blitz-open root@10.11.99.1:/home/root/indium-08/bin/
 scp out/bundle/run-split.sh root@10.11.99.1:/home/root/indium-08/
 ssh root@10.11.99.1 'sh /home/root/indium-08/run-split.sh'
 scp root@10.11.99.1:/home/root/indium-08/results-split.txt out/remarkable2-split.txt
+```
+A chapter's layout on one core and on both (`run-par.sh`; only the two `blitz-open`s and the script need copying if
+the bundle is still on the device):
+```sh
+scp out/bundle/bin/blitz-open out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/indium-08/bin/
+scp out/bundle/run-par.sh root@10.11.99.1:/home/root/indium-08/
+ssh root@10.11.99.1 'sh /home/root/indium-08/run-par.sh'
+scp root@10.11.99.1:/home/root/indium-08/results-par.txt out/remarkable2-par.txt
 ```
