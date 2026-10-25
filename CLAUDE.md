@@ -55,34 +55,48 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   through Blitz, webrender and the Go engine against Chromium. Lines: all three 98–99% Chromium's (once Chromium's
   own `text-wrap: pretty` is set aside, and webrender's hyphenation). Pages: Blitz 383 of 388, webrender 323, Go 89
   (rtlbook's CSS subset). Whole book as it is: Blitz ~0.25 s and 71 MB, the Go engine the same time and 88 MB,
-  webrender ~1 s and 72 MB for each chapter. So Blitz, not webrender, looks like the engine for other books (to decide). The maintainer
+  webrender ~1 s and 72 MB for each chapter. So Blitz, not webrender, for other books (to decide). The maintainer
   also wants Blitz considered for FarsiEPUB's books (2026-10-23): one engine for all; its cost is close to Go's; on
   those books its line differences from Chromium are word-box widths, not visible (04's NOTES.md).
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
-  closed to third-party apps); PocketBook for read-along (official SDK, sound works); a Raspberry Pi Zero 2 W ($15,
-  about an e-reader's speed) as the bench for real timings before buying an e-reader.
+  closed to third-party apps); PocketBook for read-along (official SDK, sound works). On hand: the maintainer's
+  **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
+  driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (mentioned 2026-10-24; reported as a
+  1 GHz MediaTek MT8113, 512 MB, 6.8" 300 ppi; cores to check), where our pages go on a real screen.
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
+## Where things are (2026-10-24)
+- **Timing on a device:** experiments 06–08 on the reMarkable 2 (06, 07, 08's NOTES.md). **KOReader's crengine on the
+  same device** is the bar. Blitz now, built with NEON and the feature `parallel` (both cores), against crengine:
+  a page 13–20 ms (16–19); a first open 0.12–0.28 s (0.47–2.25 s); a reopen from its cache 50–57 ms for Haji Agha,
+  128–241 ms on long chapters (57–85 ms); memory read through 22 / 43 / 56 MB (18 / 29 / 20); a scan's first draw
+  1.1–1.5 s (about 0.3 s).
+- **How (07, 08):** our glyph layer between Blitz's painter and vello_cpu (`blitz-engine/src/glyphs.rs`; 266 → 20 ms a
+  page); only the chapter being opened laid out first, the rest after; pictures decoded when drawn, at the size drawn
+  (`pictures.rs`, `blitz-lazy-images.patch`); only the last chapters used kept laid out; masks keyed by font file and
+  made on both cores; Blitz's text layouts on both cores (`parallel-construct`); a cache file per book, pages and
+  masks (`saved.rs`, `Book::save` / `restore`). Pages byte-identical throughout unless NOTES.md says otherwise.
+- **Haji Agha** (Internet Archive OCR EPUB) is the first Farsi book tried that rtlbook did not make: right-to-left
+  without `dir` works; it found three bugs, fixed (pictures never decoded, pictures outside lines, page bottoms).
+- **Left against crengine:** a reopen's own chapter layout (Blitz cannot keep it on disk; idea, not tried: lay out
+  the part of the chapter around the page shown first), memory (1.2–2.8×), scans (jpeg-decoder has no SIMD on ARM),
+  Holmes's SVG title page (284 ms) and its last story's first page (65 ms to draw, not yet split).
+- **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
+  book: none of 08's opening or the cache), e-ink output and input, read-along (SMIL only shown with crengine, 02).
+
 ## Next steps (not decided)
-1. Decide which engine takes the books the Go engine is not for: experiment 05 points to Blitz over webrender.
-   Not yet tried: a Farsi book that is not rtlbook's, and Blitz's memory (it keeps every document laid out).
-2. Timing on a device: `experiments/06-device-timing` (NOTES.md), on a reMarkable 2 (Cortex-A7, as slow as a Kobo;
-   the maintainer's, used instead of buying a Pi Zero 2 W). First run: a page in 63–105 ms (Go) and 266–332 ms
-   (Blitz, 73–81× the Mac where all else is 10–25×); the whole book laid out in 0.7–2.6 s (Blitz) and 1.5–4.9 s (Go).
-   With NEON on (`+neon`, which Rust's ARMv7 target leaves off) Blitz draws in 206–257 ms: glyphs redrawn every page
-   (127 ms; hinting costs nothing) and a fixed 57 ms (a blank RGBA page, then grey). **KOReader's crengine on the same
-   device** is the bar: a page in 17–19 ms, a book opened in 0.5–2.2 s the first time and ~60 ms reopened from its
-   cache of laid-out books, 18–29 MB. **Experiment 07** (NOTES.md) took Blitz's page to **20 ms** on the device
-   (crengine's speed; 3–5× faster than the Go engine), with our own glyph layer between Blitz's painter and vello_cpu
-   (`blitz-engine/src/glyphs.rs`); vello_cpu's own glyph cache was tried and dropped. Left against crengine: opening
-   (no cache of laid-out books) and memory (2×). Not decided what to chase next.
-3. Then the e-ink output (FBInk, partial refresh of the highlighted word) on a Kobo, and sound on a PocketBook.
-4. Propose the go-toolkit trim to Readium; report the go-text justification bug (the maintainer posts from their
-   GitHub account).
+1. **Experiment 09 on the Kindle:** the 08 timing bundle with KOReader's crengine beside it (do two cores help
+   there?), then our pages on its screen through FBInk: drawn page to screen, and a partial refresh of one word.
+2. Decide Blitz as the one engine for all books, FarsiEPUB's included (the measurements point there; the Go engine
+   stays the reference), then 08's opening and cache through the Go interface: the start of the reader.
+3. Read-along (sound on a PocketBook), then the speed items left above if they still matter in use.
+4. Upstream (the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text
+   justification bug; to Blitz, the line culling (`blitz-cull-lines.patch`), pictures sized from their headers and
+   decoded when drawn (`blitz-lazy-images.patch`), and the `image` crate taken with every format off.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.
