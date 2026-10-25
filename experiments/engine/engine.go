@@ -2,7 +2,7 @@
 // readium/go-toolkit, owns the screen and the narration; an engine lays the book out once, keeps it, draws pages into
 // buffers the reader owns and says where an element is. Engines register by name: "gotext" (experiment 03, pure Go)
 // always, "cre" (crengine through cgo, experiment 02) with -tags cre, "blitz" (Rust, experiment 04) with -tags blitz.
-// See docs/engine-design.md.
+// See docs/design.md, section 1.
 package engine
 
 import (

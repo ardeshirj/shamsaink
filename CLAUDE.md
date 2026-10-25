@@ -40,8 +40,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   Its `compare.sh` (every word in a span, then ours, crengine and Chromium say where it went) is how any engine is
   judged.
 - **Engines sit behind one Go interface,** `experiments/engine` (`Document`: pages, draw into a Go-owned buffer, an
-  id's page and boxes): "gotext" (03) and "cre" (02, `-tags cre`). Why stateful and not one call per page:
-  `docs/engine-design.md`, which also checks an outside Go + Rust design discussion against our measurements.
+  id's page and boxes): "gotext" (03), "cre" (02, `-tags cre`), "blitz" (04, `-tags blitz`). Why stateful and not
+  one call per page, and every part from the EPUB down to the ink: `docs/design.md`.
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
   all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
