@@ -73,6 +73,24 @@ Also, Blitz:
 - **Memory as on the reMarkable;** 210 MB free is plenty.
 
 ## Step 2: our pages on its screen (2026-10-25, `show.sh`)
+
+**How it works.** The engine runs on the Kindle: nothing is drawn ahead on the Mac, no picture is sent. The Mac only
+builds `blitz-show` (Blitz with our pagination and glyph layer, one static 13 MB ARM program needing nothing from the
+Kindle) and copies it, with the book's files unpacked (XHTML, CSS, fonts), to `/mnt/us/indium-09`; `show.sh` only
+starts it with its arguments, over SSH. Then, on the Kindle's CPU:
+1. **Lay out:** read the chapter's XHTML and CSS, shape the Farsi, break the lines, cut the pages (~650 ms here).
+2. **Draw:** paint the page into memory, 1236×1648 pixels at a byte of grey each, about 2 MB (~123 ms).
+3. **Into the screen's memory:** Linux shows it as a file, `/dev/fb0`; the page's bytes are written there (~6 ms).
+   On e-ink nothing visible changes yet.
+4. **Refresh:** the e-ink controller is told which rectangle to update and with which waveform (KOReader's `fbink`
+   sends that command and nothing else), and moves the ink: 383 ms for the page with a flash, 140 ms for an underline.
+
+Each word after that repeats 3 and 4 for a strip under it. KOReader's part: its SSH server, and the Kindle's own
+interface paused while it is open; it draws nothing for us (we draw over its screen, which it takes back on a
+touch). A reader app is the same program with more: the `.epub` read directly, touches to turn pages, its place
+kept, started from a launcher (KUAL) instead of KOReader; FBInk's library linked in, not `fbink` run for each refresh
+(~10 ms saved a time).
+
 - **The screen** (FBInk's `-e`): 1236×1648, 300 dpi, 8-bit grey (`Y8`), rows 1248 bytes long, a MediaTek controller
   (`hwtcon_v2`; FBInk: "PaperWhite 5, Malbec on Bellatrix"), drawn upright (the controller rotates).
 - **KOReader's own `fbink`** (`/mnt/us/koreader/fbink`) is built without images, but refreshes any rectangle of the
