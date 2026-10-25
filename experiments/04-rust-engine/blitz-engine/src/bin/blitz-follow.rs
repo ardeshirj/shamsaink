@@ -7,8 +7,8 @@
 //! on the screen when a word's time comes is not interrupted: the word is skipped, and the latest word due is shown
 //! once the screen is free. A word on the next page turns the page (drawn, GC16, flashing). Logs each word shown (its
 //! time on the clock, how late its refresh was sent, words skipped before it) and a summary. Without a framebuffer
-//! (the Mac) it stops after placing the words. FBINK as in blitz-show; FONT_SIZE is the text's size in px (44, about
-//! 10.5 pt on the Kindle's 300 ppi screen); LEAD_MS (0) starts the clock that long after "clock started" is printed,
+//! (the Mac) it stops after placing the words. FBINK as in blitz-show; FONT_SIZE is the text's size in px (50, about
+//! 12 pt on the Kindle's 300 ppi screen); LEAD_MS (0) starts the clock that long after "clock started" is printed,
 //! for a player elsewhere that takes time to start (`09-kindle/follow-audio.sh`).
 //!
 //!     blitz-follow BOOK_DIR FONTS_DIR|- SMIL DURATIONS [SECONDS [FROM [WAVEFORM]]]
@@ -202,7 +202,7 @@ fn main() {
     let from: usize = args.get(6).map(|s| s.parse().unwrap()).unwrap_or(0);
     let waveform = args.get(7).map(String::as_str).unwrap_or("A2");
     let fbink = std::env::var("FBINK").unwrap_or("/mnt/us/koreader/fbink".into());
-    let font_size = std::env::var("FONT_SIZE").ok().and_then(|v| v.parse().ok()).unwrap_or(44.0);
+    let font_size = std::env::var("FONT_SIZE").ok().and_then(|v| v.parse().ok()).unwrap_or(50.0);
     let opts = Options { width: 1236, height: 1648, font_size, ..Options::default() };
     let (w, h) = (opts.width as usize, opts.height as usize);
 

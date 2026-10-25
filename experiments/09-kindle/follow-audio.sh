@@ -1,9 +1,9 @@
 #!/bin/sh
 # On the Mac: follow.sh started on the Kindle over SSH and, when it prints "clock started", Buried Alive's chapter 1
 # played here (the narration's MP3s from FarsiEPUB's folder, with afplay), so the voice and the underline run
-# together. afplay takes ~0.3 s to start: the Kindle's clock runs LEAD_MS (300) after "clock started", and each MP3
-# is started at its own time on the clock (the lengths of those before it), so its start-up does not add up; afplay
-# is warmed up first (its very first start is ~0.9 s). If the underline is still ahead of the voice, raise LEAD_MS;
+# together. afplay takes ~0.3 s to start: the Kindle's clock runs LEAD_MS (200, by ear) after "clock started", and
+# each MP3 is started at its own time on the clock (the lengths of those before it), so its start-up does not add up;
+# afplay is warmed up first (its very first start is ~0.9 s). If the underline is ahead of the voice, raise LEAD_MS;
 # if behind, lower it. Ctrl-C stops both. Needs out/bundle (pack.sh) and the bundle on the Kindle.
 #
 #     ./follow-audio.sh [SECONDS]        (FONT_SIZE=..., LEAD_MS=...)
@@ -19,7 +19,7 @@ stop=$(mktemp -u)
 # the player runs in the background, where Ctrl-C does not reach it: it stops at the mark, its file killed
 quit() { touch "$stop"; pkill -f "afplay $A" 2>/dev/null; sleep 1; pkill -f "afplay $A" 2>/dev/null; rm -f "$stop"; }
 trap 'quit; exit 130' INT TERM
-ssh kindle "FONT_SIZE=${FONT_SIZE:-44} LEAD_MS=${LEAD_MS:-300} sh /mnt/us/indium-09/follow.sh ${1:-180}" |
+ssh kindle "FONT_SIZE=${FONT_SIZE:-50} LEAD_MS=${LEAD_MS:-200} sh /mnt/us/indium-09/follow.sh ${1:-180}" |
   while IFS= read -r line; do
     echo "$line"
     case $line in

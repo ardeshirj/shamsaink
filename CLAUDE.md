@@ -99,9 +99,10 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   first (GL16 best, but its words shake a little in day mode; DU greys them).
 - **Read-along works (09, step 3):** `blitz-follow` underlines FarsiEPUB's narrated *Buried Alive* word by word at its
   SMIL's times (one clock over the MP3s' lengths) while the Mac plays the voice (`follow-audio.sh`; the Kindle's
-  clock waits `LEAD_MS` for `afplay`'s start-up). 201 words, none skipped, each sent 9 ms after its word starts; a
+  clock waits `LEAD_MS`, 200 by ear, for `afplay`'s start-up). 201 words, none skipped, each sent 9 ms after its word starts; a
   page turn 440 ms. 4.3% of the words are shorter than A2's 140 ms: a word due while the screen is busy is skipped.
-  Text now 44 px (34 px looked small at 300 ppi).
+  Text now 44 px (34 px looked small at 300 ppi; maybe a little bigger still). The page turn with its flash feels
+  fine to the maintainer.
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
   book: none of 08's opening or the cache), input, sound on the device.
 

@@ -153,11 +153,15 @@ text, CSS and fonts, without its audio, on the Kindle. `blitz-follow` (`04-rust-
 
 **On the Kindle** (`out/kindle-follow.txt`, the maintainer's run, stopped at 112 s): 313 words timed and placed in
 0.88 s; **201 words underlined, none skipped, each sent 9 ms (median) after its word's start**; one page turn, 440 ms
-(48 ms drawn), the word due during it sent 449 ms late. The maintainer: "Wooohooo! It worked!" Not yet said: whether
-300 ms is the right lead by ear, how the page turn's flash feels mid-sentence, whether 44 px suits.
+(48 ms drawn), the word due during it sent 449 ms late. The maintainer: "Wooohooo! It worked!" Then, by ear and eye:
+the page turn "almost instant and flash is kind of expected with page change"; 44 px "definitely better", with
+"some room with bigger font". The lead: every run so far was at 300 ms (150 and 450 were tried as the run's length,
+not `LEAD_MS`), and nothing about it was noticed. Then `LEAD_MS` 150 and 450: at 450 "voice is getting ahead"
+(the underline held back too long); "200 is fine, it is hard to tell difference in these ms". **`LEAD_MS` is 200 by
+default now.** (A reader playing its own sound has no such lead to guess: it takes the time from its player.)
 
 ## What next
-1. **Read-along by ear:** the lead, the page turn (a gentler one: no flash, or the next page drawn ahead), the size.
+1. **A size above 44 px** (`FONT_SIZE=50`). The lead (200 ms) and the page turn as it is are fine.
 2. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
    its fonts once when it starts, not on every book. Measure `blitz-open` reading the EPUB itself; the reader's cache
    files could live where reading is fast.
