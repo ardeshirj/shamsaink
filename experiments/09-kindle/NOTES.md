@@ -1,7 +1,8 @@
 # Experiment 09: the Kindle (2026-10-25)
 
-The maintainer's jailbroken Kindle Paperwhite 11th gen, where our pages will go on a real screen (step 2, not yet).
-First 08's timings there, with KOReader's crengine beside them, as 06 and 08 did on the reMarkable 2.
+The maintainer's jailbroken Kindle Paperwhite 11th gen, where our pages go on a real screen. First 08's timings
+there, with KOReader's crengine beside them, as 06 and 08 did on the reMarkable 2; then (step 2) our page on its
+screen and one word refreshed at a time.
 
 ## The device
 - **2 Cortex-A53 cores** (`CPU part 0xd03`) running a 32-bit kernel (armv7l, Linux 4.9), NEON, VFPv4; `ondemand`
@@ -71,9 +72,40 @@ Also, Blitz:
   Haji Agha slower (24–25 against 19).
 - **Memory as on the reMarkable;** 210 MB free is plenty.
 
+## Step 2: our pages on its screen (2026-10-25, `show.sh`)
+- **The screen** (FBInk's `-e`): 1236×1648, 300 dpi, 8-bit grey (`Y8`), rows 1248 bytes long, a MediaTek controller
+  (`hwtcon_v2`; FBInk: "PaperWhite 5, Malbec on Bellatrix"), drawn upright (the controller rotates).
+- **KOReader's own `fbink`** (`/mnt/us/koreader/fbink`) is built without images, but refreshes any rectangle of the
+  screen without drawing (`-s top=,left=,width=,height=`, a waveform `-W`, `-w` to wait until the screen is done).
+  So `blitz-show` (`04-rust-engine/blitz-engine`) writes the page's bytes itself into `/dev/fb0` (the buffer shown,
+  from `/sys/class/graphics/fb0/pan`) and runs `fbink -s` for the whole screen or a word's box. Nothing to build or
+  install on the Kindle. FBInk's start is ~10 ms; linking it (C, static with zig) is for the reader.
+- **The page:** *Buried Alive*'s chapter 1 (03's copy with every word in a span, so `Book::find` gives each word's
+  boxes) at the screen's size, 01's margins and text size. The maintainer: "It looks really nice!" Right to left,
+  whole, in place; a word highlighted by inverting its boxes. Some small boxes showed briefly early on (when: not
+  noted; the controller working through a refresh in blocks is a guess). KOReader takes its screen back on a touch.
+- **Times** (`show.sh`, twelve words a waveform; each refresh until the screen is done, `fbink` included). The page:
+  chapter laid out 647–664 ms (from `/mnt/us`), drawn 122–124 ms (its first draw, masks made), written into the
+  framebuffer 5.5–5.9 ms. Then:
+
+  | refresh | ms | |
+  |---|---|---|
+  | whole page, GC16 with a flash | 383–419 | a page turn |
+  | a word, **A2** | **140–143** | black and white only, may leave traces |
+  | a word, DU | 255–261 | black and white only |
+  | a word, GL16 | 316–320 | keeps the greys (smooth letter edges), no flash |
+
+  A word's box written into the framebuffer: 6–7.5 ms (the whole page copied to highlight it: could be the box only).
+  **The size of the box does not matter** (77×90 px and 625×197 px the same). Narration is 2–3 words a second
+  (330–500 ms a word): all three fit, A2 with the most room.
+- **By eye:** the maintainer, watching the three in turn (DU, A2, GL16): "it was getting better as examples moving
+  forward", so GL16 looked best, as expected of the one that keeps the greys. Not yet checked the other way round
+  (each round starts with its own flashing page, which may also clean the screen): `show.sh "GL16 DU"`. If it
+  holds, GL16 for read-along's highlight (it fits a narrated word with little to spare; A2 if a narrator outruns
+  it). One word at a time, held: `show.sh A2 w00020 1 3000` and the like.
+
 ## What next
-1. **Step 2 (the plan): our pages on the Kindle's screen** through FBInk, a page drawn and a partial refresh of one
-   word.
+1. **GL16 against DU in the other order** (above), to settle read-along's highlight.
 2. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
    its fonts once when it starts, not on every book. Measure `blitz-open` reading the EPUB itself; the reader's cache
    files could live where reading is fast.
@@ -86,6 +118,11 @@ COPYFILE_DISABLE=1 tar -C out -cf - bundle | ssh kindle 'mkdir -p /mnt/us/indium
 ssh kindle 'cd /mnt/us/indium-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'   # about an hour (crengine draws every page)
 ssh kindle 'ps | grep -c "[r]un.sh"'           # 0 once it is done
 ssh kindle 'cat /mnt/us/indium-09/results.txt' > out/kindle.txt
+```
+Our page on the screen (step 2; KOReader in front, the bundle already there):
+```sh
+ssh kindle 'sh /mnt/us/indium-09/show.sh'                    # 12 words with each of DU, A2 and GL16
+ssh kindle 'sh /mnt/us/indium-09/show.sh A2 w00020 1 3000'   # one word with A2, held 3 s
 ```
 (`run.sh`'s screensaver guard was added after this run. Its cache runs open *Buried Alive* at chapter 9, 08's at
 chapter 1: both 30 pages.)
