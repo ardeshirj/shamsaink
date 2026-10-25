@@ -58,6 +58,10 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   webrender ~1 s and 72 MB for each chapter. So Blitz, not webrender, for other books (to decide). The maintainer
   also wants Blitz considered for FarsiEPUB's books (2026-10-23): one engine for all; its cost is close to Go's; on
   those books its line differences from Chromium are word-box widths, not visible (04's NOTES.md).
+- **Decided (2026-10-25): Blitz is the one engine, for all books, FarsiEPUB's included.** On rtlbook's books as good
+  as the Go engine; the only one with real CSS (383 of 388 pages); Farsi right without `dir`; at crengine's speed on
+  both devices after 07–08; one static musl binary; no GPL among its 215 crates. The Go engine stays as the
+  reference (rtlbook's books, `compare.sh`); crengine stays the bar. webrender is dropped.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
@@ -89,8 +93,14 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **On the Kindle (09's NOTES.md):** the same static ARMv7 binaries run unchanged, every page identical to the
   reMarkable's; two cores help as there. Against its crengine: a first open 0.28–0.43 s (0.54–2.55 s), a reopen
   0.17–0.38 s (0.09–0.14 s), a page 15–25 ms (19–24). **Its storage is slow:** `/mnt/us` (where books live) is FUSE;
-  the same reopens read from RAM take 50–150 ms, as on the reMarkable. Our bundle reads books unpacked and the fonts
-  on every run; a reader opens one EPUB file and loads fonts once (to measure).
+  the same reopens read from RAM take 50–150 ms, as on the reMarkable. **One EPUB file (09, step 4):** the engine
+  reads the `.epub` as it is (`blitz-engine/src/epub.rs`), pages identical, no slower than the unpacked folder. The
+  slow part on FUSE is the program itself: its 13 MB read page by page as its code first runs, ~640 ms of a cold open
+  and ~120 of a warm one, plus the fallback fonts (up to 0.2 s); copying it to RAM first costs more (0.82 s). **So the
+  reader stays running** and pays that once; a book in it costs its chapter's layout (0.1–0.3 s warm). Memory over
+  many books in one process (09, step 5, `blitz-books`): closing a book gives its memory back with musl's allocator
+  (Haji Agha 65 MB read, 26 closed); ~6 MB stays once, then 0.1–0.2 MB per book opened (cause not found; to watch,
+  not a concern). glibc would keep freed memory; our static binaries use musl.
 - **Our page on an e-ink screen (09, step 2):** `blitz-show` writes the page into `/dev/fb0` and KOReader's own
   `fbink` refreshes the screen or one word's box (nothing installed). Whole page with a flash 383–419 ms; a word
   highlighted A2 140 ms, DU 255–261, GL16 316–320, whatever its size: all fit a narrated word. **The mark is
@@ -101,7 +111,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   SMIL's times (one clock over the MP3s' lengths) while the Mac plays the voice (`follow-audio.sh`; the Kindle's
   clock waits `LEAD_MS`, 200 by ear, for `afplay`'s start-up). 201 words, none skipped, each sent 9 ms after its word starts; a
   page turn 440 ms. 4.3% of the words are shorter than A2's 140 ms: a word due while the screen is busy is skipped.
-  Text now 44 px (34 px looked small at 300 ppi; maybe a little bigger still). The page turn with its flash feels
+  **Text 50 px** (about 12 pt at 300 ppi; 34 looked small, 44 better, 50 "looks great" to the maintainer). The page turn with its flash feels
   fine to the maintainer.
 - **Refreshing the screen (10's NOTES.md): our own ioctls, from Go,** not FBInk. On the Kindle a refresh is one ioctl
   (`MXCFB_SEND_UPDATE_MTK`) and a wait on its marker: under 100 lines of Go, no cgo, worked the first time. Sending
@@ -115,7 +125,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   book: none of 08's opening or the cache), input, sound on the device.
 
 ## Next steps: `docs/roadmap.md`
-The roadmap (2026-10-25): close the proof of concept (stage 0: a size above 44 px, one EPUB from `/mnt/us`, decide
+The roadmap (2026-10-25): close the proof of concept (stage 0, done: text 50 px, one EPUB from `/mnt/us`,
 Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened from KOReader's file manager** (2:
 one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
 read-along in the reader (4, sound on a PocketBook); a stand-alone app only if 3 earns it (5). Upstream any time

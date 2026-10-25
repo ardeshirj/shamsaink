@@ -17,17 +17,22 @@ The parts the reader stands on on a device, and every dependency with its licenc
 
 | Stage | What | Done when |
 |---|---|---|
-| **0. Close the proof of concept** | Commit 09's last changes. The two Kindle items left: a text size above 44 px; one `.epub` file read from `/mnt/us` (not the unpacked bundle). Decide Blitz as the one engine for all books (the Go engine stays the reference). | Notes and CLAUDE.md updated, the engine decision written down |
+| **0. Close the proof of concept** (done, 2026-10-25) | 09's last changes committed. One `.epub` file read from `/mnt/us` (09, step 4: no cost against the unpacked folder; the program's own start is what is slow on FUSE, so the reader is kept running; memory over many books, step 5). The text size: 50 px, by eye. **Blitz is the one engine for all books** (the Go engine stays the reference). | Done |
 | **1. Refresh** (experiment 10) | **Our own ioctls in Go**, not FBInk (10's NOTES.md). Page turns REAGL without a flash (by eye, waveforms look alike in day mode; the flash shows most in night mode); the mark A2. Left: night mode driven by us, how often to flash (stage 3). | Done, but for night mode |
 | **2. A minimal reader** (experiment 11) | Opened from KOReader's file manager. One EPUB; tap or swipe to turn pages; its place kept; reopened at once from its cache (08's opening and cache through the C API, `capi.rs`); a clean way back to KOReader. | The maintainer opens a book from KOReader and reads a chapter without noticing seams |
-| **3. Daily use** | The maintainer reads with it for a week or two. Text size and margins, progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. | It is the reader the maintainer picks for Farsi books |
+| **3. Daily use** | The maintainer reads with it for a week or two. Text size and margins, progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. Memory over days of use (09, step 5: 0.1–0.2 MB more per book opened, cause not found). | It is the reader the maintainer picks for Farsi books |
 | **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). Sound on a PocketBook (needs one); the Mac playing the voice meanwhile, as in 09. | A narrated book read and followed on a device, its sound included |
 | **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
 | **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling, pictures decoded when drawn, the `image` crate with every format off. | — |
 
 ## Stage 2, more closely
 - **Started by KOReader:** a small KOReader plugin (Lua) adds "Open with Indium" for EPUBs and runs our binary with the
-  book's path; when it exits, KOReader redraws its own screen. How a plugin hands over and takes back the screen and
+  book's path; when it exits, KOReader redraws its own screen. **The reader is kept running** once started (09, step
+  4): started from scratch on a cold open its 13 MB program alone costs ~0.64 s read from `/mnt/us` (FUSE) and its
+  fonts up to 0.2 s, so the plugin starts it once and hands it the next book after; a book in a running reader costs
+  its chapter's layout, 0.1–0.3 s. Memory allows it (09, step 5): closing a book gives its memory back (Haji Agha 65 MB
+  read through, 26 once closed); about 6 MB stays once, then 0.1–0.2 MB more per book opened, to watch in stage 3.
+  How a plugin hands over and takes back the screen and
   input without KOReader reacting to our touches is the first thing to find out (`EVIOCGRAB` on the touch device is
   the likely answer).
 - **Our binary owns, while it runs:** the framebuffer and its refreshes (10's code), the touch device (Linux input
@@ -47,5 +52,4 @@ The parts the reader stands on on a device, and every dependency with its licenc
 
 ## Not decided
 - Where the reader's Go code lives once it is no longer an experiment (a `reader/` beside `experiments/`?).
-- The engine decision (stage 0).
 - Whether stage 5 happens at all.

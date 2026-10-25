@@ -119,7 +119,7 @@ sequenceDiagram
 
 | Engine | What it is | Use |
 |---|---|---|
-| **Blitz** ("blitz") | Blitz's CSS and layout, our pagination, glyph layer, pictures and cache | the engine: real CSS, Farsi right, crengine's speed (to decide formally: stage 0) |
+| **Blitz** ("blitz") | Blitz's CSS and layout, our pagination, glyph layer, pictures and cache | the engine (decided 2026-10-25): real CSS, Farsi right, crengine's speed |
 | Go engine ("gotext") | our layout on go-text, rtlbook's CSS subset | the reference on rtlbook's books (94–100% of Chromium's line starts) |
 | crengine ("cre") | KOReader's engine, C++, its own HTML, CSS, pagination | the bar to measure against; GPL-2.0, never shipped |
 
