@@ -132,8 +132,33 @@ kept, started from a launcher (KUAL) instead of KOReader; FBInk's library linked
   maintainer, against GL16 inversion: "It seems easier on eye. It doesn't distract in neither night or day mode."
   **The underline with A2 is read-along's mark.**
 
+## Step 3: a narration followed (2026-10-25, `follow.sh`, `follow-audio.sh`)
+FarsiEPUB's narrated *Buried Alive*, word by word (`buried-alive-narrated-Roya-words.epub`: ElevenLabs's Roya; its
+SMIL made from ElevenLabs's per-character timestamps by FarsiEPUB's experiment 13, `overlay.py … words`), its own
+text, CSS and fonts, without its audio, on the Kindle. `blitz-follow` (`04-rust-engine/blitz-engine`):
+- **One clock:** a SMIL file per chapter, a `par` per word (its id, its MP3, its clip in it); each MP3 holds several
+  paragraphs. A word's time is the lengths of the MP3s before its own (`durations.txt` from FarsiEPUB's narration
+  folder: a reader would take them from the player or the files) plus its clip's start. Chapter 1's 27 MP3s add up to
+  58:09.541, the length its EPUB states.
+- **The words:** 23,771 in the book, median 440 ms (each lasts until the next starts, pauses included); 15% under
+  200 ms, **4.3% under 140 ms** (A2's refresh: و, به, از said fast). So a refresh still on the screen is never
+  interrupted: a word due meanwhile is skipped, the latest due shown once the screen is free.
+- **Each word underlined when its time comes** (A2), a page turned when the next word is on the next page (drawn,
+  GC16 with a flash), the text at 44 px now (`FONT_SIZE`; 34 px is ~8 pt at 300 ppi, small to the maintainer's eye).
+- **The voice, from the Mac** (`follow-audio.sh`): it starts `follow.sh` over SSH and, on its "clock started", plays
+  the chapter's MP3s with `afplay`. First try: the underline ran ahead and the voice "caught up" at each pause. The
+  cause: `afplay` takes ~0.3 s to start (0.9 s the first time), and each MP3 (every ~2 min) started when the last
+  ended. Now the Kindle's clock runs `LEAD_MS` (300) after "clock started", each MP3 is started at its own time on
+  the clock, and `afplay` is warmed up silently first. Ctrl-C stops both sides.
+
+**On the Kindle** (`out/kindle-follow.txt`, the maintainer's run, stopped at 112 s): 313 words timed and placed in
+0.88 s; **201 words underlined, none skipped, each sent 9 ms (median) after its word's start**; one page turn, 440 ms
+(48 ms drawn), the word due during it sent 449 ms late. The maintainer: "Wooohooo! It worked!" Not yet said: whether
+300 ms is the right lead by ear, how the page turn's flash feels mid-sentence, whether 44 px suits.
+
 ## What next
-1. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
+1. **Read-along by ear:** the lead, the page turn (a gentler one: no flash, or the next page drawn ahead), the size.
+2. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
    its fonts once when it starts, not on every book. Measure `blitz-open` reading the EPUB itself; the reader's cache
    files could live where reading is fast.
 
@@ -150,6 +175,11 @@ Our page on the screen (step 2; KOReader in front, the bundle already there):
 ```sh
 ssh kindle 'sh /mnt/us/indium-09/show.sh'                    # 12 words with each of DU, A2 and GL16
 ssh kindle 'sh /mnt/us/indium-09/show.sh A2 w00020 1 3000'   # one word with A2, held 3 s
+```
+A narration followed (step 3), with the voice on the Mac, KOReader's "Keep alive" on:
+```sh
+./follow-audio.sh 180                           # LEAD_MS=450 if the underline is ahead of the voice, 150 if behind
+ssh kindle 'sh /mnt/us/indium-09/follow.sh 180'  # the same, silent
 ```
 (`run.sh`'s screensaver guard was added after this run. Its cache runs open *Buried Alive* at chapter 9, 08's at
 chapter 1: both 30 pages.)

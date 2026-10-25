@@ -5,7 +5,8 @@
 //! the last word go. MARK is how a word is marked: "invert" (its boxes inverted, the default) or "underline" (a black
 //! bar under each box). Prints each step's time. Without a framebuffer (the Mac), writes PNGs instead: the page, the
 //! page with its first word marked, and the page with every word from ID to the page's end marked. FBINK is FBInk's
-//! command-line tool (KOReader's by default); the page is the screen's size, 1236×1648 (WIDTH, HEIGHT).
+//! command-line tool (KOReader's by default); the page is the screen's size, 1236×1648 (WIDTH, HEIGHT), the text
+//! FONT_SIZE px (34, 01's).
 //!
 //!     blitz-show BOOK_DIR FONTS_DIR|- DOC ID [WORDS [WAVEFORM [DELAY_MS [MARK]]]]
 
@@ -179,7 +180,8 @@ fn main() {
     };
     let fbink = std::env::var("FBINK").unwrap_or("/mnt/us/koreader/fbink".into());
     let env = |k: &str, d: u32| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
-    let opts = Options { width: env("WIDTH", 1236), height: env("HEIGHT", 1648), ..Options::default() };
+    let font_size = std::env::var("FONT_SIZE").ok().and_then(|v| v.parse().ok()).unwrap_or(34.0);
+    let opts = Options { width: env("WIDTH", 1236), height: env("HEIGHT", 1648), font_size, ..Options::default() };
     let (w, h) = (opts.width as usize, opts.height as usize);
 
     let t = Instant::now();

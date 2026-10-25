@@ -96,13 +96,17 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   highlighted A2 140 ms, DU 255–261, GL16 316–320, whatever its size: all fit a narrated word. **The mark is
   an underline refreshed with A2** (139–142 ms): a bar under the line's deepest descender, never touching the
   letters; the maintainer: easier on the eye, not distracting in night or day mode. Inverting the word was tried
-  first (GL16 best, but its words shake a little in day mode; DU greys them). Words stepped at a fixed pace so far: no SMIL, no sound.
+  first (GL16 best, but its words shake a little in day mode; DU greys them).
+- **Read-along works (09, step 3):** `blitz-follow` underlines FarsiEPUB's narrated *Buried Alive* word by word at its
+  SMIL's times (one clock over the MP3s' lengths) while the Mac plays the voice (`follow-audio.sh`; the Kindle's
+  clock waits `LEAD_MS` for `afplay`'s start-up). 201 words, none skipped, each sent 9 ms after its word starts; a
+  page turn 440 ms. 4.3% of the words are shorter than A2's 140 ms: a word due while the screen is busy is skipped.
+  Text now 44 px (34 px looked small at 300 ppi).
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
-  book: none of 08's opening or the cache), input, read-along (SMIL only shown with crengine, 02).
+  book: none of 08's opening or the cache), input, sound on the device.
 
 ## Next steps (not decided)
-1. **On the Kindle:** highlight the words of FarsiEPUB's
-   `buried-alive-narrated-Roya-words.epub` at the narration's own timings (its SMIL), silently; a book read as one
+1. **On the Kindle:** read-along judged by ear (the lead, a gentler page turn, the text size); a book read as one
    EPUB file from `/mnt/us`.
 2. Decide Blitz as the one engine for all books, FarsiEPUB's included (the measurements point there; the Go engine
    stays the reference), then 08's opening and cache through the Go interface: the start of the reader.
