@@ -9,21 +9,24 @@
 //! document out again), and the memory held at the end. KEEP is how many documents stay laid out (2). With CACHE,
 //! the book's cache file: read before laying out if it is there (a book opened again), written after reading through.
 //!
-//!     blitz-open BOOK_DIR [FONTS_DIR|-] [DOC [KEEP [CACHE]]]
+//! BOOK is an unzipped EPUB's folder or, ending in `.epub`, the EPUB file itself (read as a reader would: `Epub`).
+//!
+//!     blitz-open BOOK [FONTS_DIR|-] [DOC [KEEP [CACHE]]]
 
-use blitz_engine::{Book, Dir, Options};
+use blitz_engine::{Book, Dir, Epub, Options, Source};
 use std::sync::Arc;
 use std::time::Instant;
 
 /// The spine's documents, from the OPF the container names (paths from the EPUB's root).
-fn spine(dir: &std::path::Path) -> Vec<String> {
+fn spine(src: &dyn Source) -> Vec<String> {
     let attr = |tag: &str, name: &str| -> Option<String> {
         let i = tag.find(&format!("{name}=\""))? + name.len() + 2;
         Some(tag[i..i + tag[i..].find('"')?].to_string())
     };
-    let container = std::fs::read_to_string(dir.join("META-INF/container.xml")).unwrap();
+    let text = |path: &str| String::from_utf8(src.read(path).unwrap_or_else(|| panic!("no {path}"))).unwrap();
+    let container = text("META-INF/container.xml");
     let opf_path = attr(&container[container.find("<rootfile").unwrap()..], "full-path").unwrap();
-    let opf = std::fs::read_to_string(dir.join(&opf_path)).unwrap();
+    let opf = text(&opf_path);
     let base = opf_path.rsplit_once('/').map(|(b, _)| format!("{b}/")).unwrap_or_default();
     let mut hrefs = std::collections::HashMap::new();
     for item in opf.split("<item ").skip(1) {
@@ -51,13 +54,17 @@ fn main() {
     let t = Instant::now();
     let fonts = args.get(2).filter(|d| *d != "-").map(|d| fallback_fonts(d)).unwrap_or_default();
     let fonts_ms = ms(t);
-    let files = spine(&dir);
+    let src: Arc<dyn Source> = if args[1].ends_with(".epub") {
+        Arc::new(Epub::open(&dir).unwrap())
+    } else {
+        Arc::new(Dir(dir.clone()))
+    };
+    let files = spine(src.as_ref());
     let mut opts = Options::default();
     if let Some(k) = args.get(4) {
         opts.keep = k.parse().unwrap();
     }
     let mut px = vec![0u8; (opts.width * opts.height) as usize];
-    let src: Arc<Dir> = Arc::new(Dir(dir.clone()));
 
     if let Some(i) = args.get(3).map(|d| d.parse::<usize>().unwrap()) {
         let t = Instant::now();

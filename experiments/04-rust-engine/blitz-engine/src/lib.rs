@@ -33,6 +33,9 @@ impl Source for Dir {
     }
 }
 
+mod epub;
+pub use epub::Epub;
+
 /// Documents get URLs under this root, so that relative links resolve to paths in the book.
 const ROOT: &str = "file:///book/";
 

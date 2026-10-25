@@ -17,11 +17,12 @@ docker run --rm -v "$X":/x -v eink-cargo:/cargo -w /x/04-rust-engine/blitz-engin
   CARGO_TARGET_DIR=/x/04-rust-engine/out/target-neon \
     cargo build -q --release --bin blitz-pages --bin blitz-open --target armv7-unknown-linux-musleabihf &&
   CARGO_TARGET_DIR=/x/04-rust-engine/out/target-neon-par \
-    cargo build -q --release --features parallel --bin blitz-open --bin blitz-show --bin blitz-follow --target armv7-unknown-linux-musleabihf'
+    cargo build -q --release --features parallel --bin blitz-open --bin blitz-show --bin blitz-follow --bin blitz-books --target armv7-unknown-linux-musleabihf'
 T=armv7-unknown-linux-musleabihf/release
 cp ../04-rust-engine/out/target-neon/$T/blitz-pages ../04-rust-engine/out/target-neon/$T/blitz-open $O/bin/
 cp ../04-rust-engine/out/target-neon-par/$T/blitz-open $O/bin/blitz-open-par
-cp ../04-rust-engine/out/target-neon-par/$T/blitz-show ../04-rust-engine/out/target-neon-par/$T/blitz-follow $O/bin/
+cp ../04-rust-engine/out/target-neon-par/$T/blitz-show ../04-rust-engine/out/target-neon-par/$T/blitz-follow \
+  ../04-rust-engine/out/target-neon-par/$T/blitz-books $O/bin/
 cp -R ../03-own-layout/out/cmp/buried-alive/src $O/books/buried-alive
 cp ../03-own-layout/out/cmp/buried-alive/book.epub $O/books/buried-alive.epub
 cp -R ../03-own-layout/out/cmp/buried-alive/spanned $O/books/buried-alive-spanned
@@ -34,6 +35,6 @@ cp -R ../08-opening/book/haji-agha/src $O/books/haji-agha
 cp ../08-opening/book/haji-agha/book.epub $O/books/haji-agha.epub
 cp ../05-real-css/out/fonts/*.ttf $O/fonts/holmes/
 cp ../08-opening/book/fonts/*.ttf $O/fonts/haji-agha/
-cp run.sh show.sh follow.sh ../01-renderers/koreader/crebench.lua $O/
+cp run.sh run-epub.sh show.sh follow.sh ../01-renderers/koreader/crebench.lua $O/
 file $O/bin/* | sed 's/,.*stripped//'
 du -sh $O

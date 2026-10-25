@@ -160,11 +160,80 @@ not `LEAD_MS`), and nothing about it was noticed. Then `LEAD_MS` 150 and 450: at
 (the underline held back too long); "200 is fine, it is hard to tell difference in these ms". **`LEAD_MS` is 200 by
 default now.** (A reader playing its own sound has no such lead to guess: it takes the time from its player.)
 
+## Step 4: one EPUB file from `/mnt/us` (2026-10-25, `run-epub.sh`; the roadmap's stage 0)
+`blitz-engine` reads an EPUB file as it is now (`src/epub.rs`, `Epub`: the zip's central directory read once at
+open, each file read and inflated when Blitz asks; `miniz_oxide`, already in the tree through `png`). `blitz-open`
+takes either the folder or the `.epub`. **Pages identical** either way (Mac: every page's hash, three books).
+
+On the Kindle (`out/kindle-epub.txt`, `out/kindle-epub-ram.txt`): 08's `blitz-open-par` at 09's documents, three
+runs each, **cold** (the kernel's file cache dropped first, as after a while away) and **warm** (just run). Times
+from the program's start to the first page drawn (its start, the spine, the fallback fonts and blitz-open's "first
+page" added up):
+
+| | | folder | **EPUB** | EPUB, program in RAM |
+|---|---|---|---|---|
+| *Buried Alive*, ch. 9 | first open, cold | 977–980 ms | 945–948 | |
+| | reopen, cold | 869–942 | 854–868 | **211–219** |
+| | reopen, warm | 289–298 | 296–303 | **171–180** |
+| Holmes, last story | first open, cold | 1207–1243 | 1200–1324 | |
+| | reopen, cold | 1175–1281 | 1151–1208 | **497–515** |
+| | reopen, warm | 441–448 | 441–452 | **296** |
+| Haji Agha, a text page | first open, cold | 1109–1121 | 1028–1031 | |
+| | reopen, cold | 918–939 | 899–912 | **280** |
+| | reopen, warm | 223–235 | 231–236 | **101–110** |
+
+- **Reading the EPUB file costs nothing:** within a few percent of the folder, a little faster cold (one file opened
+  through FUSE instead of one per file). The reader can open books as they are.
+- **The program itself was the slow part.** Its 13 MB are read from `/mnt/us` page by page as its code first runs,
+  and FUSE does not keep them between runs: Blitz's parse took 400–430 ms cold and 82–100 warm, against 11–23 with
+  the program in `/var/tmp` (a RAM disk). That is **~640 ms of every cold open and ~120 of every warm one**; with
+  it gone a cold reopen is 211–515 ms.
+- **Copying the program into RAM first does not pay:** 0.82 s cold (0.16 warm), more than the 0.64 s it costs to run
+  it from `/mnt/us`, which reads only the code it uses.
+- **The fallback fonts read from `/mnt/us`** (Holmes, Haji Agha): 156–205 ms cold, 31–36 warm, on every run.
+- **What is left, the program and fonts aside:** the chapter's own layout (Blitz's "resolve", 110–150 ms for *Buried
+  Alive* and Holmes's chapters, 16–18 for Haji Agha's page), as noted in 08.
+
+**For the reader (stage 2):** these costs are a program's start, not a book's. A reader that stays running (started
+once, books opened inside it) pays its code and its fonts once, then each book costs its chapter's layout:
+0.1–0.3 s warm. One started from scratch for every book, as KOReader's plugin would do in the simplest version,
+pays 0.85–1.3 s on a cold open. So the program should be started once and kept: KOReader's plugin starts it the
+first time and hands it the next book afterwards (or the reader, once open, opens the next book itself).
+
+## Step 5: memory over many books in one running reader (2026-10-25, `blitz-books`)
+Step 4 says the reader should stay running and open book after book. Does closing a book give its memory back?
+`blitz-books` (`04-rust-engine/blitz-engine`): one process opens the three EPUBs in turn, each at 09's document,
+reads it through (the rest laid out, every page drawn) and closes it (the `Book` dropped), round after round, printing
+resident memory after each step. On the Kindle (`out/kindle-books.txt`: 8 rounds, 24 books;
+`out/kindle-books-split.txt`: 3 rounds, with memory split into allocated and the program's code):
+
+| | at the start | first book closed | after 9 books | after 24 books |
+|---|---|---|---|---|
+| resident | 5.9 MB | 21.4 MB | 25.8 MB | 27.1 MB |
+| of which allocated | 5.2 | 11.0 | 14.6 | |
+| reading (peak) | | 27 (*Buried Alive*) | 64 (Haji Agha) | 65.5 |
+
+(The rest of resident is the program's own code: run from `/var/tmp`, a RAM disk, it shows as shared memory, not
+as a file; ~10.5 MB once its code has run. The kernel can drop it under pressure and read it again.)
+- **Closing a book gives its memory back:** Haji Agha 63–65 MB while read through, 25–27 MB once closed, every round.
+  The peak is the largest book's, not a sum.
+- **Once, about 6 MB stays** with the first book (thread pools, Stylo's and Blitz's tables made at first use, the
+  glyph layer's renderers).
+- **A slow climb: about 0.1–0.2 MB per book opened** (24.7 → 27.1 MB resident over 21 books after the first round,
+  the same three books again and again, so not new CSS names in Stylo's tables). What grows is not found yet; 100
+  books opened would be ~10–20 MB, against ~210 MB free with KOReader open.
+- **glibc** (the Mac's Docker, Linux on arm64, for comparison: not what ships) keeps freed memory instead: resident
+  climbs to ~75 MB and stays; with `malloc_trim` after each close (`TRIM=1`) it shows the same picture as the Kindle
+  (allocated memory 30 → 45 MB over 18 books there). musl's allocator, the one in our static binaries, gives memory
+  back on its own.
+
+**Not a concern now:** no flushing of Stylo's tables or other allocator needed. To watch in daily use (stage 3);
+if it ever matters, the reader can restart itself while the device sleeps (it reopens from its cache).
+
 ## What next
-1. **A size above 44 px** (`FONT_SIZE=50`). The lead (200 ms) and the page turn as it is are fine.
-2. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
-   its fonts once when it starts, not on every book. Measure `blitz-open` reading the EPUB itself; the reader's cache
-   files could live where reading is fast.
+1. **The text size: 50 px** (`FONT_SIZE=50`, the default now; about 12 pt at 300 ppi). The maintainer, looking at
+   *Buried Alive*'s first page on the Kindle: "50px looks great". The lead (200 ms) and the page turn are fine.
+2. **Reading files on `/mnt/us`:** done (step 4): the EPUB as it is, no cost; a reader kept running.
 
 ## Running it on the Kindle
 KOReader open in front, its SSH server on (`ssh kindle`: the maintainer's `~/.ssh/config`, port 2222):
@@ -184,6 +253,12 @@ A narration followed (step 3), with the voice on the Mac, KOReader's "Keep alive
 ```sh
 ./follow-audio.sh 180                           # LEAD_MS=450 if the underline is ahead of the voice, 150 if behind
 ssh kindle 'sh /mnt/us/indium-09/follow.sh 180'  # the same, silent
+```
+One EPUB file against the folder (step 4; `blitz-open-par` rebuilt with `Epub` and copied to `bin/`):
+```sh
+scp run-epub.sh kindle:/mnt/us/indium-09/
+ssh kindle 'cd /mnt/us/indium-09 && nohup sh run-epub.sh >/dev/null 2>&1 </dev/null &'   # about 40 minutes
+scp kindle:/mnt/us/indium-09/results-epub.txt out/kindle-epub.txt
 ```
 (`run.sh`'s screensaver guard was added after this run. Its cache runs open *Buried Alive* at chapter 9, 08's at
 chapter 1: both 30 pages.)

@@ -145,6 +145,7 @@ dependencies = [
  "bytes",
  "image",
  "jpeg-decoder",
+ "miniz_oxide 0.8.9",
  "parley",
  "peniko",
  "png 0.17.16",

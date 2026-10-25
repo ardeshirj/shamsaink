@@ -27,6 +27,7 @@ png = "0.17"
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }
 # JPEGs decoded already scaled down (1/2, 1/4, 1/8), which the image crate's decoder cannot (pure Rust)
 jpeg-decoder = { version = "0.3", default-features = false }
+miniz_oxide = "0.8"
 # glyph masks made on every core with "parallel" (already in Blitz's tree, through Stylo)
 rayon = { version = "1", optional = true }
 
