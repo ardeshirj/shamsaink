@@ -99,14 +99,17 @@ Also, Blitz:
   **The size of the box does not matter** (77×90 px and 625×197 px the same). Narration is 2–3 words a second
   (330–500 ms a word): all three fit, A2 with the most room.
 - **By eye:** the maintainer, watching the three in turn (DU, A2, GL16): "it was getting better as examples moving
-  forward", so GL16 looked best, as expected of the one that keeps the greys. Not yet checked the other way round
-  (each round starts with its own flashing page, which may also clean the screen): `show.sh "GL16 DU"`. If it
-  holds, GL16 for read-along's highlight (it fits a narrated word with little to spare; A2 if a narrator outruns
-  it). One word at a time, held: `show.sh A2 w00020 1 3000` and the like.
+  forward", so GL16 looked best, as expected of the one that keeps the greys. The other way round (`show.sh
+  "GL16 DU"`, since each round's flashing page might clean the screen): "first one was better", GL16 again: "DU
+  makes the words a little grey and start losing some contrast". **The screen was in KOReader's night mode** for
+  both (inverted, very likely by the controller: FBInk reports `canHWInvert=1`), so the page showed light on dark.
+  **In day mode** (GL16 first): "similar quality except this time GL16 felt like causing words to shake a bit"
+  (GL16 takes each pixel through grey steps over ~320 ms). **Not settled:** GL16 in night mode, maybe DU in day
+  mode; to decide with words following a real narration, read for a few minutes. GL16 fits a narrated word with
+  little to spare; A2 if a narrator outruns both. One word at a time, held: `show.sh A2 w00020 1 3000` and the like.
 
 ## What next
-1. **GL16 against DU in the other order** (above), to settle read-along's highlight.
-2. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
+1. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads
    its fonts once when it starts, not on every book. Measure `blitz-open` reading the EPUB itself; the reader's cache
    files could live where reading is fast.
 

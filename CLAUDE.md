@@ -93,13 +93,14 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   on every run; a reader opens one EPUB file and loads fonts once (to measure).
 - **Our page on an e-ink screen (09, step 2):** `blitz-show` writes the page into `/dev/fb0` and KOReader's own
   `fbink` refreshes the screen or one word's box (nothing installed). Whole page with a flash 383–419 ms; a word
-  highlighted A2 140 ms, DU 255–261, GL16 316–320, whatever its size: all fit a narrated word. GL16 looked best to
-  the maintainer (to confirm with it shown first). Words stepped at a fixed pace so far: no SMIL, no sound.
+  highlighted A2 140 ms, DU 255–261, GL16 316–320, whatever its size: all fit a narrated word. The highlight's
+  waveform is open (the maintainer, by eye): in night mode GL16 (DU greys the words, loses contrast); in day mode
+  the same quality but GL16's words shake a little. To decide reading along a real narration. Words stepped at a fixed pace so far: no SMIL, no sound.
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
   book: none of 08's opening or the cache), input, read-along (SMIL only shown with crengine, 02).
 
 ## Next steps (not decided)
-1. **On the Kindle:** GL16 against DU shown the other way round; highlight the words of FarsiEPUB's
+1. **On the Kindle:** highlight the words of FarsiEPUB's
    `buried-alive-narrated-Roya-words.epub` at the narration's own timings (its SMIL), silently; a book read as one
    EPUB file from `/mnt/us`.
 2. Decide Blitz as the one engine for all books, FarsiEPUB's included (the measurements point there; the Go engine
