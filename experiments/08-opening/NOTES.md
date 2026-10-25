@@ -293,7 +293,26 @@ Mac, two threads:
 - Every page of a book read from its cache is the same as without (a hash of every page's pixels, all three books,
   and Haji Agha opened at a scan).
 - What a reopen still pays is the chapter's own parse and layout. The cache holds every mask the book needed, which is
-  the whole book's alphabet: a few thousand masks, 0.3–0.4 MB.
+  the whole book's alphabet, in 0.3–0.4 MB.
+
+### On the device (`out/remarkable2-cache.txt`)
+`run-cache.sh`: each book opened once without a cache (which writes it), then three times from it. In ms:
+
+| reMarkable 2 | first open | **reopened** | crengine reopened (its cache) | what a reopen pays |
+|---|---|---|---|---|
+| *Buried Alive*, chapter 1 | 208 | **128–145** | 57 | layout 93–104, parse 16–21, draw 11.5 |
+| Holmes, last story | 281 | **234–241** | 68 | layout 131–134, draw 65, parse 21–24, fonts 17 |
+| Haji Agha, a text page | 137 | **50–57** | 84–85 | parse 10–13, layout 12–19, draw 13, fonts 16 |
+
+- **Reopening Haji Agha is faster than crengine's** (crengine's cache holds its whole layout, 147 pages; ours, only
+  the page counts and masks, and the page shown is one paragraph). *Buried Alive* and Holmes are 2–3.5× behind it:
+  what is left is the chapter's own layout, which Blitz cannot keep on disk.
+- The cache is read and restored in 4–6.5 ms, written in 4–7 ms; memory the same or 1 MB less. The pages are the
+  same read from the cache (the hash of every page, each book, the same in all four runs).
+- **Holmes's first page still draws in 65 ms** with no masks to make (its other pages: 20 ms): not yet split (the
+  vello_cpu part of the page, a heading's rule, or its first use).
+- To come nearer crengine on long chapters: lay out only the part of the chapter around the page shown first (the
+  cache knows where the page starts), the rest after. Not tried.
 
 ## Running it on the device
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
