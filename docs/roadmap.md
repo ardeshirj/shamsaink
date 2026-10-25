@@ -1,0 +1,51 @@
+# Roadmap: from the experiments to a reader (2026-10-25)
+
+Experiments 01–09 answered whether this can be done: an EPUB reader for Linux e-ink devices, Farsi done properly,
+narration followed word by word, in a static ARM binary at crengine's speed. 10 chose how the screen is refreshed.
+What follows turns that into a reader, in small stages, each with a test of being done; nothing in a stage is built
+before the maintainer says yes to it.
+
+**The approach:** start small and on top of KOReader, not instead of it. The first reader is a program KOReader's
+file manager opens a book with. KOReader is already installed, started and set up (sleep, Wi-Fi, SSH) on every
+Kindle, Kobo and PocketBook it supports, so the reader only has to own the screen and the touch while a book is open,
+and the same static ARMv7 binary can run on all of them. A stand-alone app (its own launcher, library, sleep and
+light) comes only once the reader has earned it in daily use.
+
+The parts the reader stands on on a device, and every dependency with its licence: `design.md`, sections 6 and 7.
+
+## Stages
+
+| Stage | What | Done when |
+|---|---|---|
+| **0. Close the proof of concept** | Commit 09's last changes. The two Kindle items left: a text size above 44 px; one `.epub` file read from `/mnt/us` (not the unpacked bundle). Decide Blitz as the one engine for all books (the Go engine stays the reference). | Notes and CLAUDE.md updated, the engine decision written down |
+| **1. Refresh** (experiment 10) | **Our own ioctls in Go**, not FBInk (10's NOTES.md). Page turns REAGL without a flash (by eye, waveforms look alike in day mode; the flash shows most in night mode); the mark A2. Left: night mode driven by us, how often to flash (stage 3). | Done, but for night mode |
+| **2. A minimal reader** (experiment 11) | Opened from KOReader's file manager. One EPUB; tap or swipe to turn pages; its place kept; reopened at once from its cache (08's opening and cache through the C API, `capi.rs`); a clean way back to KOReader. | The maintainer opens a book from KOReader and reads a chapter without noticing seams |
+| **3. Daily use** | The maintainer reads with it for a week or two. Text size and margins, progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. | It is the reader the maintainer picks for Farsi books |
+| **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). Sound on a PocketBook (needs one); the Mac playing the voice meanwhile, as in 09. | A narrated book read and followed on a device, its sound included |
+| **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
+| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling, pictures decoded when drawn, the `image` crate with every format off. | — |
+
+## Stage 2, more closely
+- **Started by KOReader:** a small KOReader plugin (Lua) adds "Open with Indium" for EPUBs and runs our binary with the
+  book's path; when it exits, KOReader redraws its own screen. How a plugin hands over and takes back the screen and
+  input without KOReader reacting to our touches is the first thing to find out (`EVIOCGRAB` on the touch device is
+  the likely answer).
+- **Our binary owns, while it runs:** the framebuffer and its refreshes (10's code), the touch device (Linux input
+  events, read directly), the book's cache file.
+- **What changes per device:** a small table: the screen controller (10: one file per family), the touch device and
+  how its coordinates turn with the screen, the screen's size. The Kindle first, since it is the one device on hand
+  whose screen we can drive; the rest written for, and tried when a device is at hand.
+- **What KOReader keeps doing:** sleep and the power button (on Kindle the Kindle's own `powerd` sleeps; on Kobo
+  KOReader does it, so inside our reader the power button would do nothing until stage 5), Wi-Fi, SSH.
+
+## Why this order
+- The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
+  around them, and stage 1 has settled the one with a licence question.
+- Reading every day (stage 3) decides what the reader needs, before anything is designed for it.
+- Everything a stand-alone app would need (sleep, light, a library, a launcher) KOReader already does, so it can
+  wait until it is worth doing.
+
+## Not decided
+- Where the reader's Go code lives once it is no longer an experiment (a `reader/` beside `experiments/`?).
+- The engine decision (stage 0).
+- Whether stage 5 happens at all.

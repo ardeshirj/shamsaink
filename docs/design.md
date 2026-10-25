@@ -1,9 +1,10 @@
-# Indium's components, and where a page's time goes (2026-10-23)
+# Indium's components, and where a page's time goes (2026-10-23; the device side 2026-10-25)
 
 A map of the parts, for finding your way around: what each one is, how a page flows through each engine, what the
-device measurements say about each step, and which layer every speed-up lives in. Why the engine interface keeps
-state (and the outside design discussion it was checked against) is in `engine-design.md`; the numbers come from the
-experiments' NOTES.md files, mostly 06 (the reMarkable 2).
+device measurements say about each step, which layer every speed-up lives in, what the reader leans on on a device,
+and what it all depends on (sections 6 and 7). Why the engine interface keeps state (and the outside design
+discussion it was checked against) is in `engine-design.md`; the stages ahead are in `roadmap.md`; the numbers come
+from the experiments' NOTES.md files, mostly 06 (the reMarkable 2) and 09–10 (the Kindle).
 
 ## 1. The reader, top to bottom
 
@@ -22,7 +23,7 @@ flowchart TB
       blitz["Blitz engine, blitz<br/>Rust through cgo"]
       cre["crengine, cre<br/>C++ through cgo, reference only"]
     end
-    engines -- "a grey buffer<br/>the reader owns" --> screen["the e-ink screen<br/>FBInk, partial refresh<br/><i>not built</i>"]
+    engines -- "a grey buffer<br/>the reader owns" --> screen["the e-ink screen<br/>our refresh ioctls, Go (10)<br/><i>probe only</i>"]
   end
   read -- "engine.Document: Open · Pages · Draw · Find · Close" --> lay
 ```
@@ -35,6 +36,8 @@ flowchart TB
 | Blitz engine, "blitz" | Blitz's CSS and layout, our pagination | Rust (cgo), MIT/Apache | `experiments/04-rust-engine/blitz-engine` | works |
 | crengine, "cre" | KOReader's engine | C++ (cgo), GPL-2.0 | `experiments/02-crengine-go` | the reference only |
 | read-along test | words highlighted from the SMIL timings | Go | `experiments/engine/cmd/readalong` | passes on all three |
+| screen refresh | the page into `/dev/fb0`, one ioctl per refresh | Go, ours | `experiments/10-refresh/probe` | works on the Kindle (10) |
+| on a device | KOReader, input, power, sound: section 6 | | | |
 
 ## 2. Inside each engine
 
@@ -192,7 +195,60 @@ left against crengine is opening (0.7–2.5 s, crengine 57–68 ms from its cach
 | justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
 | trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |
 
-## 6. Words used here
+## 6. On the device
+
+What the reader stands on once it runs on an e-ink device, as the roadmap's stage 2 has it (a reader KOReader's file
+manager opens a book with). The Kindle Paperwhite 11th gen is the device the screen parts were tried on (09, 10).
+
+```mermaid
+flowchart LR
+  ko["KOReader (stage 2: the host)<br/>file manager, SSH, Wi-Fi,<br/>sleep on Kobo"] -- "a small plugin: Open with Indium<br/>(the book's path)" --> app["Indium reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
+  app -- "exits" --> ko
+  app --> scr["screen: /dev/fb0, mapped;<br/>refresh ioctls, a file<br/>per controller family"]
+  app --> inp["touch and buttons:<br/>/dev/input/eventN, grabbed<br/>while the reader runs"]
+  app --> pw["power: the Kindle's powerd (lipc);<br/>Kobo: KOReader, later ours"]
+  app --> snd["sound: PocketBook's SDK<br/>(stage 4)"]
+  scr --> panel["e-ink controller<br/>Kindle PW5: MediaTek hwtcon_v2"]
+```
+
+| Part | What it does | Whose | State |
+|---|---|---|---|
+| KOReader | stage 2's host: its file manager starts the reader; it keeps SSH, Wi-Fi and (on Kobo) sleep | KOReader, AGPL-3 | installed on the Kindle (v2026.07.1); the plugin not written |
+| the plugin | "Open with Indium" in KOReader's file manager; runs the reader, redraws KOReader's screen after | ours, Lua inside KOReader | not written (stage 2) |
+| screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
+| input | touches and page buttons as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them | ours, Go | not written (stage 2); on the Kindle the touch is `pt_mt` (`event1`), the power key `event0` |
+| power | the Kindle's `powerd` sleeps on its own; held off with `lipc-set-prop com.lab126.powerd preventScreenSaver` (09, 10) | Amazon's firmware | used by the experiments' scripts |
+| sound | narration's audio | PocketBook's SDK (Kindle and Kobo: closed to us) | stage 4; a PocketBook needed |
+| launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | stage 5 only |
+| `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
+
+## 7. What Indium depends on, and the licences
+
+The reader is to be one static binary: what is linked into it is what its licence has to live with. Rust crates
+counted from `cargo metadata` of `blitz-engine` for the ARMv7 target (2026-10-25): 215 crates, none GPL; the only
+copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published; we change none).
+
+| Dependency | For | Licence | In the reader |
+|---|---|---|---|
+| readium/go-toolkit | EPUB, positions, SMIL timings | BSD-3 | yes (trimmed, 02) |
+| Blitz: blitz-dom, blitz-html, blitz-paint | HTML, CSS, layout, painting | MIT / Apache-2.0 | yes, with our two patches (section 5) |
+| Stylo, cssparser, selectors, and small crates with them (app_units, dtoa-short, to_shmem, uluru) | Firefox's CSS engine, inside Blitz | **MPL-2.0** (14 crates) | yes, unchanged |
+| Parley, fontique, HarfRust, skrifa | text: fonts, shaping, lines | MIT / Apache-2.0 | yes |
+| Taffy | boxes (flex, grid, block) | MIT | yes |
+| vello_cpu, anyrender | drawing what is not text | MIT / Apache-2.0 | yes |
+| html5ever | parsing XHTML | MIT / Apache-2.0 | yes |
+| ICU4X | bidi, line breaking, Unicode data | Unicode-3.0 (22 crates) | yes |
+| image, png, zune-jpeg, jpeg-decoder | pictures | MIT / Apache-2.0 (/ Zlib) | yes |
+| rayon | both cores | MIT / Apache-2.0 | yes |
+| Linux's framebuffer, mxcfb/MediaTek and input interfaces | screen and touch | the kernel's interface (numbers and struct layouts, no code) | called |
+| go-text | the Go engine | BSD-3 / Unlicense | only if the Go engine stays (the reference) |
+| KOReader | stage 2's host | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) read as a reference, nothing copied. The plugin runs inside it: its licence to check |
+| FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
+| crengine | the bar to measure against | GPL-2.0 | no |
+| the Kindle's `powerd`, `lipc` | sleep held off | Amazon's | no: run as commands |
+| Go, Rust (musl, static), zig (cgo cross-builds), Docker images `eink-go`, `eink-rust`, `eink-cre`, `eink-koreader` | building and measuring | — | build tools |
+
+## 8. Words used here
 - **Scene:** the list of drawing commands for a page (fill this shape, draw these glyphs), built before anything is drawn.
 - **Outline, strips:** a glyph is stored as curves (its outline); vello_cpu cuts outlines into strips of pixel
   coverage, which rendering then paints.

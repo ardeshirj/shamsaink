@@ -103,18 +103,25 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   page turn 440 ms. 4.3% of the words are shorter than A2's 140 ms: a word due while the screen is busy is skipped.
   Text now 44 px (34 px looked small at 300 ppi; maybe a little bigger still). The page turn with its flash feels
   fine to the maintainer.
+- **Refreshing the screen (10's NOTES.md): our own ioctls, from Go,** not FBInk. On the Kindle a refresh is one ioctl
+  (`MXCFB_SEND_UPDATE_MTK`) and a wait on its marker: under 100 lines of Go, no cgo, worked the first time. Sending
+  takes under 2.5 ms (the reader is free while the ink moves); `fbink` adds 19 ms a refresh just to start; FBInk's
+  daemon mode prints text only; its library is GPL. With our ioctl: A2 underline 121 ms, a page turn GL16 or REAGL
+  296–299 ms, GC16 366 ms. By eye the page turns look alike in day mode, the flash shows most in night mode: **page
+  turns REAGL without a flash**, a flash now and then (how often: in use); night mode driven by us not tried yet.
+- **Components and dependencies:** `docs/design.md`, section 6 (on the device: KOReader as host, refresh, input,
+  power, sound) and 7 (every dependency and its licence: 215 Rust crates, none GPL, 14 MPL-2.0 from Firefox's CSS).
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
   book: none of 08's opening or the cache), input, sound on the device.
 
-## Next steps (not decided)
-1. **On the Kindle:** read-along judged by ear (the lead, a gentler page turn, the text size); a book read as one
-   EPUB file from `/mnt/us`.
-2. Decide Blitz as the one engine for all books, FarsiEPUB's included (the measurements point there; the Go engine
-   stays the reference), then 08's opening and cache through the Go interface: the start of the reader.
-3. Read-along (sound on a PocketBook), then the speed items left above if they still matter in use.
-4. Upstream (the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text
-   justification bug; to Blitz, the line culling (`blitz-cull-lines.patch`), pictures sized from their headers and
-   decoded when drawn (`blitz-lazy-images.patch`), and the `image` crate taken with every format off.
+## Next steps: `docs/roadmap.md`
+The roadmap (2026-10-25): close the proof of concept (stage 0: a size above 44 px, one EPUB from `/mnt/us`, decide
+Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened from KOReader's file manager** (2:
+one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
+read-along in the reader (4, sound on a PocketBook); a stand-alone app only if 3 earns it (5). Upstream any time
+(the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text justification bug; to
+Blitz, the line culling (`blitz-cull-lines.patch`), pictures sized from their headers and decoded when drawn
+(`blitz-lazy-images.patch`), and the `image` crate taken with every format off.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.
