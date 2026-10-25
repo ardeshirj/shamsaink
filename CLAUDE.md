@@ -63,8 +63,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
   closed to third-party apps); PocketBook for read-along (official SDK, sound works). On hand: the maintainer's
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
-  driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (mentioned 2026-10-24; reported as a
-  1 GHz MediaTek MT8113, 512 MB, 6.8" 300 ppi; cores to check), where our pages go on a real screen.
+  driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (mentioned 2026-10-24; reported
+  as a 1 GHz MediaTek MT8113, 512 MB, 6.8" 300 ppi; cores to check), where our pages go on a real screen.
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
