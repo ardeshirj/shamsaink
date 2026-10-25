@@ -104,9 +104,15 @@ Also, Blitz:
   makes the words a little grey and start losing some contrast". **The screen was in KOReader's night mode** for
   both (inverted, very likely by the controller: FBInk reports `canHWInvert=1`), so the page showed light on dark.
   **In day mode** (GL16 first): "similar quality except this time GL16 felt like causing words to shake a bit"
-  (GL16 takes each pixel through grey steps over ~320 ms). **Not settled:** GL16 in night mode, maybe DU in day
-  mode; to decide with words following a real narration, read for a few minutes. GL16 fits a narrated word with
+  (GL16 takes each pixel through grey steps over ~320 ms). So for inverting: GL16 in night mode, maybe DU in day
+  mode (but see the underline, below). GL16 fits a narrated word with
   little to spare; A2 if a narrator outruns both. One word at a time, held: `show.sh A2 w00020 1 3000` and the like.
+- **An underline instead** (`blitz-show` MARK `underline`): a black bar 4 px thick, 3 px under the lowest ink of the
+  word's line (a word's box is its line's whole height; the line's deepest descender, so every bar on a line is
+  level and clear of the next line). It never touches the letters, so no greys change: A2, black and white only, is
+  clean on it. On the Kindle, `show.sh A2 w00001 12 500 underline`: a 12 px strip refreshed in **139–142 ms**. The
+  maintainer, against GL16 inversion: "It seems easier on eye. It doesn't distract in neither night or day mode."
+  **The underline with A2 is read-along's mark.**
 
 ## What next
 1. **Reading files on `/mnt/us`:** the reader opens the book as one EPUB file (go-toolkit reads the zip), and loads

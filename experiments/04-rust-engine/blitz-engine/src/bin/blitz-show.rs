@@ -1,12 +1,13 @@
 //! blitz-show: our page on the Kindle's screen (experiment 09, step 2). Opens BOOK at document DOC, draws the page
 //! holding the element ID at the screen's size, writes it into the framebuffer (/dev/fb0, the buffer shown) and has
-//! FBInk refresh the whole screen (GC16, flashing); then highlights that word (inverted) and the next WORDS-1 ones in
-//! turn, DELAY_MS apart, refreshing only the box around the word let go and the word highlighted (WAVEFORM, DU by
-//! default), and last lets the last word go. Prints each step's time. Without a framebuffer (the Mac), writes the page
-//! and the page with its first word highlighted as PNGs instead. FBINK is FBInk's command-line tool (KOReader's by
-//! default); the page is the screen's size, 1236×1648 (WIDTH, HEIGHT).
+//! FBInk refresh the whole screen (GC16, flashing); then marks that word and the next WORDS-1 ones in turn, DELAY_MS
+//! apart, refreshing only the box around the word let go and the word marked (WAVEFORM, DU by default), and last lets
+//! the last word go. MARK is how a word is marked: "invert" (its boxes inverted, the default) or "underline" (a black
+//! bar under each box). Prints each step's time. Without a framebuffer (the Mac), writes PNGs instead: the page, the
+//! page with its first word marked, and the page with every word from ID to the page's end marked. FBINK is FBInk's
+//! command-line tool (KOReader's by default); the page is the screen's size, 1236×1648 (WIDTH, HEIGHT).
 //!
-//!     blitz-show BOOK_DIR FONTS_DIR|- DOC ID [WORDS [WAVEFORM [DELAY_MS]]]
+//!     blitz-show BOOK_DIR FONTS_DIR|- DOC ID [WORDS [WAVEFORM [DELAY_MS [MARK]]]]
 
 use blitz_engine::{Book, Dir, Options};
 use std::collections::HashMap;
@@ -86,12 +87,34 @@ fn union(a: [usize; 4], b: [usize; 4]) -> [usize; 4] {
     [a[0].min(b[0]), a[1].min(b[1]), a[2].max(b[2]), a[3].max(b[3])]
 }
 
-/// The page with these boxes inverted (the word highlighted).
-fn highlighted(page: &[u8], w: usize, boxes: &[[i32; 4]]) -> Vec<u8> {
+/// The bar under a word's box: [left, top, right, bottom], just under the lowest ink of the box's line (the deepest
+/// descender across the page's width, so every bar on a line is level; a box is the line's whole height).
+fn bar(page: &[u8], w: usize, b: [i32; 4]) -> [i32; 4] {
+    let (gap, thick) = (3, 4);
+    let h = page.len() / w;
+    let (t, bt) = (b[1].max(0) as usize, (b[3].max(0) as usize).min(h));
+    let ink = (t..bt).rev().find(|&y| page[y * w..(y + 1) * w].iter().any(|&p| p < 128)).unwrap_or(bt) as i32;
+    [b[0], ink + 1 + gap, b[2], ink + 1 + gap + thick]
+}
+
+/// The pixels a mark changes for these boxes: the boxes themselves when inverted, the bars under them when underlined.
+fn marked_area(page: &[u8], w: usize, boxes: &[[i32; 4]], underline: bool) -> Vec<[i32; 4]> {
+    if underline { boxes.iter().map(|b| bar(page, w, *b)).collect() } else { boxes.to_vec() }
+}
+
+/// The page with these words marked: each word's boxes inverted, or a black bar under each.
+fn marked(page: &[u8], w: usize, words: &[Vec<[i32; 4]>], underline: bool) -> Vec<u8> {
     let mut out = page.to_vec();
     let h = page.len() / w;
-    for b in boxes {
-        let [l, t, r, bt] = around(&[*b], w, h);
+    for b in words.iter().flat_map(|boxes| marked_area(page, w, boxes, underline)) {
+        if underline {
+            let (l, r) = (b[0].max(0) as usize, (b[2].max(0) as usize).min(w));
+            for y in b[1].max(0) as usize..(b[3].max(0) as usize).min(h) {
+                out[y * w + l..y * w + r].fill(0);
+            }
+            continue;
+        }
+        let [l, t, r, bt] = around(&[b], w, h);
         for y in t..bt {
             for p in &mut out[y * w + l..y * w + r] {
                 *p = 255 - *p;
@@ -149,6 +172,11 @@ fn main() {
     let words: usize = args.get(5).map(|n| n.parse().unwrap()).unwrap_or(10);
     let waveform = args.get(6).map(String::as_str).unwrap_or("DU");
     let delay = Duration::from_millis(args.get(7).map(|n| n.parse().unwrap()).unwrap_or(500));
+    let underline = match args.get(8).map(String::as_str).unwrap_or("invert") {
+        "invert" => false,
+        "underline" => true,
+        m => panic!("MARK is invert or underline, not {m}"),
+    };
     let fbink = std::env::var("FBINK").unwrap_or("/mnt/us/koreader/fbink".into());
     let env = |k: &str, d: u32| std::env::var(k).ok().and_then(|v| v.parse().ok()).unwrap_or(d);
     let opts = Options { width: env("WIDTH", 1236), height: env("HEIGHT", 1648), ..Options::default() };
@@ -171,9 +199,19 @@ fn main() {
     );
 
     let Some(fb) = Fb::open() else {
+        let mut all = vec![boxes.clone()];
+        let mut next = next_id(&id);
+        while let Some((m, b)) = book.find(doc, &next) {
+            if m != n {
+                break;
+            }
+            all.push(b);
+            next = next_id(&next);
+        }
         png("show-page.png", w, h, &page);
-        png("show-word.png", w, h, &highlighted(&page, w, &boxes));
-        println!("no framebuffer: show-page.png and show-word.png written, {id} at {boxes:?}");
+        png("show-word.png", w, h, &marked(&page, w, &all[..1], underline));
+        png("show-all.png", w, h, &marked(&page, w, &all, underline));
+        println!("no framebuffer: show-page.png, show-word.png, show-all.png written ({} words), {id} at {boxes:?}", all.len());
         return;
     };
     let whole = [0, 0, w, h];
@@ -186,9 +224,9 @@ fn main() {
     std::thread::sleep(delay);
     let mut last: Option<[usize; 4]> = None;
     for k in 0..words {
-        let r = around(&boxes, w, h);
+        let r = around(&marked_area(&page, w, &boxes, underline), w, h);
         let t = Instant::now();
-        let lit = highlighted(&page, w, &boxes);
+        let lit = marked(&page, w, std::slice::from_ref(&boxes), underline);
         let area = last.map(|l| union(l, r)).unwrap_or(r);
         fb.write(&lit, w, area);
         let write = ms(t);
