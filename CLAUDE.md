@@ -63,13 +63,14 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
   closed to third-party apps); PocketBook for read-along (official SDK, sound works). On hand: the maintainer's
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
-  driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (mentioned 2026-10-24; reported
-  as a 1 GHz MediaTek MT8113, 512 MB, 6.8" 300 ppi; cores to check), where our pages go on a real screen.
+  driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
+  Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
+  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09).
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
 
-## Where things are (2026-10-24)
+## Where things are (2026-10-25)
 - **Timing on a device:** experiments 06–08 on the reMarkable 2 (06, 07, 08's NOTES.md). **KOReader's crengine on the
   same device** is the bar. Blitz now, built with NEON and the feature `parallel` (both cores), against crengine:
   a page 13–20 ms (16–19); a first open 0.12–0.28 s (0.47–2.25 s); a reopen from its cache 50–57 ms for Haji Agha,
@@ -85,12 +86,22 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Left against crengine:** a reopen's own chapter layout (Blitz cannot keep it on disk; idea, not tried: lay out
   the part of the chapter around the page shown first), memory (1.2–2.8×), scans (jpeg-decoder has no SIMD on ARM),
   Holmes's SVG title page (284 ms) and its last story's first page (65 ms to draw, not yet split).
+- **On the Kindle (09's NOTES.md):** the same static ARMv7 binaries run unchanged, every page identical to the
+  reMarkable's; two cores help as there. Against its crengine: a first open 0.28–0.43 s (0.54–2.55 s), a reopen
+  0.17–0.38 s (0.09–0.14 s), a page 15–25 ms (19–24). **Its storage is slow:** `/mnt/us` (where books live) is FUSE;
+  the same reopens read from RAM take 50–150 ms, as on the reMarkable. Our bundle reads books unpacked and the fonts
+  on every run; a reader opens one EPUB file and loads fonts once (to measure).
+- **Our page on an e-ink screen (09, step 2):** `blitz-show` writes the page into `/dev/fb0` and KOReader's own
+  `fbink` refreshes the screen or one word's box (nothing installed). Whole page with a flash 383–419 ms; a word
+  highlighted A2 140 ms, DU 255–261, GL16 316–320, whatever its size: all fit a narrated word. GL16 looked best to
+  the maintainer (to confirm with it shown first). Words stepped at a fixed pace so far: no SMIL, no sound.
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
-  book: none of 08's opening or the cache), e-ink output and input, read-along (SMIL only shown with crengine, 02).
+  book: none of 08's opening or the cache), input, read-along (SMIL only shown with crengine, 02).
 
 ## Next steps (not decided)
-1. **Experiment 09 on the Kindle:** the 08 timing bundle with KOReader's crengine beside it (do two cores help
-   there?), then our pages on its screen through FBInk: drawn page to screen, and a partial refresh of one word.
+1. **On the Kindle:** GL16 against DU shown the other way round; highlight the words of FarsiEPUB's
+   `buried-alive-narrated-Roya-words.epub` at the narration's own timings (its SMIL), silently; a book read as one
+   EPUB file from `/mnt/us`.
 2. Decide Blitz as the one engine for all books, FarsiEPUB's included (the measurements point there; the Go engine
    stays the reference), then 08's opening and cache through the Go interface: the start of the reader.
 3. Read-along (sound on a PocketBook), then the speed items left above if they still matter in use.
