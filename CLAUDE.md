@@ -39,8 +39,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   pages the same as Chromium's (crengine: 42–67%), whole book in 61 ms, 35 MB, a static ARMv7 binary in one command.
   Its `compare.sh` (every word in a span, then ours, crengine and Chromium say where it went) is how any engine is
   judged.
-- **Engines sit behind one Go interface,** `experiments/engine` (`Document`: pages, draw into a Go-owned buffer, an
-  id's page and boxes): "gotext" (03), "cre" (02, `-tags cre`), "blitz" (04, `-tags blitz`). Why stateful and not
+- **Engines sit behind one Go interface,** `bench/` (`Document`: pages, draw into a Go-owned buffer, an
+  id's page and boxes): "gotext" (03), "cre" (02, `-tags cre`), "blitz" (04, `-tags blitz`; its Go binding is the
+  module `indiumengine` in `engine/go`, which the bench adapts). Why stateful and not
   one call per page, and every part from the EPUB down to the ink: `docs/design.md`.
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:

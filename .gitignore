@@ -2,7 +2,7 @@
 *.epub
 book/
 out/
-bench/
+experiments/*/bench/
 index.html
 # Built or fetched
 bin/

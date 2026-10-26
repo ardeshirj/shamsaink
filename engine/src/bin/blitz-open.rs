@@ -218,7 +218,7 @@ fn main() {
     );
 }
 
-/// FNV-1a 64 of a page's pixels, for PAGE_HASHES (experiments/engine/cmd/open prints the same).
+/// FNV-1a 64 of a page's pixels, for PAGE_HASHES (bench/cmd/open prints the same).
 fn fnv1a(b: &[u8]) -> u64 {
     b.iter().fold(0xcbf29ce484222325, |h, &c| (h ^ c as u64).wrapping_mul(0x100000001b3))
 }

@@ -25,8 +25,8 @@ page and boxes of an element id           read-along
 id at a point                             taps, selection (not built yet)
 ```
 
-In Go: `experiments/engine` (`engine.Document`: `Pages`, `Draw`, `Find`, `Close`; engines by name: "gotext", "cre"
-with `-tags cre`, "blitz" with `-tags blitz`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
+In Go: `bench/` (`engine.Document`: `Pages`, `Draw`, `Find`, `Close`; engines by name: "gotext", "cre"
+with `-tags cre`, "blitz" with `-tags blitz`, an adapter over the binding in `engine/go`, module `indiumengine`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
 its buffers in, strings as pointer and length, and answers the engine's file requests through a callback, so
 go-toolkit stays in charge of the EPUB. Not yet through it: 08's chapter-first opening and the cache (stage 0–2).
 
@@ -124,7 +124,7 @@ sequenceDiagram
 | crengine ("cre") | KOReader's engine, C++, its own HTML, CSS, pagination | the bar to measure against; GPL-2.0, never shipped |
 
 Any engine is judged the same way: 03's `compare.sh` (every word in a span, then each engine and Chromium say where it
-went), the read-along test (`experiments/engine/cmd/readalong`), times and memory on a device.
+went), the read-along test (`bench/cmd/readalong`), times and memory on a device.
 
 ## 4. On the device
 

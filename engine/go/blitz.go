@@ -1,16 +1,16 @@
 //go:build blitz
 
-// Package blitz is the Rust engine in engine/ (Blitz: Stylo, Taffy, Parley; our pagination) as an
-// engine.Document, through cgo and its C interface (blitz_engine.h). Go reads the book: the engine asks for files
-// through a callback. Needs the static library built first (engine/: cargo build --release, and
-// for ARMv7 --target armv7-unknown-linux-musleabihf) and -tags blitz, in the eink-rust image; build-armv7.sh makes
-// the 32-bit ARM binaries.
+// Package blitz is the Rust engine in engine/ (Blitz: Stylo, Taffy, Parley; our pagination) for Go, through cgo and
+// its C interface (blitz_engine.h). Go reads the book: the caller gives the spine's paths and a function that reads
+// a file, and the engine asks for files through a callback. Needs the static library built first (engine/: cargo
+// build --release, and for ARMv7 --target armv7-unknown-linux-musleabihf) and -tags blitz, in the eink-rust image;
+// bench/build-armv7.sh makes the 32-bit ARM binaries.
 package blitz
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../../engine
-#cgo arm64 LDFLAGS: ${SRCDIR}/../../../engine/target/release/libblitz_engine.a -lgcc_s -lutil -lrt -lpthread -lm -ldl
-#cgo arm LDFLAGS: ${SRCDIR}/../../../engine/target/armv7-unknown-linux-musleabihf/release/libblitz_engine.a -lunwind -lm
+#cgo CFLAGS: -I${SRCDIR}/..
+#cgo arm64 LDFLAGS: ${SRCDIR}/../target/release/libblitz_engine.a -lgcc_s -lutil -lrt -lpthread -lm -ldl
+#cgo arm LDFLAGS: ${SRCDIR}/../target/armv7-unknown-linux-musleabihf/release/libblitz_engine.a -lunwind -lm
 #include <stdlib.h>
 #include "blitz_engine.h"
 void goRead(uintptr_t ctx, uint8_t *path, size_t path_len, void *dst);
@@ -21,26 +21,33 @@ import (
 	"image"
 	"sync"
 	"unsafe"
-
-	engine "einkengine"
-	"einkengine/epub"
 )
 
-func init() { engine.Register("blitz", Open) }
+// Options are the page and text settings: size in pixels, margin on every side, text size in pixels.
+type Options struct {
+	Width, Height, Margin int
+	FontSize              float32
+}
+
+// PageInfo says which spine document a page is from and how many lines of text it has.
+type PageInfo struct{ Spine, Lines int }
+
+// ReadFunc reads a file of the book by its path in the EPUB.
+type ReadFunc func(path string) ([]byte, error)
 
 // Books being read, by the number C holds (C may not keep Go pointers).
 var (
 	booksMu sync.Mutex
-	books   = map[uintptr]*epub.Book{}
+	books   = map[uintptr]ReadFunc{}
 	nextCtx uintptr
 )
 
 //export goRead
 func goRead(ctx C.uintptr_t, path *C.uint8_t, pathLen C.size_t, dst unsafe.Pointer) {
 	booksMu.Lock()
-	b := books[uintptr(ctx)]
+	read := books[uintptr(ctx)]
 	booksMu.Unlock()
-	data, err := b.Read(C.GoStringN((*C.char)(unsafe.Pointer(path)), C.int(pathLen)))
+	data, err := read(C.GoStringN((*C.char)(unsafe.Pointer(path)), C.int(pathLen)))
 	if err != nil {
 		return
 	}
@@ -56,13 +63,12 @@ type doc struct {
 }
 
 // start makes the book reachable from C and the spine's paths C arrays; free releases the arrays.
-func start(b *epub.Book) (ctx uintptr, ptrs, lens unsafe.Pointer, n int, free func()) {
+func start(spine []string, read ReadFunc) (ctx uintptr, ptrs, lens unsafe.Pointer, n int, free func()) {
 	booksMu.Lock()
 	nextCtx++
 	ctx = nextCtx
-	books[ctx] = b
+	books[ctx] = read
 	booksMu.Unlock()
-	spine := b.Spine()
 	n = len(spine)
 	ptrs = C.malloc(C.size_t(n+1) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	lens = C.malloc(C.size_t(n+1) * C.size_t(unsafe.Sizeof(C.size_t(0))))
@@ -82,12 +88,13 @@ func start(b *epub.Book) (ctx uintptr, ptrs, lens unsafe.Pointer, n int, free fu
 	return
 }
 
-func Open(b *epub.Book, o engine.Options) (engine.Document, error) {
-	ctx, ptrs, lens, n, free := start(b)
+// Open lays out the whole book: spine is its documents' paths in reading order.
+func Open(spine []string, read ReadFunc, o Options) *Book {
+	ctx, ptrs, lens, n, free := start(spine, read)
 	defer free()
 	h := C.be_open(C.be_read_fn(C.goRead), C.uintptr_t(ctx), (**C.uint8_t)(ptrs), (*C.size_t)(lens),
 		C.size_t(n), C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize))
-	return &doc{b: h, ctx: ctx, w: o.Width, h: o.Height}, nil
+	return &Book{doc{b: h, ctx: ctx, w: o.Width, h: o.Height}}
 }
 
 // Fonts are fallback fonts read from a folder once, for every book of a long-running reader.
@@ -106,14 +113,13 @@ func (f *Fonts) Free() {
 	f.f = nil
 }
 
-// Book is a book opened as experiment 08 does: nothing laid out at New; the reader lays out the document it opens
-// at, then the rest, and keeps the cache (Save) for the next time (Restore). Pages, Draw, Find, PageLines and Close
-// are as on the Document Open returns.
+// Book is a book: from Open all laid out; from New nothing laid out (as experiment 08 does): the reader lays out the
+// document it opens at, then the rest, and keeps the cache (Save) for the next time (Restore).
 type Book struct{ doc }
 
 // New makes a book with nothing laid out; fonts (or nil) are for text the book's own fonts lack.
-func New(b *epub.Book, o engine.Options, fonts *Fonts) *Book {
-	ctx, ptrs, lens, n, free := start(b)
+func New(spine []string, read ReadFunc, o Options, fonts *Fonts) *Book {
+	ctx, ptrs, lens, n, free := start(spine, read)
 	defer free()
 	var f *C.Fonts
 	if fonts != nil {
@@ -177,12 +183,12 @@ func (d *doc) Find(spine int, id string) (int, []image.Rectangle) {
 	return p, rs
 }
 
-func (d *doc) PageLines() []engine.PageInfo {
-	ps := make([]engine.PageInfo, d.Pages())
+func (d *doc) PageLines() []PageInfo {
+	ps := make([]PageInfo, d.Pages())
 	for i := range ps {
 		var docIdx, lines C.size_t
 		C.be_page_info(d.b, C.size_t(i), &docIdx, &lines)
-		ps[i] = engine.PageInfo{Spine: int(docIdx), Lines: int(lines)}
+		ps[i] = PageInfo{Spine: int(docIdx), Lines: int(lines)}
 	}
 	return ps
 }

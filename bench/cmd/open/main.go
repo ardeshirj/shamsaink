@@ -1,6 +1,6 @@
 //go:build blitz
 
-// open: a book opened as the reader will (experiment 08's way, through the Blitz engine's C interface): go-toolkit
+// open: a book opened as the reader will (experiment 08's way, through the Blitz engine's C interface, engine/go): go-toolkit
 // reads the EPUB, the document DOC is laid out and its first page drawn, then the other documents one by one, the
 // cache is written (unless it was restored), and every page is drawn in order, laying its document out first.
 // Prints for every page its index, spine document and a hash of its pixels, as `blitz-open` does with PAGE_HASHES
@@ -18,9 +18,8 @@ import (
 	"strconv"
 	"time"
 
-	engine "einkengine"
-	"einkengine/blitz"
 	"einkengine/epub"
+	blitz "indiumengine"
 )
 
 func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }
@@ -41,10 +40,10 @@ func main() {
 		defer fonts.Free()
 	}
 	// blitz-open's defaults
-	o := engine.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34}
+	o := blitz.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34}
 	img := image.NewGray(image.Rect(0, 0, o.Width, o.Height))
 
-	book := blitz.New(b, o, fonts)
+	book := blitz.New(b.Spine(), b.Read, o, fonts)
 	defer book.Close()
 	restored := false
 	if data, err := os.ReadFile(os.Args[4]); err == nil {

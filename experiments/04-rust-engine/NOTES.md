@@ -56,7 +56,7 @@ Two questions are left for Stage 1:
   - It reads the book through a `Source`. In Go that is a callback (`src/capi.rs`, `blitz_engine.h`), so go-toolkit
     keeps the EPUB.
   - `src/bin/blitz-pages.rs` writes the same files as 03's `cmd/pages`. Through the Go interface it is the engine
-    `"blitz"` (`experiments/engine/blitz`, `-tags blitz`).
+    `"blitz"` (`experiments/engine/blitz`, now `bench/blitz` over `engine/go`; `-tags blitz`).
 - **Through the Go interface it reproduces the Rust tool exactly** (119 of 119 pages pixel for pixel, all 23,775
   word boxes). Experiment 02's read-along test passes: all 834 words, 4 page turns, every word on the same page as
   with the Go engine.
@@ -149,7 +149,7 @@ C=/x/03-own-layout/out/cmp/buried-alive        # from experiment 03's compare.sh
   ../04-rust-engine/out/bpages/buried-alive - out/cmp/buried-alive/chrome)
 # drawing times on the books as they are, and pages compared between two runs
 ./go.sh ./bench.sh NAME; ./go.sh ./pagediff.sh NAME1 NAME2
-# through the Go interface (in experiments/engine): IMAGE=eink-rust ./go.sh go build -tags blitz -o bin/blitz/ ./cmd/...
+# through the Go interface (in experiments/engine, now bench/): IMAGE=eink-rust ./go.sh go build -tags blitz -o bin/blitz/ ./cmd/...
 # and IMAGE=eink-rust ./go.sh sh build-armv7.sh for the static ARMv7 binaries
 # ARMv7 builds of the first two (with RUSTFLAGS="-C target-feature=+neon" for NEON: see 06):
 #   CARGO_TARGET_ARMV7_UNKNOWN_LINUX_MUSLEABIHF_LINKER=rust-lld cargo build --release \

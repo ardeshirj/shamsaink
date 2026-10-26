@@ -23,7 +23,7 @@ The parts the reader stands on on a device, and every dependency with its licenc
 | **3. Daily use** | The maintainer reads with it for a week or two. Text size and margins, progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. Memory over days of use (09, step 5: 0.1–0.2 MB more per book opened, cause not found). | It is the reader the maintainer picks for Farsi books |
 | **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). Sound on a PocketBook (needs one); the Mac playing the voice meanwhile, as in 09. | A narrated book read and followed on a device, its sound included |
 | **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
-| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling, pictures decoded when drawn, the `image` crate with every format off. | — |
+| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling, pictures decoded when drawn, the `image` crate with every format off. Plato's engine on the bench (`bench/`), for comparison like crengine: its licence and right to left to check first. | — |
 
 ## Stage 2, more closely
 - **Started by KOReader:** a small KOReader plugin (Lua) adds "Open with Indium" for EPUBs and runs our binary with the

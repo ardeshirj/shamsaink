@@ -2,7 +2,7 @@
 
 The question: does a layout engine in Rust do better than experiment 03's pure-Go one on these devices, by enough to
 pay for a second toolchain? Better means more of the book drawn right (real CSS, for books that aren't rtlbook's), or
-clearly faster or lighter, on the same tests. It plugs into `experiments/engine` as a third engine next to "gotext" and
+clearly faster or lighter, on the same tests. It plugs into `experiments/engine` (now `bench/`) as a third engine next to "gotext" and
 "cre", so `cmd/pages`, `cmd/readalong`, `compare.sh` and `tools/linecmp` measure it unchanged.
 
 ## The bar (experiment 03, Go)
@@ -37,7 +37,7 @@ one static 10.4 MB ARMv7 binary from one command.
 - Otherwise: **Parley plus a port of 03's layout** (our small CSS cascade, block flow, margins, pagination) to Rust.
   The same scope as 03 in another language; it answers the language question on its own, not the CSS one.
 - Either way, behind the C interface experiment 02's crengine already has (open, lay out, page count, draw a page into
-  a buffer Go owns, an id's page and boxes), so a cgo adapter in `experiments/engine/rust` is a copy of `cre`'s.
+  a buffer Go owns, an id's page and boxes), so a cgo adapter in `experiments/engine/rust` (now `bench/blitz`, over `engine/go`) is a copy of `cre`'s.
 
 ## Measured, as for 03
 Line and page agreement with Chromium on the four books; the read-along test; layout and draw time; memory; binary

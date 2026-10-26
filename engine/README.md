@@ -3,7 +3,7 @@
 Indium's layout engine in Rust: [Blitz](https://github.com/DioxusLabs/blitz) (Stylo, Taffy, Parley) with our own
 pagination (`lib.rs`), glyph layer between Blitz's painter and vello_cpu (`glyphs.rs`), pictures decoded when drawn
 (`pictures.rs`), a cache file per book (`saved.rs`), EPUB reading (`epub.rs`) and a C interface for Go (`capi.rs`,
-`blitz_engine.h`; the cgo binding is `experiments/engine/blitz`). Crate `blitz-engine`, library `blitz_engine`.
+`blitz_engine.h`; the cgo binding is `engine/go`, module `indiumengine`). Crate `blitz-engine`, library `blitz_engine`.
 
 Blitz is not in git: `engine/fetch-blitz.sh` clones it into `engine/blitz/` at the pinned commit (21edc92) and applies
 `patches/` (line culling, pictures sized from their headers). Safe to run again; stops if `blitz/` is in another state.

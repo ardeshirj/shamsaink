@@ -1,4 +1,4 @@
-//! The C interface, for the Go reader (cgo; experiments/engine/blitz). Go reads the book (readium/go-toolkit) and
+//! The C interface, for the Go reader (cgo; engine/go). Go reads the book (readium/go-toolkit) and
 //! answers file requests through a callback; this side keeps the laid-out book behind an opaque handle; Go owns the
 //! page buffers. See blitz_engine.h.
 
