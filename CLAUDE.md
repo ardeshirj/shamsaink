@@ -143,5 +143,9 @@ when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate tak
   `index.html`). Test books are copied in locally; FarsiEPUB's are under `~/Github/farsiepub/pipeline/.work/books/`.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
+- **The Kindle:** set up as in `docs/kindle-setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
+  sleeps after a few minutes untouched, taking Wi-Fi and SSH with it: `make kindle-awake` before a session,
+  `make kindle-sleep` after, `make kindle-status`, `make kindle-wait` once woken by hand. Long runs detached
+  (`nohup`), results read from their file. Clean up what goes in `/var/tmp` (RAM).
 - Confirm every push; make exactly the git step asked; small clear commits ending with the Co-Authored-By line.
 - Never read key or credential files.

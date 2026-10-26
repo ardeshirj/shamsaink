@@ -7,8 +7,9 @@
 #
 #     ssh kindle 'sh /mnt/us/indium-09/run-epub.sh'
 cd "$(dirname "$0")"
+was=$(lipc-get-prop com.lab126.powerd preventScreenSaver) # put back as it was at the end (make kindle-awake may have set it)
 lipc-set-prop com.lab126.powerd preventScreenSaver 1
-trap 'lipc-set-prop com.lab126.powerd preventScreenSaver 0' EXIT
+trap 'lipc-set-prop com.lab126.powerd preventScreenSaver $was' EXIT
 cold() { sync; echo 3 > /proc/sys/vm/drop_caches; }
 open() { # label, then blitz-open's arguments
   l=$1; shift

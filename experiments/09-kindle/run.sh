@@ -13,8 +13,9 @@
 cd "$(dirname "$0")"
 H=$(pwd)
 KO=${KO:-/mnt/us/koreader}
+was=$(lipc-get-prop com.lab126.powerd preventScreenSaver) # put back as it was at the end (make kindle-awake may have set it)
 lipc-set-prop com.lab126.powerd preventScreenSaver 1
-trap 'lipc-set-prop com.lab126.powerd preventScreenSaver 0' EXIT
+trap 'lipc-set-prop com.lab126.powerd preventScreenSaver $was' EXIT
 BOOKS="buried-alive:-:1:9:fa holmes:holmes:0:13:en haji-agha:haji-agha:2:60:fa" # book:fonts:doc:doc:language
 {
   echo "== $(date -u '+%Y-%m-%d %H:%M UTC')"

@@ -3,8 +3,9 @@
 # no word marked), then refresh-probe with these arguments. Run with KOReader open in front, as for 09; the Kindle's
 # screensaver is held off while it runs. Appends to results-refresh.txt.
 cd "$(dirname "$0")"
+was=$(lipc-get-prop com.lab126.powerd preventScreenSaver) # put back as it was at the end (make kindle-awake may have set it)
 lipc-set-prop com.lab126.powerd preventScreenSaver 1
-trap 'lipc-set-prop com.lab126.powerd preventScreenSaver 0' EXIT
+trap 'lipc-set-prop com.lab126.powerd preventScreenSaver $was' EXIT
 {
   echo "== $(date -u '+%Y-%m-%d %H:%M UTC') refresh-probe $*"
   FONT_SIZE=${FONT_SIZE:-44} bin/blitz-show books/buried-alive-spanned - 1 w00001 0 >/dev/null
