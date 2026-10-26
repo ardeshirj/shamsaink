@@ -9,4 +9,6 @@ s=$(date +%s)
   RUSTFLAGS="-C target-feature=+neon" cargo build -q --release --lib --features parallel --target armv7-unknown-linux-musleabihf)
 CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC="zig cc -target arm-linux-musleabihf" \
   go build -tags blitz -trimpath -ldflags '-s -w -linkmode external -extldflags -static' -o bin/armv7/ ./cmd/...
+# -s -w leaves the Rust library's symbols and debug sections in when zig links (32 MB `open`, 21 stripped)
+strip bin/armv7/*
 echo "built in $(( $(date +%s)-s )) s"; file bin/armv7/readalong; ls -l bin/armv7 | awk 'NR>1{print $5, $9}'

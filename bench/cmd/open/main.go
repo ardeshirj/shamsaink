@@ -10,12 +10,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"hash/fnv"
 	"image"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"einkengine/epub"
@@ -31,18 +33,23 @@ func main() {
 	}
 	doc, err := strconv.Atoi(os.Args[3])
 	check(err)
+	age := processAge()
 	t0 := time.Now()
 	b, err := epub.Open(context.Background(), os.Args[1])
 	check(err)
+	openMs := ms(t0)
+	t := time.Now()
 	var fonts *blitz.Fonts
 	if os.Args[2] != "-" {
 		fonts = blitz.LoadFonts(os.Args[2])
 		defer fonts.Free()
 	}
+	fontsMs := ms(t)
 	// blitz-open's defaults
 	o := blitz.Options{Width: 1072, Height: 1448, Margin: 60, FontSize: 34}
 	img := image.NewGray(image.Rect(0, 0, o.Width, o.Height))
 
+	t = time.Now() // the first page from here, as blitz-open's
 	book := blitz.New(b.Spine(), b.Read, o, fonts)
 	defer book.Close()
 	restored := false
@@ -51,7 +58,7 @@ func main() {
 	}
 	first, _ := book.Layout(doc)
 	book.Draw(first, img)
-	firstMs := ms(t0)
+	firstMs := ms(t)
 
 	s := time.Now()
 	for book.LayoutNext() {
@@ -81,6 +88,21 @@ func main() {
 	}
 	fmt.Fprintf(os.Stderr, "document %d: first page %.1f ms, then the rest %.0f ms, whole %.0f ms; %d pages; cache %s\n",
 		doc, firstMs, restMs, ms(t0), len(infos), cache)
+	fmt.Fprintf(os.Stderr, "  before it, ms: process start %.0f (to 10 ms), go-toolkit open %.1f, fallback fonts read %.1f\n",
+		age, openMs, fontsMs)
+}
+
+// processAge is how long ago the process started, from /proc (as blitz-open's process_age_ms).
+func processAge() float64 {
+	stat, _ := os.ReadFile("/proc/self/stat")
+	f := strings.Fields(string(stat[bytes.LastIndexByte(stat, ')')+1:]))
+	if len(f) < 20 {
+		return 0
+	}
+	start, _ := strconv.ParseFloat(f[19], 64)
+	up, _ := os.ReadFile("/proc/uptime")
+	u, _ := strconv.ParseFloat(strings.Fields(string(up))[0], 64)
+	return max(u*1e3-start*10, 0)
 }
 
 func check(err error) {
