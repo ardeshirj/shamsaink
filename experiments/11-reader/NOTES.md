@@ -110,11 +110,16 @@ Internet Archive's OCR *Alice* and Project Gutenberg's *Pride and Prejudice* (25
 | Pride and Prejudice | 0.35 s | 1.1 s | 4.7 s | ~185 ms; illustrations 0.6–0.8 s |
 
 (A page's time includes waiting for the last page's ink when turned quickly.) **Left, found here:**
-- *Haji Agha* turned the wrong way: its OPF names no language and no direction, so go-toolkit says left to right
-  (Blitz still draws the text right to left from its letters).
+- *Haji Agha* turns the wrong way: its OPF names no language and no direction, so go-toolkit says left to right
+  (Blitz still draws the text right to left from its letters). Guessing from the text was tried (its first letters
+  are the Internet Archive's English notice, so it needed 10,000 letters: tuned to one book) and dropped: the reader
+  goes by the metadata, as Readium does, and a setting will reverse it (stage 3).
 - Slow pages: scans (JPEG, no SIMD on ARM, known); *Pride*'s pages, its text mostly in one big document (drawing
   costs with the document's size, as Holmes's last story in 08); its reopen lays that document out again (1.1 s).
-  Next: draw the next page while the reader reads.
+  **Done since:** between touches the reader draws the next page ahead, and keeps three pages drawn (shown, behind,
+  ahead): a turn forward after a moment on a page is only its ink, including onto *Alice*'s photo and *Pride*'s
+  illustrations, and a turn back finds the page it came from. The maintainer: "smoother", "definitely faster".
+  A quick run of taps, or a jump, still draws as it goes.
 - English lines look close together: the books set no line height, so the font's own (DejaVu Serif ~1.16, as a
   browser). A setting for daily use (stage 3), with text size and margins.
 

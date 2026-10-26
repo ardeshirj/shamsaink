@@ -44,27 +44,41 @@ func main() {
 	o := blitz.Options{Width: scr.w, Height: scr.h, Margin: atoi(margin), FontSize: float32(atoi(fontSize))}
 	r, err := openBook(context.Background(), os.Args[1], dir, o, fonts)
 	check(err)
-	img := image.NewGray(image.Rect(0, 0, scr.w, scr.h))
-	r.book.Draw(r.page(), img)
-	scr.show(img, wfGC16, true) // a clean page over KOReader's
+	// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest ago,
+	// so a turn forward is only its ink, and a turn back finds the page it came from
+	pages := make(drawnPages, 3)
+	for i := range pages {
+		pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, scr.w, scr.h)), doc: -1}
+	}
+	shown := pages.get(r, r.doc, r.at, r.page())
+	scr.show(shown.img, wfGC16, true) // a clean page over KOReader's
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v)\n", filepath.Base(os.Args[1]),
 		r.doc, r.at, ms(t), r.restored, r.rtl)
 
+	ahead := true       // the next page may still need drawing
 	rest := !r.restored // documents still to paginate
 	for {
 		var g gesture
-		if rest {
-			select {
-			case g = <-gestures:
-			default:
-				// nothing touched: one more document laid out, then look again
+		select {
+		case g = <-gestures:
+		default:
+			// nothing touched: the next page drawn, else one more document laid out, then look again
+			if ahead {
+				ahead = false
+				if d, a, n, ok := r.peek(); ok && pages.find(d, a) == nil {
+					s := time.Now()
+					pages.get(r, d, a, n)
+					fmt.Printf("  document %d page %d drawn ahead: %.0f ms\n", d, a, ms(s))
+				}
+				continue
+			}
+			if rest {
 				if rest = r.book.LayoutNext(); !rest {
 					r.keep()
 					fmt.Printf("every document paginated after %.0f ms, %d pages\n", ms(t), r.book.Pages())
 				}
 				continue
 			}
-		} else {
 			g = <-gestures
 		}
 		// taps queued while the last page's ink moved are applied together: one page drawn for all of them
@@ -81,12 +95,57 @@ func main() {
 		}
 		if turned {
 			s := time.Now()
-			r.book.Draw(r.page(), img)
-			scr.show(img, wfREAGL, false)
+			how := "drawn"
+			if pages.find(r.doc, r.at) != nil {
+				how = "drawn before"
+			}
+			shown = pages.get(r, r.doc, r.at, r.page())
+			pages.touch(shown)
+			scr.show(shown.img, wfREAGL, false)
 			r.keep()
-			fmt.Printf("document %d page %d: %.0f ms\n", r.doc, r.at, ms(s))
+			ahead = true
+			fmt.Printf("document %d page %d: %s, %.0f ms\n", r.doc, r.at, how, ms(s))
 		}
 	}
+}
+
+// A page drawn, its place, and when it was last shown or drawn.
+type drawn struct {
+	img     *image.Gray
+	doc, at int
+	last    int
+}
+
+type drawnPages []*drawn
+
+var clock int
+
+func (ps drawnPages) find(doc, at int) *drawn {
+	for _, p := range ps {
+		if p.doc == doc && p.at == at {
+			return p
+		}
+	}
+	return nil
+}
+
+func (ps drawnPages) touch(p *drawn) { clock++; p.last = clock }
+
+// get is the page at (doc, at), number n now: drawn already, or drawn into the page used longest ago.
+func (ps drawnPages) get(r *reading, doc, at, n int) *drawn {
+	if p := ps.find(doc, at); p != nil {
+		return p
+	}
+	p := ps[0]
+	for _, q := range ps[1:] {
+		if q.last < p.last {
+			p = q
+		}
+	}
+	r.book.Draw(n, p.img)
+	p.doc, p.at = doc, at
+	ps.touch(p)
+	return p
 }
 
 // apply turns a page for a gesture, or says to leave (a tap on the top tenth of the screen).

@@ -77,8 +77,10 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 	}
 	key := fmt.Sprintf("%s-%d-%d", filepath.Base(abs), st.Size(), st.ModTime().Unix())
 	r := &reading{
-		pub:   p,
-		book:  blitz.New(spine, read, o, fonts),
+		pub:  p,
+		book: blitz.New(spine, read, o, fonts),
+		// as go-toolkit says (its stated direction, else its language); a book that says neither turns left to
+		// right, as in Readium (a setting to reverse it: stage 3)
 		rtl:   p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
 		cache: filepath.Join(dir, key+".cache"),
 		place: filepath.Join(dir, key+".place"),
@@ -141,6 +143,18 @@ func (r *reading) prev() bool {
 	}
 	r.book.Layout(r.doc)
 	return false
+}
+
+// peek is the next page: its document, its page in it and its number across the book now; false at the end. The
+// place stays where it is.
+func (r *reading) peek() (doc, at, n int, ok bool) {
+	d, a := r.doc, r.at
+	if ok = r.next(); ok {
+		doc, at, n = r.doc, r.at, r.page()
+	}
+	r.doc, r.at = d, a
+	r.book.Layout(d) // the current document first again among those kept laid out
+	return doc, at, n, ok
 }
 
 // keep writes the place, and the cache once every document is paginated (once).
