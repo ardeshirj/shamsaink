@@ -43,24 +43,6 @@ fn spine(dir: &std::path::Path) -> Vec<String> {
         .collect()
 }
 
-fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
-    let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
-        let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
-            "monospace"
-        } else if name.contains("Serif") {
-            "serif"
-        } else if name.contains("Sans") {
-            "sans-serif"
-        } else {
-            continue;
-        };
-        out.push((generic, std::fs::read(e.path()).unwrap()));
-    }
-    out
-}
-
 fn ms(t: Instant) -> f64 {
     t.elapsed().as_secs_f64() * 1e3
 }
@@ -196,7 +178,7 @@ fn refresh(fbink: &str, r: [usize; 4], waveform: &str, flash: bool) -> Child {
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let dir = std::path::PathBuf::from(&args[1]);
-    let fonts = args.get(2).filter(|d| *d != "-").map(|d| fallback_fonts(d)).unwrap_or_default();
+    let fonts = args.get(2).filter(|d| *d != "-").map(|d| blitz_engine::fallback_fonts(d)).unwrap_or_default();
     let (smil, durations) = (&args[3], &args[4]);
     let seconds: f64 = args.get(5).map(|s| s.parse().unwrap()).unwrap_or(180.0);
     let from: usize = args.get(6).map(|s| s.parse().unwrap()).unwrap_or(0);

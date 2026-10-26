@@ -38,24 +38,6 @@ fn spine(src: &dyn Source) -> Vec<String> {
         .collect()
 }
 
-fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
-    let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
-        let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
-            "monospace"
-        } else if name.contains("Serif") {
-            "serif"
-        } else if name.contains("Sans") {
-            "sans-serif"
-        } else {
-            continue;
-        };
-        out.push((generic, std::fs::read(e.path()).unwrap()));
-    }
-    out
-}
-
 /// A field of /proc/self/status in MB (Linux; 0 elsewhere).
 fn status_mb(field: &str) -> f64 {
     let s = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
@@ -73,7 +55,7 @@ fn main() {
         .iter()
         .map(|a| {
             let p: Vec<&str> = a.split(':').collect();
-            let fonts = if p[1] == "-" { vec![] } else { fallback_fonts(p[1]) };
+            let fonts = if p[1] == "-" { vec![] } else { blitz_engine::fallback_fonts(p[1]) };
             (p[0].to_string(), fonts, p[2].parse().unwrap())
         })
         .collect();

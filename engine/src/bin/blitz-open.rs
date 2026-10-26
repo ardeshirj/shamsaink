@@ -52,7 +52,7 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     let dir = std::path::PathBuf::from(&args[1]);
     let t = Instant::now();
-    let fonts = args.get(2).filter(|d| *d != "-").map(|d| fallback_fonts(d)).unwrap_or_default();
+    let fonts = args.get(2).filter(|d| *d != "-").map(|d| blitz_engine::fallback_fonts(d)).unwrap_or_default();
     let fonts_ms = ms(t);
     let src: Arc<dyn Source> = if args[1].ends_with(".epub") {
         Arc::new(Epub::open(&dir).unwrap())
@@ -137,6 +137,9 @@ fn main() {
             book.draw(n, &mut px);
             turns.push(ms(s));
             std::hash::Hash::hash(&px, &mut sum);
+            if std::env::var_os("PAGE_HASHES").is_some() {
+                println!("page {n} doc {} hash {:016x}", book.pages[n].doc, fnv1a(&px));
+            }
         }
         let sum = std::hash::Hasher::finish(&sum);
         turns.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -215,23 +218,9 @@ fn main() {
     );
 }
 
-/// The fonts in a folder, each as its generic family by its file name.
-fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
-    let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
-        let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
-            "monospace"
-        } else if name.contains("Serif") {
-            "serif"
-        } else if name.contains("Sans") {
-            "sans-serif"
-        } else {
-            continue;
-        };
-        out.push((generic, std::fs::read(e.path()).unwrap()));
-    }
-    out
+/// FNV-1a 64 of a page's pixels, for PAGE_HASHES (experiments/engine/cmd/open prints the same).
+fn fnv1a(b: &[u8]) -> u64 {
+    b.iter().fold(0xcbf29ce484222325, |h, &c| (h ^ c as u64).wrapping_mul(0x100000001b3))
 }
 
 /// Peak resident memory, from /proc (Linux).

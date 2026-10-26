@@ -41,7 +41,7 @@ fn main() {
     let opts = Options::default();
     let t = Instant::now();
     let files = spine(&dir);
-    let fonts = args.get(4).map(|d| fallback_fonts(d)).unwrap_or_default();
+    let fonts = args.get(4).map(|d| blitz_engine::fallback_fonts(d)).unwrap_or_default();
     let mut book = Book::open_with_fonts(Arc::new(Dir(dir.clone())), &files, opts, &fonts);
     let layout_ms = t.elapsed().as_secs_f64() * 1e3;
 
@@ -89,25 +89,6 @@ fn main() {
     );
     std::fs::write(format!("{out}/timings.json"), &t).unwrap();
     println!("{t}");
-}
-
-/// The fonts in a folder, each as its generic family by its file name.
-fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
-    let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
-        let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
-            "monospace"
-        } else if name.contains("Serif") {
-            "serif"
-        } else if name.contains("Sans") {
-            "sans-serif"
-        } else {
-            continue;
-        };
-        out.push((generic, std::fs::read(e.path()).unwrap()));
-    }
-    out
 }
 
 /// Peak resident memory, from /proc (Linux).

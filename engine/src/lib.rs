@@ -278,14 +278,18 @@ impl Book {
 
     /// Paginates every document not paginated yet, letting each go after unless the reader is using it.
     pub fn layout_rest(&mut self) {
-        for doc in 0..self.docs.len() {
-            if !self.paged[doc] {
-                self.load(doc);
-                if !self.used.contains(&doc) {
-                    self.docs[doc] = None;
-                }
-            }
+        while self.layout_next() {}
+    }
+
+    /// Paginates the next document not paginated yet (in spine order), letting it go after unless the reader is using
+    /// it. False if every document already was.
+    pub fn layout_next(&mut self) -> bool {
+        let Some(doc) = self.paged.iter().position(|&p| !p) else { return false };
+        self.load(doc);
+        if !self.used.contains(&doc) {
+            self.docs[doc] = None;
         }
+        true
     }
 
     /// Lays out `doc` if it is not, and paginates it the first time.
@@ -460,6 +464,26 @@ impl Book {
     fn page_at(&self, doc: usize, y: f64) -> Option<usize> {
         self.pages.iter().position(|p| p.doc == doc && y >= p.top && y < p.bottom)
     }
+}
+
+/// The fonts in a folder, each as its generic family by its file name ("Mono", "Serif" or "Sans" in it; others are
+/// skipped), for `Book::new`.
+pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
+    let mut out = vec![];
+    for e in std::fs::read_dir(dir).unwrap().flatten() {
+        let name = e.file_name().to_string_lossy().into_owned();
+        let generic = if name.contains("Mono") {
+            "monospace"
+        } else if name.contains("Serif") {
+            "serif"
+        } else if name.contains("Sans") {
+            "sans-serif"
+        } else {
+            continue;
+        };
+        out.push((generic, std::fs::read(e.path()).unwrap()));
+    }
+    out
 }
 
 /// A font context holding the given fallback fonts as the generic families (None: Blitz's own).

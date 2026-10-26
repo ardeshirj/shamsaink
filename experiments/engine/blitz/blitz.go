@@ -55,31 +55,104 @@ type doc struct {
 	w, h int
 }
 
-func Open(b *epub.Book, o engine.Options) (engine.Document, error) {
+// start makes the book reachable from C and the spine's paths C arrays; free releases the arrays.
+func start(b *epub.Book) (ctx uintptr, ptrs, lens unsafe.Pointer, n int, free func()) {
 	booksMu.Lock()
 	nextCtx++
-	ctx := nextCtx
+	ctx = nextCtx
 	books[ctx] = b
 	booksMu.Unlock()
 	spine := b.Spine()
-	ptrs := C.malloc(C.size_t(len(spine)) * C.size_t(unsafe.Sizeof(uintptr(0))))
-	lens := C.malloc(C.size_t(len(spine)) * C.size_t(unsafe.Sizeof(C.size_t(0))))
-	defer C.free(ptrs)
-	defer C.free(lens)
-	ps := unsafe.Slice((**C.uint8_t)(ptrs), len(spine))
-	ls := unsafe.Slice((*C.size_t)(lens), len(spine))
+	n = len(spine)
+	ptrs = C.malloc(C.size_t(n+1) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	lens = C.malloc(C.size_t(n+1) * C.size_t(unsafe.Sizeof(C.size_t(0))))
+	ps := unsafe.Slice((**C.uint8_t)(ptrs), n)
+	ls := unsafe.Slice((*C.size_t)(lens), n)
 	for i, s := range spine {
 		ps[i] = (*C.uint8_t)(C.CBytes([]byte(s)))
 		ls[i] = C.size_t(len(s))
 	}
-	defer func() {
+	free = func() {
 		for _, p := range ps {
 			C.free(unsafe.Pointer(p))
 		}
-	}()
+		C.free(ptrs)
+		C.free(lens)
+	}
+	return
+}
+
+func Open(b *epub.Book, o engine.Options) (engine.Document, error) {
+	ctx, ptrs, lens, n, free := start(b)
+	defer free()
 	h := C.be_open(C.be_read_fn(C.goRead), C.uintptr_t(ctx), (**C.uint8_t)(ptrs), (*C.size_t)(lens),
-		C.size_t(len(spine)), C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize))
+		C.size_t(n), C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize))
 	return &doc{b: h, ctx: ctx, w: o.Width, h: o.Height}, nil
+}
+
+// Fonts are fallback fonts read from a folder once, for every book of a long-running reader.
+type Fonts struct{ f *C.Fonts }
+
+// LoadFonts reads the fonts in dir, each as the generic family its file name says (Mono, Serif, Sans).
+func LoadFonts(dir string) *Fonts {
+	c := C.CBytes([]byte(dir))
+	defer C.free(c)
+	return &Fonts{C.be_fonts((*C.uint8_t)(c), C.size_t(len(dir)))}
+}
+
+// Free releases the fonts; books made with them keep their own copy.
+func (f *Fonts) Free() {
+	C.be_fonts_free(f.f)
+	f.f = nil
+}
+
+// Book is a book opened as experiment 08 does: nothing laid out at New; the reader lays out the document it opens
+// at, then the rest, and keeps the cache (Save) for the next time (Restore). Pages, Draw, Find, PageLines and Close
+// are as on the Document Open returns.
+type Book struct{ doc }
+
+// New makes a book with nothing laid out; fonts (or nil) are for text the book's own fonts lack.
+func New(b *epub.Book, o engine.Options, fonts *Fonts) *Book {
+	ctx, ptrs, lens, n, free := start(b)
+	defer free()
+	var f *C.Fonts
+	if fonts != nil {
+		f = fonts.f
+	}
+	h := C.be_new(C.be_read_fn(C.goRead), C.uintptr_t(ctx), (**C.uint8_t)(ptrs), (*C.size_t)(lens), C.size_t(n), f,
+		C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize))
+	return &Book{doc{b: h, ctx: ctx, w: o.Width, h: o.Height}}
+}
+
+// Layout lays out spine document doc (paginating it the first time); its pages are [first, last). Page numbers
+// after it shift the first time: final once every document is paginated.
+func (b *Book) Layout(doc int) (first, last int) {
+	var f, l C.size_t
+	C.be_layout(b.b, C.size_t(doc), &f, &l)
+	return int(f), int(l)
+}
+
+// LayoutNext paginates the next document not paginated yet: false if every one already was.
+func (b *Book) LayoutNext() bool { return C.be_layout_next(b.b) != 0 }
+
+// Save is the book's cache, or nil until every document is paginated.
+func (b *Book) Save() []byte {
+	var n C.size_t
+	p := C.be_save(b.b, &n)
+	if p == nil {
+		return nil
+	}
+	defer C.be_bytes_free(p, n)
+	return C.GoBytes(unsafe.Pointer(p), C.int(n))
+}
+
+// Restore takes a cache from Save on a book just made: false, and the book unchanged, if it is for other settings,
+// another spine or version, or damaged.
+func (b *Book) Restore(data []byte) bool {
+	if len(data) == 0 {
+		return false
+	}
+	return C.be_restore(b.b, (*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data))) != 0
 }
 
 func (d *doc) Pages() int { return int(C.be_pages(d.b)) }

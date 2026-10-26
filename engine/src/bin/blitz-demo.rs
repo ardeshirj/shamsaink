@@ -34,24 +34,6 @@ fn spine(dir: &std::path::Path) -> Vec<String> {
         .collect()
 }
 
-fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
-    let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
-        let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
-            "monospace"
-        } else if name.contains("Serif") {
-            "serif"
-        } else if name.contains("Sans") {
-            "sans-serif"
-        } else {
-            continue;
-        };
-        out.push((generic, std::fs::read(e.path()).unwrap()));
-    }
-    out
-}
-
 fn png(path: &str, w: usize, h: usize, px: &[u8]) {
     let mut enc = png::Encoder::new(std::fs::File::create(path).unwrap(), w as u32, h as u32);
     enc.set_color(png::ColorType::Grayscale);
@@ -88,7 +70,7 @@ fn main() {
     let n: usize = args[3].parse::<usize>().unwrap() - 1;
     std::fs::create_dir_all(out).unwrap();
     let opts = Options::default();
-    let fonts = args.get(4).map(|d| fallback_fonts(d)).unwrap_or_default();
+    let fonts = args.get(4).map(|d| blitz_engine::fallback_fonts(d)).unwrap_or_default();
     let mut book = Book::open_with_fonts(Arc::new(Dir(dir.clone())), &spine(&dir), opts, &fonts);
     let (w, h) = (opts.width as usize, opts.height as usize);
     let mut px = vec![0u8; w * h];
