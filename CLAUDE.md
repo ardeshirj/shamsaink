@@ -149,3 +149,9 @@ when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate tak
   (`nohup`), results read from their file. Clean up what goes in `/var/tmp` (RAM).
 - Confirm every push; make exactly the git step asked; small clear commits ending with the Co-Authored-By line.
 - Never read key or credential files.
+- **Sonnet sub-agents, on Claude's own judgment** (the maintainer, 2026-10-26, to save tokens): work already decided
+  and precisely specifiable (moves and renames, path fixes across scripts, rebuilds with checks, mechanical
+  refactors, write-ups of finished results) can go to a sub-agent with `model: "sonnet"` without asking. Decisions,
+  measurement design, anything on the Kindle and every git step stay in the main session. Brief it completely (what
+  is verified, hard rules: no commits, no Kindle, the outputs to check against), say in a line when work is handed
+  off, and check its report before relaying it.
