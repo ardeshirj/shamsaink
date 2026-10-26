@@ -1,16 +1,16 @@
 //go:build blitz
 
-// Package blitz is experiment 04's Rust engine (Blitz: Stylo, Taffy, Parley; our pagination) as an
+// Package blitz is the Rust engine in engine/ (Blitz: Stylo, Taffy, Parley; our pagination) as an
 // engine.Document, through cgo and its C interface (blitz_engine.h). Go reads the book: the engine asks for files
-// through a callback. Needs the static library built first (04-rust-engine/blitz-engine: cargo build --release, and
+// through a callback. Needs the static library built first (engine/: cargo build --release, and
 // for ARMv7 --target armv7-unknown-linux-musleabihf) and -tags blitz, in the eink-rust image; build-armv7.sh makes
 // the 32-bit ARM binaries.
 package blitz
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../04-rust-engine/blitz-engine
-#cgo arm64 LDFLAGS: ${SRCDIR}/../../04-rust-engine/blitz-engine/target/release/libblitz_engine.a -lgcc_s -lutil -lrt -lpthread -lm -ldl
-#cgo arm LDFLAGS: ${SRCDIR}/../../04-rust-engine/blitz-engine/target/armv7-unknown-linux-musleabihf/release/libblitz_engine.a -lunwind -lm
+#cgo CFLAGS: -I${SRCDIR}/../../../engine
+#cgo arm64 LDFLAGS: ${SRCDIR}/../../../engine/target/release/libblitz_engine.a -lgcc_s -lutil -lrt -lpthread -lm -ldl
+#cgo arm LDFLAGS: ${SRCDIR}/../../../engine/target/armv7-unknown-linux-musleabihf/release/libblitz_engine.a -lunwind -lm
 #include <stdlib.h>
 #include "blitz_engine.h"
 void goRead(uintptr_t ctx, uint8_t *path, size_t path_len, void *dst);

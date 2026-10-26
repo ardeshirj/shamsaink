@@ -11,6 +11,7 @@ patched/
 # Rust builds, and clones fetched by experiment scripts
 target/
 experiments/04-rust-engine/probes/blitz/
+engine/blitz/
 experiments/04-rust-engine/probes/cgo-probe/lib/
 experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*
 # ...but Rust keeps sources for its programs in src/bin

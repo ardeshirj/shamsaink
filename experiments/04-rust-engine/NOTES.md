@@ -1,5 +1,7 @@
 # 04: a Rust layout engine: Stage 0 probes, Stage 1 Blitz engine (2026-10-22)
 
+*Moved 2026-10-26: the engine (`blitz-engine`) is now in `engine/` at the top of the repo, and the two Blitz patches in `engine/patches/`; Blitz is fetched by `engine/fetch-blitz.sh`. Paths below are as they were.*
+
 The plan is in PLAN.md. Stage 0 asked, before any engine code: does Rust text layout build and run on 32-bit ARM
 (Kobo), does Blitz draw Farsi, and what does a Go program calling Rust take to build? All in Docker (`docker/`, image
 eink-rust: Rust 1.95 with the ARMv7 and arm64 musl targets, zig 0.15.2, Go 1.27). Probes in `probes/`; Blitz is cloned

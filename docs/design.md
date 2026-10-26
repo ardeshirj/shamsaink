@@ -26,7 +26,7 @@ id at a point                             taps, selection (not built yet)
 ```
 
 In Go: `experiments/engine` (`engine.Document`: `Pages`, `Draw`, `Find`, `Close`; engines by name: "gotext", "cre"
-with `-tags cre`, "blitz" with `-tags blitz`). Across cgo (`blitz-engine/src/capi.rs`, `blitz_engine.h`) Go passes
+with `-tags cre`, "blitz" with `-tags blitz`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
 its buffers in, strings as pointer and length, and answers the engine's file requests through a callback, so
 go-toolkit stays in charge of the EPUB. Not yet through it: 08's chapter-first opening and the cache (stage 0–2).
 
@@ -178,8 +178,8 @@ was found and measured: 06, 07 and 08's NOTES.md.
 
 | Patch | On | Why | Where |
 |---|---|---|---|
-| line culling | Blitz at 21edc92 | its painter drew every line of a paragraph crossing the page's edge | `experiments/04-rust-engine/blitz-cull-lines.patch` |
-| pictures left undecoded | Blitz at 21edc92 | it decoded every picture at full size while loading and kept it (a scan: 76 MB); now only the size, the file kept for our `pictures.rs` to decode when drawn | `experiments/04-rust-engine/blitz-lazy-images.patch` |
+| line culling | Blitz at 21edc92 | its painter drew every line of a paragraph crossing the page's edge | `engine/patches/blitz-cull-lines.patch` |
+| pictures left undecoded | Blitz at 21edc92 | it decoded every picture at full size while loading and kept it (a scan: 76 MB); now only the size, the file kept for our `pictures.rs` to decode when drawn | `engine/patches/blitz-lazy-images.patch` |
 | measuring switches | Blitz | `BLITZ_NO_HINT`, `BLITZ_NO_GLYPHS`, for one profiling build only | `experiments/06-device-timing/blitz-knobs.patch` |
 | justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
 | trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |

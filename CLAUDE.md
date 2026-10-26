@@ -45,12 +45,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:
   all 156 line starts of a chapter are Chromium's); Go calling Rust cross-builds with zig. Stage 1: `blitz-engine`
-  paginates Blitz and is the engine "blitz" (`-tags blitz`): on rtlbook's books as good as Go on pages, as fast to lay
-  out and lighter (60–75 ms, 36 MB for *Buried Alive*), a 34 MB static ARMv7 binary. Drawing a page: 3.6 ms against
-  Go's 3.0 (Holmes: 4–4.9 against 4.5), since a one-channel grey and a patch that has Blitz's painter skip the lines
-  off the page (04's NOTES.md, "Drawing faster"; worth proposing to Blitz).
-  (Timings on the comparison copies, every word in a span, overstate Blitz and webrender a lot: time the books as
-  they are.)
+  (since 2026-10-26 in `engine/`, Blitz fetched by `engine/fetch-blitz.sh`) paginates Blitz and is the engine "blitz"
+  (`-tags blitz`): on rtlbook's books as good as Go on pages, as fast to lay out and lighter (60–75 ms, 36 MB for
+  *Buried Alive*), a 34 MB static ARMv7 binary. Drawing a page: 3.6 ms against Go's 3.0 (Holmes: 4–4.9 against 4.5),
+  since a one-channel grey and a patch that has Blitz's painter skip the lines off the page (04's NOTES.md, "Drawing
+  faster"; worth proposing to Blitz). (Timings on the comparison copies, every word in a span, overstate Blitz and
+  webrender a lot: time the books as they are.)
 - **Real CSS (experiment 05, `experiments/05-real-css/NOTES.md`):** a Standard Ebooks book (English, their house CSS)
   through Blitz, webrender and the Go engine against Chromium. Lines: all three 98–99% Chromium's (once Chromium's
   own `text-wrap: pretty` is set aside, and webrender's hyphenation). Pages: Blitz 383 of 388, webrender 323, Go 89
@@ -80,11 +80,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   a page 13–20 ms (16–19); a first open 0.12–0.28 s (0.47–2.25 s); a reopen from its cache 50–57 ms for Haji Agha,
   128–241 ms on long chapters (57–85 ms); memory read through 22 / 43 / 56 MB (18 / 29 / 20); a scan's first draw
   1.1–1.5 s (about 0.3 s).
-- **How (07, 08):** our glyph layer between Blitz's painter and vello_cpu (`blitz-engine/src/glyphs.rs`; 266 → 20 ms a
+- **How (07, 08):** our glyph layer between Blitz's painter and vello_cpu (`engine/src/glyphs.rs`; 266 → 20 ms a
   page); only the chapter being opened laid out first, the rest after; pictures decoded when drawn, at the size drawn
-  (`pictures.rs`, `blitz-lazy-images.patch`); only the last chapters used kept laid out; masks keyed by font file and
-  made on both cores; Blitz's text layouts on both cores (`parallel-construct`); a cache file per book, pages and
-  masks (`saved.rs`, `Book::save` / `restore`). Pages byte-identical throughout unless NOTES.md says otherwise.
+  (`pictures.rs`, `engine/patches/blitz-lazy-images.patch`); only the last chapters used kept laid out; masks keyed by
+  font file and made on both cores; Blitz's text layouts on both cores (`parallel-construct`); a cache file per book,
+  pages and masks (`saved.rs`, `Book::save` / `restore`). Pages byte-identical throughout unless NOTES.md says
+  otherwise.
 - **Haji Agha** (Internet Archive OCR EPUB) is the first Farsi book tried that rtlbook did not make: right-to-left
   without `dir` works; it found three bugs, fixed (pictures never decoded, pictures outside lines, page bottoms).
 - **Left against crengine:** a reopen's own chapter layout (Blitz cannot keep it on disk; idea, not tried: lay out
@@ -94,7 +95,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   reMarkable's; two cores help as there. Against its crengine: a first open 0.28–0.43 s (0.54–2.55 s), a reopen
   0.17–0.38 s (0.09–0.14 s), a page 15–25 ms (19–24). **Its storage is slow:** `/mnt/us` (where books live) is FUSE;
   the same reopens read from RAM take 50–150 ms, as on the reMarkable. **One EPUB file (09, step 4):** the engine
-  reads the `.epub` as it is (`blitz-engine/src/epub.rs`), pages identical, no slower than the unpacked folder. The
+  reads the `.epub` as it is (`engine/src/epub.rs`), pages identical, no slower than the unpacked folder. The
   slow part on FUSE is the program itself: its 13 MB read page by page as its code first runs, ~640 ms of a cold open
   and ~120 of a warm one, plus the fallback fonts (up to 0.2 s); copying it to RAM first costs more (0.82 s). **So the
   reader stays running** and pays that once; a book in it costs its chapter's layout (0.1–0.3 s warm). Memory over
@@ -130,8 +131,8 @@ Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened 
 one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
 read-along in the reader (4, sound on a PocketBook); a stand-alone app only if 3 earns it (5). Upstream any time
 (the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text justification bug; to
-Blitz, the line culling (`blitz-cull-lines.patch`), pictures sized from their headers and decoded when drawn
-(`blitz-lazy-images.patch`), and the `image` crate taken with every format off.
+Blitz, the line culling (`engine/patches/blitz-cull-lines.patch`), pictures sized from their headers and decoded
+when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate taken with every format off.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.

@@ -3,18 +3,17 @@ name = "blitz-engine"
 version = "0.1.0"
 edition = "2024"
 
-# Blitz from its repository (cloned into ../probes/blitz at a pinned commit, with ../blitz-cull-lines.patch and ../blitz-lazy-images.patch applied; its
-# crates.io releases lag behind), without
-# system fonts (fontconfig, C), accessibility or the network layer: files only.
+# Blitz from its repository (engine/blitz, fetched by fetch-blitz.sh at a pinned commit with patches/ applied; its
+# crates.io releases lag behind), without system fonts (fontconfig, C), accessibility or the network layer: files only.
 # rlib for the blitz-pages tool, staticlib for Go (cgo) through the C interface in capi.rs
 [lib]
 crate-type = ["rlib", "staticlib"]
 
 [dependencies]
-blitz-dom = { path = "../probes/blitz/packages/blitz-dom", default-features = false, features = ["woff"] }
-blitz-html = { path = "../probes/blitz/packages/blitz-html", default-features = false }
-blitz-paint = { path = "../probes/blitz/packages/blitz-paint", default-features = false }
-blitz-traits = { path = "../probes/blitz/packages/blitz-traits" }
+blitz-dom = { path = "blitz/packages/blitz-dom", default-features = false, features = ["woff"] }
+blitz-html = { path = "blitz/packages/blitz-html", default-features = false }
+blitz-paint = { path = "blitz/packages/blitz-paint", default-features = false }
+blitz-traits = { path = "blitz/packages/blitz-traits" }
 parley = { version = "0.12", default-features = false, features = ["std"] }
 anyrender = "0.14"
 anyrender_vello_cpu = "0.18"

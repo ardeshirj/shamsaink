@@ -1,11 +1,12 @@
 #!/bin/sh
-# On the Mac: shows how a page is drawn, step by step. blitz-demo (04's blitz-engine) draws one page of each book each
+# On the Mac: shows how a page is drawn, step by step. blitz-demo (engine/) draws one page of each book each
 # way and ImageMagick cuts and enlarges the pieces into out/demo/, which demo.html shows (open it in a browser).
 # Pages hold book text: out/ stays out of git. Needs eink-rust and the books of experiments 03 and 05.
 set -e
 cd "$(dirname "$0")"
 X=$(cd .. && pwd)
-docker run --rm -v "$X":/x -v eink-cargo:/cargo -w /x/04-rust-engine/blitz-engine eink-rust sh -c '
+R=$(cd ../.. && pwd)
+docker run --rm -v "$X":/x -v "$R":/r -v eink-cargo:/cargo -w /r/engine eink-rust sh -c '
   cargo build -q --release --bin blitz-demo
   D=/x/07-blitz-drawing/out/demo
   target/release/blitz-demo /x/03-own-layout/out/cmp/buried-alive/src $D/buried 10
