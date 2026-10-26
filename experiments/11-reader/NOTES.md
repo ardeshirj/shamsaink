@@ -5,14 +5,14 @@ cache, a clean way back to KOReader. Built in steps; this file records each as i
 
 1. Touch on the Kindle, and handing it over between KOReader and our program (done, 2026-10-26, below).
 2. 08's opening and cache through the C API (done, 2026-10-26, below).
-3. The reader loop in Go.
-4. The KOReader plugin proper ("Open with Indium").
+3. The reader loop in Go (done, 2026-10-26, below).
+4. The KOReader plugin proper: "Open with Indium" (done with 3); the reader kept running between books (to do).
 
 ## Step 1: touch, and the hand-over (2026-10-26)
 
 `input/` is `input-probe` (Go, no cgo, `sh build.sh`): `info` prints the touch device's ranges and the screen's set-up;
 `taps SECONDS [grab]` logs every finger (the multi-touch type B protocol) and draws a black square where it thinks it
-is (A2), so the mapping is checked by eye. `indium.koplugin/` is a KOReader plugin with one menu entry (tools → More
+is (A2), so the mapping is checked by eye. `indium.koplugin/` (now `reader/indium.koplugin`) is a KOReader plugin with one menu entry (tools → More
 tools → "Indium: touch test") that hands the touch over, runs `input-probe taps 20 grab`, and takes it back.
 
 **The devices** (`/proc/bus/input/devices`): `event0` the power key (`bd71828-pwrkey`), `event1` the touch screen
@@ -81,3 +81,40 @@ not strip them when zig links. `build-armv7.sh` now strips: 21 MB (`blitz-open-p
 paid once since the reader stays running: 480 ms cold, 110 warm (Rust only: 60–70, 20). Fonts read as in 09.
 
 For the reader: step 2 keeps 08's gains through go-toolkit, as decided (existing tools first).
+
+## Step 3: the reader (2026-10-26)
+
+`reader/` (module `indiumreader`, `make reader-install`): `indium BOOK.epub [FONTS_DIR]` opens the book at its place
+(go-toolkit, the engine's chapter-first opening, the cache), turns pages by tap or swipe in the book's direction
+(go-toolkit's reading progression; KOReader's zones: back on the quarter by the book's start edge, forward on the
+rest), refreshes with REAGL (a GC16 flash on the first page), lays the rest of the book out one document at a time
+while nothing is touched, keeps its place (document, page in it) and the cache in `/mnt/us/indium`, and leaves on a
+tap on the top tenth. Taps queued while the ink moves are applied together: one page drawn for all of them. The
+KOReader plugin (`reader/indium.koplugin`) puts "Open with Indium" on an EPUB's long-press dialog
+(`FileManager:addFileDialogButtons`). One folder of fallback fonts for every book (DejaVu, Parastoo).
+
+**Handing the touch back:** reopening the device with `Device.input:open(path)` worked once, then the next release
+left it grabbed ("device or resource busy"): KOReader opened it at start through a scan, kept by fd. The plugin now
+reopens with `Device:openInputDevices()`, as KOReader does at start; opened again and again since.
+
+**By the maintainer, in use:** "smooth and easy"; it reopens where it was left. Five books: *Buried Alive*, *Haji
+Agha*, *Holmes* (whole, 606 pages), and two English books fetched for it (git-ignored, `reader/out/books`): the
+Internet Archive's OCR *Alice* and Project Gutenberg's *Pride and Prejudice* (25 MB, illustrated).
+
+| book | first open | reopen (cache) | every document paginated | a page drawn |
+|---|---|---|---|---|
+| Buried Alive | 0.27–0.29 s | 0.44 s | 1.1 s | 20–50 ms |
+| Alice | 0.57 s | 0.25–0.57 s | 1.6 s | 25 ms; its full-page photo 1.7 s |
+| Haji Agha | 0.33 s | | 3.6 s | its scans 1.3–2.3 s |
+| Holmes | 0.62 s | | 3.1 s | 25–140 ms |
+| Pride and Prejudice | 0.35 s | 1.1 s | 4.7 s | ~185 ms; illustrations 0.6–0.8 s |
+
+(A page's time includes waiting for the last page's ink when turned quickly.) **Left, found here:**
+- *Haji Agha* turned the wrong way: its OPF names no language and no direction, so go-toolkit says left to right
+  (Blitz still draws the text right to left from its letters).
+- Slow pages: scans (JPEG, no SIMD on ARM, known); *Pride*'s pages, its text mostly in one big document (drawing
+  costs with the document's size, as Holmes's last story in 08); its reopen lays that document out again (1.1 s).
+  Next: draw the next page while the reader reads.
+- English lines look close together: the books set no line height, so the font's own (DejaVu Serif ~1.16, as a
+  browser). A setting for daily use (stage 3), with text size and margins.
+

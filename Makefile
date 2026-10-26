@@ -1,4 +1,12 @@
-# Helpers for the Kindle the experiments run on (docs/kindle-setup.md). KINDLE is the SSH host (~/.ssh/config).
+# Builds, and helpers for the Kindle (docs/kindle-setup.md). KINDLE is the SSH host (~/.ssh/config). Builds run in
+# Docker (the eink-rust image).
+#
+#   make reader          the reader for the Kindle: reader/out/indium (static ARMv7, stripped)
+#   make reader-install  build it, copy it and the KOReader plugin to the Kindle (restart KOReader for the plugin)
+#   make reader-log      the end of the reader's log on the Kindle
+#   make engine          the engine and its tools, native (engine/target/release), for checks on the Mac
+#   make bench-armv7     the bench's commands for ARMv7 (bench/bin/armv7)
+#   make fetch-blitz     Blitz at its pinned commit with our patches (engine/blitz)
 #
 #   make kindle-awake    keep it awake: no sleep, so Wi-Fi and SSH stay up (drains the battery: undo when done)
 #   make kindle-sleep    let it sleep again (its own power manager, as normal)
@@ -9,7 +17,32 @@
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 
+DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
+  -v eink-gocache:/root/.cache/go-build eink-rust
+
+.PHONY: reader reader-install reader-log engine bench-armv7 fetch-blitz
 .PHONY: kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
+
+reader:
+	@sh reader/build.sh
+
+reader-install: reader
+	@$(SSH) 'mkdir -p /mnt/us/indium'
+	@scp -q reader/out/indium $(KINDLE):/mnt/us/indium/
+	@scp -qr reader/indium.koplugin $(KINDLE):/mnt/us/koreader/plugins/
+	@echo "reader and plugin copied to $(KINDLE)"
+
+reader-log:
+	@$(SSH) 'tail -n 40 /mnt/us/indium/log.txt'
+
+engine:
+	@$(DOCKER) sh -c 'cd /r/engine && cargo build --release --features parallel --lib --bins'
+
+bench-armv7:
+	@IMAGE=eink-rust bench/go.sh sh build-armv7.sh
+
+fetch-blitz:
+	@engine/fetch-blitz.sh
 
 kindle-awake:
 	@$(SSH) 'lipc-set-prop com.lab126.powerd preventScreenSaver 1 && lipc-get-prop com.lab126.powerd preventScreenSaver' \
