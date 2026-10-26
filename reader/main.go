@@ -1,7 +1,8 @@
 // indium: the minimal reader (experiment 11, step 3; docs/roadmap.md, stage 2). Opens one EPUB at its place, turns
 // pages by tap or swipe (in the book's direction: a right-to-left book turns forward on the left), keeps its place and
-// the book's cache in DIR, and lays the rest of the book out between touches. A tap on the top tenth of the screen
-// leaves. Run by KOReader's plugin (indium.koplugin), which lets go of the touch screen first and redraws after.
+// the book's cache in DIR/places and DIR/cache, and lays the rest of the book out between touches. A tap on the top
+// tenth of the screen leaves. Run by KOReader's plugin (indium.koplugin), which lets go of the touch screen first and
+// redraws after.
 //
 //	indium BOOK.epub [FONTS_DIR|-]      DIR: $INDIUM_DIR, or the folder the program is in
 package main

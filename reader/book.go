@@ -41,8 +41,8 @@ type reading struct {
 	book     *blitz.Book
 	rtl      bool
 	doc, at  int
-	cache    string // the cache file, by the book's name, size and date
-	place    string // the place file, beside it
+	cache    string // DIR/cache/: by the book's name, size and date; safe to delete (laid out again)
+	place    string // DIR/places/: the same name; deleting it starts the book again
 	restored bool
 	saved    bool
 }
@@ -82,8 +82,8 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		// as go-toolkit says (its stated direction, else its language); a book that says neither turns left to
 		// right, as in Readium (a setting to reverse it: stage 3)
 		rtl:   p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
-		cache: filepath.Join(dir, key+".cache"),
-		place: filepath.Join(dir, key+".place"),
+		cache: filepath.Join(dir, "cache", key+".cache"),
+		place: filepath.Join(dir, "places", key+".place"),
 	}
 	if data, err := os.ReadFile(r.cache); err == nil {
 		r.restored = r.book.Restore(data)
@@ -159,6 +159,8 @@ func (r *reading) peek() (doc, at, n int, ok bool) {
 
 // keep writes the place, and the cache once every document is paginated (once).
 func (r *reading) keep() {
+	os.MkdirAll(filepath.Dir(r.place), 0o755)
+	os.MkdirAll(filepath.Dir(r.cache), 0o755)
 	os.WriteFile(r.place, []byte(fmt.Sprintf("%d %d\n", r.doc, r.at)), 0o644)
 	if !r.saved {
 		if data := r.book.Save(); data != nil {
