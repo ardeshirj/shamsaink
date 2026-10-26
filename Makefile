@@ -28,7 +28,9 @@ reader:
 
 reader-install: reader
 	@$(SSH) 'mkdir -p /mnt/us/indium'
-	@scp -q reader/out/indium $(KINDLE):/mnt/us/indium/
+	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
+	@scp -q reader/out/indium $(KINDLE):/mnt/us/indium/indium.new
+	@$(SSH) 'mv /mnt/us/indium/indium.new /mnt/us/indium/indium'
 	@scp -qr reader/indium.koplugin $(KINDLE):/mnt/us/koreader/plugins/
 	@echo "reader and plugin copied to $(KINDLE)"
 
