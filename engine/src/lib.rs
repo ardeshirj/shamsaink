@@ -92,6 +92,8 @@ pub struct Options {
     pub height: u32,
     pub margin: u32,
     pub font_size: f32,
+    /// line spacing, as CSS's unitless line-height, over every element's own (0: the book's)
+    pub line_height: f32,
     pub orphans: usize,
     pub widows: usize,
     /// documents kept laid out: the ones the reader used last (others are laid out again when reached)
@@ -100,7 +102,7 @@ pub struct Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, orphans: 2, widows: 2, keep: 2 }
+        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, line_height: 0.0, orphans: 2, widows: 2, keep: 2 }
     }
 }
 
@@ -223,7 +225,7 @@ impl Book {
         let mut w = saved::W(saved::MAGIC.to_vec());
         w.u32(saved::VERSION);
         let o = self.opts;
-        for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.orphans as u32, o.widows as u32] {
+        for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32] {
             w.u32(v);
         }
         w.u32(self.spine.len() as u32);
@@ -252,7 +254,7 @@ impl Book {
                 return None;
             }
             let o = self.opts;
-            for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.orphans as u32, o.widows as u32] {
+            for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32] {
                 if r.u32()? != v {
                     return None;
                 }
@@ -305,10 +307,11 @@ impl Book {
         let t = Instant::now();
         let html = self.src.read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
         lt.read = ms(t);
-        // the shared page settings: text size and margins (the top one as the first page's), and padding below so
-        // the painter can scroll the last page to the top
+        // the shared page settings: text size and margins (the top one as the first page's), padding below so the
+        // painter can scroll the last page to the top, and the line spacing if one is set
+        let lh = if opts.line_height > 0.0 { format!(" * {{ line-height: {} !important; }}", opts.line_height) } else { String::new() };
         let css = format!(
-            "<style>html {{ font-size: {}px; padding: {m}px {m}px {}px {m}px; }}</style></head>",
+            "<style>html {{ font-size: {}px; padding: {m}px {m}px {}px {m}px; }}{lh}</style></head>",
             opts.font_size,
             opts.height,
             m = opts.margin
@@ -459,6 +462,23 @@ impl Book {
             })
             .collect();
         Some((page, boxes))
+    }
+
+    /// The line spacing of spine document `doc` as laid out (with the book's own, or the one set): its most common
+    /// height of a line of text, over the text size (0 if it has no text). Lays the document out if it is not.
+    pub fn line_spacing(&mut self, doc: usize) -> f32 {
+        if doc >= self.docs.len() {
+            return 0.0;
+        }
+        self.layout(doc);
+        let Some(d) = self.docs[doc].as_ref() else { return 0.0 };
+        let mut counts = std::collections::HashMap::<i64, usize>::new();
+        for b in blocks(d.as_ref()) {
+            for l in b.lines.iter().filter(|l| l.text) {
+                *counts.entry(((l.bottom - l.top) * 2.0).round() as i64).or_default() += 1; // to half a pixel
+            }
+        }
+        counts.into_iter().max_by_key(|&(h, n)| (n, h)).map_or(0.0, |(h, _)| h as f32 / 2.0 / self.opts.font_size)
     }
 
     fn page_at(&self, doc: usize, y: f64) -> Option<usize> {

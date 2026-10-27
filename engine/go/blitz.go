@@ -23,10 +23,11 @@ import (
 	"unsafe"
 )
 
-// Options are the page and text settings: size in pixels, margin on every side, text size in pixels.
+// Options are the page and text settings: size in pixels, margin on every side, text size in pixels, and line
+// spacing over the book's own (unitless, as CSS's line-height; 0: the book's; New only).
 type Options struct {
 	Width, Height, Margin int
-	FontSize              float32
+	FontSize, LineHeight  float32
 }
 
 // PageInfo says which spine document a page is from and how many lines of text it has.
@@ -126,7 +127,7 @@ func New(spine []string, read ReadFunc, o Options, fonts *Fonts) *Book {
 		f = fonts.f
 	}
 	h := C.be_new(C.be_read_fn(C.goRead), C.uintptr_t(ctx), (**C.uint8_t)(ptrs), (*C.size_t)(lens), C.size_t(n), f,
-		C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize))
+		C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize), C.float(o.LineHeight))
 	return &Book{doc{b: h, ctx: ctx, w: o.Width, h: o.Height}}
 }
 
@@ -137,6 +138,10 @@ func (b *Book) Layout(doc int) (first, last int) {
 	C.be_layout(b.b, C.size_t(doc), &f, &l)
 	return int(f), int(l)
 }
+
+// LineSpacing is spine document doc's line spacing as laid out: its most common line height over the text size (0:
+// no text).
+func (b *Book) LineSpacing(doc int) float32 { return float32(C.be_line_spacing(b.b, C.size_t(doc))) }
 
 // LayoutNext paginates the next document not paginated yet: false if every one already was.
 func (b *Book) LayoutNext() bool { return C.be_layout_next(b.b) != 0 }

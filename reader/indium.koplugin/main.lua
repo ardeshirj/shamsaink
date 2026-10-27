@@ -59,13 +59,14 @@ local function run(cmd)
 end
 
 -- The reader is kept running (it starts once: its start is slow from /mnt/us) and handed each book through two pipes
--- in RAM: the book's path written to `in`, then a line read from `out` when the book is left, or its end if the
+-- in RAM: the book written to `in` (lines of "key value": "book PATH"), then a line read from `out` when the book is left, or its end if the
 -- reader died meanwhile.
 local pipes = "/var/tmp/indium"
 
 -- open runs the reader on a book, once the dialog's callback has returned.
 local function open(file)
     local log = dir .. "/log.txt"
+    local msg = { "book " .. file }
     local cmd = table.concat({
         "P=" .. pipes .. ";",
         -- started unless running; its pid is written once its fonts are loaded, waited for up to 10 s
@@ -79,7 +80,7 @@ local function open(file)
         -- written only to a reader alive, else the write would wait for one forever
         "alive &&",
         "echo \"== $(date -u '+%Y-%m-%d %H:%M UTC')\" >> " .. log .. " &&",
-        "printf '%s\\n' " .. util.shell_escape({ file }) .. " > $P/in &&",
+        "printf '%s\\n' " .. util.shell_escape({ table.concat(msg, "\n") }) .. " > $P/in &&",
         "head -n 1 < $P/out",
     }, " ")
     -- at once (the dialog is gone in KOReader's own redraw when the book is left: the reader covers the screen)
@@ -90,14 +91,17 @@ end
 
 FileManager.addFileDialogButtons(FileManager, "indium", function(file, is_file)
     if is_file and file:lower():match("%.epub$") then
+        local function closeFileDialog()
+            local chooser = FileManager.instance and FileManager.getMenuInstance()
+            if chooser and chooser.file_dialog then
+                UIManager:close(chooser.file_dialog)
+            end
+        end
         return {
             {
                 text = "Open with Indium",
                 callback = function()
-                    local chooser = FileManager.instance and FileManager.getMenuInstance()
-                    if chooser and chooser.file_dialog then
-                        UIManager:close(chooser.file_dialog)
-                    end
+                    closeFileDialog()
                     open(file)
                 end,
             },

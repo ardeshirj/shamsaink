@@ -73,12 +73,18 @@ func openScreen() (*screen, error) {
 // show puts a page on the screen: waits for the last refresh to end (so the two never overlap), copies the page in
 // and refreshes the whole screen, returning while the ink moves.
 func (s *screen) show(p *image.Gray, waveform uint32, flash bool) {
+	s.showPart(p, image.Rect(0, 0, s.w, s.h), waveform, flash)
+}
+
+// showPart is show for a part of the screen only: the rows of r from p (p is the whole screen's).
+func (s *screen) showPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
 	s.wait()
-	for y := 0; y < s.h; y++ {
-		copy(s.mem[(s.y0+y)*s.line:(s.y0+y)*s.line+s.w], p.Pix[y*p.Stride:])
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		copy(s.mem[(s.y0+y)*s.line+r.Min.X:(s.y0+y)*s.line+r.Max.X], p.Pix[y*p.Stride+r.Min.X:])
 	}
 	s.marker++
-	u := updateMTK{region: rect{0, 0, uint32(s.w), uint32(s.h)}, waveform: waveform, marker: s.marker, temp: tempAmbient}
+	u := updateMTK{region: rect{uint32(r.Min.Y), uint32(r.Min.X), uint32(r.Dx()), uint32(r.Dy())}, waveform: waveform,
+		marker: s.marker, temp: tempAmbient}
 	if flash {
 		u.mode = 1
 	}

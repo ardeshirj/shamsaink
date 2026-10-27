@@ -155,3 +155,16 @@ touch screen in 10–14 ms; KOReader takes it back in 84–93 ms and redraws its
 full refresh, as when it closes a book of its own, left as it is. The plugin's 0.5 s wait before running the
 reader (for KOReader to redraw without the dialog) was dropped: the reader covers the screen anyway. Since: a book
 shown in 62–285 ms in a running reader, 451 ms the first in a new one, then the flash (~0.37 s).
+
+## Settings, in the reader (2026-10-27; roadmap stage 3)
+A tap on the top strip opens a menu over the top of the page (`reader/menu.go`), drawn by the engine from HTML (its
+buttons found by id with `Find`, `reader/menu_test.go` draws it and checks them); only that strip is refreshed. Close
+the book, reset the settings, text size, line spacing, margins (− and +, the page laid out again at once, the place
+kept as the same share of its document), and the page direction for this book (the book's, right to left, left to
+right). Kept in `DIR/settings.json`. A first try in KOReader's own dialogs was dropped for it: changes are seen as
+made, and the table of contents will go in the same menu.
+- **Line spacing** is a new engine option (`Options::line_height`, `* { line-height: X !important }`; 0: the book's,
+  pages as before), in the cache's page settings (cache version 2). The menu shows the spacing as laid out, measured
+  by the engine (`Book::line_spacing`: the chapter's most common line height over the text size), and steps 0.05 from
+  it. *Pride and Prejudice* and *Alice* measure 1.72 (86 px lines at 50 px text, checked on a drawn page), not the
+  font's own ~1.16 assumed in step 3.

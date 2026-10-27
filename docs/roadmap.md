@@ -43,6 +43,21 @@ The parts the reader stands on on a device, and every dependency with its licenc
 - **What KOReader keeps doing:** sleep and the power button (on Kindle the Kindle's own `powerd` sleeps; on Kobo
   KOReader does it, so inside our reader the power button would do nothing until stage 5), Wi-Fi, SSH.
 
+## Two hosts: KOReader, and later stand-alone (2026-10-27)
+Both are kept possible. **The rule meanwhile: KOReader stays in the plugin (`reader/indium.koplugin`) and the reader's
+`-serve` mode;** nothing else in `reader/` or `engine/` knows it. Already host-free: the engine (no device, no host),
+the book, its place and cache (`reader/book.go`), the settings and menu (`reader/menu.go`, in our own
+`settings.json`), and reading one book (`read` in `reader/main.go`: opens it, returns when it is closed; what follows is
+the host's).
+- **Not modular yet: the device.** Screen and touch (`reader/screen.go`, `touch.go`) are the Kindle PW5's (MediaTek
+  controller, `/dev/input/event1`, its coordinates as they are). Both hosts need a small table per device (screen
+  controller, touch device and how its coordinates turn, screen size), behind one interface (perhaps
+  `reader/device`): when a second device comes, whichever host.
+- **Stand-alone adds (stage 5):** a way to start it (KUAL, NickelMenu, a PocketBook app); a library to choose a book
+  (drawn with Blitz as HTML, as the menu, then the same `read`; "Close the book" back to it); and what KOReader does
+  for us now: pausing the Kindle's own interface, sleep and the power button, the light, battery and Wi-Fi. The last
+  is most of the work, the same in Go or Rust, and per device family.
+
 ## Why this order
 - The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
   around them, and stage 1 has settled the one with a licence question.
@@ -51,7 +66,6 @@ The parts the reader stands on on a device, and every dependency with its licenc
   wait until it is worth doing.
 
 ## Not decided
-- Where the reader's Go code lives once it is no longer an experiment (a `reader/` beside `experiments/`?).
 - Whether stage 5 happens at all.
 - **All Rust, without go-toolkit** (raised 2026-10-26; to decide by stage 4). Moving only the screen and touch code
   to Rust gains nothing while Go runs the program; the question is the whole reader. For: the Go reader starts in

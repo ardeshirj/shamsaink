@@ -38,8 +38,13 @@ func openPub(ctx context.Context, path string) (*pub.Publication, error) {
 // numbers across the book shift until every document is paginated.
 type reading struct {
 	pub      *pub.Publication
+	spine    []string
+	read     blitz.ReadFunc
+	fonts    *blitz.Fonts
 	book     *blitz.Book
-	rtl      bool
+	key      string // the book's name, size and date
+	bookRTL  bool   // as go-toolkit says (its stated direction, else its language; neither: left to right, as Readium)
+	rtl      bool   // as the pages turn: the book's, or as set for it
 	doc, at  int
 	cache    string // DIR/cache/: by the book's name, size and date; safe to delete (laid out again)
 	place    string // DIR/places/: the same name; deleting it starts the book again
@@ -47,7 +52,8 @@ type reading struct {
 	saved    bool
 }
 
-func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *blitz.Fonts) (*reading, error) {
+// openBook opens a book at its place; direction is the way set for it by its key ("rtl", "ltr", else the book's).
+func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *blitz.Fonts, direction func(key string) string) (*reading, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -77,18 +83,17 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 	}
 	key := fmt.Sprintf("%s-%d-%d", filepath.Base(abs), st.Size(), st.ModTime().Unix())
 	r := &reading{
-		pub:  p,
-		book: blitz.New(spine, read, o, fonts),
-		// as go-toolkit says (its stated direction, else its language); a book that says neither turns left to
-		// right, as in Readium (a setting to reverse it: stage 3)
-		rtl:   p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
-		cache: filepath.Join(dir, "cache", key+".cache"),
-		place: filepath.Join(dir, "places", key+".place"),
+		pub:     p,
+		spine:   spine,
+		read:    read,
+		fonts:   fonts,
+		key:     key,
+		bookRTL: p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
+		cache:   filepath.Join(dir, "cache", key+".cache"),
+		place:   filepath.Join(dir, "places", key+".place"),
 	}
-	if data, err := os.ReadFile(r.cache); err == nil {
-		r.restored = r.book.Restore(data)
-		r.saved = r.restored
-	}
+	r.direct(direction(key))
+	r.make(o)
 	if b, err := os.ReadFile(r.place); err == nil {
 		fmt.Sscan(string(b), &r.doc, &r.at)
 	}
@@ -97,6 +102,31 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		return nil, fmt.Errorf("%s: no pages", path)
 	}
 	return r, nil
+}
+
+// direct sets the way pages turn: "rtl" or "ltr", else the book's.
+func (r *reading) direct(d string) {
+	r.rtl = d == "rtl" || d != "ltr" && r.bookRTL
+}
+
+// make makes the engine's book for page settings o, its pages from the cache if it was saved for them.
+func (r *reading) make(o blitz.Options) {
+	r.book = blitz.New(r.spine, r.read, o, r.fonts)
+	r.restored, r.saved = false, false
+	if data, err := os.ReadFile(r.cache); err == nil {
+		r.restored = r.book.Restore(data)
+		r.saved = r.restored
+	}
+}
+
+// relayout makes the book again for new page settings; the place stays in its document, as the same share of it.
+func (r *reading) relayout(o blitz.Options) {
+	first, last := r.book.Layout(r.doc)
+	share := float64(r.at) / float64(max(last-first, 1))
+	r.book.Close()
+	r.make(o)
+	first, last = r.book.Layout(r.doc)
+	r.seek(r.doc, int(share*float64(last-first)))
 }
 
 // seek goes to page at of document doc (its last page if at is past it); false if the document has no pages.

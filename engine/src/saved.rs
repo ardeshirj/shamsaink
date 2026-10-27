@@ -5,7 +5,7 @@
 //! to check.
 
 /// Changes whenever the layout or the format does, so that older caches are not used.
-pub(crate) const VERSION: u32 = 1;
+pub(crate) const VERSION: u32 = 2; // 2: the line spacing among the page settings
 pub(crate) const MAGIC: &[u8; 4] = b"INDM";
 
 pub(crate) struct W(pub Vec<u8>);

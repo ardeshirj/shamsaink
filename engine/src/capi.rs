@@ -107,9 +107,10 @@ pub unsafe extern "C" fn be_new(
     height: u32,
     margin: u32,
     font_size: f32,
+    line_height: f32,
 ) -> *mut Book {
     let paths = unsafe { spine_paths(spine, spine_len, n) };
-    let opts = Options { width, height, margin, font_size, ..Options::default() };
+    let opts = Options { width, height, margin, font_size, line_height, ..Options::default() };
     let fonts: &[(&str, Vec<u8>)] = if fonts.is_null() { &[] } else { &unsafe { &*fonts }.0 };
     Box::into_raw(Box::new(Book::new(Arc::new(Callback { read, ctx }), &paths, opts, fonts)))
 }
@@ -207,6 +208,15 @@ pub unsafe extern "C" fn be_draw(b: *mut Book, page: usize, out: *mut u8) {
     let b = unsafe { &mut *b };
     let len = (b.opts.width * b.opts.height) as usize;
     b.draw(page, unsafe { std::slice::from_raw_parts_mut(out, len) });
+}
+
+/// The line spacing of spine document `doc` as laid out: its most common line height over the text size (0: no text).
+///
+/// # Safety
+/// `b` comes from be_new.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_line_spacing(b: *mut Book, doc: usize) -> f32 {
+    unsafe { &mut *b }.line_spacing(doc)
 }
 
 /// The page of the element with this id in spine document `doc` (-1 if not found); its boxes on that page, as
