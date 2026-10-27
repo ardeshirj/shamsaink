@@ -53,3 +53,11 @@ The parts the reader stands on on a device, and every dependency with its licenc
 ## Not decided
 - Where the reader's Go code lives once it is no longer an experiment (a `reader/` beside `experiments/`?).
 - Whether stage 5 happens at all.
+- **All Rust, without go-toolkit** (raised 2026-10-26; to decide by stage 4). Moving only the screen and touch code
+  to Rust gains nothing while Go runs the program; the question is the whole reader. For: the Go reader starts in
+  ~480 ms cold, 110 warm, against 60–70 and 20 for a Rust-only binary (paid once if it is kept running), 21 MB
+  against ~13, one toolchain instead of Rust + Go + cgo + zig; Go's first reason (no cgo) went with Blitz. Against:
+  go-toolkit is the existing tool (tables of contents, page lists, positions and locators, obfuscated fonts,
+  direction, and SMIL for read-along) and Rust has no Readium. Before deciding: where the 480 ms goes (the binary on
+  FUSE, Go's runtime, go-toolkit's start), and what go-toolkit does for us checked against Rust's EPUB crates, SMIL
+  first. Independent of KOReader (stage 5) is a separate question: its device work is the same in either language.

@@ -31,6 +31,8 @@ reader-install: reader
 	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
 	@scp -q reader/out/indium $(KINDLE):/mnt/us/indium/indium.new
 	@$(SSH) 'mv /mnt/us/indium/indium.new /mnt/us/indium/indium'
+	@# a reader kept running is stopped, so the next book starts the new one
+	@$(SSH) 'kill $$(cat /var/tmp/indium/pid 2>/dev/null) 2>/dev/null; true'
 	@scp -qr reader/indium.koplugin $(KINDLE):/mnt/us/koreader/plugins/
 	@echo "reader and plugin copied to $(KINDLE)"
 

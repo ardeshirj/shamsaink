@@ -123,3 +123,28 @@ Internet Archive's OCR *Alice* and Project Gutenberg's *Pride and Prejudice* (25
 - English lines look close together: the books set no line height, so the font's own (DejaVu Serif ~1.16, as a
   browser). A setting for daily use (stage 3), with text size and margins.
 
+
+## Step 4: the reader kept running (2026-10-27)
+The plugin starts the reader once (`indium -serve /var/tmp/indium fonts`) and hands it each book through two named
+pipes in RAM: the book's path written to `in`, then a line read from `out` ("left") when the book is left, or the
+pipe's end if the reader died meanwhile, so KOReader is never stuck. The reader writes its pid once its fonts are
+loaded; the plugin starts it unless `/proc/<pid>` exists (busybox's `kill -0 ""` succeeds: it takes the empty pid
+as 0, its own process group), and writes a path only to a reader alive (else the write would wait forever).
+Between books the reader lets go of the touch screen, closes the book and the EPUB, and keeps the fonts, the screen
+and the three pages' buffers. `make reader-install` stops a running reader.
+
+On the Kindle, three books opened from KOReader in a row (*Buried Alive*, *Haji Agha*, *Buried Alive* again, all
+from their caches), timed from the path received to the page on the screen:
+
+| | before (step 3: a process per book) | kept running |
+|---|---|---|
+| the process to `main` (from `/proc/self/stat`, 10 ms ticks) | each book | 340 ms, once (110 warm) |
+| fonts and screen | each book | 70 ms, once (275 warm, from SSH) |
+| *Buried Alive*, the first book | 0.44–0.53 s after `main` | 0.83 s |
+| a later book | the same | *Haji Agha* 0.20 s, *Buried Alive* 0.27 s |
+
+The first book in a new process costs ~0.55 s more than a later one, its code run for the first time (read from
+FUSE page by page, 09's finding); a later one costs only its chapter. Kept running between books: 36 MB resident.
+So of the ~1.2 s a cold first book costs, ~0.34 s is before `main` (reading the 21 MB program, Go's runtime and every
+package's init, go-toolkit's included), ~0.55 s first-run code: which part is go-toolkit's is the question for the
+all-Rust note in the roadmap (to measure apart: a Go program of the same size without go-toolkit).

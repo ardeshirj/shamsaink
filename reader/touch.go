@@ -26,15 +26,18 @@ type gesture struct {
 	swipe        bool
 }
 
-// touches sends a gesture each time the first finger down is lifted (other fingers are ignored).
-func touches(path string, out chan<- gesture) error {
+// touches grabs the touch screen and sends a gesture each time the first finger down is lifted (other fingers are
+// ignored), until the file is closed (which lets go of it). Past 8 gestures queued, more are dropped.
+func touches(path string) (*os.File, <-chan gesture, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), eviocgrab, 1); e != 0 {
-		return e
+		f.Close()
+		return nil, nil, e
 	}
+	out := make(chan gesture, 8)
 	go func() {
 		var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
 		slot, x, y := int32(0), 0, 0
@@ -70,5 +73,5 @@ func touches(path string, out chan<- gesture) error {
 			}
 		}
 	}()
-	return nil
+	return f, out, nil
 }
