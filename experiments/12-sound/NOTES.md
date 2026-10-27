@@ -85,3 +85,31 @@ Audible and its own voice, and headphones dropped after 20 minutes unless Amazon
 are hacking our way through due to Kindle limitations"; documented, and left here. Read-along stays a stage 4 goal;
 which device it is built for (a PocketBook, with a speaker and an SDK that allows sound, or the Kindle with these
 limits) is decided then.
+
+## Other devices, and how others do it (desk research, 2026-10-27)
+**audiobook.koplugin** (github.com/stradichenko/audiobook.koplugin; AGPL-3.0: to learn from, not to copy; started
+2026-02, active) is a KOReader plugin that plays sound on Kindle, Kobo and PocketBook: text-to-speech with word and
+sentence highlighting and page turns, audiobooks, EPUB 3 media overlays (work in progress). The nearest thing to our
+read-along; its notes (`docs/PLATFORM_AUDIO.md`, `docs/AIRPODS_PRO3_KINDLE.md`) map each device's audio.
+- **Kindle:** its own small C helper (`kindle/gst-play.c`): `filesrc ! audio/x-raw-int,... ! mixersink
+  stream-type=Music sync=true`, after `lipc-set-prop com.lab126.audiomgrd setFocus Music`. Why our GStreamer try in
+  step 3 hung: `stream-type=Music` (else the mixer never opens the stream), `sync=true` (else "MixerSink:Commit:in !=
+  out" and a silent hang), and focus by stream type, not by the stream's name. It appends a second of silence to each
+  clip (the mixer's ring, ~0.9 s, and Bluetooth still hold the tail at the end), loads GStreamer at run time
+  (`dlopen`) with its own glibc loader, and plays the Kindle's voice through `ttssrc` directly. A silent "keepalive"
+  stream holds the Bluetooth link through pauses and between files. The 20-minute drop: not found addressed; an
+  opt-in disconnect-and-reconnect at each file (a 5–10 s gap) "if audio goes silent at chapter transitions" suggests
+  its users meet drops too. Highlighting: a poller maps the playing time to the SMIL's clips (a clock, as ours).
+- **Kobo:** possible, a hack per family. MediaTek models (Clara 2E, Clara/Libra Colour): Kobo's own GStreamer
+  Bluetooth sink, which one program at a time can hold: the plugin runs a long-lived daemon owning it, feeding silence
+  between clips (the link kept) and reporting the real playing position. BlueZ models: `aplay` to `bluealsa`, but
+  KOReader's start-up kills Bluetooth when launched from Kobo's own interface, so it is restored and reconnected.
+  Officially Kobo plays only its own store's audiobooks; nothing for other apps.
+- **PocketBook:** the friendliest hardware (Era, InkPad 4, InkPad Color 2 have a speaker; Bluetooth; their own
+  audiobooks and text-to-speech), apps officially supported (InkView SDK, which declares `OpenPlayer`, `PlayFile`,
+  `TogglePlaying`), but the sound path is messy: on an InkPad Color 3 those calls were not exported, the plugin
+  bundles its own ALSA player and works around the firmware's routing, and keeps the speaker opt-in ("direct speaker
+  access has affected amplifiers on similar models"). An earlier community route (Bluetooth MP3 through `bluealsa`)
+  needed root and a patched library, firmware 6.7 or older.
+- **So:** no e-reader gives other apps clean sound. If we want one long-lived player on the Kindle (gapless parts,
+  pause and resume, a keepalive), `mixersink` with the settings above is the route; `mplay` does for now.
