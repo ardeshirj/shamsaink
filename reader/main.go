@@ -100,7 +100,7 @@ func (rd *reader) read(path string, t time.Time) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer f.Close() // closed at once when left, the book too: twice does no harm
 	r, err := openBook(context.Background(), path, rd.dir, rd.o, rd.fonts)
 	if err != nil {
 		return err
@@ -149,9 +149,15 @@ func (rd *reader) read(path string, t time.Time) error {
 			turned, leave = turned || t, l
 		}
 		if leave {
+			s := time.Now()
 			r.keep()
+			k := ms(s)
 			scr.wait()
-			fmt.Printf("left at document %d page %d\n", r.doc, r.at)
+			w := ms(s) - k
+			f.Close()
+			r.close()
+			fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms\n", r.doc, r.at, k, w,
+				ms(s)-k-w)
 			return nil
 		}
 		if turned {

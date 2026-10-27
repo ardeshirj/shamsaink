@@ -148,3 +148,10 @@ FUSE page by page, 09's finding); a later one costs only its chapter. Kept runni
 So of the ~1.2 s a cold first book costs, ~0.34 s is before `main` (reading the 21 MB program, Go's runtime and every
 package's init, go-toolkit's included), ~0.55 s first-run code: which part is go-toolkit's is the question for the
 all-Rust note in the roadmap (to measure apart: a Go program of the same size without go-toolkit).
+
+**Leaving, timed** (the reader and the plugin log it): the reader keeps the place, closes the book and lets go of the
+touch screen in 10–14 ms; KOReader takes it back in 84–93 ms and redraws its screen with a flash in 397–413 ms
+(`forceRePaint`, which waits for the ink). The maintainer felt KOReader slow to answer after a book: that is its own
+full refresh, as when it closes a book of its own, left as it is. The plugin's 0.5 s wait before running the
+reader (for KOReader to redraw without the dialog) was dropped: the reader covers the screen anyway. Since: a book
+shown in 62–285 ms in a running reader, 451 ms the first in a new one, then the flash (~0.37 s).

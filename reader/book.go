@@ -159,8 +159,11 @@ func (r *reading) peek() (doc, at, n int, ok bool) {
 
 // close closes the engine's book (its memory given back) and the EPUB.
 func (r *reading) close() {
-	r.book.Close()
-	r.pub.Close()
+	if r.book != nil {
+		r.book.Close()
+		r.pub.Close()
+		r.book = nil
+	}
 }
 
 // keep writes the place, and the cache once every document is paginated (once).

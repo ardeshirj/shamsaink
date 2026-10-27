@@ -11,6 +11,7 @@ local FileManager = require("apps/filemanager/filemanager")
 local UIManager = require("ui/uimanager")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local logger = require("logger")
+local time = require("ui/time")
 local util = require("util")
 
 local dir = "/mnt/us/indium"
@@ -36,7 +37,9 @@ local function run(cmd)
         Device.input:close(path)
     end
     logger.info("indium: released", table.concat(paths, " "), "; running", cmd, ";", night())
+    local t = time.now()
     local status = os.execute(cmd)
+    local ran = time.to_ms(time.since(t))
     -- As KOReader opened them at start (a scan, the devices kept by fd): Input:open(path) alone leaves a device
     -- that the next close does not let go of.
     if Device.openInputDevices then
@@ -46,8 +49,13 @@ local function run(cmd)
             Device.input:open(path)
         end
     end
-    logger.info("indium: exit", status, "; took back", table.concat(paths, " "), ";", night())
+    logger.info("indium: exit", status, "after", ran, "ms; took back", table.concat(paths, " "), "in",
+        time.to_ms(time.since(t)) - ran, "ms;", night())
+    -- redrawn now, to time it (the widgets drawn and the refresh sent; the ink takes ~0.4 s more)
+    local r = time.now()
     UIManager:setDirty("all", "full")
+    UIManager:forceRePaint()
+    logger.info("indium: KOReader redrawn in", time.to_ms(time.since(r)), "ms")
 end
 
 -- The reader is kept running (it starts once: its start is slow from /mnt/us) and handed each book through two pipes
@@ -55,7 +63,7 @@ end
 -- reader died meanwhile.
 local pipes = "/var/tmp/indium"
 
--- open runs the reader on a book, once the dialog has closed and the screen is redrawn without it.
+-- open runs the reader on a book, once the dialog's callback has returned.
 local function open(file)
     local log = dir .. "/log.txt"
     local cmd = table.concat({
@@ -74,7 +82,8 @@ local function open(file)
         "printf '%s\\n' " .. util.shell_escape({ file }) .. " > $P/in &&",
         "head -n 1 < $P/out",
     }, " ")
-    UIManager:scheduleIn(0.5, function()
+    -- at once (the dialog is gone in KOReader's own redraw when the book is left: the reader covers the screen)
+    UIManager:nextTick(function()
         run(cmd)
     end)
 end
