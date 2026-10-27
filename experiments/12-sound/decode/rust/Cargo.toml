@@ -1,0 +1,10 @@
+[package]
+name = "mp3-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+symphonia = { version = "0.5.4", default-features = false, features = ["mp3"] }
+
+[profile.release]
+opt-level = 3

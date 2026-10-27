@@ -74,4 +74,4 @@ the host's).
   go-toolkit is the existing tool (tables of contents, page lists, positions and locators, obfuscated fonts,
   direction, and SMIL for read-along) and Rust has no Readium. Before deciding: where the 480 ms goes (the binary on
   FUSE, Go's runtime, go-toolkit's start), and what go-toolkit does for us checked against Rust's EPUB crates, SMIL
-  first. Independent of KOReader (stage 5) is a separate question: its device work is the same in either language.
+  first. Since: decoding MP3 on the Kindle, Rust's symphonia is 70× real time, Go's go-mp3 5× (experiment 12, step 6). Independent of KOReader (stage 5) is a separate question: its device work is the same in either language.

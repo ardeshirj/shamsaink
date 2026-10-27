@@ -34,9 +34,22 @@ in the Kindle's own settings, *Buried Alive*'s chapter 1 played to them while 09
    (250) later. 90 s: 161 words underlined, none skipped, sent a median 8 ms after their time. The maintainer: "It
    WORKED!" (250 ms not yet tuned finely by ear).
 
+6. **Decoding MP3 on the Kindle** (`decode/`: `go` with hajimehoshi/go-mp3, Apache-2.0; `rust` with symphonia,
+   MPL-2.0, its MP3 decoder only; both static ARMv7, the Rust with NEON), one of *Buried Alive*'s narration files
+   (154 s, mono 44.1 kHz) from RAM, three runs each, within 1%:
+
+   | decoder | 154 s decoded in | real time |
+   |---|---|---|
+   | go-mp3 | 28.6–28.9 s | 5× (one core ~20% busy while it plays) |
+   | symphonia | 2.19 s | 70× (~1.5%) |
+
+   go-mp3 always gives stereo (twice the work for this mono narration); Rust is still ~6× faster. **So decoding
+   goes in the engine, in Rust** (symphonia, behind the C API): a narration file decoded just before it plays, fed to
+   `mplay` through a pipe, nothing stored. A point for the all-Rust question (roadmap, "Not decided").
+
 ## For the reader
 - Sound: `mplay` as it is (a process per chapter, raw PCM from a file or a pipe), or the mixer's library by its
   functions (`MixerOpenPlay`, `MixerGetBufPlay`, ...; a glibc library, not callable from our static binary).
-- MP3s must be decoded by us (Go or Rust, both have decoders), on the device or ahead of time.
+- MP3s must be decoded by us: in the engine with symphonia (step 6), just before each file plays.
 - The clock: the mixer plays in real time from the stream's start, so the reader's clock can start with `mplay`, plus
   `LEAD_MS` for the headphones (a setting, per pair).
