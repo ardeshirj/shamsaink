@@ -32,4 +32,12 @@ float be_line_spacing(Book *b, size_t doc);           // doc's most common line 
 int64_t be_find(Book *b, size_t doc, const uint8_t *id, size_t id_len, int32_t *rects, size_t max, size_t *n);
 void be_close(Book *b);
 
+typedef struct Audio Audio;
+Audio *be_audio_open(const uint8_t *data, size_t len);  // an MP3's bytes (copied); NULL if not decodable
+uint32_t be_audio_rate(const Audio *a);                 // samples per second, per channel
+uint32_t be_audio_channels(const Audio *a);             // channels; the samples come interleaved
+double be_audio_seek(Audio *a, double secs);            // seeks to secs: the time reached, or -1
+size_t be_audio_read(Audio *a, int16_t *out, size_t max);  // up to max samples into out; 0 at the end
+void be_audio_close(Audio *a);
+
 #endif

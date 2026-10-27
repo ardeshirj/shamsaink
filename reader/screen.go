@@ -20,6 +20,7 @@ const (
 const (
 	wfGC16  = 2
 	wfREAGL = 4
+	wfA2    = 6
 )
 
 type rect struct{ top, left, width, height uint32 }

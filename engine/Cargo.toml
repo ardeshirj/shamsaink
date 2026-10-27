@@ -21,6 +21,8 @@ peniko = "0.6"
 bytes = "1"
 url = "2"
 png = "0.17"
+# MP3 narration decoded for read-along (pure Rust, MPL-2.0; experiment 12, step 6)
+symphonia = { version = "0.5.4", default-features = false, features = ["mp3"] }
 # Blitz takes the image crate with every format off, so no picture was ever decoded (found in 08): ours switch the
 # common ones on (pure Rust)
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "gif", "webp"] }

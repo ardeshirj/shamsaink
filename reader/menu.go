@@ -19,13 +19,14 @@ type settings struct {
 	FontSize   float32           `json:"font_size"`   // px
 	LineHeight float32           `json:"line_height"` // as CSS's unitless line-height over the book's own; 0: the book's
 	Margin     int               `json:"margin"`      // px
+	LeadMs     int               `json:"lead_ms"`     // read-along: the words underlined this much after the sound starts, for the headphones' own delay
 	Direction  map[string]string `json:"direction,omitempty"` // by book (its key, as its cache's name): "rtl" or "ltr"
 }
 
 // defaults are the settings before any is set (the environment's, else the reader's own).
 func defaults() *settings {
 	f := func(s string) float32 { v, _ := strconv.ParseFloat(s, 32); return float32(v) }
-	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin)}
+	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin), LeadMs: atoi(leadMs)}
 }
 
 func loadSettings(dir string) *settings {
@@ -92,14 +93,19 @@ const menuHeight = 700 // px, the panel's
 var menuButtons = []string{"leave", "reset", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
 	"dir-", "dir-rtl", "dir-ltr"}
 
-// drawMenu draws the menu for the settings s and the book by key; lines is its line spacing as laid out now.
-func drawMenu(s *settings, key string, lines float32, fonts *blitz.Fonts, w int) *menu {
+// drawMenu draws the menu for the settings s and the book by key; lines is its line spacing as laid out now, narrated
+// whether it can be read aloud.
+func drawMenu(s *settings, key string, lines float32, narrated bool, fonts *blitz.Fonts, w int) *menu {
 	// the line spacing as it is, and whether it is the book's own
 	linesName := "Line spacing (the book's)"
 	if s.LineHeight > 0 {
 		lines, linesName = s.LineHeight, "Line spacing"
 	}
 	dir := s.Direction[key]
+	aloud, ids := "", menuButtons
+	if narrated {
+		aloud, ids = ` <span class="b" id="read-aloud">Read aloud</span>`, append(ids, "read-aloud")
+	}
 	on := func(d string) string {
 		if d == dir {
 			return "✓ "
@@ -121,7 +127,8 @@ span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; p
 p { margin: 0.3em 0; }
 p span.b { margin-right: 0.5em; }
 </style></head><body>
-<p><span class="b" id="leave">Close the book</span> <span class="b" id="reset">Reset settings</span></p><table>` +
+<p><span class="b" id="leave">Close the book</span> <span class="b" id="reset">Reset settings</span>` + aloud +
+		`</p><table>` +
 		row("Text size", "size", fmt.Sprintf("%g px", s.FontSize)) +
 		row(linesName, "lines", fmt.Sprintf("%.2f", lines)) +
 		row("Margins", "margin", fmt.Sprintf("%d px", s.Margin)) +
@@ -141,7 +148,7 @@ p span.b { margin-right: 0.5em; }
 			m.img.Pix[y*m.img.Stride+x] = 0
 		}
 	}
-	for _, id := range menuButtons {
+	for _, id := range ids {
 		if p, rs := b.Find(0, id); p == 0 {
 			var r image.Rectangle
 			for _, q := range rs {

@@ -3,6 +3,7 @@
 //! page buffers. See blitz_engine.h.
 
 use crate::{Book, Options, Source, fallback_fonts};
+use crate::audio::Audio;
 use std::ffi::c_void;
 use std::sync::Arc;
 
@@ -253,4 +254,59 @@ pub unsafe extern "C" fn be_find(
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn be_close(b: *mut Book) {
     drop(unsafe { Box::from_raw(b) });
+}
+
+/// Opens an MP3 (its bytes are copied). Null if it cannot be decoded. Free with be_audio_close.
+///
+/// # Safety
+/// `data` has `len` readable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_open(data: *const u8, len: usize) -> *mut Audio {
+    let data = if len == 0 { vec![] } else { unsafe { std::slice::from_raw_parts(data, len) }.to_vec() };
+    match Audio::open(data) {
+        Some(a) => Box::into_raw(Box::new(a)),
+        None => std::ptr::null_mut(),
+    }
+}
+
+/// # Safety
+/// `a` comes from be_audio_open and is not closed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_rate(a: *const Audio) -> u32 {
+    unsafe { &*a }.rate()
+}
+
+/// # Safety
+/// `a` comes from be_audio_open and is not closed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_channels(a: *const Audio) -> u32 {
+    unsafe { &*a }.channels()
+}
+
+/// Seeks to `secs`; returns the time reached, or -1 if the seek failed.
+///
+/// # Safety
+/// `a` comes from be_audio_open and is not closed.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_seek(a: *mut Audio, secs: f64) -> f64 {
+    unsafe { &mut *a }.seek(secs)
+}
+
+/// Writes up to `max` interleaved samples into `out`; returns how many, 0 at the end of the stream.
+///
+/// # Safety
+/// `a` comes from be_audio_open and is not closed; `out` has room for `max` samples.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_read(a: *mut Audio, out: *mut i16, max: usize) -> usize {
+    let out = unsafe { std::slice::from_raw_parts_mut(out, max) };
+    unsafe { &mut *a }.read(out)
+}
+
+/// # Safety
+/// `a` comes from be_audio_open and is not used afterwards.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_audio_close(a: *mut Audio) {
+    if !a.is_null() {
+        drop(unsafe { Box::from_raw(a) });
+    }
 }

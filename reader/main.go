@@ -30,6 +30,7 @@ var (
 	fontSize   = env("FONT_SIZE", "50") // px (09: 50 looks right at 300 ppi)
 	lineHeight = env("LINE_HEIGHT", "0")
 	margin     = env("MARGIN", "60")
+	leadMs     = env("LEAD_MS", "250") // experiment 12: by ear, for the maintainer's headphones
 )
 
 // What stays between books: the screen, the fallback fonts, the three pages' buffers and one for the menu over a
@@ -116,6 +117,8 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 		return err
 	}
 	defer r.close()
+	narration := cues(context.Background(), r.pub)
+	var nar *narrator // the narration, while it plays
 	forget := func() {
 		for _, p := range pages {
 			p.doc, p.at, p.last = -1, 0, 0
@@ -136,7 +139,7 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 	// showMenu puts the menu over the page shown: only the panel refreshed, unless the page under it changed
 	showMenu := func(whole bool) {
 		s := time.Now()
-		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), rd.fonts, scr.w)
+		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, rd.fonts, scr.w)
 		copy(rd.over.Pix, shown.img.Pix)
 		copy(rd.over.Pix, mn.img.Pix)
 		if whole {
@@ -146,8 +149,95 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 		}
 		fmt.Printf("  menu drawn in %.0f ms\n", ms(s))
 	}
+	// underline marks word c: a bar under each of its boxes, the last one erased, refreshed together with A2; the
+	// page turned first if the narration has crossed to another
+	underline := func(c cue) {
+		page, boxes := r.book.Find(c.doc, c.id)
+		if page < 0 || len(boxes) == 0 {
+			return
+		}
+		if first, _ := r.book.Layout(c.doc); c.doc != r.doc || page != first+r.at {
+			r.doc, r.at = c.doc, page-first
+			shown = pages.get(r, r.doc, r.at, page)
+			pages.touch(shown)
+			scr.show(shown.img, wfREAGL, false)
+			r.keep()
+			nar.bars = nil
+		}
+		copy(rd.over.Pix, shown.img.Pix)
+		region := image.Rectangle{}
+		for _, b := range nar.bars {
+			region = region.Union(b)
+		}
+		nar.bars = nar.bars[:0]
+		for _, b := range boxes {
+			bar := image.Rect(b.Min.X, b.Max.Y+3, b.Max.X, min(b.Max.Y+9, scr.h))
+			for y := bar.Min.Y; y < bar.Max.Y; y++ {
+				for x := bar.Min.X; x < bar.Max.X; x++ {
+					rd.over.Pix[y*rd.over.Stride+x] = 0
+				}
+			}
+			nar.bars = append(nar.bars, bar)
+			region = region.Union(bar)
+		}
+		scr.showPart(rd.over, region.Intersect(image.Rect(0, 0, scr.w, scr.h)), wfA2, false)
+	}
+	// silence ends the narration, the underline erased
+	silence := func() {
+		nar.stop()
+		region := image.Rectangle{}
+		for _, b := range nar.bars {
+			region = region.Union(b)
+		}
+		if !region.Empty() {
+			scr.showPart(shown.img, region, wfA2, false)
+		}
+		fmt.Printf("read aloud: stopped at word %d of %d\n", nar.next, len(nar.cues))
+		nar = nil
+		ahead = true
+	}
 	for {
 		var g gesture
+		if nar != nil {
+			// reading aloud: the next thing due done in time (words due together: the last one underlined); a
+			// touch stops it
+			due, ok := nar.due()
+			if !ok {
+				silence()
+				continue
+			}
+			select {
+			case <-gestures:
+				silence()
+				for len(gestures) > 0 {
+					<-gestures
+				}
+			case <-time.After(time.Until(due)):
+				now := time.Now()
+				at := func(s float64) time.Time { return nar.start.Add(time.Duration(s * float64(time.Second))) }
+				if p := nar.parts[min(nar.started, len(nar.parts)-1)]; nar.started < len(nar.parts) && !now.Before(at(p.at)) {
+					<-p.done // decoded in the background while the part before played: late only if that was short
+					if p.err != nil {
+						fmt.Fprintln(os.Stderr, "indium: read aloud:", p.err)
+						silence()
+						continue
+					}
+					if late := time.Since(at(p.at)); late > 50*time.Millisecond {
+						fmt.Printf("  read aloud: part %d started %.0f ms late\n", nar.started, ms(at(p.at)))
+					}
+					nar.play(nar.started)
+					nar.started++
+				}
+				w := -1
+				for nar.next < len(nar.cues) && !now.Before(at(nar.cues[nar.next].at).Add(nar.lead)) {
+					w, nar.next = nar.next, nar.next+1
+				}
+				if w >= 0 {
+					underline(nar.cues[w])
+				}
+			}
+			continue
+		}
 		select {
 		case g = <-gestures:
 		default:
@@ -178,6 +268,38 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			case g.swipe:
 			case id == "leave":
 				leave = true
+			case id == "read-aloud":
+				// from the first narrated word on the page shown, after the menu is closed
+				mn = nil
+				scr.showPart(shown.img, panel, wfREAGL, false)
+				first := -1
+				for i, c := range narration {
+					if c.doc < r.doc {
+						continue
+					}
+					if p, _ := r.book.Find(c.doc, c.id); c.doc > r.doc || p >= r.page() {
+						first = i
+						break
+					}
+				}
+				if first < 0 {
+					continue
+				}
+				s := time.Now()
+				nar = newNarrator(narration, first, r.read, time.Duration(set.LeadMs)*time.Millisecond)
+				nar.wake()
+				w := ms(s)
+				if err := nar.begin(); err != nil {
+					fmt.Fprintln(os.Stderr, "indium: read aloud:", err)
+					nar = nil
+					continue
+				}
+				nar.start = time.Now()
+				nar.play(0)
+				nar.started = 1
+				fmt.Printf("read aloud from word %d (document %d): woken %.0f ms, first parts decoded %.0f ms, %d parts\n",
+					first, narration[first].doc, w, ms(s)-w, len(nar.parts))
+				continue
 			case id != "":
 				s := time.Now()
 				relayout := set.change(id, r.key, r.book.LineSpacing(r.doc))
@@ -221,6 +343,9 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			continue
 		}
 		if leave {
+			if nar != nil {
+				silence()
+			}
 			s := time.Now()
 			r.keep()
 			k := ms(s)

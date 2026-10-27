@@ -19,8 +19,8 @@ func TestMenu(t *testing.T) {
 		fonts = blitz.LoadFonts(d)
 	}
 	s := &settings{FontSize: 50, LineHeight: 1.35, Margin: 60, Direction: map[string]string{"k": "rtl"}}
-	m := drawMenu(s, "k", 1.16, fonts, 1236)
-	for _, id := range menuButtons {
+	m := drawMenu(s, "k", 1.16, true, fonts, 1236)
+	for _, id := range append(menuButtons, "read-aloud") {
 		r, ok := m.buttons[id]
 		if !ok || r.Empty() || !r.In(m.img.Bounds()) {
 			t.Errorf("%s: %v (found %v)", id, r, ok)
