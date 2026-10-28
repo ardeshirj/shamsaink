@@ -13,15 +13,24 @@
 #   make kindle-status   awake or not, battery, Wi-Fi, free memory and storage
 #   make kindle-wait     wait until it answers over SSH (after waking it by hand)
 #   make kindle-ssh      a shell on it
+#
+# The Kobo (experiment 13, docs/kobo-setup.md; KOBO is its SSH host), inside KOReader:
+#   make kobo-status     battery, Wi-Fi, free memory and storage
+#   make kobo-wait       wait until it answers over SSH (after waking it by hand)
+#   make kobo-ssh        a shell on it
+#   make kobo-probe      step 0's probe inside KOReader, both results copied to experiments/13-kobo/out
 
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
+KOBO ?= kobo
+KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
 
 DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
   -v eink-gocache:/root/.cache/go-build eink-rust
 
 .PHONY: reader reader-install reader-log engine bench-armv7 fetch-blitz
 .PHONY: kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
+.PHONY: kobo-status kobo-wait kobo-ssh kobo-probe
 
 reader:
 	@sh reader/build.sh
@@ -70,3 +79,23 @@ kindle-wait:
 
 kindle-ssh:
 	@$(SSH)
+
+kobo-status:
+	@$(KOBO_SSH) 'B=/sys/class/power_supply/bd71827_bat; \
+	  echo "battery: $$(cat $$B/capacity 2>/dev/null)%, $$(cat $$B/status 2>/dev/null)"; \
+	  echo "wi-fi: $$(ip -4 addr show wlan0 2>/dev/null | sed -n "s/.*inet \([0-9.]*\).*/\1/p")"; \
+	  echo "memory free: $$(sed -n "s/MemAvailable: *\([0-9]*\) kB/\1/p" /proc/meminfo | awk "{printf \"%d MB\", \$$1/1024}")"; \
+	  df -h /mnt/onboard /tmp | awk "NR>1 {print \"storage \" \$$6 \": \" \$$4 \" free of \" \$$2}"'
+
+kobo-wait:
+	@echo "waiting for $(KOBO) over SSH (wake it with its power button, open KOReader)..."
+	@until $(KOBO_SSH) true 2>/dev/null; do sleep 5; done; echo "$(KOBO) is up"
+
+kobo-ssh:
+	@$(KOBO_SSH)
+
+kobo-probe:
+	@$(KOBO_SSH) 'sh /mnt/onboard/.adds/indium/probe/probe.sh koreader'
+	@mkdir -p experiments/13-kobo/out
+	@scp -q '$(KOBO):/mnt/onboard/.adds/indium/probe/probe-*.txt' experiments/13-kobo/out/
+	@ls experiments/13-kobo/out

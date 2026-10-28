@@ -32,6 +32,12 @@ to copy):
   stereo, its own clock from what is heard, silence fed between clips so the link stays). The device's GStreamer is
   a stripped build reached by `dlopen` with a loader matching its glibc (2.19). Pairing: `bluetoothctl` or D-Bus
   `Device1.Pair`, by our own interface once Nickel is gone.
+- **Our way to that sink is not the plugin's:** the reader is a static musl binary and cannot load the device's
+  glibc GStreamer. So the Kobo's own `gst-launch-1.0` as a separate process, our decoded sound piped in (`fdsrc` or a
+  FIFO into the pipeline above), as `mplay` on the Kindle; the plugin's wrapper path before its daemon did the same.
+  One long-lived pipeline a session, fed silence between parts, since only one can hold the socket. Its clock (what
+  is heard, not what was written) is ours to find: the plugin found the sink takes clips in faster than it plays
+  them (`FINDING-2026-10-19-instant-completion.md`).
 - **KOReader on Kobo stops Nickel** (`koreader.sh`: `killall nickel ...`, Bluetooth powered down on sunxi and NXP
   boards), unlike the Kindle, where the Kindle's own interface stays paused beside it. So the reader hosted by
   KOReader already runs without Kobo's interface, as Plato does, with KOReader keeping sleep, Wi-Fi and the light.
@@ -43,6 +49,11 @@ to copy):
    server, a key of its own, `ssh kobo`; Makefile targets as the Kindle's. Note the firmware, the board (391 or 395),
    the framebuffer (`fbset`, bits per pixel, rotation), the touch device and what it sends (`evtest`), what of
    `mtkbtd`, GStreamer and `mtkbtmwrpcaudiosink` is there, with Nickel running and after KOReader's start.
+   `probe/` gathers them: `build.sh` makes a static ARMv7 `probe` (the framebuffer's ioctls, the input devices and
+   their touch ranges, a touch's raw events), `probe.sh nickel` (from NickelMenu, with a tap and a swipe) and
+   `probe.sh koreader` (over SSH) write `probe-LABEL.txt` (`make kobo-probe` for the second). Checked on the
+   Kindle (2026-10-28): it reads 1236×1648, 8 bits a pixel, 1248 bytes a line and `pt_mt`'s ranges, as `screen.go`
+   and `touch.go` have them; the Kindle's framebuffer is `hwtcon_v2`, the driver family FBInk names on the Kobo.
    **Done when** `ssh kobo` works and these are written down.
 1. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
    `reader/device`; the Kindle checked to still work, every page identical), the Clara BW's entry: `hwtcon`'s ioctl,
@@ -54,7 +65,7 @@ to copy):
    `mtkbtmwrpcaudiosink`, (a) from Nickel's side (Nickel running: who holds the socket, does Kobo's own audiobook
    player get in the way), (b) inside KOReader with Nickel stopped. Counted: drop-outs, gaps between parts, how far
    the underline drifts from the voice over the hour, the start-up delay (the Kindle's `LEAD_MS`), what pairing
-   takes. **Done when** we know whether read-along on the Clara BW goes around the device as on the Kindle or not.
+   takes. Through `gst-launch-1.0` fed by us (above): first whether it plays at all from a pipe, then the hour. **Done when** we know whether read-along on the Clara BW goes around the device as on the Kindle or not.
 3. **Started without KOReader** (only if 2 says sound is clean): from NickelMenu, Nickel stopped as KOReader does
    and started again when left; what KOReader does for us then (sleep, the light, Wi-Fi, battery) listed with what
    each costs to do ourselves (Plato's code, AGPL-3.0, to learn from). **Done when** the list says whether stage 5
