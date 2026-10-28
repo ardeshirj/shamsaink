@@ -134,20 +134,60 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 
 	ahead := true       // the next page may still need drawing
 	rest := !r.restored // documents still to paginate
-	var mn *menu        // the menu, while open
-	panel := image.Rect(0, 0, scr.w, menuHeight)
-	// showMenu puts the menu over the page shown: only the panel refreshed, unless the page under it changed
-	showMenu := func(whole bool) {
+	var mn, nav *menu   // the menu and the panel at the bottom, while open
+	toc := contents(r.pub.Manifest.TableOfContents, r.spine)
+	var cv *contentsView                  // the table of contents, while shown
+	backDoc, backAt, backPage := -1, 0, 0 // the place before the last jump, and its page then
+	// where says where the reader is, for the bottom panel
+	where := func() progress {
+		p := progress{rtl: r.rtl, page: r.page() + 1, back: backPage}
+		if c := r.chapter(toc); c >= 0 {
+			p.chapter = toc[c].title
+		}
+		first, last := r.book.Layout(r.doc)
+		p.at, p.of = r.at+1, last-first
+		if !rest {
+			p.total = r.book.Pages()
+			p.share = float64(r.page()) / float64(max(p.total-1, 1))
+		} else {
+			p.share = (float64(r.doc) + float64(r.at)/float64(max(p.of, 1))) / float64(len(r.spine))
+		}
+		if backDoc < 0 {
+			p.back = 0
+		}
+		return p
+	}
+	// showMenu puts the menu and the panel at the bottom over the page shown
+	showMenu := func() {
 		s := time.Now()
 		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, rd.fonts, scr.w)
+		nav = drawNav(where(), rd.fonts, scr.w, scr.h)
 		copy(rd.over.Pix, shown.img.Pix)
-		copy(rd.over.Pix, mn.img.Pix)
-		if whole {
-			scr.show(rd.over, wfREAGL, false)
-		} else {
-			scr.showPart(rd.over, panel, wfREAGL, false)
-		}
+		mn.over(rd.over)
+		nav.over(rd.over)
+		scr.show(rd.over, wfREAGL, false)
 		fmt.Printf("  menu drawn in %.0f ms\n", ms(s))
+	}
+	// closeMenu takes the menu and the bottom panel off the page
+	closeMenu := func() {
+		mn, nav = nil, nil
+		scr.show(shown.img, wfREAGL, false)
+	}
+	// jump goes to page at of document doc from the menu or the table of contents, the place before it kept for
+	// "Back to page"
+	jump := func(doc, at int) {
+		d, a, n := r.doc, r.at, r.page()+1
+		if !r.seek(doc, at) {
+			return
+		}
+		backDoc, backAt, backPage = d, a, n
+		mn, nav = nil, nil
+		shown = pages.get(r, r.doc, r.at, r.page())
+		pages.touch(shown)
+		scr.show(shown.img, wfREAGL, false)
+		r.keep()
+		ahead = true
+		fmt.Printf("went to document %d page %d (from document %d page %d)\n", r.doc, r.at, d, a)
 	}
 	// underline marks word c: a bar under each of its boxes, the last one erased, refreshed together with A2; the
 	// page turned first if the narration has crossed to another
@@ -278,6 +318,34 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			}
 			g = <-gestures
 		}
+		if cv != nil {
+			// the table of contents shown: a swipe turns its pages (in the book's direction, or up for the next), a
+			// tap on an entry goes there, the header's button back to the page
+			switch {
+			case g.hold != notHeld:
+			case g.swipe:
+				forward := (g.dx < 0) != r.rtl
+				if abs(g.dy) > abs(g.dx) {
+					forward = g.dy < 0
+				}
+				if n := cv.page + map[bool]int{true: 1, false: -1}[forward]; n >= 0 && n < cv.pages {
+					cv.page = n
+					cv.draw(rd.over)
+					scr.show(rd.over, wfREAGL, false)
+				}
+			case cv.head.at(g.x, g.y) == "contents-close":
+				cv.close()
+				cv = nil
+				scr.show(shown.img, wfREAGL, false)
+			default:
+				if i := cv.entryAt(g.x, g.y); i >= 0 {
+					cv.close()
+					cv = nil
+					jump(toc[i].doc, r.entryAt(toc[i]))
+				}
+			}
+			continue
+		}
 		if g.hold != notHeld {
 			// a finger held on a word: on a highlight, a panel to remove it; else a selection from that word to
 			// the one under the finger, a highlight once it is lifted
@@ -290,10 +358,10 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 					break
 				}
 				if unmark = r.marks.at(r.doc, words[i]); unmark >= 0 {
-					mn = drawRemove(r.marks.list[unmark].Text, rd.fonts, scr.w)
+					mn = drawRemove(rd.fonts, scr.w)
 					copy(rd.over.Pix, shown.img.Pix)
-					copy(rd.over.Pix, mn.img.Pix)
-					scr.showPart(rd.over, mn.img.Rect, wfREAGL, false)
+					mn.over(rd.over)
+					scr.showPart(rd.over, mn.rect(), wfREAGL, false)
 					break
 				}
 				sel = &selection{words: words, from: i, to: i}
@@ -330,14 +398,45 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 		if mn != nil {
 			// the menu open: a button tapped is applied (the page laid out again if need be), a tap off the
 			// panel closes it
-			switch id := mn.at(g.x, g.y); {
+			id := mn.at(g.x, g.y)
+			if id == "" && nav != nil {
+				id = nav.at(g.x, g.y)
+			}
+			switch {
 			case g.swipe:
 			case id == "leave":
 				leave = true
+			case id == "contents":
+				s := time.Now()
+				mn, nav = nil, nil
+				cv = newContentsView(toc, r.chapter(toc), r.rtl, rd.fonts, scr.w, scr.h)
+				cv.draw(rd.over)
+				scr.show(rd.over, wfREAGL, false)
+				fmt.Printf("  contents: %d entries, %d pages, drawn in %.0f ms\n", len(toc), cv.pages, ms(s))
+			case id == "chapter-prev" || id == "chapter-next":
+				c := r.prevChapter(toc)
+				if id == "chapter-next" {
+					c = r.nextChapter(toc)
+				}
+				if c >= 0 {
+					jump(toc[c].doc, r.entryAt(toc[c]))
+				}
+			case id == "bar":
+				share := nav.share(g.x, r.rtl)
+				doc, at := int(share*float64(len(r.spine))), 0
+				if !rest {
+					n := int(share * float64(r.book.Pages()-1))
+					doc = r.book.PageLines()[n].Spine
+					first, _ := r.book.Layout(doc)
+					at = n - first
+				}
+				jump(min(doc, len(r.spine)-1), at)
+			case id == "back":
+				d, a := backDoc, backAt
+				jump(d, a)
 			case id == "read-aloud":
 				// from the first narrated word on the page shown, after the menu is closed
-				mn = nil
-				scr.showPart(shown.img, panel, wfREAGL, false)
+				closeMenu()
 				first := -1
 				for i, c := range narration {
 					if c.doc < r.doc {
@@ -377,7 +476,7 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 				fmt.Printf("highlight %d removed\n", unmark+1)
 				continue
 			case id == "keep-highlight":
-				scr.showPart(shown.img, mn.img.Rect, wfREAGL, false)
+				scr.showPart(shown.img, mn.rect(), wfREAGL, false)
 				mn = nil
 			case id != "":
 				s := time.Now()
@@ -393,10 +492,12 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 					fmt.Printf("%s: text %g px, lines %g, margin %d: document %d page %d in %.0f ms (cache %v)\n", id,
 						o.FontSize, o.LineHeight, o.Margin, r.doc, r.at, ms(s), r.restored)
 				}
-				showMenu(relayout)
-			case g.y >= mn.img.Rect.Dy():
-				scr.showPart(shown.img, mn.img.Rect, wfREAGL, false)
+				showMenu()
+			case nav == nil && !image.Pt(g.x, g.y).In(mn.rect()):
+				scr.showPart(shown.img, mn.rect(), wfREAGL, false)
 				mn = nil
+			case nav != nil && !image.Pt(g.x, g.y).In(mn.rect()) && !image.Pt(g.x, g.y).In(nav.rect()):
+				closeMenu()
 			}
 			if !leave {
 				continue
@@ -418,7 +519,7 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 				r.keep()
 				ahead = true
 			}
-			showMenu(turned)
+			showMenu()
 			continue
 		}
 		if leave {

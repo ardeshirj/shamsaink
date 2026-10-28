@@ -64,7 +64,7 @@ func TestRemovePanel(t *testing.T) {
 	if d := os.Getenv("FONTS"); d != "" {
 		fonts = blitz.LoadFonts(d)
 	}
-	m := drawRemove("این یک آزمایش است <b>", fonts, 1236)
+	m := drawRemove(fonts, 1236)
 	a, b := m.buttons["remove-highlight"], m.buttons["keep-highlight"]
 	if a.Empty() || b.Empty() || a.Overlaps(b) || !a.In(m.img.Bounds()) || !b.In(m.img.Bounds()) {
 		t.Errorf("buttons %v", m.buttons)
