@@ -50,6 +50,7 @@ type reading struct {
 	place    string // DIR/places/: the same name; deleting it starts the book again
 	restored bool
 	saved    bool
+	marks    *highlights
 }
 
 // openBook opens a book at its place; direction is the way set for it by its key ("rtl", "ltr", else the book's).
@@ -91,6 +92,7 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		bookRTL: p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
 		cache:   filepath.Join(dir, "cache", key+".cache"),
 		place:   filepath.Join(dir, "places", key+".place"),
+		marks:   loadHighlights(dir, key),
 	}
 	r.direct(direction(key))
 	r.make(o)

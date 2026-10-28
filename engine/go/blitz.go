@@ -188,6 +188,37 @@ func (d *doc) Find(spine int, id string) (int, []image.Rectangle) {
 	return p, rs
 }
 
+// A Word on a page: where it is in its document's text (its inline block, counted in document order, and its bytes
+// in that block's text), which stays when the book is laid out again, and its box on the page, its line's height.
+type Word struct {
+	Block, Start, End int
+	Box               image.Rectangle
+}
+
+// Words are the words on page n, line by line, each line in visual order.
+func (d *doc) Words(n int) []Word {
+	buf := make([]C.int32_t, 7*512)
+	k := int(C.be_words(d.b, C.size_t(n), &buf[0], 512))
+	if k > 512 {
+		buf = make([]C.int32_t, 7*k)
+		C.be_words(d.b, C.size_t(n), &buf[0], C.size_t(k))
+	}
+	ws := make([]Word, k)
+	for i := range ws {
+		v := buf[7*i:]
+		ws[i] = Word{int(v[0]), int(v[1]), int(v[2]), image.Rect(int(v[3]), int(v[4]), int(v[5]), int(v[6]))}
+	}
+	return ws
+}
+
+// Text is spine document doc's text from (block, byte) to (block, byte), as Words gives them.
+func (d *doc) Text(spine, b0, s0, b1, s1 int) string {
+	var n C.size_t
+	p := C.be_text(d.b, C.size_t(spine), C.uint32_t(b0), C.uint32_t(s0), C.uint32_t(b1), C.uint32_t(s1), &n)
+	defer C.be_bytes_free(p, n)
+	return string(C.GoBytes(unsafe.Pointer(p), C.int(n)))
+}
+
 func (d *doc) PageLines() []PageInfo {
 	ps := make([]PageInfo, d.Pages())
 	for i := range ps {

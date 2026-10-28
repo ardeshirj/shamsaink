@@ -465,6 +465,77 @@ impl Book {
         Some((page, boxes))
     }
 
+    /// The words on page n, line by line, each in visual order: where each is in its document's text (which stays
+    /// when the book is laid out again) and its box on the page, the height of its line. A word is the text between
+    /// spaces within one run of glyphs (a word in two styles is two).
+    pub fn words(&mut self, n: usize) -> Vec<Word> {
+        let Some(&p) = self.pages.get(n) else { return vec![] };
+        self.layout(p.doc);
+        let m = self.opts.margin as f64;
+        let mut out = vec![];
+        let Some(d) = self.docs[p.doc].as_mut() else { return out };
+        let d = d.as_mut();
+        d.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: 0.0 });
+        inline_roots(d, &mut |block, node, tl| {
+            let pos = node.absolute_position(0.0, 0.0);
+            let l = node.final_layout();
+            let (x0, y0) = ((pos.x + l.padding.left + l.border.left) as f64, (pos.y + l.padding.top + l.border.top + tl.block_offset) as f64);
+            for line in tl.layout.lines() {
+                let lm = line.metrics();
+                let (top, bottom) = (y0 + lm.block_min_coord as f64, y0 + lm.block_max_coord as f64);
+                if (top + bottom) / 2.0 < p.top || (top + bottom) / 2.0 >= p.bottom {
+                    continue;
+                }
+                let (y, yb) = ((top - p.top + m).floor() as i32, (bottom - p.top + m).ceil() as i32);
+                for item in line.items() {
+                    let parley::PositionedLayoutItem::GlyphRun(gr) = item else { continue };
+                    let mut x = x0 + gr.offset() as f64;
+                    let mut word: Option<Word> = None;
+                    for c in gr.run().visual_clusters() {
+                        let adv = c.advance() as f64;
+                        if c.is_space_or_nbsp() || c.is_hard_line_break() {
+                            out.extend(word.take());
+                        } else {
+                            let r = c.text_range();
+                            let w = word.get_or_insert(Word { block: block as u32, start: r.start as u32, end: r.end as u32, rect: [x.floor() as i32, y, 0, yb] });
+                            (w.start, w.end) = (w.start.min(r.start as u32), w.end.max(r.end as u32));
+                            w.rect[2] = (x + adv).ceil() as i32;
+                        }
+                        x += adv;
+                    }
+                    out.extend(word);
+                }
+            }
+        });
+        out
+    }
+
+    /// The text of spine document `doc` from (block, byte) `from` to `to`, as `words` gives them (blocks joined by a
+    /// line break).
+    pub fn text(&mut self, doc: usize, from: (u32, u32), to: (u32, u32)) -> String {
+        if doc >= self.docs.len() {
+            return String::new();
+        }
+        self.layout(doc);
+        let mut out = String::new();
+        let Some(d) = self.docs[doc].as_ref() else { return out };
+        inline_roots(d.as_ref(), &mut |block, _, tl| {
+            let b = block as u32;
+            if b < from.0 || b > to.0 {
+                return;
+            }
+            let s = if b == from.0 { from.1 as usize } else { 0 };
+            let e = if b == to.0 { to.1 as usize } else { tl.text.len() };
+            if let Some(t) = tl.text.get(s.min(e)..e.min(tl.text.len())) {
+                if b > from.0 {
+                    out.push('\n');
+                }
+                out.push_str(t);
+            }
+        });
+        out
+    }
+
     /// The line spacing of spine document `doc` as laid out (with the book's own, or the one set): its most common
     /// height of a line of text, over the text size (0 if it has no text). Lays the document out if it is not.
     pub fn line_spacing(&mut self, doc: usize) -> f32 {
@@ -537,6 +608,34 @@ fn font_context(fonts: &[(&str, Vec<u8>)]) -> Option<parley::FontContext> {
 }
 
 /// The line boxes of a laid-out document, block by block, in document order.
+/// A word on a page (`Book::words`): its document's inline block (counted in document order) and its bytes in that
+/// block's text, and its box (left, top, right, bottom).
+#[derive(Clone, Copy, Debug)]
+pub struct Word {
+    pub block: u32,
+    pub start: u32,
+    pub end: u32,
+    pub rect: [i32; 4],
+}
+
+/// Calls f with each inline root that has a text layout, in document order, and its number in that order.
+fn inline_roots(doc: &BaseDocument, f: &mut dyn FnMut(usize, &blitz_dom::Node, &blitz_dom::node::TextLayout)) {
+    fn walk(doc: &BaseDocument, id: blitz_dom::NodeId, n: &mut usize, f: &mut dyn FnMut(usize, &blitz_dom::Node, &blitz_dom::node::TextLayout)) {
+        let Some(node) = doc.get_node(id) else { return };
+        if node.flags.is_inline_root() {
+            if let Some(tl) = node.element_data().and_then(|e| e.inline_layout_data.as_ref()) {
+                f(*n, node, tl);
+                *n += 1;
+                return;
+            }
+        }
+        for &c in node.children.iter() {
+            walk(doc, c, n, f);
+        }
+    }
+    walk(doc, doc.root_node().id, &mut 0, f);
+}
+
 fn blocks(doc: &BaseDocument) -> Vec<Block> {
     let mut out = vec![];
     collect(doc, doc.root_node().id, &mut out);

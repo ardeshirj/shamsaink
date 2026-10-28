@@ -137,13 +137,38 @@ p span.b { margin-right: 0.5em; }
 		`<span class="b" id="dir-rtl">` + on("rtl") + `Right to left</span> ` +
 		`<span class="b" id="dir-ltr">` + on("ltr") + `Left to right</span></p></body></html>`
 
-	o := blitz.Options{Width: w, Height: menuHeight, Margin: 40, FontSize: 40}
+	return drawPanel(html, ids, fonts, w, menuHeight)
+}
+
+// The panel asking whether to remove a highlight, its text's start shown.
+func drawRemove(text string, fonts *blitz.Fonts, w int) *menu {
+	if r := []rune(text); len(r) > 80 {
+		text = string(r[:80]) + "…"
+	}
+	html := `<html><head><style>
+html { font-family: sans-serif; }
+body { margin: 0; }
+p { margin: 0.3em 0; }
+p.t { unicode-bidi: plaintext; }
+span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; margin-right: 0.5em; }
+</style></head><body><p class="t">` + escape(text) + `</p>
+<p><span class="b" id="remove-highlight">Remove highlight</span> <span class="b" id="keep-highlight">Keep</span></p></body></html>`
+	return drawPanel(html, []string{"remove-highlight", "keep-highlight"}, fonts, w, 300)
+}
+
+func escape(s string) string {
+	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(s)
+}
+
+// drawPanel draws a panel h px high over the top of the page from html, a line under it, its buttons by ids.
+func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *menu {
+	o := blitz.Options{Width: w, Height: h, Margin: 40, FontSize: 40}
 	b := blitz.New([]string{"menu.html"}, func(string) ([]byte, error) { return []byte(html), nil }, o, fonts)
 	defer b.Close()
 	b.Layout(0)
-	m := &menu{img: image.NewGray(image.Rect(0, 0, w, menuHeight)), buttons: map[string]image.Rectangle{}}
+	m := &menu{img: image.NewGray(image.Rect(0, 0, w, h)), buttons: map[string]image.Rectangle{}}
 	b.Draw(0, m.img)
-	for y := menuHeight - 4; y < menuHeight; y++ { // a line under the panel
+	for y := h - 4; y < h; y++ { // a line under the panel
 		for x := 0; x < w; x++ {
 			m.img.Pix[y*m.img.Stride+x] = 0
 		}

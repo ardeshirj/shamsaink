@@ -4,7 +4,9 @@ import (
 	"encoding/binary"
 	"io"
 	"os"
+	"sync"
 	"syscall"
+	"time"
 )
 
 // The touch screen, read directly (multi-touch type B; experiment 11, step 1): its coordinates are the screen's
@@ -18,16 +20,29 @@ const (
 	absMTPositionY  = 0x36
 	absMTTrackingID = 0x39
 	swipeMin        = 80 // px a finger moves for a swipe, not a tap
+	holdTime        = 500 * time.Millisecond
 )
 
-// A gesture: a tap at (x, y), or a swipe by (dx, dy).
+// A gesture: a tap at (x, y), or a swipe by (dx, dy); or a finger held still (hold), then moved while held (drag,
+// x and y where it is) and lifted (drop, where it was lifted).
 type gesture struct {
 	x, y, dx, dy int
 	swipe        bool
+	hold         holding
 }
 
+type holding int
+
+const (
+	notHeld holding = iota
+	held
+	dragged
+	dropped
+)
+
 // touches grabs the touch screen and sends a gesture each time the first finger down is lifted (other fingers are
-// ignored), until the file is closed (which lets go of it). Past 8 gestures queued, more are dropped.
+// ignored), or is held still for holdTime and then moved and lifted, until the file is closed (which lets go of
+// it). Moves while held are dropped when 8 gestures are queued.
 func touches(path string) (*os.File, <-chan gesture, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -43,6 +58,9 @@ func touches(path string) (*os.File, <-chan gesture, error) {
 		slot, x, y := int32(0), 0, 0
 		var down, started bool
 		var x0, y0 int
+		var mu sync.Mutex // the timer's goroutine sends the hold
+		var holding bool
+		var timer *time.Timer
 		for {
 			if _, err := io.ReadFull(f, ev[:]); err != nil {
 				return
@@ -61,15 +79,45 @@ func touches(path string) (*os.File, <-chan gesture, error) {
 				if val >= 0 {
 					down, started = true, false
 				} else if down {
+					mu.Lock()
 					down = false
+					if timer != nil {
+						timer.Stop()
+					}
+					h := holding
+					holding = false
+					mu.Unlock()
+					if h {
+						out <- gesture{x: x, y: y, hold: dropped}
+						continue
+					}
 					g := gesture{x: x0, y: y0, dx: x - x0, dy: y - y0}
 					g.swipe = g.dx*g.dx+g.dy*g.dy > swipeMin*swipeMin
 					out <- g
 				}
 			case typ == evSyn && code == synReport:
-				if down && !started {
+				mu.Lock()
+				switch {
+				case down && !started:
 					started, x0, y0 = true, x, y
+					// held still until then: a hold (a finger that moved first is a swipe, and stops it)
+					timer = time.AfterFunc(holdTime, func() {
+						mu.Lock()
+						defer mu.Unlock()
+						if down && !holding {
+							holding = true
+							out <- gesture{x: x0, y: y0, hold: held}
+						}
+					})
+				case down && holding:
+					select {
+					case out <- gesture{x: x, y: y, hold: dragged}:
+					default:
+					}
+				case down && (x-x0)*(x-x0)+(y-y0)*(y-y0) > swipeMin*swipeMin:
+					timer.Stop()
 				}
+				mu.Unlock()
 			}
 		}
 	}()

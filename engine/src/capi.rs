@@ -249,6 +249,35 @@ pub unsafe extern "C" fn be_find(
     page as i64
 }
 
+/// The words on a page (Book::words): block, start, end, left, top, right, bottom for each, seven ints, into
+/// `words` (room for `max`). Returns how many there are, which may be more than `max`.
+///
+/// # Safety
+/// `b` comes from be_new; `words` has room for 7 × `max` ints.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_words(b: *mut Book, page: usize, words: *mut i32, max: usize) -> usize {
+    let ws = unsafe { &mut *b }.words(page);
+    for (i, w) in ws.iter().take(max).enumerate() {
+        let v = [w.block as i32, w.start as i32, w.end as i32, w.rect[0], w.rect[1], w.rect[2], w.rect[3]];
+        for (j, x) in v.into_iter().enumerate() {
+            unsafe { *words.add(7 * i + j) = x };
+        }
+    }
+    ws.len()
+}
+
+/// The text of spine document `doc` from (block, byte) to (block, byte) (Book::text), UTF-8: its length goes into
+/// `len`; free it with be_bytes_free.
+///
+/// # Safety
+/// `b` comes from be_new; `len` is writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_text(b: *mut Book, doc: usize, b0: u32, s0: u32, b1: u32, s1: u32, len: *mut usize) -> *mut u8 {
+    let t = unsafe { &mut *b }.text(doc, (b0, s0), (b1, s1)).into_bytes().into_boxed_slice();
+    unsafe { *len = t.len() };
+    Box::into_raw(t) as *mut u8
+}
+
 /// # Safety
 /// `b` comes from be_open and is not used afterwards.
 #[unsafe(no_mangle)]

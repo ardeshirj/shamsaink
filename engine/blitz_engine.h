@@ -30,6 +30,10 @@ void be_page_info(Book *b, size_t page, size_t *doc, size_t *lines);
 void be_draw(Book *b, size_t page, uint8_t *out);  // width*height bytes of 8-bit grey
 float be_line_spacing(Book *b, size_t doc);           // doc's most common line height over the text size (0: no text)
 int64_t be_find(Book *b, size_t doc, const uint8_t *id, size_t id_len, int32_t *rects, size_t max, size_t *n);
+// the words on a page: block, start, end, left, top, right, bottom each, up to max; returns how many there are
+size_t be_words(Book *b, size_t page, int32_t *words, size_t max);
+// doc's text from (block, byte) to (block, byte), UTF-8, len bytes; free with be_bytes_free
+uint8_t *be_text(Book *b, size_t doc, uint32_t b0, uint32_t s0, uint32_t b1, uint32_t s1, size_t *len);
 void be_close(Book *b);
 
 typedef struct Audio Audio;

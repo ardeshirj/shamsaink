@@ -1,0 +1,146 @@
+package main
+
+import (
+	"encoding/json"
+	"image"
+	"os"
+	"path/filepath"
+	"slices"
+	"time"
+
+	blitz "indiumengine"
+)
+
+// A highlight: a span of one spine document's text, from the start of one word to the end of another, each as the
+// engine gives it (its inline block in document order, its byte in that block's text), so it stays when the book is
+// laid out again for other settings; its text, and when it was made.
+type highlight struct {
+	Doc  int       `json:"doc"`
+	From [2]int    `json:"from"` // block, byte
+	To   [2]int    `json:"to"`   // block, byte (the end of the last word)
+	Text string    `json:"text"`
+	Made time.Time `json:"made"`
+}
+
+// highlights are a book's, kept in DIR/highlights/KEY.json in the order made.
+type highlights struct {
+	path string
+	list []highlight
+}
+
+func loadHighlights(dir, key string) *highlights {
+	h := &highlights{path: filepath.Join(dir, "highlights", key+".json")}
+	if b, err := os.ReadFile(h.path); err == nil {
+		json.Unmarshal(b, &h.list)
+	}
+	return h
+}
+
+func (h *highlights) save() {
+	os.MkdirAll(filepath.Dir(h.path), 0o755)
+	b, _ := json.MarshalIndent(h.list, "", "  ")
+	os.WriteFile(h.path, append(b, '\n'), 0o644)
+}
+
+// before says whether (block, byte) a comes before b in the text.
+func before(a, b [2]int) bool { return a[0] < b[0] || a[0] == b[0] && a[1] < b[1] }
+
+// covers says whether word w of document doc is in the highlight.
+func (hl highlight) covers(doc int, w blitz.Word) bool {
+	return hl.Doc == doc && !before([2]int{w.Block, w.End}, hl.From) && before([2]int{w.Block, w.Start}, hl.To)
+}
+
+// at is the highlight word w of document doc is in, -1 if none.
+func (h *highlights) at(doc int, w blitz.Word) int {
+	return slices.IndexFunc(h.list, func(hl highlight) bool { return hl.covers(doc, w) })
+}
+
+func (h *highlights) in(doc int) bool {
+	return slices.ContainsFunc(h.list, func(hl highlight) bool { return hl.Doc == doc })
+}
+
+// bands are the boxes to mark for the words in, one per line (the words' boxes joined, the spaces between them
+// with them).
+func bands(words []blitz.Word, in func(blitz.Word) bool) []image.Rectangle {
+	var out []image.Rectangle
+	for _, w := range words {
+		if !in(w) {
+			continue
+		}
+		// words of one line share its top and bottom
+		if i := slices.IndexFunc(out, func(r image.Rectangle) bool { return r.Min.Y == w.Box.Min.Y && r.Max.Y == w.Box.Max.Y }); i >= 0 {
+			out[i] = out[i].Union(w.Box)
+		} else {
+			out = append(out, w.Box)
+		}
+	}
+	return out
+}
+
+// darken greys the boxes on the page as a highlighter would: white to light grey, black stays black.
+func darken(img *image.Gray, rs []image.Rectangle) {
+	for _, r := range rs {
+		r = r.Intersect(img.Rect)
+		for y := r.Min.Y; y < r.Max.Y; y++ {
+			row := img.Pix[y*img.Stride:]
+			for x := r.Min.X; x < r.Max.X; x++ {
+				row[x] = uint8(uint32(row[x]) * 13 / 16)
+			}
+		}
+	}
+}
+
+// mark greys the highlights on page n (of document doc), drawn into img.
+func (r *reading) mark(n, doc int, img *image.Gray) {
+	if r.marks.in(doc) {
+		darken(img, bands(r.book.Words(n), func(w blitz.Word) bool { return r.marks.at(doc, w) >= 0 }))
+	}
+}
+
+// wordAt is the word at (x, y) among words: the one under it, else the nearest on its line within reach of a
+// finger; -1 if none.
+func wordAt(words []blitz.Word, x, y int) int {
+	const reach = 40 // px
+	best, dist := -1, reach+1
+	for i, w := range words {
+		if y < w.Box.Min.Y || y >= w.Box.Max.Y {
+			continue
+		}
+		d := max(w.Box.Min.X-x, x-w.Box.Max.X+1, 0)
+		if d < dist {
+			best, dist = i, d
+		}
+	}
+	return best
+}
+
+// A selection being made: the page's words, the one held first and the one the finger is on, and the bars under the
+// words between them as shown.
+type selection struct {
+	words    []blitz.Word
+	from, to int
+	bars     []image.Rectangle
+}
+
+// span is the selection's first and last word in the text.
+func (s *selection) span() (a, b blitz.Word) {
+	a, b = s.words[s.from], s.words[s.to]
+	if before([2]int{b.Block, b.Start}, [2]int{a.Block, a.Start}) {
+		a, b = b, a
+	}
+	return a, b
+}
+
+func (s *selection) in(w blitz.Word) bool {
+	a, b := s.span()
+	p := [2]int{w.Block, w.Start}
+	return !before(p, [2]int{a.Block, a.Start}) && !before([2]int{b.Block, b.Start}, p)
+}
+
+func union(rs []image.Rectangle) image.Rectangle {
+	var u image.Rectangle
+	for _, r := range rs {
+		u = u.Union(r)
+	}
+	return u
+}

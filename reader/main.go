@@ -182,6 +182,24 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 		}
 		scr.showPart(rd.over, region.Intersect(image.Rect(0, 0, scr.w, scr.h)), wfA2, false)
 	}
+	var sel *selection // a selection being made, while a finger is held
+	unmark := -1       // the highlight the panel asks about
+	// showSel underlines the selection's words (with A2, as the narration's), the bars it had erased
+	showSel := func() {
+		old := union(sel.bars)
+		sel.bars = sel.bars[:0]
+		copy(rd.over.Pix, shown.img.Pix)
+		for _, b := range bands(sel.words, sel.in) {
+			bar := image.Rect(b.Min.X, b.Max.Y-8, b.Max.X, b.Max.Y-2)
+			for y := bar.Min.Y; y < bar.Max.Y; y++ {
+				for x := bar.Min.X; x < bar.Max.X; x++ {
+					rd.over.Pix[y*rd.over.Stride+x] = 0
+				}
+			}
+			sel.bars = append(sel.bars, bar)
+		}
+		scr.showPart(rd.over, old.Union(union(sel.bars)).Intersect(rd.over.Rect), wfA2, false)
+	}
 	// silence ends the narration, the underline erased
 	silence := func() {
 		nar.stop()
@@ -260,6 +278,54 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			}
 			g = <-gestures
 		}
+		if g.hold != notHeld {
+			// a finger held on a word: on a highlight, a panel to remove it; else a selection from that word to
+			// the one under the finger, a highlight once it is lifted
+			switch {
+			case mn != nil:
+			case g.hold == held:
+				words := r.book.Words(r.page())
+				i := wordAt(words, g.x, g.y)
+				if i < 0 {
+					break
+				}
+				if unmark = r.marks.at(r.doc, words[i]); unmark >= 0 {
+					mn = drawRemove(r.marks.list[unmark].Text, rd.fonts, scr.w)
+					copy(rd.over.Pix, shown.img.Pix)
+					copy(rd.over.Pix, mn.img.Pix)
+					scr.showPart(rd.over, mn.img.Rect, wfREAGL, false)
+					break
+				}
+				sel = &selection{words: words, from: i, to: i}
+				showSel()
+			case sel != nil:
+				j := wordAt(sel.words, g.x, g.y)
+				if g.hold == dragged {
+					if j >= 0 && j != sel.to {
+						sel.to = j
+						showSel()
+					}
+					break
+				}
+				if j >= 0 {
+					sel.to = j
+				}
+				s := time.Now()
+				a, b := sel.span()
+				hl := highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}
+				hl.Text = r.book.Text(r.doc, a.Block, a.Start, b.Block, b.End)
+				r.marks.list = append(r.marks.list, hl)
+				r.marks.save()
+				// the page drawn again with it (and the others on it), the bars gone
+				r.book.Draw(r.page(), shown.img)
+				r.mark(r.page(), r.doc, shown.img)
+				bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
+				scr.showPart(shown.img, union(bs).Union(union(sel.bars)).Intersect(shown.img.Rect), wfREAGL, false)
+				fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(s))
+				sel = nil
+			}
+			continue
+		}
 		leave := false
 		if mn != nil {
 			// the menu open: a button tapped is applied (the page laid out again if need be), a tap off the
@@ -300,6 +366,19 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 				fmt.Printf("read aloud from word %d (document %d): woken %.0f ms, first parts decoded %.0f ms, %d parts\n",
 					first, narration[first].doc, w, ms(s)-w, len(nar.parts))
 				continue
+			case id == "remove-highlight":
+				r.marks.list = append(r.marks.list[:unmark], r.marks.list[unmark+1:]...)
+				r.marks.save()
+				mn = nil
+				shown.doc = -1 // drawn again without it
+				shown = pages.get(r, r.doc, r.at, r.page())
+				pages.touch(shown)
+				scr.show(shown.img, wfREAGL, false)
+				fmt.Printf("highlight %d removed\n", unmark+1)
+				continue
+			case id == "keep-highlight":
+				scr.showPart(shown.img, mn.img.Rect, wfREAGL, false)
+				mn = nil
 			case id != "":
 				s := time.Now()
 				relayout := set.change(id, r.key, r.book.LineSpacing(r.doc))
@@ -315,9 +394,9 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 						o.FontSize, o.LineHeight, o.Margin, r.doc, r.at, ms(s), r.restored)
 				}
 				showMenu(relayout)
-			case g.y >= menuHeight:
+			case g.y >= mn.img.Rect.Dy():
+				scr.showPart(shown.img, mn.img.Rect, wfREAGL, false)
 				mn = nil
-				scr.showPart(shown.img, panel, wfREAGL, false)
 			}
 			if !leave {
 				continue
@@ -407,6 +486,7 @@ func (ps drawnPages) get(r *reading, doc, at, n int) *drawn {
 		}
 	}
 	r.book.Draw(n, p.img)
+	r.mark(n, doc, p.img)
 	p.doc, p.at = doc, at
 	ps.touch(p)
 	return p
