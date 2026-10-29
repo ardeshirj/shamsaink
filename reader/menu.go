@@ -16,11 +16,12 @@ import (
 
 // The settings, in DIR/settings.json: text size, line spacing and margins for every book, the page direction by book.
 type settings struct {
-	FontSize   float32           `json:"font_size"`           // px
-	LineHeight float32           `json:"line_height"`         // as CSS's unitless line-height over the book's own; 0: the book's
-	Margin     int               `json:"margin"`              // px
-	LeadMs     int               `json:"lead_ms"`             // read-along: the words underlined this much after the sound starts, for the headphones' own delay
-	Direction  map[string]string `json:"direction,omitempty"` // by book (its key, as its cache's name): "rtl" or "ltr"
+	FontSize   float32           `json:"font_size"`            // px
+	LineHeight float32           `json:"line_height"`          // as CSS's unitless line-height over the book's own; 0: the book's
+	Margin     int               `json:"margin"`               // px
+	LeadMs     int               `json:"lead_ms"`              // read-along: the words underlined this much after the sound starts, for the headphones' own delay
+	HideClock  bool              `json:"hide_clock,omitempty"` // the clock in the top margin hidden
+	Direction  map[string]string `json:"direction,omitempty"`  // by book (its key, as its cache's name): "rtl" or "ltr"
 }
 
 // defaults are the settings before any is set (the environment's, else the reader's own).
@@ -63,8 +64,11 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 	case "reset":
 		// every setting back to its default (the book's line spacing), the direction too for this book
 		d := defaults()
-		s.FontSize, s.LineHeight, s.Margin = d.FontSize, d.LineHeight, d.Margin
+		s.FontSize, s.LineHeight, s.Margin, s.HideClock = d.FontSize, d.LineHeight, d.Margin, d.HideClock
 		delete(s.Direction, key)
+	case "clock-on", "clock-off":
+		s.HideClock = id == "clock-off"
+		return false
 	case "dir-", "dir-rtl", "dir-ltr":
 		if s.Direction == nil {
 			s.Direction = map[string]string{}
@@ -98,7 +102,7 @@ func (m *menu) over(img *image.Gray) { copy(img.Pix[m.y0*img.Stride:], m.img.Pix
 const menuHeight = 900 // px, at most
 
 var menuButtons = []string{"leave", "reset", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
-	"dir-", "dir-rtl", "dir-ltr"}
+	"dir-", "dir-rtl", "dir-ltr", "clock-on", "clock-off"}
 
 // drawMenu draws the menu for the settings s and the book by key; lines is its line spacing as laid out now, narrated
 // whether it can be read aloud.
@@ -113,12 +117,13 @@ func drawMenu(s *settings, key string, lines float32, narrated bool, fonts *blit
 	if narrated {
 		aloud, ids = ` <span class="b" id="read-aloud">Read aloud</span>`, append(ids, "read-aloud")
 	}
-	on := func(d string) string {
-		if d == dir {
+	tick := func(on bool) string {
+		if on {
 			return "✓ "
 		}
 		return ""
 	}
+	on := func(d string) string { return tick(d == dir) }
 	row := func(name, id, value string) string {
 		return fmt.Sprintf(`<tr><td>%s</td><td class="n"><span class="b" id="%s-dec">−</span></td>`+
 			`<td class="v">%s</td><td class="n"><span class="b" id="%s-inc">+</span></td></tr>`, name, id, value, id)
@@ -142,7 +147,9 @@ p span.b { margin-right: 0.5em; }
 		`</table><p>Pages turn (this book):</p><p>` +
 		`<span class="b" id="dir-">` + on("") + `As the book says</span> ` +
 		`<span class="b" id="dir-rtl">` + on("rtl") + `Right to left</span> ` +
-		`<span class="b" id="dir-ltr">` + on("ltr") + `Left to right</span></p></body></html>`
+		`<span class="b" id="dir-ltr">` + on("ltr") + `Left to right</span></p><p>Clock: ` +
+		`<span class="b" id="clock-on">` + tick(!s.HideClock) + `Shown</span> ` +
+		`<span class="b" id="clock-off">` + tick(s.HideClock) + `Hidden</span></p></body></html>`
 
 	return drawPanel(html, ids, fonts, w, menuHeight)
 }

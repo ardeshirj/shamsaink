@@ -41,6 +41,7 @@ type reader struct {
 	dir   string
 	pages drawnPages
 	over  *image.Gray
+	clock *clockFace
 }
 
 func main() {
@@ -68,6 +69,7 @@ func main() {
 		rd.pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, rd.scr.w, rd.scr.h))}
 	}
 	rd.over = image.NewGray(image.Rect(0, 0, rd.scr.w, rd.scr.h))
+	rd.clock = newClockFace(rd.fonts)
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {
@@ -133,7 +135,19 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest ago,
 	// so a turn forward is only its ink, and a turn back finds the page it came from
 	shown := pages.get(r, r.doc, r.at, r.page())
-	scr.show(shown.img, wfGC16, true) // a clean page over KOReader's
+	// stamp puts the time on the page shown (or takes it off), returning its box
+	stamp := func() image.Rectangle { return rd.clock.draw(shown.img, time.Now(), o.Margin, set.HideClock) }
+	// showPage shows the page with the time on it
+	showPage := func(waveform uint32, flash bool) {
+		stamp()
+		scr.show(shown.img, waveform, flash)
+	}
+	// minute is due at the next minute's start, for the clock on a page shown that long
+	nextMinute := func() <-chan time.Time {
+		return time.After(time.Until(time.Now().Truncate(time.Minute).Add(time.Minute)))
+	}
+	minute := nextMinute()
+	showPage(wfGC16, true) // a clean page over KOReader's
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
 		filepath.Base(path), r.doc, r.at, ms(t), r.restored, r.rtl, o.FontSize, o.LineHeight, o.Margin)
 
@@ -176,7 +190,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// closeMenu takes the menu and the bottom panel off the page
 	closeMenu := func() {
 		mn, nav = nil, nil
-		scr.show(shown.img, wfREAGL, false)
+		showPage(wfREAGL, false)
 	}
 	// jump goes to page at of document doc from the menu or the table of contents, the place before it kept for
 	// "Back to page"
@@ -189,7 +203,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		mn, nav = nil, nil
 		shown = pages.get(r, r.doc, r.at, r.page())
 		pages.touch(shown)
-		scr.show(shown.img, wfREAGL, false)
+		showPage(wfREAGL, false)
 		r.keep()
 		ahead = true
 		fmt.Printf("went to document %d page %d (from document %d page %d)\n", r.doc, r.at, d, a)
@@ -205,7 +219,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			r.doc, r.at = c.doc, page-first
 			shown = pages.get(r, r.doc, r.at, page)
 			pages.touch(shown)
-			scr.show(shown.img, wfREAGL, false)
+			showPage(wfREAGL, false)
 			r.keep()
 			nar.bars = nil
 		}
@@ -305,8 +319,18 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 		}
 		// going to sleep: the book left, for KOReader to show its screensaver (the plugin opens it again on waking)
+		// the clock's box refreshed on its own, unless something is over the page or it is hidden
+		tick := func() {
+			minute = nextMinute()
+			if !set.HideClock && mn == nil && cv == nil && sel == nil {
+				scr.showPart(shown.img, stamp(), wfREAGL, false)
+			}
+		}
 		select {
 		case asleep = <-sleep:
+		case <-minute:
+			tick()
+			continue
 		case g = <-gestures:
 		default:
 			if asleep {
@@ -331,6 +355,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			select {
 			case asleep = <-sleep:
+			case <-minute:
+				tick()
+				continue
 			case g = <-gestures:
 			}
 		}
@@ -352,7 +379,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			case cv.head.at(g.x, g.y) == "contents-close":
 				cv.close()
 				cv = nil
-				scr.show(shown.img, wfREAGL, false)
+				showPage(wfREAGL, false)
 			default:
 				if i := cv.entryAt(g.x, g.y); i >= 0 {
 					cv.close()
@@ -488,7 +515,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				shown.doc = -1 // drawn again without it
 				shown = pages.get(r, r.doc, r.at, r.page())
 				pages.touch(shown)
-				scr.show(shown.img, wfREAGL, false)
+				showPage(wfREAGL, false)
 				fmt.Printf("highlight %d removed\n", unmark+1)
 				continue
 			case id == "keep-highlight":
@@ -499,6 +526,11 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				relayout := set.change(id, r.key, r.book.LineSpacing(r.doc))
 				set.save(rd.dir)
 				r.direct(set.Direction[r.key])
+				if id == "clock-off" { // the pages drawn again without the time
+					forget()
+					shown = pages.get(r, r.doc, r.at, r.page())
+					ahead = true
+				}
 				if relayout {
 					o = set.options(scr.w, scr.h)
 					r.relayout(o)
@@ -561,7 +593,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			shown = pages.get(r, r.doc, r.at, r.page())
 			pages.touch(shown)
-			scr.show(shown.img, wfREAGL, false)
+			showPage(wfREAGL, false)
 			r.keep()
 			ahead = true
 			fmt.Printf("document %d page %d: %s, %.0f ms\n", r.doc, r.at, how, ms(s))
