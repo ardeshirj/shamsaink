@@ -1,7 +1,7 @@
-# Indium's design: the parts, from the book to the ink (2026-10-25)
+# Indium's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
-What each part is, how a page goes from an EPUB file to ink on the screen, what the reader stands on on a device, where
-we stand against crengine, and what it all depends on. The stages ahead are in `roadmap.md`; the details and every
+What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
+the reader stands on on a device, where we stand against crengine, and what it all depends on. The stages ahead are in `roadmap.md`; the details and every
 measurement in the experiments' NOTES.md files (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
 
 ## 1. The layers
@@ -28,7 +28,8 @@ id at a point                             taps, selection (not built yet)
 In Go: `bench/` (`engine.Document`: `Pages`, `Draw`, `Find`, `Close`; engines by name: "gotext", "cre"
 with `-tags cre`, "blitz" with `-tags blitz`, an adapter over the binding in `engine/go`, module `indiumengine`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
 its buffers in, strings as pointer and length, and answers the engine's file requests through a callback, so
-go-toolkit stays in charge of the EPUB. Not yet through it: 08's chapter-first opening and the cache (stage 0–2).
+go-toolkit stays in charge of the EPUB. 08's chapter-first opening and the cache go through it too (`Save`, `Restore`
+in `engine/go`, used by `reader/book.go`).
 
 ## 2. From the book to the ink
 
@@ -40,7 +41,7 @@ flowchart TB
   subgraph go1 ["Go: the reader"]
     direction LR
     epub["book.epub<br/>(zip)"] --> tk["readium/go-toolkit<br/>manifest, spine, positions,<br/>SMIL timings"]
-    tk --> rd["the reader<br/>touch, place, read-along clock<br/><i>stage 2</i>"]
+    tk --> rd["the reader (reader/)<br/>touch, place, panels,<br/>read-along clock"]
   end
 
   rd -- "cgo: capi.rs<br/>open · draw · find" --> bk
@@ -115,6 +116,33 @@ sequenceDiagram
   S->>P: ~121 ms, a word due while busy is skipped (4% of words)
 ```
 
+### The reader's panels
+
+The menu, the contents, the navigation panel, the highlight's panel and the clock's digits are HTML too, drawn by the
+same engine as the book: **Go writes the HTML, Rust only draws it.** Nothing in the engine knows a menu or a button.
+
+```mermaid
+flowchart LR
+  tpl["reader/ui/<br/>a template per panel,<br/>components.html, ui.css"] --> rnd["render (ui.go)<br/>Go's html/template<br/>→ HTML + the buttons' ids"]
+  rnd -- "the HTML, as a one-chapter book" --> eng["Blitz engine<br/>lays out, draws<br/>into Go's buffer"]
+  eng -- "Find: each id's boxes" --> taps["the panel's buttons<br/>(menu.go: a tap → an id)"]
+  eng --> scr["the panel's area<br/>refreshed on the screen"]
+```
+
+- **Components:** `components.html` defines the pieces (`button`, `choice`, `toggle`, `segments`, `stepper`, `switch`)
+  as Go template blocks; each panel's template uses them. The functions that build a component's value (`btn`, `pick`,
+  `step`, `list`) record each button's id as they go, so a button drawn is a button that can be tapped, with no list
+  kept in Go. The templates are in the binary (`go:embed`), parsed once.
+- **Modern CSS** (Blitz is a modern engine): custom properties, flex with `gap`, grid, logical sides. Not all CSS is in
+  Blitz, and a page ends at its last line of text (a box's edge below it is cut off; `drawPanel` adds an empty line),
+  so panels are checked by drawing them: `TestPanels`, `TestPanelEdges`.
+- **A tap redraws the panel:** the settings change in Go, the panel is rendered and laid out again, and only its area
+  is refreshed. No state lives in the HTML; on e-ink nothing animates, and a panel is small next to its refresh.
+- **The clock** is drawn once as glyphs by the engine and put together for each time: a page turn costs no layout,
+  and its own box is refreshed once a minute (`clock.go`).
+- Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
+  API or moved, for no measured cost today. An idea for stage 5 (roadmap, "The reader's panels").
+
 ## 3. The engines
 
 | Engine | What it is | Use |
@@ -128,28 +156,29 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 
 ## 4. On the device
 
-What the reader stands on once it runs on an e-ink device, as the roadmap's stage 2 has it (a reader KOReader's file
-manager opens a book with). The Kindle Paperwhite 11th gen is the device the screen parts were tried on (09, 10).
+What the reader stands on on an e-ink device: stage 2's reader, opened from KOReader's file manager, built and in use
+on the Kindle Paperwhite 11th gen (2026-10-29). Screen and touch are still the Kindle's alone (`reader/screen.go`,
+`touch.go`); a table per device comes with the second device (experiment 13, a Kobo).
 
 ```mermaid
 flowchart LR
-  ko["KOReader (stage 2: the host)<br/>file manager, SSH, Wi-Fi,<br/>sleep on Kobo"] -- "a small plugin: Open with Indium<br/>(the book's path)" --> app["Indium reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
-  app -- "exits" --> ko
+  ko["KOReader (the host)<br/>file manager, SSH, Wi-Fi,<br/>its screensaver"] -- "our plugin: Open with Indium<br/>(the book's path, through a pipe)" --> app["Indium reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
+  app -- "left · asleep" --> ko
   app --> scr["screen: /dev/fb0, mapped;<br/>refresh ioctls, a file<br/>per controller family"]
   app --> inp["touch and buttons:<br/>/dev/input/eventN, grabbed<br/>while the reader runs"]
-  app --> pw["power: the Kindle's powerd (lipc);<br/>Kobo: KOReader, later ours"]
-  app --> snd["sound: PocketBook's SDK<br/>(stage 4)"]
+  app --> pw["sleep: the Kindle's powerd (lipc),<br/>watched; Kobo: KOReader, later ours"]
+  app --> snd["sound: Amazon's mplay<br/>(12; around the device)"]
   scr --> panel["e-ink controller<br/>Kindle PW5: MediaTek hwtcon_v2"]
 ```
 
 | Part | What it does | Whose | State |
 |---|---|---|---|
-| KOReader | stage 2's host: its file manager starts the reader; it keeps SSH, Wi-Fi and (on Kobo) sleep | KOReader, AGPL-3 | installed on the Kindle (v2026.07.1); the plugin not written |
-| the plugin | "Open with Indium" in KOReader's file manager; runs the reader, redraws KOReader's screen after | ours, Lua inside KOReader | not written (stage 2) |
+| KOReader | the host: its file manager starts the reader; it keeps SSH, Wi-Fi, its screensaver and (on Kobo) sleep | KOReader, AGPL-3 | on the Kindle (v2026.07.1) |
+| the plugin | "Open with Indium" in KOReader's file manager. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/indium`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/indium.koplugin`) | in use on the Kindle |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
-| input | touches and page buttons as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them | ours, Go | not written (stage 2); on the Kindle the touch is `pt_mt` (`event1`), the power key `event0` |
-| power | the Kindle's `powerd` sleeps on its own; held off with `lipc-set-prop com.lab126.powerd preventScreenSaver` (09, 10) | Amazon's firmware | used by the experiments' scripts |
-| sound | narration's audio | PocketBook's SDK (Kindle and Kobo: closed to us) | stage 4; a PocketBook needed |
+| input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
+| sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |
+| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); which device stage 4 is for, to decide |
 | launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | stage 5 only |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
 
@@ -199,6 +228,7 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | Taffy | boxes (flex, grid, block) | MIT | yes |
 | vello_cpu, anyrender | drawing what is not text | MIT / Apache-2.0 | yes |
 | html5ever | parsing XHTML | MIT / Apache-2.0 | yes |
+| Go's `html/template` | the reader's panels from components | BSD-3 (Go's) | yes (+2 MB) |
 | ICU4X | bidi, line breaking, Unicode data | Unicode-3.0 (22 crates) | yes |
 | image, png, zune-jpeg, jpeg-decoder | pictures | MIT / Apache-2.0 (/ Zlib) | yes |
 | rayon | both cores | MIT / Apache-2.0 | yes |
@@ -207,7 +237,7 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | KOReader | stage 2's host | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) read as a reference, nothing copied. The plugin runs inside it: its licence to check |
 | FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
 | crengine | the bar to measure against | GPL-2.0 | no |
-| the Kindle's `powerd`, `lipc` | sleep held off | Amazon's | no: run as commands |
+| the Kindle's `powerd`, `lipc`, `mplay` | sleep watched; sound | Amazon's | no: run as commands |
 | Go, Rust (musl, static), zig (cgo cross-builds), Docker images `eink-go`, `eink-rust`, `eink-cre`, `eink-koreader` | building and measuring | — | build tools |
 
 ## 8. Words used here
