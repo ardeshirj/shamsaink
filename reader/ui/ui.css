@@ -1,0 +1,13 @@
+html { font-family: sans-serif; }
+body { margin: 0; }
+span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; }
+span.s { display: inline-block; width: 2.4em; height: 1.2em; border: 3px solid black; border-radius: 0.6em; padding: 0.1em; vertical-align: middle; }
+span.s span.k { display: block; width: 1.2em; height: 1.2em; border-radius: 0.6em; background: black; }
+span.s.on { background: black; }
+div.g { display: flex; border: 3px solid black; border-radius: 0.4em; }
+div.g span { flex: 1; text-align: center; padding: 0.15em 0.3em; }
+div.g span + span { border-left: 3px solid black; }
+div.g span:first-child { border-radius: 0.25em 0 0 0.25em; }
+div.g span:last-child { border-radius: 0 0.25em 0.25em 0; }
+div.g span.on { background: black; color: white; }
+span.s.on span.k { background: white; margin-inline-start: 1.2em; }

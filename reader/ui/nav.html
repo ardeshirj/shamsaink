@@ -1,0 +1,11 @@
+{{template "head" ""}}<style>
+p { margin: 0.3em 0; }
+p.t { direction: {{.Dir}}; white-space: nowrap; overflow: hidden; }
+div.bar { height: 28px; border: 3px solid black; border-radius: 14px; margin: 0.4em 0; direction: {{.Dir}}; }
+div.fill { height: 100%; width: {{.Width}}%; background: black; float: {{.Fill}}; border-radius: 11px; }
+span.b { margin: 0 0.5em 0.4em 0; }
+</style></head><body>
+<p class="t">{{.Chapter}}</p>
+<p>{{.Where}}</p>
+<div class="bar" id="{{id "bar"}}"><div class="fill"></div></div>
+<p>{{template "button" btn "contents" "Contents"}} {{template "button" btn "chapter-prev" "Previous chapter"}} {{template "button" btn "chapter-next" "Next chapter"}}{{if .Back}} {{template "button" btn "back" .Back}}{{end}}</p></body></html>

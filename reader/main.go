@@ -136,7 +136,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// so a turn forward is only its ink, and a turn back finds the page it came from
 	shown := pages.get(r, r.doc, r.at, r.page())
 	// stamp puts the time on the page shown (or takes it off), returning its box
-	stamp := func() image.Rectangle { return rd.clock.draw(shown.img, time.Now(), o.Margin, set.HideClock) }
+	stamp := func() image.Rectangle { return rd.clock.draw(shown.img, time.Now(), o.Margin, r.farsi, set.HideClock) }
 	// showPage shows the page with the time on it
 	showPage := func(waveform uint32, flash bool) {
 		stamp()
@@ -179,7 +179,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// showMenu puts the menu and the panel at the bottom over the page shown
 	showMenu := func() {
 		s := time.Now()
-		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, rd.fonts, scr.w)
+		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, r.bookRTL, rd.fonts, scr.w)
 		nav = drawNav(where(), rd.fonts, scr.w, scr.h)
 		copy(rd.over.Pix, shown.img.Pix)
 		mn.over(rd.over)
@@ -526,7 +526,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				relayout := set.change(id, r.key, r.book.LineSpacing(r.doc))
 				set.save(rd.dir)
 				r.direct(set.Direction[r.key])
-				if id == "clock-off" { // the pages drawn again without the time
+				if id == "clock" && set.HideClock { // the pages drawn again without the time
 					forget()
 					shown = pages.get(r, r.doc, r.at, r.page())
 					ahead = true

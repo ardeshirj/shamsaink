@@ -1,0 +1,21 @@
+{{/* The pieces the panels are made of. A button is drawn from btn (or pick, for one that can be ticked, or step, for a
+row with a minus and a plus): the id it is given is how the reader finds its box on the panel. */}}
+
+{{/* The start of a document: the shared rules; the panel's own come in a style of its own after this. Given the page
+direction ("rtl", "ltr" or "" for none). */}}
+{{define "head"}}<html{{if .}} dir="{{.}}"{{end}}><head><style>{{template "ui.css"}}</style>{{end}}
+
+{{define "button"}}<span class="b" id="{{.ID}}">{{.Label}}</span>{{end}}
+
+{{/* A button that shows whether it is the one chosen, with a tick. */}}
+{{define "choice"}}<span class="b" id="{{.ID}}">{{if .On}}✓ {{end}}{{.Label}}</span>{{end}}
+
+{{/* A switch: a track with a knob, dark with the knob at its end when on, an outline with the knob at its start
+when off. */}}
+{{define "toggle"}}<span class="s{{if .On}} on{{end}}" id="{{.ID}}"><span class="k"></span></span>{{end}}
+
+{{/* One choice of a few, as one bar: each a button (from pick, gathered by list), the chosen one filled. */}}
+{{define "segments"}}<div class="g">{{range .}}<span class="{{if .On}}on{{end}}" id="{{.ID}}">{{.Label}}</span>{{end}}</div>{{end}}
+
+{{/* A row of a table: a name, a minus, the value, a plus. */}}
+{{define "stepper"}}<tr><td>{{.Name}}</td><td class="n">{{template "button" .Dec}}</td><td class="v">{{.Value}}</td><td class="n">{{template "button" .Inc}}</td></tr>{{end}}

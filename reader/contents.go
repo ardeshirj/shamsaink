@@ -111,38 +111,34 @@ type contentsView struct {
 	on    []int // each entry's page
 }
 
+// The list's entries as the template draws them: Pad is the indent in em.
+type contentsEntry struct {
+	ID, Pad, Title string
+	Cur            bool
+}
+
+type contentsData struct {
+	Dir     string
+	Entries []contentsEntry
+}
+
 func newContentsView(es []entry, cur int, rtl bool, fonts *blitz.Fonts, w, h int) *contentsView {
 	dir := "ltr"
 	if rtl {
 		dir = "rtl"
 	}
-	var b strings.Builder
-	b.WriteString(`<html dir="` + dir + `"><head><style>
-html { font-family: serif; }
-body { margin: 0; }
-p { margin: 0; padding: 0.35em 0.3em; }
-p.cur { font-weight: bold; background: #d8d8d8; }
-</style></head><body>`)
+	d := contentsData{Dir: dir}
 	for i, e := range es {
-		class := ""
-		if i == cur {
-			class = ` class="cur"`
-		}
 		title := e.title
 		if title == "" {
 			title = "…"
 		}
-		fmt.Fprintf(&b, `<p id="e%d"%s style="padding-inline-start: %.1fem">%s</p>`, i, class, 0.3+1.5*float64(e.depth), escape(title))
+		d.Entries = append(d.Entries, contentsEntry{ID: fmt.Sprint("e", i), Cur: i == cur,
+			Pad: fmt.Sprintf("%.1f", 0.3+1.5*float64(e.depth)), Title: title})
 	}
-	b.WriteString(`</body></html>`)
-	html := b.String()
-	head := drawPanel(`<html><head><style>
-html { font-family: sans-serif; }
-body { margin: 0; }
-p { margin: 0.2em 0; }
-span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; margin-right: 0.5em; }
-</style></head><body><p><span class="b" id="contents-close">Back to the book</span> Contents</p></body></html>`,
-		[]string{"contents-close"}, fonts, w, 300)
+	html, _ := render("contents.html", d)
+	headHTML, headIDs := render("contents-head.html", nil)
+	head := drawPanel(headHTML, headIDs, fonts, w, 300)
 	hh := head.img.Rect.Dy()
 	o := blitz.Options{Width: w, Height: h - hh, Margin: 40, FontSize: 44}
 	v := &contentsView{
@@ -181,7 +177,3 @@ func (v *contentsView) entryAt(x, y int) int {
 }
 
 func (v *contentsView) close() { v.list.Close() }
-
-func escape(s string) string {
-	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;").Replace(s)
-}

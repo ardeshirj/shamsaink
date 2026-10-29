@@ -66,8 +66,8 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 		d := defaults()
 		s.FontSize, s.LineHeight, s.Margin, s.HideClock = d.FontSize, d.LineHeight, d.Margin, d.HideClock
 		delete(s.Direction, key)
-	case "clock-on", "clock-off":
-		s.HideClock = id == "clock-off"
+	case "clock":
+		s.HideClock = !s.HideClock
 		return false
 	case "dir-", "dir-rtl", "dir-ltr":
 		if s.Direction == nil {
@@ -101,75 +101,42 @@ func (m *menu) over(img *image.Gray) { copy(img.Pix[m.y0*img.Stride:], m.img.Pix
 
 const menuHeight = 900 // px, at most
 
-var menuButtons = []string{"leave", "reset", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
-	"dir-", "dir-rtl", "dir-ltr", "clock-on", "clock-off"}
+// The menu's numbers and choices, for ui/menu.html.
+type menuData struct {
+	Size, LinesName, Lines, Margin string
+	Dir, BookDir                   string
+	Narrated, HideClock            bool
+}
 
 // drawMenu draws the menu for the settings s and the book by key; lines is its line spacing as laid out now, narrated
-// whether it can be read aloud.
-func drawMenu(s *settings, key string, lines float32, narrated bool, fonts *blitz.Fonts, w int) *menu {
+// whether it can be read aloud, bookRTL whether the book itself reads right to left.
+func drawMenu(s *settings, key string, lines float32, narrated, bookRTL bool, fonts *blitz.Fonts, w int) *menu {
 	// the line spacing as it is, and whether it is the book's own
 	linesName := "Line spacing (the book's)"
 	if s.LineHeight > 0 {
 		lines, linesName = s.LineHeight, "Line spacing"
 	}
-	dir := s.Direction[key]
-	aloud, ids := "", menuButtons
-	if narrated {
-		aloud, ids = ` <span class="b" id="read-aloud">Read aloud</span>`, append(ids, "read-aloud")
-	}
-	tick := func(on bool) string {
-		if on {
-			return "✓ "
-		}
-		return ""
-	}
-	on := func(d string) string { return tick(d == dir) }
-	row := func(name, id, value string) string {
-		return fmt.Sprintf(`<tr><td>%s</td><td class="n"><span class="b" id="%s-dec">−</span></td>`+
-			`<td class="v">%s</td><td class="n"><span class="b" id="%s-inc">+</span></td></tr>`, name, id, value, id)
-	}
-	html := `<html><head><style>
-html { font-family: sans-serif; }
-body { margin: 0; }
-table { width: 100%; border-collapse: collapse; }
-td { padding: 0.3em 0; }
-td.n { width: 2.4em; text-align: center; }
-td.v { width: 6em; text-align: center; }
-span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; }
-p { margin: 0.3em 0; }
-p span.b { margin-right: 0.5em; }
-</style></head><body>
-<p><span class="b" id="leave">Close the book</span> <span class="b" id="reset">Reset settings</span>` + aloud +
-		`</p><table>` +
-		row("Text size", "size", fmt.Sprintf("%g px", s.FontSize)) +
-		row(linesName, "lines", fmt.Sprintf("%.2f", lines)) +
-		row("Margins", "margin", fmt.Sprintf("%d px", s.Margin)) +
-		`</table><p>Pages turn (this book):</p><p>` +
-		`<span class="b" id="dir-">` + on("") + `As the book says</span> ` +
-		`<span class="b" id="dir-rtl">` + on("rtl") + `Right to left</span> ` +
-		`<span class="b" id="dir-ltr">` + on("ltr") + `Left to right</span></p><p>Clock: ` +
-		`<span class="b" id="clock-on">` + tick(!s.HideClock) + `Shown</span> ` +
-		`<span class="b" id="clock-off">` + tick(s.HideClock) + `Hidden</span></p></body></html>`
-
+	html, ids := render("menu.html", menuData{
+		Size: fmt.Sprintf("%g px", s.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
+		Margin: fmt.Sprintf("%d px", s.Margin), Dir: s.Direction[key], BookDir: map[bool]string{true: "RTL", false: "LTR"}[bookRTL],
+		Narrated: narrated, HideClock: s.HideClock,
+	})
 	return drawPanel(html, ids, fonts, w, menuHeight)
 }
 
 // The panel asking whether to remove a highlight (its words are grey on the page under it).
 func drawRemove(fonts *blitz.Fonts, w int) *menu {
-	html := `<html><head><style>
-html { font-family: sans-serif; }
-body { margin: 0; }
-p { margin: 0.3em 0; }
-span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; margin: 0 0.5em 0.4em 0; }
-</style></head><body>
-<p><span class="b" id="remove-highlight">Remove highlight</span> <span class="b" id="keep-highlight">Keep</span></p></body></html>`
-	return drawPanel(html, []string{"remove-highlight", "keep-highlight"}, fonts, w, 180)
+	html, ids := render("remove.html", nil)
+	return drawPanel(html, ids, fonts, w, 180)
 }
 
 // drawPanel draws a panel over the top of the page from html, as high as its buttons need (at most h px; the last
 // thing on a panel is a button), a line under it, its buttons by ids.
 func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *menu {
 	const pad = 30 // px under the last button, over the line
+	// a line after everything: a page ends at its last line of text, so a box's bottom edge after its own (the
+	// segments' bar) would be cut off; cropped away below
+	html = strings.Replace(html, "</body>", "<p>&nbsp;</p></body>", 1)
 	o := blitz.Options{Width: w, Height: h, Margin: 40, FontSize: 40}
 	b := blitz.New([]string{"menu.html"}, func(string) ([]byte, error) { return []byte(html), nil }, o, fonts)
 	defer b.Close()
@@ -195,15 +162,20 @@ func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *menu {
 	return m
 }
 
-// at is the button tapped at (x, y) on the screen, with some room around each for a finger; "" if none.
+// at is the button tapped at (x, y) on the screen, with some room around each for a finger: the nearest, for buttons
+// side by side (a bar's segments share a border); "" if none.
 func (m *menu) at(x, y int) string {
 	const room = 16
-	for id, r := range m.buttons {
-		if image.Pt(x, y-m.y0).In(r.Inset(-room)) {
-			return id
+	p := image.Pt(x, y-m.y0)
+	id, best := "", room+1
+	for b, r := range m.buttons {
+		// how far p is outside r, along the farther axis (0 inside)
+		d := max(r.Min.X-p.X, p.X-r.Max.X+1, r.Min.Y-p.Y, p.Y-r.Max.Y+1, 0)
+		if d < best || d == best && b < id {
+			id, best = b, d
 		}
 	}
-	return ""
+	return id
 }
 
 // Where the reader is, for the bottom panel: the chapter's title, the page in its document, the page in the book
@@ -220,7 +192,11 @@ type progress struct {
 
 const navHeight = 700 // px, at most
 
-var navButtons = []string{"contents", "chapter-prev", "chapter-next", "bar"}
+// The bottom panel's words and numbers, for ui/nav.html.
+type navData struct {
+	Chapter, Where, Back string // Back: the way back's label, "" for none
+	Dir, Fill, Width     string // the book's direction, the side the bar fills from, its filled share in per cent
+}
 
 // drawNav draws the bottom panel, opened with the menu: where the reader is, a bar to tap to go anywhere in the book,
 // the table of contents, the chapters before and after, and the way back after a jump.
@@ -229,30 +205,15 @@ func drawNav(p progress, fonts *blitz.Fonts, w, h int) *menu {
 	if p.total > 0 {
 		book = fmt.Sprintf("page %d of %d", p.page, p.total)
 	}
-	dir, fill := "ltr", "left"
+	d := navData{Chapter: p.chapter, Where: fmt.Sprintf("%d of %d in this part · %s", p.at, p.of, book),
+		Dir: "ltr", Fill: "left", Width: fmt.Sprintf("%.1f", 100*min(max(p.share, 0), 1))}
 	if p.rtl {
-		dir, fill = "rtl", "right"
+		d.Dir, d.Fill = "rtl", "right"
 	}
-	ids := navButtons
-	back := ""
 	if p.back > 0 {
-		back, ids = fmt.Sprintf(` <span class="b" id="back">Back to page %d</span>`, p.back), append(ids, "back")
+		d.Back = fmt.Sprintf("Back to page %d", p.back)
 	}
-	// the chapter buttons in the book's direction: "previous" on its start side
-	chapters := `<span class="b" id="chapter-prev">Previous chapter</span> <span class="b" id="chapter-next">Next chapter</span>`
-	html := `<html><head><style>
-html { font-family: sans-serif; }
-body { margin: 0; }
-p { margin: 0.3em 0; }
-p.t { direction: ` + dir + `; white-space: nowrap; overflow: hidden; }
-div.bar { height: 28px; border: 3px solid black; border-radius: 14px; margin: 0.4em 0; direction: ` + dir + `; }
-div.fill { height: 100%; width: ` + fmt.Sprintf("%.1f", 100*min(max(p.share, 0), 1)) + `%; background: black; float: ` + fill + `; border-radius: 11px; }
-span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; margin: 0 0.5em 0.4em 0; }
-</style></head><body>
-<p class="t">` + escape(p.chapter) + `</p>
-<p>` + fmt.Sprintf("%d of %d in this part · %s", p.at, p.of, book) + `</p>
-<div class="bar" id="bar"><div class="fill"></div></div>
-<p><span class="b" id="contents">Contents</span> ` + chapters + back + `</p></body></html>`
+	html, ids := render("nav.html", d)
 	m := drawPanel(html, ids, fonts, w, navHeight)
 	// the line on the panel's top edge, not under it
 	nh := m.img.Rect.Dy()

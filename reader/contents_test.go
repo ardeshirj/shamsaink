@@ -82,7 +82,7 @@ func TestContents(t *testing.T) {
 	page := image.NewGray(image.Rect(0, 0, w, h))
 	r.book.Draw(r.page(), page)
 	nav.over(page)
-	for _, id := range append(navButtons, "back") {
+	for _, id := range navIDs {
 		if b, ok := nav.buttons[id]; !ok || b.Empty() {
 			t.Errorf("button %s not on the panel", id)
 		}
