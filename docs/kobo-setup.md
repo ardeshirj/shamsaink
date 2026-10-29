@@ -1,13 +1,14 @@
 # Setting up a Kobo for experiment 13 (draft, 2026-10-28)
 
-How the Kobo Clara BW is to be reached from the Mac, as `docs/kindle-setup.md` does for the Kindle: KOReader on it,
+How the Kobo Libra Colour is to be reached from the Mac, as `docs/kindle-setup.md` does for the Kindle: KOReader on it,
 started from NickelMenu, its SSH server, a key, and the step 0 probe. **Written before the device is here,** from
 KOReader's Kobo installation page (its wiki) and the Kindle's setup: each step to be checked on the device, and this
 note taken off when it is.
 
 ## 1. Kobo's own first setup
 Do Kobo's setup first (language, Wi-Fi, account), as any new Kobo, and update its firmware if it offers. Note the
-firmware version (Settings → Device information) for step 0. Nothing here changes Kobo's own software: KOReader and
+firmware version (Settings → Device information) for step 0 and for the KOReader build below. Once KOReader is in,
+check before taking a firmware update that KOReader and NickelMenu support it: an update can stop them starting. Nothing here changes Kobo's own software: KOReader and
 NickelMenu sit in the user storage and are removed by deleting them.
 
 ## 2. NickelMenu and KOReader (over USB)
@@ -16,10 +17,18 @@ dot are hidden in Finder (Cmd-Shift-. shows them).
 1. **NickelMenu:** download `KoboRoot.tgz` from NickelMenu's latest release
    (github.com/pgaskin/NickelMenu/releases), copy it into `.kobo/` on the Kobo, eject. The Kobo installs it and
    restarts.
-2. **KOReader:** download `koreader-kobo-VERSION.zip` from KOReader's releases and put its `koreader` folder in
-   `.adds/` (so `.adds/koreader/koreader.sh` exists).
-3. **Keep Kobo from importing KOReader's files** (firmware 4.17 and later): in `.kobo/Kobo/Kobo eReader.conf`, add
-   if it is not there:
+2. **KOReader:** download `koreader-kobo-VERSION.zip` from KOReader's releases (firmware 4.x, the Libra Colour's in
+   2026-10; `koreader-kobov5-VERSION.zip` is for firmware 5.x, so far on Kobo-made Tolinos) and unzip it into
+   `.adds/`, so `.adds/koreader/koreader.sh` exists. In the terminal, since Finder can mishandle dot-folders:
+   ```sh
+   mkdir -p /Volumes/KOBOeReader/.adds
+   unzip -o ~/Downloads/koreader-kobo-VERSION.zip -d /Volumes/KOBOeReader/.adds
+   ```
+   A dot-folder, so it stays out of Kobo's library, and the place every KOReader guide and tool expects.
+3. **Keep Kobo from importing KOReader's files** (firmware 4.17 and later scans dot-folders too, so `.adds` alone
+   does not hide KOReader's fonts, help pages and pictures from the library): before ejecting, in
+   `.kobo/Kobo/Kobo eReader.conf`, add if it is not there (under an existing `[FeatureSettings]`, or the section at
+   the end; both backslashes as they are):
    ```
    [FeatureSettings]
    ExcludeSyncFolders=(\\.(?!kobo|adobe).+|([^.][^/]*/)+\\..+)

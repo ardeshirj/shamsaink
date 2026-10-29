@@ -1,30 +1,36 @@
-# 13: the reader and read-along on a Kobo Clara BW (plan, 2026-10-28)
+# 13: the reader and read-along on a Kobo Libra Colour (plan, 2026-10-28; device changed 2026-10-29)
 
 **The question:** on a Kobo, more open than the Kindle, does read-along get sound without going around the device
 (12's NOTES.md: Amazon's player tool, a mixer only `mplay` wakes, headphones dropped after 20 minutes), and how much of
 the reader carries over? This decides stage 4's device and whether stage 5 (stand-alone, Plato's way) is worth it
-(`docs/roadmap.md`). The device: a **Kobo Clara BW** (chosen 2026-10-28: the plainest current Kobo, a black and white
-Carta 1300 at 300 ppi like the Kindle's; the Libra Colour's colour filter greys the text; to be tried in a shop).
+(`docs/roadmap.md`). The device: a **Kobo Libra Colour**, the one on hand (2026-10-29), firmware 4.x, so KOReader's plain `kobo`
+build (`kobov5` is for firmware 5.x, seen so far on Kobo-made Tolinos). The Clara BW was chosen first (2026-10-28:
+black and white, so plain grey text); the Libra Colour's colour filter greys the text a little, which matters for
+reading, not for this experiment's questions: the screen driver and the Bluetooth sound stack are the same MediaTek
+ones. Its board is also the Tolino Vision Color's (FBInk: device id 390, 690 when flagged Tolino), so what works here
+should work there.
 
 ## What its source says, before the device (desk research, 2026-10-28)
 From KOReader (`frontend/device/kobo/device.lua`, `platform/kobo/koreader.sh`), FBInk (`eink/mtk-kobo.h`,
 `fbink_device_id.c`) and audiobook.koplugin (`docs/PLATFORM_AUDIO.md`, `dev/audioout/`; AGPL-3.0: to learn from, not
 to copy):
-- **One core: MediaTek MT8110** ("Mark 12", device id 391; a later board, "Spa BW TPV", 395). KOReader marks the Clara
-  Colour and Libra Colour as multi-core, not the Clara BW; audiobook.koplugin's MTK test Kobo is "single-core
-  (MT8110)" and its notes measure on a Clara BW. The Kindle PW5 has two cores: there, one core costs ~100 ms a
-  chapter's first page (09's NOTES.md: 472–535 ms against 362–430, crengine 540–2550). So a slower device than the
-  Kindle, not a problem; the engine's `parallel` feature does nothing there.
+- **Two cores** ("Monza", "Mark 13", device id 390; KOReader's `KoboMonza`, `isSMP`), like the Kindle PW5, so the
+  engine's `parallel` feature should help as there; the chip to read on the device (`/proc/cpuinfo`). The Clara BW,
+  first chosen, has one (MediaTek MT8110, 391/395; audiobook.koplugin's MTK test Kobo is that one): one core costs
+  ~100 ms a chapter's first page on the Kindle (09's NOTES.md: 472–535 ms against 362–430, crengine 540–2550). It
+  also has **page-turn buttons** (`hasKeys`), a second input besides touch.
 - **Screen: MediaTek's `hwtcon` driver**, the Kindle's family with another ioctl: `HWTCON_SEND_UPDATE` ('F', 0x2E,
   `struct hwtcon_update_data`: region, waveform, update mode, marker, flags, dither: 36 bytes, the Kindle's
   `mxcfb_update_data_mtk` shortened) and `HWTCON_WAIT_FOR_UPDATE_COMPLETE` ('F', 0x2F, a marker). **The same
   waveform numbers** as ours (GC16 2, REAGL 4, A2 6, DU 1). Night mode: a global switch
-  (`echo "night_mode 4" > /proc/hwtcon/cmd`), not a flag per refresh. The framebuffer is natively landscape (FBInk's
-  rotation map, `NTX_ROTA_CCW_TOUCH`) and may be 32 bits a pixel (KOReader checks for BGRA): our grey page has to be
-  turned and widened on the way in.
-- **Touch: the "snow" protocol** (`touch_snow_protocol`): a lifted finger never sends `ABS_MT_TRACKING_ID -1`, only
-  `BTN_TOUCH 0` once every finger is up; newer panels may send it after all. Our `touch.go` ends a gesture on the
-  tracking id, so it needs the `BTN_TOUCH` path, and the coordinates turned for the rotation.
+  (`echo "night_mode 4" > /proc/hwtcon/cmd`), not a flag per refresh. The framebuffer is natively landscape and 32 bits a
+  pixel at boot (FBInk, Libra Colour: "CW @ 32bpp", rotation map `NTX_ROTA_CW_TOUCH`, the Clara BW's the other way):
+  our grey page has to be turned and widened on the way in. A colour panel (Kaleido): our pages stay grey, drawn with
+  the grey waveforms above; the colour ones (`GCC16`/`GLRC16`) not needed.
+- **Touch:** KOReader does not set the "snow" protocol for the Libra Colour (it does for the Clara BW: a lifted
+  finger never sends `ABS_MT_TRACKING_ID -1`, only `BTN_TOUCH 0` once every finger is up), so our `touch.go`, which
+  ends a gesture on the tracking id, may work as it is; the probe says. Its y axis is mirrored (`touch_mirrored_y`,
+  unlike most Kobo boards), and the coordinates are turned for the rotation.
 - **Sound: Bluetooth only (no speaker), through Kobo's own stack:** `mtkbtd` (MediaTek's, with a BlueZ-like D-Bus
   interface, `com.kobo.mtk.bluedroid`) and a GStreamer sink, `mtkbtmwrpcaudiosink`, over an abstract socket
   (`@kobo:mtkbtmwrpc`) only one pipeline can hold. audiobook.koplugin runs one long-lived daemon holding it (one
@@ -46,7 +52,7 @@ to copy):
 
 ## Steps on the device
 0. **Set up** (as `docs/kindle-setup.md`, a `docs/kobo-setup.md`): KOReader installed with NickelMenu, its SSH
-   server, a key of its own, `ssh kobo`; Makefile targets as the Kindle's. Note the firmware, the board (391 or 395),
+   server, a key of its own, `ssh kobo`; Makefile targets as the Kindle's. Note the firmware, the board (390 expected),
    the framebuffer (`fbset`, bits per pixel, rotation), the touch device and what it sends (`evtest`), what of
    `mtkbtd`, GStreamer and `mtkbtmwrpcaudiosink` is there, with Nickel running and after KOReader's start.
    `probe/` gathers them: `build.sh` makes a static ARMv7 `probe` (the framebuffer's ioctls, the input devices and
@@ -56,8 +62,8 @@ to copy):
    and `touch.go` have them; the Kindle's framebuffer is `hwtcon_v2`, the driver family FBInk names on the Kobo.
    **Done when** `ssh kobo` works and these are written down.
 1. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
-   `reader/device`; the Kindle checked to still work, every page identical), the Clara BW's entry: `hwtcon`'s ioctl,
-   the page turned and widened into the framebuffer, the snow protocol and its rotation. Then the reader from
+   `reader/device`; the Kindle checked to still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl,
+   the page turned and widened into the framebuffer, its touch (mirrored y, rotation) and the page-turn buttons. Then the reader from
    KOReader's file manager, as on the Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299
    and 121 ms), a first open and a reopen against KOReader's crengine on the same device and books (09's table),
    memory. **Done when** a book is read on it as on the Kindle, and the numbers are in NOTES.md.
@@ -65,12 +71,12 @@ to copy):
    `mtkbtmwrpcaudiosink`, (a) from Nickel's side (Nickel running: who holds the socket, does Kobo's own audiobook
    player get in the way), (b) inside KOReader with Nickel stopped. Counted: drop-outs, gaps between parts, how far
    the underline drifts from the voice over the hour, the start-up delay (the Kindle's `LEAD_MS`), what pairing
-   takes. Through `gst-launch-1.0` fed by us (above): first whether it plays at all from a pipe, then the hour. **Done when** we know whether read-along on the Clara BW goes around the device as on the Kindle or not.
+   takes. Through `gst-launch-1.0` fed by us (above): first whether it plays at all from a pipe, then the hour. **Done when** we know whether read-along on the Libra Colour goes around the device as on the Kindle or not.
 3. **Started without KOReader** (only if 2 says sound is clean): from NickelMenu, Nickel stopped as KOReader does
    and started again when left; what KOReader does for us then (sleep, the light, Wi-Fi, battery) listed with what
    each costs to do ourselves (Plato's code, AGPL-3.0, to learn from). **Done when** the list says whether stage 5
    on Kobo is weeks or months.
 
 ## Not in this experiment
-The Libra Colour or Clara Colour (colour refreshes, `GCC16`/`GLRC16`), Kobo's BlueZ boards (Libra 2, Sage), and a
-stand-alone app itself (stage 5).
+Colour pages (colour refreshes, `GCC16`/`GLRC16`), the one-core Clara BW (to time later if a Kobo becomes stage 4's
+device), Kobo's BlueZ boards (Libra 2, Sage), and a stand-alone app itself (stage 5).
