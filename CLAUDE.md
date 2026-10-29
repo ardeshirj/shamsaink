@@ -132,8 +132,8 @@ Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened 
 one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
 read-along in the reader (4, sound on a PocketBook); a stand-alone app only if 3 earns it (5). Upstream any time
 (the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text justification bug; to
-Blitz, the line culling (`engine/patches/blitz-cull-lines.patch`), pictures sized from their headers and decoded
-when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate taken with every format off.
+Blitz, the line culling (`engine/patches/blitz-cull-lines.patch`) and pictures sized from their headers and decoded
+when drawn (`engine/patches/blitz-lazy-images.patch`); what Blitz already has near them: roadmap, "Upstream to Blitz".
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.

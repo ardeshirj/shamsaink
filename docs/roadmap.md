@@ -23,7 +23,7 @@ The parts the reader stands on on a device, and every dependency with its licenc
 | **3. Daily use** | The maintainer reads with it for a week or two. Text size, line spacing and margins, page direction for books whose metadata names none (settings), progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. Memory over days of use (09, step 5: 0.1–0.2 MB more per book opened, cause not found). | It is the reader the maintainer picks for Farsi books |
 | **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). **Sound on the Kindle itself, over Bluetooth headphones** (experiment 12: Amazon's `mplay` into its mixer, nothing installed; read-along worked end to end on the device): MP3s decoded by us, the clock started with the sound, `LEAD_MS` per headphones. **But every step goes around the Kindle** (12's NOTES.md): Amazon's player tool, no playing from a pipe, and the headphones dropped 20 minutes after they connect unless Amazon's own player plays. Documented and left; which device read-along is built for is decided at this stage. A PocketBook only for a device with a speaker. | A narrated book read and followed on a device, its sound included |
 | **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
-| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling, pictures decoded when drawn, the `image` crate with every format off. Plato's engine on the bench (`bench/`), for comparison like crengine: its licence and right to left to check first. | — |
+| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling and pictures decoded when drawn (below, "Upstream to Blitz"). Plato's engine on the bench (`bench/`), for comparison like crengine: its licence and right to left to check first. | — |
 
 ## Stage 2, more closely
 - **Started by KOReader:** a small KOReader plugin (Lua) adds "Open with Indium" for EPUBs and runs our binary with the
@@ -70,6 +70,28 @@ is `dir="rtl"` and nothing else; the progress bar a flex row, not a float (float
 Idea for stage 5, not decided: the panels as Dioxus components (`dioxus-native-dom`, headless, on Blitz; in our
 pinned checkout). It pays off with many screens with state (a library, settings pages); it moves the interface's
 logic into Rust. To measure first: one panel through our engine on the Kindle, its size, memory and time a tap.
+
+## Upstream to Blitz (2026-10-29: what is already there, to come back to)
+Our two patches, measured against Blitz's roadmap (#119), its tracking issues (#255 optimizations, #259 images) and a
+keyword search of its issues and PRs (cull, lazy image, image decode, image memory, image cache): **neither is
+planned or proposed there**, and neither is e-ink only. The maintainer posts from their GitHub account.
+- **Line culling** (`engine/patches/blitz-cull-lines.patch`, ~20 lines in `blitz-paint/src/render.rs`): a small PR.
+  Blitz already skips whole elements off the screen; ours skips the lines of a paragraph that is only partly on it.
+  Mention **#1012** (open: their element culling cuts off descenders hanging below a box; ours keeps a line's height
+  of slack, enough for its example but not a guarantee: first look whether Parley gives a line's ink bounds cheaply)
+  and **#809** (open PR: stacking contexts with bounds for pruning, in the same file; ours may need adjusting after
+  it). Numbers: 04's NOTES.md.
+- **Pictures decoded when drawn** (`engine/patches/blitz-lazy-images.patch`, plus our `engine/src/pictures.rs`, 130
+  lines): an issue first, the design being theirs. The patch alone keeps the file and its size; the decoding at the
+  size drawn is ours, so upstream it means decoding in blitz-paint or anyrender, a bounded cache, and the layout code
+  that reads decoded pixels (`RasterImageData`): a few hundred lines. Next to **#1221** (open PR: caps cached decoded
+  images at 32 MB; still decodes each at full size), **#896** (open: who decodes, Blitz or the renderer), **#795**
+  (merged: a decoding copy removed, asked for by Blitz's maintainer while profiling memory) and **#286** (open:
+  memory). Numbers: a scan's 76 MB (08's NOTES.md).
+- **The `image` crate's formats: nothing to propose.** `blitz-dom` already takes it with every format off, and the
+  program picks them (ours: `engine/Cargo.toml`), at Blitz 21edc92.
+- **Fragmented (paginated) layout** is in Blitz's backlog (#119): if it comes, our pagination (`lib.rs`) could move
+  into Blitz.
 
 ## Why this order
 - The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
