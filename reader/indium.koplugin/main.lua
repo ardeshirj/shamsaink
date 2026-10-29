@@ -21,7 +21,8 @@ local Indium = WidgetContainer:extend{
     is_doc_only = false,
 }
 
--- run releases KOReader's input devices, runs cmd (blocking KOReader meanwhile), and takes them back.
+-- run releases KOReader's input devices, runs cmd (blocking KOReader meanwhile), takes them back, and returns the
+-- first line cmd printed.
 local function run(cmd)
     local function night()
         return string.format("hw night %s, setting %s", tostring(Device.screen:getHWNightmode()),
@@ -38,7 +39,9 @@ local function run(cmd)
     end
     logger.info("indium: released", table.concat(paths, " "), "; running", cmd, ";", night())
     local t = time.now()
-    local status = os.execute(cmd)
+    local p = io.popen(cmd, "r")
+    local line = p:read("*l")
+    local status = p:close()
     local ran = time.to_ms(time.since(t))
     -- As KOReader opened them at start (a scan, the devices kept by fd): Input:open(path) alone leaves a device
     -- that the next close does not let go of.
@@ -49,19 +52,28 @@ local function run(cmd)
             Device.input:open(path)
         end
     end
-    logger.info("indium: exit", status, "after", ran, "ms; took back", table.concat(paths, " "), "in",
+    logger.info("indium: exit", status, line, "after", ran, "ms; took back", table.concat(paths, " "), "in",
         time.to_ms(time.since(t)) - ran, "ms;", night())
+    if line == "asleep" then
+        -- not redrawn: KOReader's screensaver goes over it, and the book is opened again on waking
+        return line
+    end
     -- redrawn now, to time it (the widgets drawn and the refresh sent; the ink takes ~0.4 s more)
     local r = time.now()
     UIManager:setDirty("all", "full")
     UIManager:forceRePaint()
     logger.info("indium: KOReader redrawn in", time.to_ms(time.since(r)), "ms")
+    return line
 end
 
 -- The reader is kept running (it starts once: its start is slow from /mnt/us) and handed each book through two pipes
 -- in RAM: the book written to `in` (lines of "key value": "book PATH"), then a line read from `out` when the book is left, or its end if the
 -- reader died meanwhile.
 local pipes = "/var/tmp/indium"
+
+-- The book left when the Kindle went to sleep: the reader leaves it for KOReader to show its screensaver (KOReader
+-- finds powerd's message waiting once it runs again), and it is opened again once the Kindle wakes.
+local asleep_in
 
 -- open runs the reader on a book, once the dialog's callback has returned.
 local function open(file)
@@ -85,8 +97,27 @@ local function open(file)
     }, " ")
     -- at once (the dialog is gone in KOReader's own redraw when the book is left: the reader covers the screen)
     UIManager:nextTick(function()
-        run(cmd)
+        if run(cmd) == "asleep" then
+            asleep_in = file
+            -- at once, not after the file manager is drawn: powerd's own message, waiting, then finds it shown
+            Device:intoScreenSaver(2)
+        end
     end)
+end
+
+-- On waking: KOReader takes its screensaver off, then the book left for it is opened again.
+if not Device.indium_wakes then
+    Device.indium_wakes = true
+    local outofScreenSaver = Device.outofScreenSaver
+    Device.outofScreenSaver = function(self, source)
+        outofScreenSaver(self, source)
+        if asleep_in then
+            local file = asleep_in
+            asleep_in = nil
+            logger.info("indium: woken, opening", file, "again")
+            open(file)
+        end
+    end
 end
 
 FileManager.addFileDialogButtons(FileManager, "indium", function(file, is_file)

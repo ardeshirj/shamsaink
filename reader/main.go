@@ -71,7 +71,8 @@ func main() {
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {
-		check(rd.read(map[string]string{"book": os.Args[1]}, t))
+		_, err := rd.read(map[string]string{"book": os.Args[1]}, t)
+		check(err)
 		return
 	}
 	pipes := os.Args[2]
@@ -93,28 +94,32 @@ func main() {
 		// held open while the book is read: if we die, the plugin reads the end of the pipe and goes on
 		out, err := os.OpenFile(filepath.Join(pipes, "out"), os.O_WRONLY, 0)
 		check(err)
-		if err := rd.read(m, t); err != nil {
+		asleep, err := rd.read(m, t)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, "indium:", err)
 		}
-		fmt.Fprintln(out, "left")
+		// "asleep": left as the Kindle went to sleep, to be opened again when it wakes
+		fmt.Fprintln(out, map[bool]string{false: "left", true: "asleep"}[asleep])
 		out.Close()
 	}
 }
 
 // read opens a book (m: "book", see above) at its place and turns its pages until it is left; the touch screen is
 // let go of and the book closed before it returns.
-func (rd *reader) read(m map[string]string, t time.Time) error {
+func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error) {
 	scr, pages, path := rd.scr, rd.pages, m["book"]
 	set := loadSettings(rd.dir)
 	o := set.options(scr.w, scr.h)
 	f, gestures, err := touches(touchDev)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer f.Close() // closed at once when left, the book too: twice does no harm
+	sleep, stopSleeps := sleeps()
+	defer stopSleeps()
 	r, err := openBook(context.Background(), path, rd.dir, o, rd.fonts, func(key string) string { return set.Direction[key] })
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer r.close()
 	narration := cues(context.Background(), r.pub)
@@ -265,6 +270,7 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 				continue
 			}
 			select {
+			case asleep = <-sleep:
 			case <-gestures:
 				silence()
 				for len(gestures) > 0 {
@@ -294,11 +300,18 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 					underline(nar.cues[w])
 				}
 			}
-			continue
+			if !asleep {
+				continue
+			}
 		}
+		// going to sleep: the book left, for KOReader to show its screensaver (the plugin opens it again on waking)
 		select {
+		case asleep = <-sleep:
 		case g = <-gestures:
 		default:
+			if asleep {
+				break
+			}
 			// nothing touched: the next page drawn, else one more document laid out, then look again
 			if ahead {
 				ahead = false
@@ -316,9 +329,12 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 				}
 				continue
 			}
-			g = <-gestures
+			select {
+			case asleep = <-sleep:
+			case g = <-gestures:
+			}
 		}
-		if cv != nil {
+		if cv != nil && !asleep {
 			// the table of contents shown: a swipe turns its pages (in the book's direction, or up for the next), a
 			// tap on an entry goes there, the header's button back to the page
 			switch {
@@ -346,7 +362,7 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			}
 			continue
 		}
-		if g.hold != notHeld {
+		if g.hold != notHeld && !asleep {
 			// a finger held on a word: on a highlight, a panel to remove it; else a selection from that word to
 			// the one under the finger, a highlight once it is lifted
 			switch {
@@ -394,8 +410,8 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			}
 			continue
 		}
-		leave := false
-		if mn != nil {
+		leave := asleep
+		if mn != nil && !leave {
 			// the menu open: a button tapped is applied (the page laid out again if need be), a tap off the
 			// panel closes it
 			id := mn.at(g.x, g.y)
@@ -533,9 +549,9 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 			w := ms(s) - k
 			f.Close()
 			r.close()
-			fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms\n", r.doc, r.at, k, w,
-				ms(s)-k-w)
-			return nil
+			fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms%s\n", r.doc, r.at, k, w,
+				ms(s)-k-w, map[bool]string{true: " (going to sleep)"}[asleep])
+			return asleep, nil
 		}
 		if turned {
 			s := time.Now()
