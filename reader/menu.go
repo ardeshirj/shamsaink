@@ -127,7 +127,7 @@ func drawMenu(s *settings, key string, lines float32, narrated, bookRTL bool, fo
 // The panel asking whether to remove a highlight (its words are grey on the page under it).
 func drawRemove(fonts *blitz.Fonts, w int) *menu {
 	html, ids := render("remove.html", nil)
-	return drawPanel(html, ids, fonts, w, 180)
+	return drawPanel(html, ids, fonts, w, 300) // at most: cut to its buttons
 }
 
 // drawPanel draws a panel over the top of the page from html, as high as its buttons need (at most h px; the last
@@ -195,7 +195,7 @@ const navHeight = 700 // px, at most
 // The bottom panel's words and numbers, for ui/nav.html.
 type navData struct {
 	Chapter, Where, Back string // Back: the way back's label, "" for none
-	Dir, Fill, Width     string // the book's direction, the side the bar fills from, its filled share in per cent
+	Dir, Width           string // the book's direction (the bar fills from its start side), its filled share in per cent
 }
 
 // drawNav draws the bottom panel, opened with the menu: where the reader is, a bar to tap to go anywhere in the book,
@@ -206,9 +206,9 @@ func drawNav(p progress, fonts *blitz.Fonts, w, h int) *menu {
 		book = fmt.Sprintf("page %d of %d", p.page, p.total)
 	}
 	d := navData{Chapter: p.chapter, Where: fmt.Sprintf("%d of %d in this part · %s", p.at, p.of, book),
-		Dir: "ltr", Fill: "left", Width: fmt.Sprintf("%.1f", 100*min(max(p.share, 0), 1))}
+		Dir: "ltr", Width: fmt.Sprintf("%.1f", 100*min(max(p.share, 0), 1))}
 	if p.rtl {
-		d.Dir, d.Fill = "rtl", "right"
+		d.Dir = "rtl"
 	}
 	if p.back > 0 {
 		d.Back = fmt.Sprintf("Back to page %d", p.back)

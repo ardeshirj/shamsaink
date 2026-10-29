@@ -1,13 +1,36 @@
+/* The look, in one place. */
+:root {
+  --ink: black;
+  --paper: white;
+  --line: 3px;          /* every border */
+  --radius: 0.4em;      /* a button's corners */
+  --pad: 0.05em 0.6em;  /* inside a button */
+  --gap: 0.5em;         /* between buttons side by side, and between rows of them */
+}
 html { font-family: sans-serif; }
 body { margin: 0; }
-span.b { display: inline-block; border: 3px solid black; border-radius: 0.4em; padding: 0.05em 0.6em; }
-span.s { display: inline-block; width: 2.4em; height: 1.2em; border: 3px solid black; border-radius: 0.6em; padding: 0.1em; vertical-align: middle; }
-span.s span.k { display: block; width: 1.2em; height: 1.2em; border-radius: 0.6em; background: black; }
-span.s.on { background: black; }
-div.g { display: flex; border: 3px solid black; border-radius: 0.4em; }
+p { margin: 0.3em 0; }
+
+/* A row of buttons (and words), wrapped when it is too long, the same room across and down. */
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); margin: 0.3em 0; }
+
+span.b { display: inline-block; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }
+
+/* The switch: a track with a knob, the knob at the end when on. */
+span.s { display: inline-block; width: 2.4em; height: 1.2em; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.6em; }
+span.s span.k { display: block; width: 1.2em; height: 1.2em; border-radius: 0.6em; background: var(--ink); }
+span.s.on { background: var(--ink); }
+span.s.on span.k { background: var(--paper); margin-inline-start: 1.2em; }
+
+/* One choice of a few, as one bar; the parts share their borders, the chosen one filled. */
+div.g { display: flex; border: var(--line) solid var(--ink); border-radius: var(--radius); }
 div.g span { flex: 1; text-align: center; padding: 0.15em 0.3em; }
-div.g span + span { border-left: 3px solid black; }
-div.g span:first-child { border-radius: 0.25em 0 0 0.25em; }
-div.g span:last-child { border-radius: 0 0.25em 0.25em 0; }
-div.g span.on { background: black; color: white; }
-span.s.on span.k { background: white; margin-inline-start: 1.2em; }
+div.g span + span { border-inline-start: var(--line) solid var(--ink); }
+div.g span:first-child { border-start-start-radius: calc(var(--radius) - var(--line)); border-end-start-radius: calc(var(--radius) - var(--line)); }
+div.g span:last-child { border-start-end-radius: calc(var(--radius) - var(--line)); border-end-end-radius: calc(var(--radius) - var(--line)); }
+div.g span.on { background: var(--ink); color: var(--paper); }
+
+/* Settings, one a row: a name, then a minus, the value and a plus, or the value alone (a switch). */
+div.set { display: grid; grid-template-columns: 1fr 2.4em 6em 2.4em; align-items: center; justify-items: center; row-gap: 0.6em; margin: 0.6em 0; }
+div.set > .name { grid-column: 1; justify-self: start; }
+div.set > .v { grid-column: 3; }

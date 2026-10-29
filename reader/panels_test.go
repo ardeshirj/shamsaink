@@ -83,3 +83,30 @@ func TestPanels(t *testing.T) {
 	newClockFace(fonts).draw(img, time.Date(2026, 10, 29, 20, 48, 0, 0, time.UTC), 60, false, false)
 	save("clock", img.SubImage(image.Rect(0, 0, w, 200)))
 }
+
+// Every button's bottom edge is drawn on its panel: a page ends at its last line of text, so a box whose edge lies
+// below its text can be cut off when the panel is laid out too short for the line drawPanel adds after it.
+func TestPanelEdges(t *testing.T) {
+	var fonts *blitz.Fonts
+	if d := os.Getenv("FONTS"); d != "" {
+		fonts = blitz.LoadFonts(d)
+	}
+	const w, h = 1236, 1648
+	s := &settings{FontSize: 50, Margin: 60, Direction: map[string]string{}}
+	p := progress{chapter: "A chapter", at: 3, of: 12, page: 40, total: 300, share: 0.25, back: 7}
+	v := newContentsView([]entry{{title: "One"}, {title: "Two"}}, 0, false, fonts, w, h)
+	defer v.close()
+	for name, m := range map[string]*menu{"menu": drawMenu(s, "k", 1.16, true, false, fonts, w),
+		"remove": drawRemove(fonts, w), "nav": drawNav(p, fonts, w, h), "contents": v.head} {
+		for id, r := range m.buttons {
+			// dark at the bottom of its box, or just under it (a bar's parts stand on the bar's own border)
+			x, dark := (r.Min.X+r.Max.X)/2, false
+			for _, y := range []int{r.Max.Y - 2, r.Max.Y + 1} {
+				dark = dark || y < m.img.Rect.Dy() && m.img.GrayAt(x, y).Y < 128
+			}
+			if !dark {
+				t.Errorf("%s: %s's bottom edge not drawn (%v, panel %d px)", name, id, r, m.img.Rect.Dy())
+			}
+		}
+	}
+}

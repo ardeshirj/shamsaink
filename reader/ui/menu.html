@@ -1,13 +1,6 @@
-{{template "head" ""}}<style>
-p { margin: 0.3em 0; }
-table { width: 100%; border-collapse: collapse; }
-td { padding: 0.3em 0; }
-td.n { width: 2.4em; text-align: center; }
-td.v { width: 6em; text-align: center; }
-p span.b { margin-right: 0.5em; }
-</style></head><body>
-<p>{{template "button" btn "leave" "Close the book"}} {{template "button" btn "reset" "Reset settings"}}{{if .Narrated}} {{template "button" btn "read-aloud" "Read aloud"}}{{end}}</p>
-<table>{{template "stepper" step "Text size" "size" .Size}}{{template "stepper" step .LinesName "lines" .Lines}}{{template "stepper" step "Margins" "margin" .Margin}}<tr><td>Clock</td><td class="n"></td><td class="v">{{template "toggle" pick "clock" "" (not .HideClock)}}</td><td class="n"></td></tr></table>
+{{template "head" ""}}</head><body>
+<div class="row">{{template "button" btn "leave" "Close the book"}}{{template "button" btn "reset" "Reset settings"}}{{if .Narrated}}{{template "button" btn "read-aloud" "Read aloud"}}{{end}}</div>
+<div class="set">{{template "stepper" step "Text size" "size" .Size}}{{template "stepper" step .LinesName "lines" .Lines}}{{template "stepper" step "Margins" "margin" .Margin}}{{template "switch" pick "clock" "Clock" (not .HideClock)}}</div>
 <p>Page turns (this book):</p>
 {{template "segments" list (pick "dir-" (printf "Book's (%s)" .BookDir) (eq .Dir "")) (pick "dir-rtl" "Right to left" (eq .Dir "rtl")) (pick "dir-ltr" "Left to right" (eq .Dir "ltr"))}}
 </body></html>

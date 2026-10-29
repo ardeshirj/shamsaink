@@ -143,7 +143,7 @@ when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate tak
   `reader/ui/` built from the pieces in `components.html` (button, choice, toggle, segments, stepper; a button's id
   registers itself), not HTML put together per feature in Go. Checked by drawing (`TestPanels`, `PANELS=dir`): not all
   CSS is in Blitz, and our pages end at their last line of text, so a box's edge below its text is cut off
-  (`drawPanel` adds an empty line at the end). Still e-ink: refresh only what changed. Next steps: roadmap, "The
+  (`drawPanel` adds an empty line at the end; `TestPanelEdges`). Still e-ink: refresh only what changed. More: roadmap, "The
   reader's panels".
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in

@@ -63,16 +63,13 @@ the host's).
 ## The reader's panels (2026-10-29)
 The menu, the bottom panel, the contents, the remove panel and the clock are templates in `reader/ui/` (`ui.css`,
 `components.html`, one file a panel), drawn by Blitz from HTML; `TestPanels` draws every panel in its states to look
-at and compare. The guidance (components, modern CSS) is in CLAUDE.md. Next, each checked against drawings before
-and after (the panels may move a little):
-- CSS variables on `:root` for the look (the line's width, the corners, the buttons' padding, the clock's grey), so a
-  night mode or a larger interface is one place.
-- `gap` in flex rows instead of spaces typed between buttons (today the markup's whitespace is the spacing).
-- A grid for the settings rows instead of the table, and logical properties (`inline-start`, `inline-end`)
-  throughout, so a Farsi interface is `dir="rtl"` and nothing else.
-- Idea for stage 5, not decided: the panels as Dioxus components (`dioxus-native-dom`, headless, on Blitz; in our
-  pinned checkout). It pays off with many screens with state (a library, settings pages); it moves the interface's
-  logic into Rust. To measure first: one panel through our engine on the Kindle, its size, memory and time a tap.
+at and compare, `TestPanelEdges` checks every button's edges are drawn. The guidance (components, modern CSS) is in
+CLAUDE.md. Done (2026-10-29): CSS variables on `:root` for the look; flex rows with `gap` instead of spaces typed
+between buttons; a grid for the settings rows; logical properties (`inline-start`, `inline-end`), so a Farsi interface
+is `dir="rtl"` and nothing else; the progress bar a flex row, not a float (floats are off in our build).
+Idea for stage 5, not decided: the panels as Dioxus components (`dioxus-native-dom`, headless, on Blitz; in our
+pinned checkout). It pays off with many screens with state (a library, settings pages); it moves the interface's
+logic into Rust. To measure first: one panel through our engine on the Kindle, its size, memory and time a tap.
 
 ## Why this order
 - The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
