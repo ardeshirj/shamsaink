@@ -138,6 +138,13 @@ when drawn (`engine/patches/blitz-lazy-images.patch`), and the `image` crate tak
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.
 - **Existing tools first:** our own code only where they fall short.
+- **The reader's panels are HTML components, in modern CSS** (the maintainer, 2026-10-29): Blitz is a modern
+  engine, so flex, grid, gap, custom properties and logical properties are welcome. Each panel is a template in
+  `reader/ui/` built from the pieces in `components.html` (button, choice, toggle, segments, stepper; a button's id
+  registers itself), not HTML put together per feature in Go. Checked by drawing (`TestPanels`, `PANELS=dir`): not all
+  CSS is in Blitz, and our pages end at their last line of text, so a box's edge below its text is cut off
+  (`drawPanel` adds an empty line at the end). Still e-ink: refresh only what changed. Next steps: roadmap, "The
+  reader's panels".
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.

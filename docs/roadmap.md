@@ -41,7 +41,9 @@ The parts the reader stands on on a device, and every dependency with its licenc
   how its coordinates turn with the screen, the screen's size. The Kindle first, since it is the one device on hand
   whose screen we can drive; the rest written for, and tried when a device is at hand.
 - **What KOReader keeps doing:** sleep and the power button (on Kindle the Kindle's own `powerd` sleeps; on Kobo
-  KOReader does it, so inside our reader the power button would do nothing until stage 5), Wi-Fi, SSH.
+  KOReader does it, so inside our reader the power button would do nothing until stage 5), Wi-Fi, SSH. On the
+  Kindle the reader leaves the book when `powerd` goes to the screensaver, for KOReader to show its own, and the
+  plugin opens the book again on waking (2026-10-28).
 
 ## Two hosts: KOReader, and later stand-alone (2026-10-27)
 Both are kept possible. **The rule meanwhile: KOReader stays in the plugin (`reader/indium.koplugin`) and the reader's
@@ -57,6 +59,20 @@ the host's).
   (drawn with Blitz as HTML, as the menu, then the same `read`; "Close the book" back to it); and what KOReader does
   for us now: pausing the Kindle's own interface, sleep and the power button, the light, battery and Wi-Fi. The last
   is most of the work, the same in Go or Rust, and per device family.
+
+## The reader's panels (2026-10-29)
+The menu, the bottom panel, the contents, the remove panel and the clock are templates in `reader/ui/` (`ui.css`,
+`components.html`, one file a panel), drawn by Blitz from HTML; `TestPanels` draws every panel in its states to look
+at and compare. The guidance (components, modern CSS) is in CLAUDE.md. Next, each checked against drawings before
+and after (the panels may move a little):
+- CSS variables on `:root` for the look (the line's width, the corners, the buttons' padding, the clock's grey), so a
+  night mode or a larger interface is one place.
+- `gap` in flex rows instead of spaces typed between buttons (today the markup's whitespace is the spacing).
+- A grid for the settings rows instead of the table, and logical properties (`inline-start`, `inline-end`)
+  throughout, so a Farsi interface is `dir="rtl"` and nothing else.
+- Idea for stage 5, not decided: the panels as Dioxus components (`dioxus-native-dom`, headless, on Blitz; in our
+  pinned checkout). It pays off with many screens with state (a library, settings pages); it moves the interface's
+  logic into Rust. To measure first: one panel through our engine on the Kindle, its size, memory and time a tap.
 
 ## Why this order
 - The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
