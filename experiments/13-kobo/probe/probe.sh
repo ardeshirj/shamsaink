@@ -1,7 +1,7 @@
 #!/bin/sh
-# Experiment 13, step 0 (PLAN.md): everything about the Kobo that the screen, touch and sound work starts from, into
+# Experiment 13, step 1 (PLAN.md): everything about the Kobo that the screen, touch and sound work starts from, into
 # probe-LABEL.txt next to this script. Reads only: nothing is written outside this folder. Run twice:
-#   - with Nickel running, from NickelMenu (docs/kobo-setup.md): sh probe.sh nickel
+#   - with Nickel running, from NickelMenu (PLAN.md, step 1): sh probe.sh nickel
 #     After tapping the menu item, wait about 3 s, then tap the screen once and swipe left once (10 s are recorded).
 #   - inside KOReader, over SSH (Nickel stopped by KOReader): sh probe.sh koreader
 #     KOReader holds the touch screen there, so the touch is recorded only in the first run.
@@ -53,7 +53,9 @@ out=probe-$label.txt
     echo "== touch: a tap, then a swipe left (10 s)"
     for e in /dev/input/event*; do
       # the touch screen: the device with multi-touch positions
-      if ./probe input 2>/dev/null | grep -A9 "^$e:" | grep -q ABS_MT_POSITION_X; then
+      # (only this device's lines: a device without ranges is followed straight by the next one's)
+      if ./probe input 2>/dev/null | awk -v d="$e:" 'index($0, "/dev/input/") == 1 { on = index($0, d) == 1 } on' \
+        | grep -q ABS_MT_POSITION_X; then
         echo "$e"
         sleep 3
         ./probe touch "$e" 10

@@ -51,28 +51,46 @@ to copy):
   survive KOReader's start?).
 
 ## Steps on the device
-0. **Set up** (as `docs/kindle-setup.md`, a `docs/kobo-setup.md`): KOReader installed with NickelMenu, its SSH
-   server, a key of its own, `ssh kobo`; Makefile targets as the Kindle's. Note the firmware, the board (390 expected),
-   the framebuffer (`fbset`, bits per pixel, rotation), the touch device and what it sends (`evtest`), what of
-   `mtkbtd`, GStreamer and `mtkbtmwrpcaudiosink` is there, with Nickel running and after KOReader's start.
+0. **Set up** (`docs/kobo-setup.md`, as `docs/kindle-setup.md` for the Kindle): KOReader installed with NickelMenu,
+   its SSH server, a key of its own; Makefile targets as the Kindle's (`kobo-status`, `kobo-wait`, `kobo-ssh`).
+   **Done when** `ssh kobo` works.
+1. **The probe:** note the firmware, the board (390 expected), the framebuffer (`fbset`, bits per pixel, rotation),
+   the touch device and what it sends (`evtest`), what of `mtkbtd`, GStreamer and `mtkbtmwrpcaudiosink` is there, with Nickel running and after KOReader's start.
    `probe/` gathers them: `build.sh` makes a static ARMv7 `probe` (the framebuffer's ioctls, the input devices and
    their touch ranges, a touch's raw events), `probe.sh nickel` (from NickelMenu, with a tap and a swipe) and
-   `probe.sh koreader` (over SSH) write `probe-LABEL.txt` (`make kobo-probe` for the second). Checked on the
-   Kindle (2026-10-28): it reads 1236×1648, 8 bits a pixel, 1248 bytes a line and `pt_mt`'s ranges, as `screen.go`
-   and `touch.go` have them; the Kindle's framebuffer is `hwtcon_v2`, the driver family FBInk names on the Kobo.
-   **Done when** `ssh kobo` works and these are written down.
-1. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
+   `probe.sh koreader` (over SSH) write `probe-LABEL.txt`. Checked on the Kindle (2026-10-28): it reads 1236×1648,
+   8 bits a pixel, 1248 bytes a line and `pt_mt`'s ranges, as `screen.go` and `touch.go` have them; the Kindle's
+   framebuffer is `hwtcon_v2`, the driver family FBInk names on the Kobo. To run it:
+   - **Copy it over** (KOReader open), with a NickelMenu item for the run with Kobo's interface (read when that
+     interface starts again, as KOReader exits):
+     ```sh
+     sh experiments/13-kobo/probe/build.sh
+     ssh kobo 'mkdir -p /mnt/onboard/.adds/indium/probe'
+     scp experiments/13-kobo/probe/out/* kobo:/mnt/onboard/.adds/indium/probe/
+     ssh kobo "echo 'menu_item:main:Indium probe:cmd_spawn:quiet:sh /mnt/onboard/.adds/indium/probe/probe.sh nickel' \
+       > /mnt/onboard/.adds/nm/indium"
+     ```
+   - **With Kobo's interface running** (KOReader closed): tap **Indium probe** in NickelMenu, wait about 3 s, then
+     tap the screen once (somewhere harmless) and swipe left once, within 10 s. It writes `probe-nickel.txt`.
+   - **Inside KOReader:** open KOReader, then run it there and copy both results back:
+     ```sh
+     ssh kobo 'sh /mnt/onboard/.adds/indium/probe/probe.sh koreader'
+     mkdir -p experiments/13-kobo/out
+     scp 'kobo:/mnt/onboard/.adds/indium/probe/probe-*.txt' experiments/13-kobo/out/
+     ```
+   **Done when** these are written down (NOTES.md).
+2. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
    `reader/device`; the Kindle checked to still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl,
    the page turned and widened into the framebuffer, its touch (mirrored y, rotation) and the page-turn buttons. Then the reader from
    KOReader's file manager, as on the Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299
    and 121 ms), a first open and a reopen against KOReader's crengine on the same device and books (09's table),
    memory. **Done when** a book is read on it as on the Kindle, and the numbers are in NOTES.md.
-2. **Sound, both ways, an hour each:** narration (FarsiEPUB's *Buried Alive*) to Bluetooth headphones through
+3. **Sound, both ways, an hour each:** narration (FarsiEPUB's *Buried Alive*) to Bluetooth headphones through
    `mtkbtmwrpcaudiosink`, (a) from Nickel's side (Nickel running: who holds the socket, does Kobo's own audiobook
    player get in the way), (b) inside KOReader with Nickel stopped. Counted: drop-outs, gaps between parts, how far
    the underline drifts from the voice over the hour, the start-up delay (the Kindle's `LEAD_MS`), what pairing
    takes. Through `gst-launch-1.0` fed by us (above): first whether it plays at all from a pipe, then the hour. **Done when** we know whether read-along on the Libra Colour goes around the device as on the Kindle or not.
-3. **Started without KOReader** (only if 2 says sound is clean): from NickelMenu, Nickel stopped as KOReader does
+4. **Started without KOReader** (only if 3 says sound is clean): from NickelMenu, Nickel stopped as KOReader does
    and started again when left; what KOReader does for us then (sleep, the light, Wi-Fi, battery) listed with what
    each costs to do ourselves (Plato's code, AGPL-3.0, to learn from). **Done when** the list says whether stage 5
    on Kobo is weeks or months.
