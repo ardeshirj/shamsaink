@@ -1,9 +1,13 @@
-# Indium — context for Claude
+# ShamsaInk — context for Claude
 
-**The name** (2026-10-23): Indium, after indium tin oxide, the transparent front electrode of every E Ink screen; an
-element like Thorium, next to Readium. The repo is `indium-reader` (plain "indium" is a well-known Emacs debugger on
-GitHub, and a placeholder crate on crates.io). It was "inkreader" until then; Go module and Docker image names
-(`einkengine`, `eink-*`) stay as they are.
+**The name** (2026-10-30): ShamsaInk (`shamsaink` in code), two parts like FarsiEPUB and rtlbook. A *shamsa* (شمسه,
+"little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript, the first thing a
+reader saw on opening a book; *ink* is the illuminator's and the screen's. Searched 2026-10-30: no product or project
+of that name, `shamsaink` free on GitHub and crates.io. Before it: Indium (2026-10-23, after indium tin oxide, E Ink's
+front electrode) and inkreader. Still named the old way until renamed: the GitHub repo `indium-reader`; the reader's
+binary, KOReader plugin and folders on the devices (`indium`, `indium.koplugin`, `/mnt/us/indium`: to rename with a
+reinstall). Staying as they are: Go module and Docker image names (`indiumengine`, `indiumreader`, `einkengine`,
+`eink-*`), and old paths in the experiments' notes.
 
 Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, `ardeshirj/indium-reader` (public or not decided
 once it does something). A side project

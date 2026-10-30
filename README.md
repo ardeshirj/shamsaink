@@ -1,7 +1,7 @@
-# Indium
+# ShamsaInk
 
-Named after indium tin oxide, the transparent front electrode every E Ink screen switches through, and a cousin of
-Readium and Thorium.
+A *shamsa* (شمسه, "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript;
+*ink* is the illuminator's, and the screen's.
 
 An experiment: a light EPUB reader for Linux e-ink devices (Kobo, PocketBook, Kindle, reMarkable), written in Go on
 Readium's Go toolkit, that gets right-to-left books right (Farsi first) and later plays media overlays (narration with

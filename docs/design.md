@@ -1,4 +1,4 @@
-# Indium's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
+# ShamsaInk's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
 What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
 the reader stands on on a device, where we stand against crengine, and what it all depends on. The stages ahead are in `roadmap.md`; the details and every
@@ -215,7 +215,7 @@ was found and measured: 06, 07 and 08's NOTES.md.
 | justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
 | trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |
 
-## 7. What Indium depends on, and the licences
+## 7. What ShamsaInk depends on, and the licences
 
 The reader is to be one static binary: what is linked into it is what its licence has to live with. Rust crates
 counted from `cargo metadata` of `blitz-engine` for the ARMv7 target (2026-10-25): 215 crates, none GPL; the only
