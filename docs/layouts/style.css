@@ -11,6 +11,13 @@
   --paper: #f4f4f0;       /* the e-ink screen: never pure white */
   --ink: #161616;
   --bezel: #2a2c2b;
+  --soft: #333;           /* secondary text on the screen */
+  --hair: #999;           /* hairlines on the screen */
+  --fold: #bbb;           /* the fold between two pages */
+  --device: #eceeea;      /* the Kobo's body: white by default, black from the bar */
+  --device-edge: #b9bdb7;
+  --grip: #d3d6d1;
+  --grip-edge: #b4b8b2;
   --tag: #8a3b12;         /* layer outlines and their labels */
   --tag-soft: rgba(138, 59, 18, .1);
   /* highlight colours as a Kaleido colour screen shows them: muted */
@@ -37,6 +44,14 @@ nav.crumbs a:hover, nav.crumbs a:focus-visible { text-decoration: underline; }
 h1 { font: 600 2.1rem/1.15 var(--display); margin: 0 0 .4rem; text-wrap: balance; }
 h2 { font: 600 1.35rem/1.2 var(--display); margin: 0 0 .5rem; text-wrap: balance; }
 h3 { font: 600 1.1rem/1.25 var(--display); margin: 0 0 4px; }
+/* the device body: white or black (the Libra Colour comes in both), chosen from the bar */
+:root[data-device="black"] { --device: #2a2c2b; --device-edge: #0b0c0c; --grip: #3b3e3c; --grip-edge: #4a4d4b; }
+/* the screen at night: the page inverted, as the reader's night mode draws it (never pure black or white) */
+:root[data-screen="night"] {
+  --paper: #121212; --ink: #e6e6e1; --soft: #c8c8c3; --hair: #6a6a66; --fold: #4a4a47;
+  --hl-yellow: #6f6623; --hl-green: #425a35; --hl-blue: #3b5568; --hl-pink: #624144;
+}
+
 .lede { max-width: 68ch; color: var(--muted); margin: 0; }
 section { margin-top: 48px; }
 code { font: .85em var(--mono); }
@@ -70,10 +85,10 @@ dl.layers dt { font: 500 .78rem/1.5 var(--mono); color: var(--tag); white-space:
 dl.layers dd { margin: 0; color: var(--muted); min-width: 0; }
 
 /* ---- the device: a Kobo Libra Colour, its page-turn buttons on the wide side of the bezel ---- */
-.device { display: flex; background: var(--bezel); border-radius: 18px; padding: 14px; gap: 10px; max-width: 380px; width: 100%; box-sizing: border-box; }
+.device { display: flex; background: var(--device); box-shadow: 0 0 0 1px var(--device-edge), 0 6px 18px rgba(0,0,0,.18); border-radius: 18px; padding: 14px; gap: 10px; max-width: 380px; width: 100%; box-sizing: border-box; }
 .device .screen { flex: 1; min-width: 0; }
 .device .grip { width: 16%; display: flex; flex-direction: column; justify-content: center; gap: 14px; align-items: center; }
-.device .grip i { display: block; width: 46%; aspect-ratio: 1 / 2.2; border-radius: 6px; background: #3b3e3c; box-shadow: inset 0 0 0 1px #4a4d4b; }
+.device .grip i { display: block; width: 46%; aspect-ratio: 1 / 2.2; border-radius: 6px; background: var(--grip); box-shadow: inset 0 0 0 1px var(--grip-edge); }
 .device.landscape { max-width: 520px; flex-direction: column; }
 .device.landscape .grip { width: auto; height: 14%; flex-direction: row; }
 .device.landscape .grip i { width: auto; height: 46%; aspect-ratio: 2.2 / 1; }
@@ -88,7 +103,7 @@ dl.layers dd { margin: 0; color: var(--muted); min-width: 0; }
 .page[dir="rtl"] p { text-indent: 1.2em; }
 .spread { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; }
 .spread .page { position: static; padding: 3.6cqw; }
-.spread .page + .page { border-inline-start: .12cqw solid #bbb; }
+.spread .page + .page { border-inline-start: .12cqw solid var(--fold); }
 sup.note { font-size: .6em; line-height: 0; padding: 0 .15em; border: .14cqw solid var(--ink); border-radius: .3em; font-family: var(--body); }
 
 /* ---- layers ---- */
@@ -97,7 +112,7 @@ sup.note { font-size: .6em; line-height: 0; padding: 0 .15em; border: .14cqw sol
 .dock { inset-inline: 0; bottom: 0; border-top: .24cqw solid var(--ink); padding: .55em 4.75cqw .7em; display: grid; gap: .5em; }
 .dock.wide { grid-template-columns: 1fr auto; column-gap: 2em; align-items: end; padding-inline: 3.6cqw; }
 .dock.wide .place { display: grid; gap: .45em; min-width: 0; }
-.status { display: flex; justify-content: space-between; align-items: center; gap: 1em; font-size: .88em; color: #333; font-variant-numeric: tabular-nums; }
+.status { display: flex; justify-content: space-between; align-items: center; gap: 1em; font-size: .88em; color: var(--soft); font-variant-numeric: tabular-nums; }
 .status .right { display: inline-flex; gap: .8em; align-items: center; }
 .where { display: flex; justify-content: space-between; gap: 1em; }
 .where span:first-child { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -113,7 +128,7 @@ sup.note { font-size: .6em; line-height: 0; padding: 0 .15em; border: .14cqw sol
 .glance { border: .24cqw solid var(--ink); border-radius: .5em; padding: .45em .7em; display: grid; gap: .25em; font-size: 3.1cqw; }
 .pop { border: .24cqw solid var(--ink); border-radius: .5em; padding: .55em .65em; display: grid; gap: .55em; }
 .pop .word { font: 600 1.25em/1.2 var(--display); }
-.pop .gloss { font-family: var(--display); color: #333; }
+.pop .gloss { font-family: var(--display); color: var(--soft); }
 .foot { inset-inline: 0; bottom: 0; border-top: .24cqw solid var(--ink); padding: .7em 4.75cqw 1em; display: grid; gap: .55em; }
 .foot p { margin: 0; font-family: var(--display); font-size: 1.05em; line-height: 1.45; }
 .zone { position: absolute; display: grid; place-items: center; font: 500 2.3cqw/1.25 var(--mono); color: var(--tag); text-align: center; opacity: 0; }
@@ -149,7 +164,7 @@ svg.ic { width: 1.2em; height: 1.2em; vertical-align: -.22em; fill: none; stroke
 .tabs span { flex: 1; text-align: center; padding: .25em 0 .35em; }
 .tabs span.on { font-weight: 600; box-shadow: inset 0 -.18em 0 var(--ink); }
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
-.list li { display: flex; justify-content: space-between; gap: 1em; padding: .42em 0; border-bottom: .12cqw solid #999; font-family: var(--display); font-size: 1.05em; }
+.list li { display: flex; justify-content: space-between; gap: 1em; padding: .42em 0; border-bottom: .12cqw solid var(--hair); font-family: var(--display); font-size: 1.05em; }
 .list li.sub { padding-inline-start: 1.2em; font-size: .95em; }
 .list li.here { font-weight: 600; }
 .list li.here span:first-child::before { content: "▸ "; }
@@ -182,7 +197,7 @@ details { margin-top: 12px; max-width: 760px; }
 summary { cursor: pointer; font: 500 .8rem/1.4 var(--mono); color: var(--tag); }
 summary:focus-visible { outline: 2px solid var(--tag); outline-offset: 2px; }
 .specimen { display: grid; gap: 16px; margin-top: 16px; }
-.strip { background: var(--paper); color: var(--ink); border-radius: 6px; container-type: inline-size; padding: 3cqw 4.75cqw; max-width: 640px; box-sizing: border-box; border: 10px solid var(--bezel); }
+.strip { background: var(--paper); color: var(--ink); border-radius: 6px; container-type: inline-size; padding: 3cqw 4.75cqw; max-width: 640px; box-sizing: border-box; border: 10px solid var(--device); box-shadow: 0 0 0 1px var(--device-edge); }
 .strip > * { font: 3.3cqw/1.3 var(--body); }
 .strip .label { font: 500 11px/1 var(--mono); color: var(--muted); letter-spacing: .04em; text-transform: uppercase; display: block; margin-bottom: 2cqw; }
 .facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 16px 0 0; font-size: .92rem; max-width: 760px; }
@@ -198,3 +213,14 @@ nav.tabs-top a { font: 600 .9rem/1 var(--body); color: var(--muted); text-decora
 nav.tabs-top a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--tag); }
 nav.tabs-top a:hover, nav.tabs-top a:focus-visible { color: var(--fg); }
 #components > h1 { margin-bottom: .4rem; }
+
+/* the view controls (controls.js): device colour, screen day or night */
+.view { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; margin-top: 20px; }
+.view .pick { display: inline-flex; align-items: center; gap: 10px; font-size: .9rem; }
+.view .pick > span { font: 500 .75rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.view .seg { display: inline-flex; border: 1px solid var(--fg); border-radius: 6px; overflow: hidden; }
+.view .seg button { font: 600 .85rem/1 var(--body); padding: 8px 14px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.view .seg button + button { border-inline-start: 1px solid var(--fg); }
+.view .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.view .seg button:focus-visible { outline: 2px solid var(--tag); outline-offset: -3px; }
+.view.inbar { margin-top: 0; }
