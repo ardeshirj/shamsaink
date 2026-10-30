@@ -21,6 +21,7 @@
 #   make kobo-ssh        a shell on it
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
+#   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
 
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
@@ -37,7 +38,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 
 .PHONY: reader reader-install reader-log engine bench-armv7 fetch-blitz
 .PHONY: kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
-.PHONY: kobo-status kobo-wait kobo-ssh kobo-nickelmenu
+.PHONY: kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import
 
 reader:
 	@sh reader/build.sh
@@ -109,6 +110,12 @@ kobo-nickelmenu: $(NM_TGZ)
 	@[ -d $(KOBO_USB)/.kobo ] || { echo "the Kobo is not connected: plug it in and tap Connect"; exit 1; }
 	@cp $(NM_TGZ) $(KOBO_USB)/.kobo/KoboRoot.tgz && dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null
 	@echo "NickelMenu $(NM_VERSION) copied, Kobo ejected: unplug it, it installs and restarts (about a minute)"
+
+# Kobo imports new books and drops the gone ones (and what ExcludeSyncFolders now skips) when a USB connection ends.
+kobo-import:
+	@[ -d $(KOBO_USB)/.kobo ] || { echo "the Kobo is not connected: plug it in and tap Connect"; exit 1; }
+	@dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null
+	@echo "Kobo ejected: unplug it, it imports its books (a minute or so)"
 
 $(NM_TGZ):
 	@mkdir -p out
