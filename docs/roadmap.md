@@ -95,6 +95,23 @@ The order of work:
 Decided pieces of 2–4 can go to sub-agents (CLAUDE.md); anything on a device and every git step stay in the main
 session.
 
+### Interface language (2026-10-30, planned, not built)
+The menus in the book's language, English and Farsi first. The panels have English strings typed into the templates
+(`reader/ui/*.html`) and no string table or language setting yet. The Farsi dock is drawn in `docs/layouts/layout.html`
+("In Farsi"); the mirroring is free (logical properties, `dir="rtl"`).
+- **A setting, "Interface language": Follow the book (default), English, Farsi.** Following the book means a Farsi
+  classic gets Farsi menus and an English book English ones; the override is for a Farsi book on a reader who wants
+  English menus, or the reverse. (The recommendation; the maintainer to confirm.)
+- **Strings out of the templates:** one small table per language (`en`, `fa`), a `t` function in the template set
+  (`{{t "contents"}}`), `dir` and `lang` set on each panel's root. Before more panels are added, so none has to be
+  converted later.
+- **Farsi digits** for the page, the clock, the battery and the progress; the clock already uses Parastoo.
+- **To check:** the menu font (Parastoo, a fallback font already; the layouts use Vazirmatn); strings that carry a
+  value (`Book's (%s)`) need word order per language, so a whole sentence per string, not pieces; icons that point
+  (back, next) mirror, those that do not (headphones, sun) stay.
+- **Stage:** with the layouts being built, not stage 5: the string table is cheap now and costly later. A stand-alone
+  app's library and settings use the same table.
+
 ## Upstream to Blitz (2026-10-29: what is already there, to come back to)
 Our two patches, measured against Blitz's roadmap (#119), its tracking issues (#255 optimizations, #259 images) and a
 keyword search of its issues and PRs (cull, lazy image, image decode, image memory, image cache): **neither is
