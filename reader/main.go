@@ -128,6 +128,8 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	defer f.Close() // closed at once when left, the book too: twice does no harm
 	sleep, stopSleeps := sleeps()
 	defer stopSleeps()
+	pf, power := presses(scr.bytes == 4) // the Kobo's power button (power.go)
+	defer pf.Close()
 	// the book opened meanwhile, and the opening screen shown if it takes longer than splashAfter (its picture first,
 	// so the engine never draws it and opens the book at once)
 	open := splash(rd.dir, rd.fonts, scr.w, scr.h)
@@ -306,6 +308,18 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		nar = nil
 		ahead = true
 	}
+	// doze sleeps until the power button is pressed again (the Kobo), the narration stopped; the clock brought up to
+	// date on waking
+	doze := func() {
+		if nar != nil {
+			silence()
+		}
+		rd.doze(power, sleepScreen(rd.dir, open))
+		for len(gestures) > 0 { // touched while asleep
+			<-gestures
+		}
+		minute = time.After(0)
+	}
 	for {
 		var g gesture
 		if nar != nil {
@@ -318,6 +332,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			select {
 			case asleep = <-sleep:
+			case <-power:
+				doze()
+				continue
 			case <-gestures:
 				silence()
 				for len(gestures) > 0 {
@@ -361,6 +378,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		}
 		select {
 		case asleep = <-sleep:
+		case <-power:
+			doze()
+			continue
 		case <-minute:
 			tick()
 			continue
@@ -388,6 +408,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			select {
 			case asleep = <-sleep:
+			case <-power:
+				doze()
+				continue
 			case <-minute:
 				tick()
 				continue

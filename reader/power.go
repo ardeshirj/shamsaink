@@ -1,0 +1,193 @@
+package main
+
+import (
+	"encoding/binary"
+	"fmt"
+	"image"
+	"image/color"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"math/rand/v2"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"syscall"
+	"time"
+
+	"golang.org/x/image/draw"
+)
+
+// Sleep on the Kobo, where Kobo's interface is stopped while a book is open (13's NOTES.md), so the power button and
+// sleep are the reader's: a press shows the sleep screen and suspends the Kobo, the next press wakes it and puts back
+// what the screen showed. As KOReader and Plato suspend a Kobo (their code read, not copied): Wi-Fi down first (a
+// suspend with it up fails or locks the kernel), the light off, 1 written to /sys/power/state-extended (the drivers
+// told) and 2 s let pass, then "mem" to /sys/power/state, a write that returns once the Kobo wakes. On MediaTek Kobos
+// a suspend while plugged in hangs the kernel, so then the Kobo stays awake behind the sleep screen until unplugged
+// or pressed again. A wake that is not a press (the charger, the battery's chip) goes back to sleep after 15 s, at
+// most 20 times in a row. On the Kindle sleep is powerd's (sleep.go).
+const (
+	powerDev = "/dev/input/event3" // bd71828-pwrkey
+	evKey    = 1
+	keyPower = 116
+	// the white light, 0 to 100 (KOReader's): set in brightness, which always reads 0; its level in actual_brightness
+	lightFile     = "/sys/class/backlight/mxc_msp430.0/brightness"
+	lightLevel    = "/sys/class/backlight/mxc_msp430.0/actual_brightness"
+	batteryStatus = "/sys/class/power_supply/bd71827_bat/status"
+	// this Kobo's Wi-Fi (wlan_drv_gen4m), as the launcher takes it down for Kobo's interface
+	wifiOff = "killall -q -TERM dhcpcd udhcpc; wpa_cli -i wlan0 terminate; ifconfig wlan0 down; echo 0 > /dev/wmtWifi"
+)
+
+// presses sends each press of the power button until the file is closed (not on a Kobo: a channel that never sends).
+func presses(kobo bool) (io.Closer, <-chan struct{}) {
+	out := make(chan struct{}, 4)
+	f, err := os.Open(powerDev)
+	if !kobo || err != nil {
+		return io.NopCloser(nil), out
+	}
+	go func() {
+		var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
+		for {
+			if _, err := io.ReadFull(f, ev[:]); err != nil {
+				return
+			}
+			typ, code := binary.LittleEndian.Uint16(ev[8:]), binary.LittleEndian.Uint16(ev[10:])
+			if typ == evKey && code == keyPower && binary.LittleEndian.Uint32(ev[12:]) == 1 {
+				select {
+				case out <- struct{}{}:
+				default:
+				}
+			}
+		}
+	}()
+	return f, out
+}
+
+// sleepScreen is a picture from DIR/sleep (PNG or JPEG, one at random) fitted to the screen on white, else fallback.
+func sleepScreen(dir string, fallback *image.Gray) *image.Gray {
+	var pics []string
+	for _, ext := range []string{"*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG"} {
+		m, _ := filepath.Glob(filepath.Join(dir, "sleep", ext))
+		pics = append(pics, m...)
+	}
+	if len(pics) == 0 {
+		return fallback
+	}
+	path := pics[rand.IntN(len(pics))]
+	f, err := os.Open(path)
+	if err != nil {
+		return fallback
+	}
+	defer f.Close()
+	src, _, err := image.Decode(f)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "indium: sleep screen:", filepath.Base(path), err)
+		return fallback
+	}
+	r := fallback.Rect
+	img := image.NewGray(r)
+	draw.Draw(img, r, image.NewUniform(color.White), image.Point{}, draw.Src)
+	// as large as fits, kept in proportion, centred
+	b := src.Bounds()
+	w, h := r.Dx(), b.Dy()*r.Dx()/b.Dx()
+	if h > r.Dy() {
+		w, h = b.Dx()*r.Dy()/b.Dy(), r.Dy()
+	}
+	at := image.Rect((r.Dx()-w)/2, (r.Dy()-h)/2, (r.Dx()+w)/2, (r.Dy()+h)/2)
+	draw.CatmullRom.Scale(img, at, src, b, draw.Over, nil)
+	return img
+}
+
+// sysfs writes v to a kernel file, as one write.
+func sysfs(path, v string) error {
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.WriteString(v)
+	return err
+}
+
+// plugged says whether the Kobo is on a charger (charging or full: anything but discharging, as KOReader reads it).
+func plugged() bool {
+	b, err := os.ReadFile(batteryStatus)
+	return err == nil && strings.TrimSpace(string(b)) != "Discharging"
+}
+
+// doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again
+// (power), then puts the light and the screen back as they were. Wi-Fi stays down until Kobo's interface starts again.
+func (rd *reader) doze(power <-chan struct{}, pic *image.Gray) {
+	t := time.Now()
+	back := rd.scr.save()
+	rd.scr.show(pic, wfGC16, true)
+	rd.scr.wait()
+	light, _ := os.ReadFile(lightLevel)
+	sysfs(lightFile, "0")
+	exec.Command("sh", "-c", wifiOff).Run()
+	fmt.Printf("asleep: sleep screen shown, light and Wi-Fi off in %.0f ms\n", ms(t))
+	for len(power) > 0 {
+		<-power
+	}
+	for wakes, refused := 0, 0; ; {
+		if plugged() {
+			// awake behind the sleep screen: a press wakes, an unplugged charger lets it suspend
+			select {
+			case <-power:
+			case <-time.After(5 * time.Second):
+				continue
+			}
+			break
+		}
+		if wakes >= 20 {
+			fmt.Println("  woken 20 times without a press: awake until one")
+			<-power
+			break
+		}
+		if err := sysfs("/sys/power/state-extended", "1"); err != nil {
+			fmt.Fprintln(os.Stderr, "indium: sleep:", err)
+		}
+		// a press while the drivers get ready cancels
+		cancel := false
+		select {
+		case <-power:
+			cancel = true
+		case <-time.After(2 * time.Second):
+		}
+		if cancel {
+			sysfs("/sys/power/state-extended", "0")
+			break
+		}
+		syscall.Sync()
+		s := time.Now().Round(0) // the wall clock: Go's own stops while the Kobo is suspended
+		err := sysfs("/sys/power/state", "mem")
+		sysfs("/sys/power/state-extended", "0")
+		time.Sleep(100 * time.Millisecond)
+		if err != nil && refused < 5 {
+			// a driver not ready: the screen's, while the panel stays powered a moment after the last refresh
+			// ("hwtcon ... xon off timer pending", 2026-10-30); tried again soon, a press still waking
+			refused++
+			fmt.Printf("  suspend refused (%v), again in 3 s\n", err)
+			select {
+			case <-power:
+			case <-time.After(3 * time.Second):
+				continue
+			}
+			break
+		}
+		refused = 0
+		fmt.Printf("  suspended for %.0f s\n", time.Now().Round(0).Sub(s).Seconds())
+		select {
+		case <-power:
+		case <-time.After(15 * time.Second):
+			wakes++
+			continue
+		}
+		break
+	}
+	t = time.Now()
+	sysfs(lightFile, strings.TrimSpace(string(light)))
+	rd.scr.restore(back)
+	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
+}

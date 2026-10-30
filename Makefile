@@ -55,7 +55,7 @@ KOBO_USB = /Volumes/KOBOeReader
 
 kobo-reader-install: reader
 	@$(KOBO_SSH) 'pidof shamsaink indium >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \
-	  mkdir -p $(KOBO_DIR)/fonts $(KOBO_DIR)/books'
+	  mkdir -p $(KOBO_DIR)/fonts $(KOBO_DIR)/books $(KOBO_DIR)/sleep'
 	@scp -q reader/out/indium $(KOBO):$(KOBO_DIR)/shamsaink.new
 	@scp -q reader/kobo/launch.sh reader/out/fonts/* $(KOBO):$(KOBO_DIR)/
 	@$(KOBO_SSH) 'cd $(KOBO_DIR) && mv shamsaink.new shamsaink && mv *.ttf fonts/ && rm -f cache/splash-*.gray'
