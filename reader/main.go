@@ -73,7 +73,16 @@ func main() {
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {
+		// RESTORE_SCREEN: the screen found put back on leaving, for a host paused meanwhile that does not redraw once
+		// resumed (Kobo's interface, from reader/kobo/launch.sh)
+		var found saved
+		if os.Getenv("RESTORE_SCREEN") != "" {
+			found = rd.scr.save()
+		}
 		_, err := rd.read(map[string]string{"book": os.Args[1]}, t)
+		if found != nil {
+			rd.scr.restore(found)
+		}
 		check(err)
 		return
 	}
@@ -112,7 +121,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	scr, pages, path := rd.scr, rd.pages, m["book"]
 	set := loadSettings(rd.dir)
 	o := set.options(scr.w, scr.h)
-	f, gestures, err := touches(touchDev)
+	f, gestures, err := touches(touchDev, scr.touchTurn())
 	if err != nil {
 		return false, err
 	}

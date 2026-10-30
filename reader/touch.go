@@ -10,7 +10,8 @@ import (
 )
 
 // The touch screen, read directly (multi-touch type B; experiment 11, step 1): its coordinates are the screen's
-// pixels on the Kindle PW5. KOReader lets go of it before starting us; we grab it so nothing else sees our touches.
+// pixels on the Kindle PW5, and turned on the Kobo Libra Colour (13's probe: screen x = touch y, screen y = 1680 −
+// touch x). KOReader lets go of it before starting us; we grab it so nothing else sees our touches.
 const (
 	eviocgrab       = 0x40044590
 	evSyn, evAbs    = 0, 3
@@ -42,8 +43,8 @@ const (
 
 // touches grabs the touch screen and sends a gesture each time the first finger down is lifted (other fingers are
 // ignored), or is held still for holdTime and then moved and lifted, until the file is closed (which lets go of
-// it). Moves while held are dropped when 8 gestures are queued.
-func touches(path string) (*os.File, <-chan gesture, error) {
+// it). Moves while held are dropped when 8 gestures are queued. turn takes the touch's coordinates to the screen's.
+func touches(path string, turn func(x, y int) (int, int)) (*os.File, <-chan gesture, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, nil, err
@@ -55,7 +56,7 @@ func touches(path string) (*os.File, <-chan gesture, error) {
 	out := make(chan gesture, 8)
 	go func() {
 		var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
-		slot, x, y := int32(0), 0, 0
+		slot, x, y, tx, ty := int32(0), 0, 0, 0, 0
 		var down, started bool
 		var x0, y0 int
 		var mu sync.Mutex // the timer's goroutine sends the hold
@@ -72,9 +73,11 @@ func touches(path string) (*os.File, <-chan gesture, error) {
 				slot = val
 			case typ == evAbs && slot != 0:
 			case typ == evAbs && code == absMTPositionX:
-				x = int(val)
+				tx = int(val)
+				x, y = turn(tx, ty)
 			case typ == evAbs && code == absMTPositionY:
-				y = int(val)
+				ty = int(val)
+				x, y = turn(tx, ty)
 			case typ == evAbs && code == absMTTrackingID:
 				if val >= 0 {
 					down, started = true, false
