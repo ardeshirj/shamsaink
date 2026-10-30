@@ -37,6 +37,14 @@ const (
 	batteryStatus = "/sys/class/power_supply/bd71827_bat/status"
 	// this Kobo's Wi-Fi (wlan_drv_gen4m), as the launcher takes it down for Kobo's interface
 	wifiOff = "killall -q -TERM dhcpcd udhcpc; wpa_cli -i wlan0 terminate; ifconfig wlan0 down; echo 0 > /dev/wmtWifi"
+	// and up again on waking, its drivers still loaded: the Wi-Fi function cycled through MediaTek's wmt_dbg (as
+	// Nickel's own log shows it, and KOReader's enable-wifi.sh), powered, then wpa_supplicant and dhcpcd as Nickel
+	// runs them (its known networks in /etc/wpa_supplicant)
+	wifiOn = "echo 0xDB9DB9 > /proc/driver/wmt_dbg; echo '7 9 0' > /proc/driver/wmt_dbg; sleep 1; " +
+		"echo 0xDB9DB9 > /proc/driver/wmt_dbg; echo '7 9 1' > /proc/driver/wmt_dbg; echo 1 > /dev/wmtWifi; sleep 1; " +
+		"ifconfig wlan0 up && wpa_supplicant -D nl80211 -s -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf " +
+		"-C /var/run/wpa_supplicant -B && dhcpcd -d -t 30 -w wlan0"
+	wifiState = "/sys/class/net/wlan0/operstate"
 )
 
 // presses sends each press of the power button until the file is closed (not on a Kobo: a channel that never sends).
@@ -117,7 +125,8 @@ func plugged() bool {
 }
 
 // doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again
-// (power), then puts the light and the screen back as they were. Wi-Fi stays down until Kobo's interface starts again.
+// (power), then puts the light and the screen back as they were, and Wi-Fi if it was up (in the background: a few
+// seconds to connect).
 func (rd *reader) doze(power <-chan struct{}, pic *image.Gray) {
 	t := time.Now()
 	back := rd.scr.save()
@@ -125,6 +134,21 @@ func (rd *reader) doze(power <-chan struct{}, pic *image.Gray) {
 	rd.scr.wait()
 	light, _ := os.ReadFile(lightLevel)
 	sysfs(lightFile, "0")
+	wifi, _ := os.ReadFile(wifiState)
+	defer func() {
+		if strings.TrimSpace(string(wifi)) != "up" {
+			return
+		}
+		go func() {
+			s := time.Now()
+			out, err := exec.Command("sh", "-c", wifiOn).CombinedOutput()
+			if err != nil {
+				fmt.Printf("  Wi-Fi not back: %v: %s\n", err, strings.TrimSpace(string(out)))
+				return
+			}
+			fmt.Printf("  Wi-Fi back in %.1f s\n", time.Since(s).Seconds())
+		}()
+	}()
 	exec.Command("sh", "-c", wifiOff).Run()
 	fmt.Printf("asleep: sleep screen shown, light and Wi-Fi off in %.0f ms\n", ms(t))
 	for len(power) > 0 {
