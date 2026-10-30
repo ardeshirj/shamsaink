@@ -1,0 +1,35 @@
+[package]
+name = "dioxus-spike"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# its own workspace: not part of engine/'s crate
+[workspace]
+
+[features]
+# the menu as Dioxus components (off: only the HTML-template variant, which is what the reader does today)
+dioxus = ["dep:dioxus-native-dom", "dep:dioxus", "dep:dioxus-core", "dep:dioxus-html"]
+
+[dependencies]
+blitz-dom = { path = "../../engine/blitz/packages/blitz-dom", default-features = false, features = ["woff"] }
+blitz-html = { path = "../../engine/blitz/packages/blitz-html", default-features = false }
+blitz-paint = { path = "../../engine/blitz/packages/blitz-paint", default-features = false }
+blitz-traits = { path = "../../engine/blitz/packages/blitz-traits" }
+parley = { version = "0.12", default-features = false, features = ["std"] }
+anyrender = "0.14"
+anyrender_vello_cpu = "0.18"
+peniko = "0.6"
+png = "0.17"
+
+dioxus-native-dom = { path = "../../engine/blitz/packages/dioxus-native-dom", default-features = false, optional = true }
+dioxus = { version = "0.7.3", default-features = false, features = ["macro", "html", "hooks", "signals"], optional = true }
+dioxus-core = { version = "0.7.3", optional = true }
+dioxus-html = { version = "0.7.3", optional = true }
+
+[profile.release]
+strip = true
+
+[[bin]]
+name = "spike"
+path = "src/main.rs"

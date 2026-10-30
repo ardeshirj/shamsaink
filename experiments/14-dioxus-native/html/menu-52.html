@@ -1,0 +1,42 @@
+<html><head><style> 
+:root {
+  --ink: black;
+  --paper: white;
+  --line: 3px;           
+  --radius: 0.4em;       
+  --pad: 0.05em 0.6em;   
+  --gap: 0.5em;          
+}
+html { font-family: sans-serif; }
+body { margin: 0; }
+p { margin: 0.3em 0; }
+
+ 
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); margin: 0.3em 0; }
+
+span.b { display: inline-block; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }
+
+ 
+span.s { display: inline-block; width: 2.4em; height: 1.2em; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.6em; }
+span.s span.k { display: block; width: 1.2em; height: 1.2em; border-radius: 0.6em; background: var(--ink); }
+span.s.on { background: var(--ink); }
+span.s.on span.k { background: var(--paper); margin-inline-start: 1.2em; }
+
+ 
+div.g { display: flex; border: var(--line) solid var(--ink); border-radius: var(--radius); }
+div.g span { flex: 1; text-align: center; padding: 0.15em 0.3em; }
+div.g span + span { border-inline-start: var(--line) solid var(--ink); }
+div.g span:first-child { border-start-start-radius: calc(var(--radius) - var(--line)); border-end-start-radius: calc(var(--radius) - var(--line)); }
+div.g span:last-child { border-start-end-radius: calc(var(--radius) - var(--line)); border-end-end-radius: calc(var(--radius) - var(--line)); }
+div.g span.on { background: var(--ink); color: var(--paper); }
+
+ 
+div.set { display: grid; grid-template-columns: 1fr 2.4em 6em 2.4em; align-items: center; justify-items: center; row-gap: 0.6em; margin: 0.6em 0; }
+div.set > .name { grid-column: 1; justify-self: start; }
+div.set > .v { grid-column: 3; }
+</style></head><body>
+<div class="row"><span class="b" id="leave">Close the book</span><span class="b" id="reset">Reset settings</span><span class="b" id="read-aloud">Read aloud</span></div>
+<div class="set"><span class="name">Text size</span><span class="b" id="size-dec">−</span><span class="v">52 px</span><span class="b" id="size-inc">&#43;</span><span class="name">Line spacing (the book&#39;s)</span><span class="b" id="lines-dec">−</span><span class="v">1.16</span><span class="b" id="lines-inc">&#43;</span><span class="name">Margins</span><span class="b" id="margin-dec">−</span><span class="v">60 px</span><span class="b" id="margin-inc">&#43;</span><span class="name">Clock</span><span class="v"><span class="s on" id="clock"><span class="k"></span></span></span></div>
+<p>Page turns (this book):</p>
+<div class="g"><span class="on" id="dir-">Book&#39;s (RTL)</span><span class="" id="dir-rtl">Right to left</span><span class="" id="dir-ltr">Left to right</span></div>
+<p>&nbsp;</p></body></html>
