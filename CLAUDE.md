@@ -65,8 +65,10 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   reference (rtlbook's books, `compare.sh`); crengine stays the bar. webrender is dropped.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
   experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
-- **Devices:** Kobo first for reading (most readers; NickelMenu, KOReader's tools FBInk and koxtoolchain; sound is
-  closed to third-party apps); PocketBook for read-along (official SDK, sound works). On hand: the maintainer's
+- **Devices:** **the Kobo Libra Colour is the primary target (the maintainer, 2026-10-30), read-along included:**
+  experiment 13 played sound through Kobo's own Bluetooth sink from our side (the Kindle's goes around Amazon's
+  tools, 12), and Kobo has the most readers (NickelMenu, KOReader's tools FBInk and koxtoolchain). PocketBook only
+  for a device with a speaker. On hand: the maintainer's
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
   driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
   Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
@@ -145,8 +147,9 @@ when drawn (`engine/patches/blitz-lazy-images.patch`); what Blitz already has ne
   `reader/ui/` built from the pieces in `components.html` (button, choice, toggle, segments, stepper; a button's id
   registers itself), not HTML put together per feature in Go. Checked by drawing (`TestPanels`, `PANELS=dir`): not all
   CSS is in Blitz, and our pages end at their last line of text, so a box's edge below its text is cut off
-  (`drawPanel` adds an empty line at the end; `TestPanelEdges`). Still e-ink: refresh only what changed. More: roadmap, "The
-  reader's panels".
+  (`drawPanel` adds an empty line at the end; `TestPanelEdges`). Still e-ink: refresh only what changed. The layouts to
+  build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
+  components, one set used everywhere): `docs/layouts/` (`layout.html`, `components.html`). More: roadmap, "The reader's panels".
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.

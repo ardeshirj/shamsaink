@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- The reader's components (2026-10-30): ours, one set used everywhere, sketched by a browser as the reader would
+     draw them; the screens made of them: layout.html. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indium components</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&family=Vazirmatn:wght@400;600&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Icons from Lucide (lucide.dev, ISC licence). On the device they come from an icon font cut from the same set. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-contents" viewBox="0 0 24 24"><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></symbol>
+  <symbol id="i-headphones" viewBox="0 0 24 24"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" x2="5" y1="19" y2="5"/></symbol>
+  <symbol id="i-on" viewBox="0 0 24 24"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" x2="19" y1="5" y2="19"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-highlight" viewBox="0 0 24 24"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-speak" viewBox="0 0 24 24"><path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.41 7.59A1.4 1.4 0 0 1 5.42 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.42a1.4 1.4 0 0 1 1 .41l3.38 3.39a.7.7 0 0 0 1.2-.5z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.36 18.36a9 9 0 0 0 0-12.73"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+</svg>
+<div class="wrap">
+  <nav class="tabs-top"><a href="layout.html">Layouts</a><a href="components.html" aria-current="page">Components</a></nav>
+  <section id="components">
+    <h1>Indium components</h1>
+    <p class="lede">Ours, one set used everywhere, made for e-ink: black on the paper, 3 px borders, start and end rather than left and right. Each with its states as the reader would draw them, how it is refreshed, and the markup it expects. Link to one as <code>components.html#slider</code>.</p>
+    <nav class="crumbs" style="margin-top:16px"><a href="#button">Button</a><a href="#icon-button">Icon button</a><a href="#switch">Switch</a><a href="#segments">Segments</a><a href="#stepper">Stepper</a><a href="#slider">Slider</a><a href="#tabs">Tabs</a><a href="#list">List</a><a href="#battery">Battery</a></nav>
+    <article class="comp" id="button"><h3>Button</h3><p class="lede">A word in a box: the action it does. Filled when it is the one the panel expects (Done); a ring when the page buttons are on it.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="row"><span class="b">Reset</span><span class="b fill">Done</span><span class="b focus">Clean the screen</span><span class="b"><svg class="ic"><use href="#i-close"/></svg></span></div></div></div><div class="strip"><span class="label">Right to left</span><div><div class="row" dir="rtl" style="font-family:var(--farsi)"><span class="b">بازنشانی</span><span class="b fill">تمام</span></div></div></div></div><dl class="facts"><dt>exists</dt><dd>Today: <code>button</code> in reader/ui/components.html; its id registers it for taps.</dd><dt>refresh</dt><dd>With its panel; a press shows by the panel changing, not by the button flashing.</dd><dt>used in</dt><dd>Every panel; the footnote, the contents' paging.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;span class=&quot;b&quot; id=&quot;done&quot;&gt;Done&lt;/span&gt;
+&lt;span class=&quot;b fill&quot; id=&quot;done&quot;&gt;Done&lt;/span&gt;   &lt;!-- the expected one --&gt;</code></pre></details></article>
+<article class="comp" id="icon-button"><h3>Icon button</h3><p class="lede">An icon over its word. The word stays: icons alone are guesses on a grey screen. Filled when its panel is open; a ring where the page buttons are.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="row"><span class="ib"><svg class="ic"><use href="#i-sun"/></svg>Light</span><span class="ib on"><svg class="ic"><use href="#i-text"/></svg>Text</span><span class="ib focus"><svg class="ic"><use href="#i-contents"/></svg>Contents</span><span class="ib"><svg class="ic"><use href="#i-headphones"/></svg>Listen</span></div></div></div></div><dl class="facts"><dt>new</dt><dd>Icons from Lucide (ISC), cut into an icon font for the device and drawn through the glyph layer like text.</dd><dt>refresh</dt><dd>Its own box with A2 when it turns on or off; the ring moves with A2.</dd><dt>used in</dt><dd>The dock, the word panel, the player.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;span class=&quot;ib&quot; id=&quot;light&quot;&gt;&lt;i class=&quot;icon&quot;&gt;sun&lt;/i&gt;Light&lt;/span&gt;   &lt;!-- the icon a glyph of the icon font --&gt;</code></pre></details></article>
+<article class="comp" id="switch"><h3>Switch</h3><p class="lede">On or off. The track filled and the knob at the end when on; an outline with the knob at the start when off.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="row"><span class="s"><span class="kn"></span></span> Off <span class="s on"><span class="kn"></span></span> On</div></div></div><div class="strip"><span class="label">Right to left</span><div><div class="row" dir="rtl"><span class="s"><span class="kn"></span></span><span class="s on"><span class="kn"></span></span></div></div></div></div><dl class="facts"><dt>exists</dt><dd>Today: <code>toggle</code>; the knob placed with margin-inline-start, so it mirrors itself.</dd><dt>refresh</dt><dd>Its box, A2.</dd><dt>used in</dt><dd>Night mode, justify, what is always shown.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;span class=&quot;s on&quot; id=&quot;night&quot;&gt;&lt;span class=&quot;k&quot;&gt;&lt;/span&gt;&lt;/span&gt;</code></pre></details></article>
+<article class="comp" id="segments"><h3>Segments</h3><p class="lede">One choice of a few, as one bar; the parts share their borders, the chosen one filled.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="g"><span class="on">The book's</span><span>Parastoo</span></div><div style="height:2cqw"></div><div class="g"><span>Never</span><span class="on">10 pages</span><span>20</span><span>Chapter</span></div></div></div></div><dl class="facts"><dt>exists</dt><dd>Today: <code>segments</code>; a tap goes to the nearest part, since the parts touch.</dd><dt>refresh</dt><dd>The bar, A2.</dd><dt>used in</dt><dd>Font, page turns, flashes, speed, the contents' parts.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;div class=&quot;g&quot;&gt;&lt;span class=&quot;on&quot; id=&quot;font-book&quot;&gt;The book&#x27;s&lt;/span&gt;&lt;span id=&quot;font-parastoo&quot;&gt;Parastoo&lt;/span&gt;&lt;/div&gt;</code></pre></details></article>
+<article class="comp" id="stepper"><h3>Stepper</h3><p class="lede">A setting's row: its name, −, the value, +. The rows of a sheet share one grid, so values line up.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="set"><span class="name">Text size</span><span class="b">−</span><span class="v">50</span><span class="b">+</span><span class="name">Line spacing</span><span class="b">−</span><span class="v">1.50</span><span class="b">+</span></div></div></div></div><dl class="facts"><dt>exists</dt><dd>Today: <code>stepper</code> in a <code>div.set</code> grid.</dd><dt>refresh</dt><dd>The value's cell alone, A2; the book laid out again behind the sheet.</dd><dt>used in</dt><dd>Text size, line spacing, margins.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;div class=&quot;set&quot;&gt;
+  &lt;span class=&quot;name&quot;&gt;Text size&lt;/span&gt;&lt;span class=&quot;b&quot; id=&quot;size-dec&quot;&gt;−&lt;/span&gt;&lt;span class=&quot;v&quot;&gt;50&lt;/span&gt;&lt;span class=&quot;b&quot; id=&quot;size-inc&quot;&gt;+&lt;/span&gt;
+&lt;/div&gt;</code></pre></details></article>
+<article class="comp" id="slider"><h3>Slider</h3><p class="lede">A value along a track: tap anywhere along it to set it there, or − and + for one step. The value in numbers above it.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="slider"><div class="name"><span>Light</span><span>14 of 24</span></div><span class="b">−</span><div class="track"><i style="width:58%"></i></div><span class="b">+</span></div><div style="height:2cqw"></div><div class="slider"><div class="name"><span>Warmth</span><span>0 of 24</span></div><span class="b">−</span><div class="track"><i style="width:0"></i></div><span class="b">+</span></div></div></div></div><dl class="facts"><dt>new</dt><dd>The track a flex row, its fill a width, so it fills from the start side in either direction.</dd><dt>refresh</dt><dd>The track and the number, A2, as the finger moves; the light itself set at once.</dd><dt>used in</dt><dd>Light, warmth; later a narration's place.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;div class=&quot;slider&quot;&gt;
+  &lt;div class=&quot;name&quot;&gt;&lt;span&gt;Light&lt;/span&gt;&lt;span&gt;14 of 24&lt;/span&gt;&lt;/div&gt;
+  &lt;span class=&quot;b&quot; id=&quot;light-dec&quot;&gt;−&lt;/span&gt;&lt;div class=&quot;track&quot; id=&quot;light&quot;&gt;&lt;i style=&quot;width:58%&quot;&gt;&lt;/i&gt;&lt;/div&gt;&lt;span class=&quot;b&quot; id=&quot;light-inc&quot;&gt;+&lt;/span&gt;
+&lt;/div&gt;</code></pre></details></article>
+<article class="comp" id="tabs"><h3>Tabs</h3><p class="lede">The parts of a sheet; the open one in bold with a bar under it. Tabs that do not apply are not there (Listen without narration).</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="tabs"><span class="on">Text</span><span>Page</span><span>Listen</span></div><div style="height:2cqw"></div><div class="tabs"><span>Text</span><span class="on">Page</span></div></div></div></div><dl class="facts"><dt>new</dt><dd>A flex row; the bar an inset shadow line, drawn by Blitz as a box.</dd><dt>refresh</dt><dd>The sheet below, REAGL.</dd><dt>used in</dt><dd>The Text sheet.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;div class=&quot;tabs&quot;&gt;&lt;span class=&quot;on&quot; id=&quot;tab-text&quot;&gt;Text&lt;/span&gt;&lt;span id=&quot;tab-page&quot;&gt;Page&lt;/span&gt;&lt;/div&gt;</code></pre></details></article>
+<article class="comp" id="list"><h3>List</h3><p class="lede">Rows with a value at the end (a page), a page of them at a time; the row you are in marked. Sub-rows indented.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><ul class="list"><li><span>2. The Ferryman</span><span>14</span></li><li class="here"><span>3. The Letter</span><span>31</span></li><li class="sub"><span>The Oarlock</span><span>36</span></li></ul></div></div></div><dl class="facts"><dt>new</dt><dd>Today's contents drawn as a list component, so highlights and marks use it too.</dd><dt>refresh</dt><dd>A page of it, REAGL; the ring moving, A2.</dd><dt>used in</dt><dd>Contents, highlights, marks.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;ul class=&quot;list&quot;&gt;
+  &lt;li class=&quot;here&quot; id=&quot;toc-3&quot;&gt;&lt;span&gt;3. The Letter&lt;/span&gt;&lt;span&gt;31&lt;/span&gt;&lt;/li&gt;
+&lt;/ul&gt;</code></pre></details></article>
+<article class="comp" id="battery"><h3>Battery</h3><p class="lede">A cell filled to the charge, a nub, and the charge in numbers. Drawn left to right in either direction.</p>
+      <div class="specimen"><div class="strip"><span class="label">States</span><div><div class="row"><span class="batt"><span class="icon"><span class="cell"><i style="width:82%"></i></span><span class="nub"></span></span>82%</span>&nbsp;&nbsp;<span class="batt"><span class="icon"><span class="cell"><i style="width:35%"></i></span><span class="nub"></span></span>35%</span>&nbsp;&nbsp;<span class="batt"><span class="icon"><span class="cell"><i style="width:9%"></i></span><span class="nub"></span></span>9%</span></div></div></div><div class="strip"><span class="label">Farsi</span><div><div class="row" dir="rtl" style="font-family:var(--farsi)"><span class="batt"><span class="icon"><span class="cell"><i style="width:82%"></i></span><span class="nub"></span></span>۸۲٪</span></div></div></div></div><dl class="facts"><dt>new</dt><dd>Boxes and borders only, no icon needed; the charge from the device's battery file.</dd><dt>refresh</dt><dd>With the dock or the glance; never on its own.</dd><dt>used in</dt><dd>The dock, the glance.</dd></dl>
+      <details><summary>Markup</summary><pre><code>&lt;span class=&quot;batt&quot;&gt;&lt;span class=&quot;icon&quot;&gt;&lt;span class=&quot;cell&quot;&gt;&lt;i style=&quot;width:82%&quot;&gt;&lt;/i&gt;&lt;/span&gt;&lt;span class=&quot;nub&quot;&gt;&lt;/span&gt;&lt;/span&gt;82%&lt;/span&gt;</code></pre></details></article>
+
+  </section>
+</div>
+</body>
+</html>

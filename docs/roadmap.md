@@ -21,7 +21,7 @@ The parts the reader stands on on a device, and every dependency with its licenc
 | **1. Refresh** (experiment 10) | **Our own ioctls in Go**, not FBInk (10's NOTES.md). Page turns REAGL without a flash (by eye, waveforms look alike in day mode; the flash shows most in night mode); the mark A2. Left: night mode driven by us, how often to flash (stage 3). | Done, but for night mode |
 | **2. A minimal reader** (experiment 11) | Opened from KOReader's file manager. One EPUB; tap or swipe to turn pages; its place kept; reopened at once from its cache (08's opening and cache through the C API, `capi.rs`); a clean way back to KOReader. | The maintainer opens a book from KOReader and reads a chapter without noticing seams |
 | **3. Daily use** | The maintainer reads with it for a week or two. Text size, line spacing and margins, page direction for books whose metadata names none (settings), progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. Memory over days of use (09, step 5: 0.1–0.2 MB more per book opened, cause not found). | It is the reader the maintainer picks for Farsi books |
-| **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). **Sound on the Kindle itself, over Bluetooth headphones** (experiment 12: Amazon's `mplay` into its mixer, nothing installed; read-along worked end to end on the device): MP3s decoded by us, the clock started with the sound, `LEAD_MS` per headphones. **But every step goes around the Kindle** (12's NOTES.md): Amazon's player tool, no playing from a pipe, and the headphones dropped 20 minutes after they connect unless Amazon's own player plays. Documented and left; which device read-along is built for is decided at this stage. A PocketBook only for a device with a speaker. | A narrated book read and followed on a device, its sound included |
+| **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). **Sound on the Kindle itself, over Bluetooth headphones** (experiment 12: Amazon's `mplay` into its mixer, nothing installed; read-along worked end to end on the device): MP3s decoded by us, the clock started with the sound, `LEAD_MS` per headphones. **But every step goes around the Kindle** (12's NOTES.md): Amazon's player tool, no playing from a pipe, and the headphones dropped 20 minutes after they connect unless Amazon's own player plays. Documented and left. **Built for the Kobo Libra Colour (decided 2026-10-30):** a tone through Kobo's own Bluetooth sink from our side worked (experiment 13). A PocketBook only for a device with a speaker. | A narrated book read and followed on a device, its sound included |
 | **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
 | **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling and pictures decoded when drawn (below, "Upstream to Blitz"). Plato's engine on the bench (`bench/`), for comparison like crengine: its licence and right to left to check first. | — |
 
@@ -67,9 +67,33 @@ at and compare, `TestPanelEdges` checks every button's edges are drawn. The guid
 CLAUDE.md. Done (2026-10-29): CSS variables on `:root` for the look; flex rows with `gap` instead of spaces typed
 between buttons; a grid for the settings rows; logical properties (`inline-start`, `inline-end`), so a Farsi interface
 is `dir="rtl"` and nothing else; the progress bar a flex row, not a float (floats are off in our build).
-Idea for stage 5, not decided: the panels as Dioxus components (`dioxus-native-dom`, headless, on Blitz; in our
-pinned checkout). It pays off with many screens with state (a library, settings pages); it moves the interface's
-logic into Rust. To measure first: one panel through our engine on the Kindle, its size, memory and time a tap.
+**The layouts (2026-10-30): `docs/layouts/`** (`layout.html`, the screens; `components.html`, the components; `style.css`, shared), the
+reference, drawn for the Kobo Libra Colour (1264 × 1680, the first target). Nothing on the page while reading; every
+control comes to the hand, as a layer over the engine's page, which is never written to: a tap brings the dock to the
+nearest edge (time, headphones, battery icon, place, and Close, Contents, Mark, Light, Text, Listen); a held margin
+shows the glance while held; a held word, the word panel (meaning, highlight in four colours, note, listen from
+here); a tapped note, the footnote in place. Light and Text open above the dock; Contents full screen. In landscape,
+two pages and the dock along the grip. The page buttons reach everything (the table in `layout.html`). The clock and the
+page number stay as switches, off by default. Components are ours, one set used everywhere (Dioxus's own are made
+for colour screens and would be restyled anyway): today's button, switch, segments and stepper, plus an icon button
+(Lucide icons, from an icon font on the device), a slider, tabs, a list and the battery. Ideas for the reading
+(smarter flashes, places by word, kashida, a dictionary, ...) are listed there too.
+
+The order of work:
+1. **`dioxus-native-dom` tried with today's menu: done (2026-10-30, experiment 14), the panels stay Go templates.**
+   On the Mac, byte-identical drawings; after a tap 0.04 ms against 0.28 to lay out, drawing 1.3–1.7 ms either way
+   (it dominates); +0.7 MB binary, +1–3 MB memory, 54 crates (none GPL or MPL); it names the changed elements, but not
+   what CSS moves around them, where comparing the panel's old and new drawing gives the exact box. Whether the whole
+   reader moves to Rust is stage 5's question; the panels' HTML and CSS carry over either way.
+2. **Layers:** the page buffers hold the engine's pixels only; each control a layer (box, drawing, waveform), drawn
+   into the framebuffer's copy; the clock the first. Checked byte-identical against today's drawings.
+3. **Components:** icon button (with the icon font), slider, tabs, list, battery, each drawn by `TestPanels` and
+   checked by eye against `components.html`.
+4. **The screens of `layout.html`,** one at a time: the dock with the status, the page buttons, Light (its files on
+   the device checked first), Text, Contents, then the glance, the word panel and footnotes.
+
+Decided pieces of 2–4 can go to sub-agents (CLAUDE.md); anything on a device and every git step stay in the main
+session.
 
 ## Upstream to Blitz (2026-10-29: what is already there, to come back to)
 Our two patches, measured against Blitz's roadmap (#119), its tracking issues (#255 optimizations, #259 images) and a
