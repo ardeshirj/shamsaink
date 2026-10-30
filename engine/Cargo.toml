@@ -29,6 +29,8 @@ image = { version = "0.25", default-features = false, features = ["jpeg", "png",
 # JPEGs decoded already scaled down (1/2, 1/4, 1/8), which the image crate's decoder cannot (pure Rust)
 jpeg-decoder = { version = "0.3", default-features = false }
 miniz_oxide = "0.8"
+# the screen's visible size asked of its driver, for blitz-follow (already in Blitz's tree)
+libc = "0.2"
 # glyph masks made on every core with "parallel" (already in Blitz's tree, through Stylo)
 rayon = { version = "1", optional = true }
 

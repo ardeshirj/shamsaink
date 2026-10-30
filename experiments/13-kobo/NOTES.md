@@ -6,7 +6,8 @@ The plan and the desk research before the device: `PLAN.md`. This file records e
 1. The probe (done, 2026-10-29, below).
 2. Inside KOReader: our page on its screen (to do), and a safe exit (done, 2026-10-29, below).
 3. Without KOReader: Nickel paused (to do).
-4. Sound, under both hosts (a first tone, 2026-10-29, below; the hour to do).
+4. Sound, under both hosts (a first tone, 2026-10-29; read-along inside KOReader, 2026-10-30, below; the hour and
+   Nickel paused to do).
 
 ## Step 0: set up (2026-10-29, `docs/kobo-setup.md`)
 
@@ -137,3 +138,47 @@ Plato (0.9.45, installed as `docs/kobo-setup.md` section 5) quit with Bluetooth 
 kernel. The exit patch covers only "Bluetooth first, then Exit"; after any normal exit from KOReader or Plato, the
 Kobo is restarted before Bluetooth is used. Plato quits the same way as KOReader (`plato.sh` runs `nickel.sh` unless
 its Reboot was chosen), with no patch. Pausing Nickel (step 3) never starts it twice, so it meets neither order.
+
+## Another crash: Bluetooth in Nickel with KOReader's SSH still up (2026-10-30)
+
+With Nickel in front and `ssh kobo` answering, the headphones were connected in Nickel: the Kobo crashed (SSH and
+the headphones lost at once). The other order above, met without meaning to: **KOReader's SSH server answering
+with Nickel in front means KOReader was opened and closed in that boot**, so Nickel has started twice and Bluetooth
+will panic the kernel. The order that works, every session: a fresh boot, Wi-Fi and the headphones connected in
+Nickel, then KOReader opened (SSH on, its Wi-Fi left alone), and left by Reboot (or the exit patch). The Kobo also
+answered at its old address after the reboot (192.168.86.23); a device at .21 answering on port 2222 with another
+key is not the Kobo.
+
+## Step 4 (a): sound and read-along inside KOReader (2026-10-30, `sound/`)
+
+Inside KOReader, Nickel stopped, the headphones connected in Nickel first (above), sound through Kobo's own sink
+(`mtkbtmwrpcaudiosink`) from `gst-launch-1.0`, run by us over SSH.
+
+**`play.sh`: the sink plays in real time.** gst-launch timed against the sound's length:
+
+| | Sound | gst-launch | Extra |
+|---|---|---|---|
+| One of *Buried Alive*'s MP3s, decoded by the Kobo (`mpegaudioparse ! mpg123audiodec`) | 59.5 s | 65.1 s | 5.7 s |
+| Chapter 1's first 386 s, raw (12's `narration.raw`, 16-bit mono 44.1 kHz) | 386.3 s | 391.7 s | 5.4 s |
+
+Six times the sound, the same extra: a fixed cost, no drift. Fed as one pipeline, the sink does not take sound in
+faster than it plays (audiobook.koplugin's finding, `PLAN.md`, came from clips one after another). The Kobo decodes
+MP3 itself, so the reader can hand it the book's files as they are. No drop-outs heard.
+
+**`follow.sh`: read-along works on the Kobo's own sound path.** 09's `blitz-follow` now sizes its page from the
+screen (`FBIOGET_VSCREENINFO`: 1264×1680 here, 1236×1648 on the Kindle; `WIDTH`/`HEIGHT` override), widens each grey
+to the screen's 32-bit pixel, and finds FBInk in either device's KOReader; nothing else changed. `follow.sh` starts
+it at a word chosen at random in the chapter's first ~5 minutes, and gst-launch, fed `narration.raw` from that word's
+time, when its clock starts. Each run: chapter laid out and its words found in 460–475 ms, a page turn 543–550 ms
+(GC16 with a flash, FBInk), 114–119 words a minute underlined, **none skipped**, each refresh sent a median 5–6 ms
+after its word's time (90%: 16–17 ms).
+
+**The clock's head start (`LEAD_MS`), by ear, the maintainer:** 0, the underline ahead of the voice; 5000, the
+voice ahead; 2500, "much better", the voice still slightly ahead at two places (41 s and 224 s into the chapter);
+2000 tried last. So ~2–2.5 s of the 5.5 s is before the voice is heard (pipeline start and the Bluetooth link), the
+rest after it (the sink draining). The exact value is tuning, and will move once the reader keeps one pipeline open
+a session (fed silence between parts, `PLAN.md`): then only the headphones' own delay is left, as the Kindle's
+`LEAD_MS` (200–250 ms).
+
+Not yet: the hour (drop-outs, drift over it), the reader itself on the Kobo (its own screen code, `reader/`), and
+step 3's host (Nickel paused).

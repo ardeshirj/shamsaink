@@ -1,4 +1,5 @@
-//! blitz-follow: a narration followed on the Kindle's screen, silently (experiment 09). Reads a chapter's SMIL (one
+//! blitz-follow: a narration followed on the Kindle's or the Kobo's screen, silently (experiments 09 and 13: the page
+//! sized as the screen says, unless WIDTH and HEIGHT; FBInk from that device's KOReader). Reads a chapter's SMIL (one
 //! `par` a word: the word's id, its audio file and clip) and DURATIONS (each audio file's length in seconds, a line
 //! "NAME.mp3 SECONDS"), and puts every word on one clock: the files' lengths before its own, plus its clip's start.
 //! Opens BOOK at the chapter's document, finds every word's page and boxes, shows the first word's page (GC16,
@@ -139,27 +140,45 @@ fn underlined(page: &[u8], w: usize, bars: &[[i32; 4]]) -> Vec<u8> {
     out
 }
 
-/// The framebuffer: the screen's memory, its row length and the first row of the buffer shown.
+/// The framebuffer: the screen's memory, its visible size, its row length, the first row of the buffer shown and its
+/// bytes a pixel (the Kindle: 1236×1648, 1; the Kobo Libra Colour: 1264×1680, 4, red, green, blue and transparency:
+/// experiment 13).
 struct Fb {
     file: std::fs::File,
+    size: (u32, u32),
     stride: usize,
     top: usize,
+    bytes: usize,
 }
 
 impl Fb {
     fn open() -> Option<Fb> {
+        use std::os::fd::AsRawFd;
         let file = std::fs::OpenOptions::new().read(true).write(true).open("/dev/fb0").ok()?;
-        let sys = |f: &str| std::fs::read_to_string(format!("/sys/class/graphics/fb0/{f}")).unwrap_or_default();
-        let stride = sys("stride").trim().parse().ok()?;
-        let top = sys("pan").trim().split(',').nth(1).and_then(|y| y.parse().ok()).unwrap_or(0);
-        Some(Fb { file, stride, top })
+        let mut var = [0u32; 40]; // fb_var_screeninfo: xres, yres, xres_virtual, yres_virtual, xoffset, yoffset, bits...
+        if unsafe { libc::ioctl(file.as_raw_fd(), 0x4600 as _, var.as_mut_ptr()) } != 0 {
+            return None;
+        }
+        let stride = std::fs::read_to_string("/sys/class/graphics/fb0/stride").ok()?.trim().parse().ok()?;
+        let (size, top, bytes) = ((var[0], var[1]), var[5] as usize, var[6] as usize / 8);
+        Some(Fb { file, size, stride, top, bytes })
     }
 
-    /// The part `r` of a page (w pixels wide) written into the buffer shown.
+    /// The part `r` of a page (w pixels wide) written into the buffer shown, each grey widened to the screen's pixel.
     fn write(&self, page: &[u8], w: usize, r: [usize; 4]) {
+        let mut row = Vec::with_capacity((r[2] - r[0]) * self.bytes);
         for y in r[1]..r[3] {
-            let at = ((self.top + y) * self.stride + r[0]) as u64;
-            self.file.write_all_at(&page[y * w + r[0]..y * w + r[2]], at).unwrap();
+            let grey = &page[y * w + r[0]..y * w + r[2]];
+            let at = ((self.top + y) * self.stride + r[0] * self.bytes) as u64;
+            if self.bytes == 1 {
+                self.file.write_all_at(grey, at).unwrap();
+                continue;
+            }
+            row.clear();
+            for &g in grey {
+                row.extend_from_slice(&[g, g, g, 255][..self.bytes.min(4)]);
+            }
+            self.file.write_all_at(&row, at).unwrap();
         }
     }
 }
@@ -183,9 +202,15 @@ fn main() {
     let seconds: f64 = args.get(5).map(|s| s.parse().unwrap()).unwrap_or(180.0);
     let from: usize = args.get(6).map(|s| s.parse().unwrap()).unwrap_or(0);
     let waveform = args.get(7).map(String::as_str).unwrap_or("A2");
-    let fbink = std::env::var("FBINK").unwrap_or("/mnt/us/koreader/fbink".into());
+    let fbink = std::env::var("FBINK").unwrap_or_else(|_| {
+        let on = ["/mnt/us/koreader/fbink", "/mnt/onboard/.adds/koreader/fbink"]; // the Kindle's KOReader, the Kobo's
+        on.iter().find(|p| std::path::Path::new(p).exists()).unwrap_or(&on[0]).to_string()
+    });
     let font_size = std::env::var("FONT_SIZE").ok().and_then(|v| v.parse().ok()).unwrap_or(50.0);
-    let opts = Options { width: 1236, height: 1648, font_size, ..Options::default() };
+    let fb = Fb::open();
+    let (fw, fh) = fb.as_ref().map(|f| f.size).unwrap_or((1236, 1648)); // the screen's, else the Kindle's
+    let size = |v: &str, or: u32| std::env::var(v).ok().and_then(|v| v.parse().ok()).unwrap_or(or);
+    let opts = Options { width: size("WIDTH", fw), height: size("HEIGHT", fh), font_size, ..Options::default() };
     let (w, h) = (opts.width as usize, opts.height as usize);
 
     let t = Instant::now();
@@ -206,7 +231,7 @@ fn main() {
         placed.iter().filter(|p| p.is_none()).count()
     );
 
-    let Some(fb) = Fb::open() else {
+    let Some(fb) = fb else {
         println!("no framebuffer: nothing shown");
         return;
     };
