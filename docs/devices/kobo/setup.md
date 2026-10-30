@@ -1,6 +1,6 @@
 # Setting up a Kobo for experiment 13 (draft, 2026-10-28)
 
-How the Kobo Libra Colour is to be reached from the Mac, as `docs/kindle-setup.md` does for the Kindle: KOReader on
+How the Kobo Libra Colour is to be reached from the Mac, as `docs/devices/kindle/setup.md` does for the Kindle: KOReader on
 it, started from NickelMenu, its SSH server and a key (step 0 of `experiments/13-kobo/PLAN.md`; its probe is step
 1). **Written before the device is here,** from KOReader's Kobo installation page (its wiki) and the Kindle's setup:
 each step to be checked on the device, and this note taken off when it is.
@@ -180,7 +180,7 @@ scp BOOK.epub kobo:/mnt/onboard/.adds/shamsaink/books/SOURCE/
 ssh kobo "echo 'menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/launch.sh' \
   > /mnt/onboard/.adds/nm/shamsaink"
 ```
-**Books** are in `.adds/shamsaink/books/`, one folder per source, and NickelMenu → ShamsaInk opens the newest (the paths and how to open a given one: `devices/kobo.md`, "Paths"). The menu (a tap on the top tenth) → Close the book
+**Books** are in `.adds/shamsaink/books/`, one folder per source, and NickelMenu → ShamsaInk opens the newest (the paths and how to open a given one: `devices/kobo/README.md`, "Paths"). The menu (a tap on the top tenth) → Close the book
 goes back to Kobo's interface, its home screen after its boot animation (a few seconds). The logs, in `logs/`: `reader.log`, and while a book is open the system's and
 the kernel's (`system.log`, `kernel.log`) and `alive.log` (when the Kobo was last up); `make kobo-reader-log`. If
 the screen ever stays ours, over SSH: `sh /mnt/onboard/.adds/shamsaink/launch.sh nickel`. Not yet: the page-turn and

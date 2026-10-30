@@ -2,7 +2,7 @@
 
 MediaTek MT8113 (two Cortex-A53 cores; the second off unless switched on, Kobo's interface does it itself), 965 MB,
 firmware 4.46, 1264 × 1680. The primary target. Reached with `ssh kobo` (KOReader's SSH server on port 2222, when
-KOReader is in front; Kobo's interface answers nothing). Set up as in `kobo-setup.md`; experiment 13
+KOReader is in front; Kobo's interface answers nothing). Set up as in `setup.md`; experiment 13
 (`experiments/13-kobo/`). One file per device in `docs/devices/`: what is on it, what it does that we work around,
 and a dated log of what we found.
 
@@ -17,7 +17,7 @@ with a reboot, and the kernel has no `pstore`.
 ```
 /mnt/onboard/.adds/                  (a dot-folder: Kobo does not import it; nothing of ours is written outside it but RAM)
 ├── nm/shamsaink                     NickelMenu entry: menu_item:main:ShamsaInk:cmd_spawn:quiet:sh $D/launch.sh
-│                                    (by hand, kobo-setup.md 7)
+│                                    (by hand, setup.md 7)
 ├── koreader/                        KOReader with our exit patch (experiments/13-kobo/koreader-patch/); crash.log is its own
 └── shamsaink/                       $D
     ├── launch.sh                    launcher: stops Nickel, runs the reader on a book, starts Nickel again  [make kobo-reader-install]
@@ -57,7 +57,7 @@ of it: two books of the same name, size and date in two folders would share them
   Exit made a reboot by our patch (`experiments/13-kobo/koreader-patch/`); headphones connected in Nickel on a
   fresh boot, before anything else.
 - Upstream: koreader/koreader#12739 (open; Kobo's bug, KOReader's maintainers say). Not reported to Kobo.
-- Found: experiment 13 (`experiments/13-kobo/NOTES.md`), `docs/kobo-setup.md` section 2.
+- Found: experiment 13 (`experiments/13-kobo/NOTES.md`), `setup.md` section 2.
 
 **Each start of Nickel leaves a stuck Wi-Fi loader** (2026-10-30).
 - What: one more `wmt_launcher` each time Nickel starts after boot, stuck in the kernel (`WMT_open`, state D)

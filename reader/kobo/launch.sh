@@ -3,7 +3,7 @@
 # closed, as KOReader and Plato do (13's NOTES.md, step 3: pausing Nickel instead brought its watchdog's reboots, a
 # frozen screen and a power button nobody heard). Bluetooth is left alone: started a second time in a boot with
 # Bluetooth on, Nickel panics the kernel (13's NOTES.md), so then the Kobo is rebooted instead. BOOK: the first argument,
-# else the newest EPUB in books/ or one folder down (by source: farsiepub/, rtlbook/, ...; docs/kobo-setup.md, 7).
+# else the newest EPUB in books/ or one folder down (by source: farsiepub/, rtlbook/, ...; docs/devices/kobo/setup.md, 7).
 #
 # The logs, in logs/: reader.log (ours and the reader's), and while a book is open, kept on storage for after a crash
 # (the Kobo's own system log is in RAM, gone with a reboot; the kernel's is in no log): system.log, kernel.log (its

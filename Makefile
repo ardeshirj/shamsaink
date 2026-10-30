@@ -27,7 +27,7 @@ fetch-blitz:
 
 # --- The Kobo ---
 #
-# Experiment 13, docs/kobo-setup.md; KOBO is its SSH host (KOReader's SSH server, which stays up after KOReader is
+# Experiment 13, docs/devices/kobo/setup.md; KOBO is its SSH host (KOReader's SSH server, which stays up after KOReader is
 # closed).
 #   make kobo-reader-install  build the reader, copy it and its launcher to .adds/shamsaink (refused while a book is
 #                        open: the launcher is read by its shell as it runs)
@@ -43,11 +43,11 @@ fetch-blitz:
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
-# The reader on the Kobo, started from NickelMenu (docs/kobo-setup.md, section 7): in .adds/shamsaink, the program
+# The reader on the Kobo, started from NickelMenu (docs/devices/kobo/setup.md, section 7): in .adds/shamsaink, the program
 # named shamsaink there, as in reader/out
 KOBO_DIR = /mnt/onboard/.adds/shamsaink
 # Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never). Kobo's interface reads them only
-# when it starts, so the timer is set by hand in its Settings (docs/kobo-setup.md, section 4), not here.
+# when it starts, so the timer is set by hand in its Settings (docs/devices/kobo/setup.md, section 4), not here.
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
@@ -105,7 +105,7 @@ $(NM_TGZ):
 
 # --- The Kindle ---
 #
-# docs/kindle-setup.md; KINDLE is its SSH host (~/.ssh/config).
+# docs/devices/kindle/setup.md; KINDLE is its SSH host (~/.ssh/config).
 #   make kindle-reader-install  build the reader, copy it and the KOReader plugin to the Kindle (restart KOReader for
 #                        the plugin; reader-install until 2026-10-30)
 #   make kindle-reader-log  the end of the reader's log on the Kindle (reader-log until 2026-10-30)

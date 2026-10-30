@@ -42,7 +42,7 @@ the Kobo it earned it sooner than planned.)
   waking (2026-10-30)
 - [x] The sleep screen: pictures from `sleep/`, else the opening screen
 - [x] The launcher's logs: the kernel's warnings and errors only, cut back while a book is open (2026-10-30)
-- [x] The stray Wi-Fi loaders Nickel leaves stopped (2026-10-30; `devices/kobo.md`)
+- [x] The stray Wi-Fi loaders Nickel leaves stopped (2026-10-30; `devices/kobo/README.md`)
 - [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink
 
 **4. The reader's code** (2026-10-30)
@@ -89,7 +89,7 @@ the Kobo it earned it sooner than planned.)
   - [ ] go-text's justification fix
   - [ ] Blitz: line culling
   - [ ] Blitz: pictures sized from their headers and decoded when drawn
-  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo.md`)
+  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
 
 **9. The Kindle** (later: the Kobo is the primary device)
 - [x] Pages identical after the screen code's changes (with the rename's reinstall)
@@ -109,7 +109,7 @@ Only the host knows the host: the engine, the book and its cache (`book.go`), th
   **A launcher of our own there** (a KUAL item, Amazon's interface stopped while reading; the plugin and `-serve`
   gone) is decided once the Kobo's host is done (the maintainer, 2026-10-30); KOReader stays installed on both
   devices for SSH and other tasks.
-- **The Kobo: our own host** (13's NOTES.md, `docs/kobo-setup.md`, section 7). NickelMenu starts `launch.sh`, which
+- **The Kobo: our own host** (13's NOTES.md, `docs/devices/kobo/setup.md`, section 7). NickelMenu starts `launch.sh`, which
   stops Kobo's interface while a book is open and starts it again after, as KOReader and Plato do (pausing it, tried
   first, brought its watchdog's reboots and a frozen screen); once Bluetooth has been on in the boot it reboots
   instead (the kernel's crash on a second start of Nickel). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's,

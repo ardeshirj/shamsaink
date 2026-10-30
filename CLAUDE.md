@@ -78,7 +78,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
   v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8512, two Cortex-A53 cores at up to 2 GHz, the second off unless
   switched on (Kobo's interface does it itself), 965 MB, firmware 4.46; reached with `ssh kobo`), for experiment 13
-  (`experiments/13-kobo/PLAN.md`, set up as `docs/kobo-setup.md`).
+  (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`).
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
   and FarsiEPUB and their marks, in `reader/ui/brand/` and the opening screen). So code from KOReader, Plato
   (AGPL-3.0) or FBInk (GPL) is read, never copied. The roadmap's "Licence and brand" has what a first release needs.
@@ -133,7 +133,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   296–299 ms, GC16 366 ms. By eye the page turns look alike in day mode, the flash shows most in night mode: **page
   turns REAGL without a flash**, a flash now and then (how often: in use); night mode driven by us not tried yet.
 - **The devices' own bugs and limits** (the Kobo's kernel panic with Bluetooth, its stray Wi-Fi loaders, the
-  Kindle's headphones dropped after 20 minutes, ...): `docs/devices/` (one file per device: its books and paths, its limits and a dated findings log; each new one added there when found).
+  Kindle's headphones dropped after 20 minutes, ...): `docs/devices/DEVICE/` (per device: `README.md` with its paths, limits and a dated findings log, and `setup.md`; each new one added there when found).
 - **Components and dependencies:** `docs/design.md`, section 6 (on the device: KOReader as host, refresh, input,
   power, sound) and 7 (every dependency and its licence: 215 Rust crates, none GPL, 14 MPL-2.0 from Firefox's CSS).
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
@@ -170,7 +170,7 @@ and tried on a device and stays in its group; new work goes where it belongs as 
   `index.html`). Test books are copied in locally; FarsiEPUB's are under `~/Github/farsiepub/pipeline/.work/books/`.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
-- **The Kindle:** set up as in `docs/kindle-setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
+- **The Kindle:** set up as in `docs/devices/kindle/setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
   sleeps after a few minutes untouched, taking Wi-Fi and SSH with it: `make kindle-awake` before a session,
   `make kindle-sleep` after, `make kindle-status`, `make kindle-wait` once woken by hand. Long runs detached
   (`nohup`), results read from their file. Clean up what goes in `/var/tmp` (RAM).

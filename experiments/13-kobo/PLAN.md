@@ -54,7 +54,7 @@ to copy):
   survive KOReader's start?).
 
 ## Steps on the device
-0. **Set up** (`docs/kobo-setup.md`, as `docs/kindle-setup.md` for the Kindle): KOReader installed with NickelMenu,
+0. **Set up** (`docs/devices/kobo/setup.md`, as `docs/devices/kindle/setup.md` for the Kindle): KOReader installed with NickelMenu,
    its SSH server, a key of its own; Makefile targets as the Kindle's (`kobo-status`, `kobo-wait`, `kobo-ssh`).
    **Done when** `ssh kobo` works.
 1. **The probe:** note the firmware, the board (390 expected), the framebuffer (`fbset`, bits per pixel, rotation),
