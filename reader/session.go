@@ -66,8 +66,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	return s.asleep, nil
 }
 
-// open opens the book at path and shows its page: the book opened meanwhile, and the opening screen shown if it takes
-// longer than ui.SplashAfter (its picture first, so the engine never draws it and opens the book at once).
+// open opens the book at path and shows its page: the book opened, its narration and contents read and its page drawn
+// meanwhile, and the opening screen shown if that takes longer than ui.SplashAfter (its picture first, so the engine
+// never draws it and opens the book at once).
 func (rd *reader) open(path string, t time.Time) (*session, error) {
 	s := &session{rd: rd, dev: rd.dev, scr: rd.dev.Screen, set: loadSettings(rd.dir), t: t, backDoc: -1, unmark: -1}
 	s.o = s.set.options(s.scr.W, s.scr.H)
@@ -76,34 +77,39 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 		return nil, err
 	}
 	s.splash = ui.Splash(rd.dir, rd.fonts, s.scr.W, s.scr.H)
-	type opened struct {
-		r   *reading
-		err error
-	}
-	done := make(chan opened, 1)
+	done := make(chan error, 1)
 	go func() {
+		t0 := time.Now()
 		r, err := openBook(context.Background(), path, rd.dir, s.o, rd.fonts, func(key string) string { return s.set.Direction[key] })
-		done <- opened{r, err}
+		if err != nil {
+			done <- err
+			return
+		}
+		s.r = r
+		t1 := time.Now()
+		s.narration = cues(context.Background(), r.pub)
+		t2 := time.Now()
+		s.toc = contents(r.pub.Manifest.TableOfContents, r.spine)
+		t3 := time.Now()
+		s.forget()
+		// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest
+		// ago, so a turn forward is only its ink, and a turn back finds the page it came from
+		s.shown = rd.pages.get(r, r.doc, r.at, r.page())
+		fmt.Printf("  opened %.0f ms, narration %.0f ms (%d words), contents %.0f ms, page drawn %.0f ms\n",
+			ms(t0)-ms(t1), ms(t1)-ms(t2), len(s.narration), ms(t2)-ms(t3), ms(t3))
+		done <- nil
 	}()
-	var op opened
 	select {
-	case op = <-done:
+	case err = <-done:
 	case <-time.After(ui.SplashAfter):
 		s.scr.Show(s.splash, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
-		op = <-done
+		err = <-done
 	}
-	if op.err != nil {
+	if err != nil {
 		s.stop()
-		return nil, op.err
+		return nil, err
 	}
-	s.r = op.r
-	s.narration = cues(context.Background(), s.r.pub)
-	s.toc = contents(s.r.pub.Manifest.TableOfContents, s.r.spine)
-	s.forget()
-	// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest ago,
-	// so a turn forward is only its ink, and a turn back finds the page it came from
-	s.shown = rd.pages.get(s.r, s.r.doc, s.r.at, s.r.page())
 	s.minute = time.NewTimer(untilMinute())
 	s.word = time.NewTimer(time.Hour)
 	s.word.Stop()
