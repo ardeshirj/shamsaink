@@ -8,7 +8,7 @@
 # it; if behind, lower it. With none, the underline led (2026-10-30); play.sh found ~5.5 s more than the sound's
 # length. SECONDS (60) of it.
 #
-#     ssh kobo 'sh /mnt/onboard/.adds/indium/sound/follow.sh [SECONDS [FROM]]'      (LEAD_MS=..., FONT_SIZE=...)
+#     ssh kobo 'sh /mnt/onboard/.adds/shamsaink/sound/follow.sh [SECONDS [FROM]]'      (LEAD_MS=..., FONT_SIZE=...)
 cd "$(dirname "$0")"
 B=books/buried-alive-narrated
 OUT='audio/x-raw,format=S16LE,rate=48000,channels=2'

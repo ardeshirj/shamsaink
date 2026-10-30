@@ -79,6 +79,9 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8512, two Cortex-A53 cores at up to 2 GHz, the second off unless
   switched on (Kobo's interface does it itself), 965 MB, firmware 4.46; reached with `ssh kobo`), for experiment 13
   (`experiments/13-kobo/PLAN.md`, set up as `docs/kobo-setup.md`).
+- **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
+  and FarsiEPUB and their marks, in `reader/ui/brand/` and the opening screen). So code from KOReader, Plato
+  (AGPL-3.0) or FBInk (GPL) is read, never copied. The roadmap's "Licence and brand" has what a first release needs.
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.

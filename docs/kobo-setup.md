@@ -170,3 +170,19 @@ the Libra Colour (`monza`). Its guide points to MobileRead's one-click packages;
 `plato.sh` runs `nickel.sh`), the same kernel panic as KOReader's Exit (section 2, step 6), and there is no patch for
 Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, crashed the Kobo; the same bug in the
 other order). After a normal Quit, restart the Kobo before using Bluetooth.
+
+## 7. ShamsaInk from NickelMenu (2026-10-30)
+Our reader, with Kobo's interface paused while a book is open and resumed when it is closed (never restarted, so
+no Reboot needed to leave; `reader/kobo/launch.sh`, 13's NOTES.md, step 3), in `.adds/shamsaink/`. With SSH up, from
+the Mac (refused while a book is open):
+```sh
+make kobo-reader-install
+scp BOOK.epub kobo:/mnt/onboard/.adds/shamsaink/books/
+ssh kobo "echo 'menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/launch.sh' \
+  > /mnt/onboard/.adds/nm/shamsaink"
+```
+**NickelMenu → ShamsaInk** opens the newest EPUB in `books/`; the menu (a tap on the top tenth) → Close the book
+goes back to Kobo's interface as it was. Kobo's watchdog for its interface (`sickel`) is paused with it, or it would
+reboot the Kobo after about a minute. The logs, in `logs/`: `reader.log`, and while a book is open the system's and
+the kernel's (`system.log`, `kernel.log`) and `alive.log` (when the Kobo was last up); `make kobo-reader-log`. If
+the screen ever stays ours, over SSH: `kill -CONT $(pidof nickel) $(pidof sickel)`. Not yet: the page-turn and power buttons, sound.

@@ -112,6 +112,13 @@ The menus in the book's language, English and Farsi first. The panels have Engli
 - **Stage:** with the layouts being built, not stage 5: the string table is cheap now and costly later. A stand-alone
   app's library and settings use the same table.
 
+### The opening screen (2026-10-30, built)
+ShamsaInk's mark and name, "by" FarsiEPUB's logo (`reader/ui/splash.html`, the logos in `reader/ui/brand/`, made from
+FarsiEPUB's brand files), shown when a book is not open within 0.3 s; drawn once (60 ms on the Kobo) and kept as a
+picture in the cache, so showing it is a copy and a refresh, the ink moving while the book opens (`reader/splash.go`).
+To come: Kobo's sleep screen from the same picture (`.kobo/screensaver/`, `docs/kobo-setup.md`, section 5). Not Kobo's
+boot screen: in Kobo's system files, undone by every update.
+
 ### Voice timing (2026-10-30, planned, not built)
 How late the underline follows the voice, set by the reader: every pair of headphones has its own delay (Bluetooth:
 typically 0.1–0.3 s), which nothing on our side can measure. Found by ear on the Kobo (13's NOTES.md, step 4 (a)):
@@ -155,6 +162,15 @@ planned or proposed there**, and neither is e-ink only. The maintainer posts fro
 - Reading every day (stage 3) decides what the reader needs, before anything is designed for it.
 - Everything a stand-alone app would need (sleep, light, a library, a launcher) KOReader already does, so it can
   wait until it is worth doing.
+
+## Licence and brand (decided 2026-10-30)
+The code under **Apache-2.0** (`LICENSE`, `NOTICE`): permissive like Readium (BSD) and Blitz, which our patches are
+for; its section 6 grants no rights to names or logos. **The brand reserved** (`BRAND.md`): the names ShamsaInk and
+FarsiEPUB and their marks; a changed version shipped to others uses its own (the opening screen's three files).
+Code from KOReader, Plato (AGPL-3.0) or FBInk (GPL) is read as a reference, never copied. **At the first release:**
+the licences and notices of what is linked in (215 crates, `cargo-about`; the Go modules, `go-licenses`;
+`docs/design.md`, section 7), and the licence texts of the fonts shipped (Parastoo, DejaVu); public or not still the
+maintainer's to decide.
 
 ## Not decided
 - Whether stage 5 happens at all.

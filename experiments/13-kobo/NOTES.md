@@ -4,8 +4,10 @@ The plan and the desk research before the device: `PLAN.md`. This file records e
 
 0. Set up (done, 2026-10-29, below).
 1. The probe (done, 2026-10-29, below).
-2. Inside KOReader: our page on its screen (to do), and a safe exit (done, 2026-10-29, below).
-3. Without KOReader: Nickel paused (to do).
+2. Inside KOReader: our page on its screen (to do; the reader's screen and touch for the Kobo done for step 3), and a
+   safe exit (done, 2026-10-29, below).
+3. Without KOReader: Nickel paused (the pause test done, 2026-10-30, below: how the reader is started on the Kobo
+   for now; what Nickel no longer does while paused, to do).
 4. Sound, under both hosts (a first tone, 2026-10-29; read-along inside KOReader, 2026-10-30, below; the hour and
    Nickel paused to do).
 
@@ -204,3 +206,53 @@ in the pause test. Where it matters is before KOReader, the headphones connected
 with `ForceWifiOn`, Wi-Fi pinged for 10 idle minutes, then the headphones left idle 5 minutes.
 
 Sources: https://www.mobileread.com/forums/showthread.php?p=4211676, https://github.com/tsowell/kobo-btpt.
+
+## Step 3: the reader from NickelMenu, Nickel paused (2026-10-30, `reader/kobo/launch.sh`)
+
+**How the reader is started on the Kobo for now.** A NickelMenu item ("ShamsaInk", `.adds/nm/shamsaink`) runs
+`launch.sh`, which waits 0.5 s for NickelMenu's menu to close, pauses Nickel (`SIGSTOP`), runs the reader on one
+book (`indium BOOK fonts`, the newest EPUB in `books/`), and resumes Nickel (`SIGCONT`) however the reader ends (a
+shell trap). Nickel never starts a second time, so it never meets the kernel's crash (above); leaving is as fast as
+closing the book, against a reboot from KOReader. The reader grabs the touch screen (`EVIOCGRAB`), so Nickel sees
+none of our taps.
+
+**The reader on the Kobo** (`reader/screen.go`, `touch.go`): the screen's 32-bit pixels (each grey widened on the
+way in) and `hwtcon`'s refresh (`HWTCON_SEND_UPDATE`, the Kindle's call cut short: 36 bytes, the same region and
+waveform numbers and the same wait; REAGL sent as a full update, as the driver wants; from FBInk's
+`eink/mtk-kobo.h`), the touch's axes turned (step 1). Told apart by the screen's bytes a pixel (1 the Kindle, 4 the
+Kobo). The Kindle not yet checked again with it. Not in it yet: the page-turn and power buttons, sound, the second
+core.
+
+**Found:**
+- **Nickel does not redraw once resumed:** the screen kept our last page, as if frozen, until a tap on Nickel's
+  search (top right) made it draw. So the reader, started with `RESTORE_SCREEN`, saves the screen it finds and puts
+  it back on leaving, with one full GC16 refresh: "nice and smooth" (the maintainer), Nickel's home screen as left.
+- Opened, read, menu and closed twice: the first page 2.5 s from the book's cache (FarsiEPUB's narrated *Buried
+  Alive*, a 98 MB EPUB: to look into; the Kindle's reopen 0.17–0.38 s), the menu drawn in 216–238 ms, the next page
+  drawn ahead (8–30 ms), Nickel resumed each time.
+- **The launcher's check:** Nickel's start time (`/proc/PID/stat`) says whether it was restarted in this boot (~4 s
+  after boot when not; 291 and 352 s after KOReader was closed). First it refused to run then; now it only writes a
+  warning to the log, since the reader does not touch Bluetooth: the danger is switching Bluetooth on in that Nickel.
+
+**Why KOReader and Plato stop Nickel instead** (not stated by either; from how they work): they change the
+framebuffer's settings (KOReader its bit depth and rotation), which a resumed Nickel would draw wrongly over; they
+drive Wi-Fi, sleep, the light and USB themselves; older Kobos had 256–512 MB. We change none of the screen's
+settings and have 965 MB.
+
+**To find out while paused (the rest of step 3):** sleep and the power button (nothing sleeps while the reader is
+open; a press probably waits for Nickel), USB plugged in, a long pause (Nickel's timers all due at once on resuming),
+the battery and charging, any watchdog. The hour of read-along with Nickel paused tests most of them; the power
+button first (close the book and resume Nickel, so it sleeps its own way).
+
+**Kobo's watchdog for Nickel, `sickel`, rebooted the Kobo** (2026-10-30): the reader left open, untouched, the Kobo
+restarted ~1.5 minutes after the book opened (every pause up to ~60 s had been fine). `sickel`
+(`/usr/local/Kobo/sickel`, started by `sickel-launcher.sh`) is a small Qt program on D-Bus with a timer that calls
+`reboot()` (its strings); KOReader's `koreader.sh` kills it with Nickel (`killall ... nickel hindenburg sickel ...`).
+Paused Nickel stops answering it, so it reboots. Not the hardware watchdog: the kernel feeds that itself
+(`feeding_thread`, every 28 s). **Fixed:** the launcher pauses `sickel` with Nickel, and resumes it 5 s after Nickel;
+the reader then stayed open 7.5 minutes without a reboot, both running again after.
+
+**Our own logs for a crash:** the Kobo's system log is in RAM (`syslogd -C500`), lost with the reboot, and the
+kernel's messages go to no log (no `klogd`), so nothing said why. While a book is open the launcher now keeps
+`logs/system.txt` (`logread -f`), `logs/kernel.txt` (`/proc/kmsg`) and `logs/alive.txt` (the uptime every 10 s,
+then `sync`) on storage, each cut back past 1 MB.
