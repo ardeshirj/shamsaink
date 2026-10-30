@@ -59,6 +59,13 @@ the host's).
   (drawn with Blitz as HTML, as the menu, then the same `read`; "Close the book" back to it); and what KOReader does
   for us now: pausing the Kindle's own interface, sleep and the power button, the light, battery and Wi-Fi. The last
   is most of the work, the same in Go or Rust, and per device family.
+- **On the Kobo, the NickelMenu host is already most of it (2026-10-30, 13's NOTES.md, step 3):** started from
+  NickelMenu, Kobo's interface and its watchdog paused while a book is open (never restarted: no kernel crash, a quick
+  exit), the screen as Kobo left it on closing; screen, touch and sound (Kobo's GStreamer) are ours or Kobo's, none
+  KOReader's. Installed with no KOReader at all: NickelMenu's `KoboRoot.tgz`, our folder `.adds/shamsaink/` and one
+  NickelMenu line, all over USB (one `KoboRoot.tgz` could carry the three, as the community's one-click packages do).
+  Left: sleep and the power button while a book is open, a library to choose the book, the light, battery. On the
+  Kindle, KOReader stays the host.
 
 ## The reader's panels (2026-10-29)
 The menu, the bottom panel, the contents, the remove panel and the clock are templates in `reader/ui/` (`ui.css`,
