@@ -5,8 +5,9 @@ package device
 
 import (
 	"image"
-	"io"
 	"os"
+	"sync"
+	"sync/atomic"
 )
 
 type Kind int
@@ -19,48 +20,54 @@ const (
 type Device struct {
 	Screen *Screen
 	Kind   Kind
-	power  <-chan struct{} // the Kobo's power key presses, from Sleeps, for Doze
+	dozing atomic.Bool   // the Kobo dozing: its power key's presses go to wake
+	wake   chan struct{} // the press that wakes it
 }
 
 // Open opens the screen. The device is known by it: a pixel is a byte on the Kindle, four on the Kobo.
 func Open() (*Device, error) {
 	s, err := openScreen()
-	d := &Device{Screen: s, Kind: Kindle}
+	d := &Device{Screen: s, Kind: Kindle, wake: make(chan struct{}, 4)}
 	if s != nil && s.bytes == 4 {
 		d.Kind = Kobo
 	}
 	return d, err
 }
 
-// Touches grabs the touch screen (TOUCH, /dev/input/event1 by default) and sends its gestures in the screen's
-// coordinates, until the file is closed (which lets go of it).
-func (d *Device) Touches() (io.Closer, <-chan Gesture, error) {
-	f, g, err := touches(env("TOUCH", "/dev/input/event1"), d.Screen.touchTurn())
+// An Event: a gesture on the touch screen, or the device wanting to sleep (Sleep): on the Kindle, powerd going to the
+// screensaver; on the Kobo, a press of the power button.
+type Event struct {
+	Gesture
+	Sleep bool
+}
+
+// Inputs grabs the touch screen (TOUCH, /dev/input/event1 by default) and listens for sleep, sending both as events
+// in one channel (gestures in the screen's coordinates) until stop is called, which lets go of the touch screen.
+func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
+	out := make(chan Event, 8)
+	f, err := touches(env("TOUCH", "/dev/input/event1"), d.Screen.touchTurn(), out)
 	if err != nil {
 		return nil, nil, err
 	}
-	return f, g, nil
-}
-
-// Sleeps sends when the device wants to sleep, until stop is called: on the Kindle, powerd going to the screensaver;
-// on the Kobo, a press of the power button.
-func (d *Device) Sleeps() (<-chan struct{}, func()) {
+	var stopSleeps func()
 	if d.Kind == Kindle {
-		return kindleSleeps()
+		stopSleeps = kindleSleeps(out)
+	} else {
+		power := d.presses(out)
+		stopSleeps = func() { power.Close() }
 	}
-	f, power := presses()
-	d.power = power
-	return power, func() { f.Close() }
+	var once sync.Once
+	return out, func() { once.Do(func() { f.Close(); stopSleeps() }) }, nil
 }
 
-// Doze is the answer to Sleeps. On the Kobo it shows the sleep screen (a picture from dir/sleep, else fallback),
-// suspends until the power button is pressed again, and returns true once the Kobo is awake and the screen back. On
-// the Kindle it returns false at once: the book is to be left, for KOReader to show its screensaver.
+// Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture from dir/sleep, else
+// fallback), suspends until the power button is pressed again, and returns true once the Kobo is awake and the
+// screen back. On the Kindle it returns false at once: the book is to be left, for KOReader to show its screensaver.
 func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 	if d.Kind == Kindle {
 		return false
 	}
-	d.doze(d.power, sleepScreen(dir, fallback))
+	d.doze(sleepScreen(dir, fallback))
 	return true
 }
 

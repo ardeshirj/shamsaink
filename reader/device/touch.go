@@ -41,19 +41,18 @@ const (
 	Dropped
 )
 
-// touches grabs the touch screen and sends a gesture each time the first finger down is lifted (other fingers are
-// ignored), or is held still for holdTime and then moved and lifted, until the file is closed (which lets go of
-// it). Moves while held are dropped when 8 gestures are queued. turn takes the touch's coordinates to the screen's.
-func touches(path string, turn func(x, y int) (int, int)) (*os.File, <-chan Gesture, error) {
+// touches grabs the touch screen and sends a gesture to out each time the first finger down is lifted (other fingers
+// are ignored), or is held still for holdTime and then moved and lifted, until the file is closed (which lets go of
+// it). Moves while held are dropped when out is full. turn takes the touch's coordinates to the screen's.
+func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os.File, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), eviocgrab, 1); e != 0 {
 		f.Close()
-		return nil, nil, e
+		return nil, e
 	}
-	out := make(chan Gesture, 8)
 	go func() {
 		var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
 		slot, x, y, tx, ty := int32(0), 0, 0, 0, 0
@@ -91,12 +90,12 @@ func touches(path string, turn func(x, y int) (int, int)) (*os.File, <-chan Gest
 					holding = false
 					mu.Unlock()
 					if h {
-						out <- Gesture{X: x, Y: y, Hold: Dropped}
+						out <- Event{Gesture: Gesture{X: x, Y: y, Hold: Dropped}}
 						continue
 					}
 					g := Gesture{X: x0, Y: y0, DX: x - x0, DY: y - y0}
 					g.Swipe = g.DX*g.DX+g.DY*g.DY > swipeMin*swipeMin
-					out <- g
+					out <- Event{Gesture: g}
 				}
 			case typ == evSyn && code == synReport:
 				mu.Lock()
@@ -109,12 +108,12 @@ func touches(path string, turn func(x, y int) (int, int)) (*os.File, <-chan Gest
 						defer mu.Unlock()
 						if down && !holding {
 							holding = true
-							out <- Gesture{X: x0, Y: y0, Hold: Held}
+							out <- Event{Gesture: Gesture{X: x0, Y: y0, Hold: Held}}
 						}
 					})
 				case down && holding:
 					select {
-					case out <- Gesture{X: x, Y: y, Hold: Dragged}:
+					case out <- Event{Gesture: Gesture{X: x, Y: y, Hold: Dragged}}:
 					default:
 					}
 				case down && (x-x0)*(x-x0)+(y-y0)*(y-y0) > swipeMin*swipeMin:
@@ -124,5 +123,5 @@ func touches(path string, turn func(x, y int) (int, int)) (*os.File, <-chan Gest
 			}
 		}
 	}()
-	return f, out, nil
+	return f, nil
 }

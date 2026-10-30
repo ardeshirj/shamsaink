@@ -47,12 +47,12 @@ const (
 	wifiState = "/sys/class/net/wlan0/operstate"
 )
 
-// presses sends each press of the power button until the file is closed (not opened: a channel that never sends).
-func presses() (io.Closer, <-chan struct{}) {
-	out := make(chan struct{}, 4)
+// presses sends each press of the power button to out, or to the doze while the Kobo dozes (the press that wakes it),
+// until the file is closed (not opened: nothing sent).
+func (d *Device) presses(out chan<- Event) io.Closer {
 	f, err := os.Open(powerDev)
 	if err != nil {
-		return io.NopCloser(nil), out
+		return io.NopCloser(nil)
 	}
 	go func() {
 		var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
@@ -62,14 +62,21 @@ func presses() (io.Closer, <-chan struct{}) {
 			}
 			typ, code := binary.LittleEndian.Uint16(ev[8:]), binary.LittleEndian.Uint16(ev[10:])
 			if typ == evKey && code == keyPower && binary.LittleEndian.Uint32(ev[12:]) == 1 {
+				if d.dozing.Load() {
+					select {
+					case d.wake <- struct{}{}:
+					default:
+					}
+					continue
+				}
 				select {
-				case out <- struct{}{}:
+				case out <- Event{Sleep: true}:
 				default:
 				}
 			}
 		}
 	}()
-	return f, out
+	return f
 }
 
 // sleepScreen is a picture from DIR/sleep (PNG or JPEG, one at random) fitted to the screen on white, else fallback.
@@ -124,10 +131,13 @@ func plugged() bool {
 	return err == nil && strings.TrimSpace(string(b)) != "Discharging"
 }
 
-// doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again
-// (power), then puts the light and the screen back as they were, and Wi-Fi if it was up (in the background: a few
-// seconds to connect).
-func (d *Device) doze(power <-chan struct{}, pic *image.Gray) {
+// doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again,
+// then puts the light and the screen back as they were, and Wi-Fi if it was up (in the background: a few seconds to
+// connect).
+func (d *Device) doze(pic *image.Gray) {
+	power := d.wake
+	d.dozing.Store(true)
+	defer d.dozing.Store(false)
 	t := time.Now()
 	back := d.Screen.Save()
 	d.Screen.Show(pic, WfGC16, true)
