@@ -172,8 +172,9 @@ Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, cra
 other order). After a normal Quit, restart the Kobo before using Bluetooth.
 
 ## 7. ShamsaInk from NickelMenu (2026-10-30)
-Our reader, with Kobo's interface paused while a book is open and resumed when it is closed (never restarted, so
-no Reboot needed to leave; `reader/kobo/launch.sh`, 13's NOTES.md, step 3), in `.adds/shamsaink/`. With SSH up, from
+Our reader, with Kobo's interface stopped while a book is open and started again when it is closed, as KOReader
+and Plato do (a reboot instead once Bluetooth has been on in the boot; `reader/kobo/launch.sh`, 13's NOTES.md), in
+`.adds/shamsaink/`. With SSH up, from
 the Mac (refused while a book is open):
 ```sh
 make kobo-reader-install
@@ -182,7 +183,7 @@ ssh kobo "echo 'menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/s
   > /mnt/onboard/.adds/nm/shamsaink"
 ```
 **NickelMenu → ShamsaInk** opens the newest EPUB in `books/`; the menu (a tap on the top tenth) → Close the book
-goes back to Kobo's interface as it was. Kobo's watchdog for its interface (`sickel`) is paused with it, or it would
-reboot the Kobo after about a minute. The logs, in `logs/`: `reader.log`, and while a book is open the system's and
+goes back to Kobo's interface, its home screen after its boot animation (a few seconds). The logs, in `logs/`: `reader.log`, and while a book is open the system's and
 the kernel's (`system.log`, `kernel.log`) and `alive.log` (when the Kobo was last up); `make kobo-reader-log`. If
-the screen ever stays ours, over SSH: `kill -CONT $(pidof nickel) $(pidof sickel)`. Not yet: the page-turn and power buttons, sound.
+the screen ever stays ours, over SSH: `sh /mnt/onboard/.adds/shamsaink/launch.sh nickel`. Not yet: the page-turn and
+power buttons, sleep, sound.

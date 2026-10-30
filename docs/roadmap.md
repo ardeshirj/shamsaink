@@ -60,8 +60,9 @@ the host's).
   for us now: pausing the Kindle's own interface, sleep and the power button, the light, battery and Wi-Fi. The last
   is most of the work, the same in Go or Rust, and per device family.
 - **On the Kobo, the NickelMenu host is already most of it (2026-10-30, 13's NOTES.md, step 3):** started from
-  NickelMenu, Kobo's interface and its watchdog paused while a book is open (never restarted: no kernel crash, a quick
-  exit), the screen as Kobo left it on closing; screen, touch and sound (Kobo's GStreamer) are ours or Kobo's, none
+  NickelMenu, Kobo's interface stopped while a book is open and started again on closing, as KOReader and Plato do
+  (pausing it instead, tried first, brought its watchdog's reboots and a frozen screen; a reboot instead once
+  Bluetooth has been on in the boot, the kernel's crash); screen, touch and sound (Kobo's GStreamer) are ours or Kobo's, none
   KOReader's. Installed with no KOReader at all: NickelMenu's `KoboRoot.tgz`, our folder `.adds/shamsaink/` and one
   NickelMenu line, all over USB (one `KoboRoot.tgz` could carry the three, as the community's one-click packages do).
   Left: sleep and the power button while a book is open, a library to choose the book, the light, battery. On the
@@ -125,6 +126,17 @@ FarsiEPUB's brand files), shown when a book is not open within 0.3 s; drawn once
 picture in the cache, so showing it is a copy and a refresh, the ink moving while the book opens (`reader/splash.go`).
 To come: Kobo's sleep screen from the same picture (`.kobo/screensaver/`, `docs/kobo-setup.md`, section 5). Not Kobo's
 boot screen: in Kobo's system files, undone by every update.
+
+### The sleep screen (2026-10-30, planned, not built)
+On the Kobo, Nickel is stopped while a book is open (13's NOTES.md), so sleep and the power button are the reader's:
+a press draws the sleep screen, then suspends; the next press wakes and draws the page again. What it draws, as
+KOReader's screensaver with a folder of its own:
+- **Pictures from our own folder,** `.adds/shamsaink/sleep/` (PNG or JPEG), one at random each time; outside `.kobo/`,
+  so Kobo never imports them as books (as it did `.kobo/screensaver/`).
+- **The folder empty: the opening screen,** already a picture in the cache (a copy and a refresh).
+- **Later, a choice in the menu:** the book's cover, or the page left as it is with a small mark that it sleeps.
+Outside a book, Nickel's own sleep screen (`.kobo/screensaver/`) stays as it is; the same pictures can go in both.
+On the Kindle, KOReader's screensaver stays (the reader leaves the book when `powerd` goes to sleep).
 
 ### Voice timing (2026-10-30, planned, not built)
 How late the underline follows the voice, set by the reader: every pair of headphones has its own delay (Bluetooth:

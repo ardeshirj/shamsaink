@@ -256,3 +256,40 @@ the reader then stayed open 7.5 minutes without a reboot, both running again aft
 kernel's messages go to no log (no `klogd`), so nothing said why. While a book is open the launcher now keeps
 `logs/system.txt` (`logread -f`), `logs/kernel.txt` (`/proc/kmsg`) and `logs/alive.txt` (the uptime every 10 s,
 then `sync`) on storage, each cut back past 1 MB.
+
+## Nickel stopped, not paused: as KOReader and Plato (2026-10-30)
+
+**Why the change.** Pausing Nickel avoided one thing, its second start in a boot (the kernel's crash once Bluetooth
+was on), and each step since worked around the pause: Nickel's frozen screen on resuming (ours saved and put back),
+`sickel` rebooting the Kobo (paused too, resumed late), the power button queued for a frozen Nickel. Two restarts the
+same day were not explained: one at about 19:06 UTC, no book open, so no logs; one ~1 minute after a book was closed
+and Nickel and `sickel` resumed, in a boot where Nickel had already been restarted, its part of the kernel log
+already cut back (the Wi-Fi driver writes ~600 KB in 3 minutes). Rather than more guesses about a paused program we
+do not control, the pattern KOReader and Plato have used for years (their `koreader.sh`, `nickel.sh`, `plato.sh`
+read; AGPL, so nothing copied).
+
+**`launch.sh` now:** what Nickel needs to start again saved from its environment (session bus, Wi-Fi interface and
+module, platform); Nickel, `hindenburg`, `sickel`, `fontickel` and the rest of KOReader's list stopped with SIGTERM,
+and its DHCP client (Nickel starts its own; Wi-Fi stays up, for SSH); the reader; then Nickel started as the
+firmware's `rcS` starts it: Wi-Fi down first (`/dev/wmtWifi`, as Nickel wants to find it), Nickel's FIFO made again,
+the boot animation, `hindenburg` and `nickel`, `udevadm trigger`. Nickel starts its helpers itself. `sh launch.sh
+nickel` over SSH starts Nickel by hand.
+
+**Tried:** Nickel stopped in 1.0 s; the first page as before (3.1 s, the item still open); closing back on Nickel's
+home screen after its boot animation, a few seconds; same boot, `sickel`, `fontickel`, Wi-Fi and SSH back by
+themselves. A book left open 5¾ minutes (`sickel` used to reboot at ~1.5): nothing happened.
+
+**The audio sink, a lead that was not it.** On this Kobo `rcS` gives Nickel `QT_GSTREAMER_PLAYBIN_AUDIOSINK=
+mtkbtmwrpcaudiosink` (MediaTek's Bluetooth sink); KOReader's and Plato's `nickel.sh` give it `alsasink` (for
+`bluealsa`, not on this Kobo), so Kobo's own audiobooks probably play nowhere in a Nickel they restarted. Ours uses
+`rcS`'s. Not the crash: Bluetooth switched on in a fresh boot, a book opened and closed, **our** Nickel's start with
+the right sink crashed the kernel, NickelMenu lost (recovered with `make kobo-nickelmenu`). Our sound names the sink
+itself (`gst-launch-1.0 … ! mtkbtmwrpcaudiosink`), so the setting is Nickel's alone.
+
+**So the launcher reboots instead while `mtkbtd` runs** (Bluetooth's daemon: not running in a boot until Bluetooth is
+first switched on, running from then on), the same rule as our KOReader patch (`koreader-patch/`,
+koreader/koreader#12739). Not tried with our launcher: the patch's check is the same line.
+
+**Left by the change:** nothing sleeps while a book is open and the power button is nobody's: Nickel is gone, so
+both are the reader's now (the next step). The launcher's logs stop before Nickel starts again, so a crash there is
+not in them.
