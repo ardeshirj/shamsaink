@@ -4,12 +4,12 @@
 "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript, the first thing a
 reader saw on opening a book; *ink* is the illuminator's and the screen's. Searched 2026-10-30: no product or project
 of that name, `shamsaink` free on GitHub and crates.io. Before it: Indium (2026-10-23, after indium tin oxide, E Ink's
-front electrode) and inkreader. Still named the old way until renamed: the GitHub repo `indium-reader`; the reader's
-binary, KOReader plugin and folders on the devices (`indium`, `indium.koplugin`, `/mnt/us/indium`: to rename with a
-reinstall). Staying as they are: Go module and Docker image names (`indiumengine`, `indiumreader`, `einkengine`,
+front electrode) and inkreader. The repo and its folder are `shamsaink` (`ardeshirj/shamsaink`, `~/Github/shamsaink`)
+since 2026-10-30. Still named the old way until renamed: the reader's binary, KOReader plugin and folders on the
+devices (`indium`, `indium.koplugin`, `/mnt/us/indium`: to rename with a reinstall). Staying as they are: Go module and Docker image names (`indiumengine`, `indiumreader`, `einkengine`,
 `eink-*`), and old paths in the experiments' notes.
 
-Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, `ardeshirj/indium-reader` (public or not decided
+Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, now `ardeshirj/shamsaink` (public or not decided
 once it does something). A side project
 of the maintainer of **FarsiEPUB** (`~/Github/farsiepub`, private: a website converting Farsi PDFs to EPUB and a
 library of public-domain Farsi classics) and **rtlbook** (`~/Github/rtlbook`, public: the engine that makes those
