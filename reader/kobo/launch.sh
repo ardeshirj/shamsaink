@@ -6,17 +6,23 @@
 # else the newest EPUB in books/. If anything hangs, over SSH: sh launch.sh nickel (starts Nickel again).
 #
 # The logs, in logs/: reader.log (ours and the reader's), and while a book is open, kept on storage for after a crash
-# (the Kobo's own system log is in RAM, gone with a reboot; the kernel's is in no log): system.log, kernel.log, and
-# alive.log, the uptime every 10 s, each followed by a sync (its last line: when the Kobo was last up). Each cut back
-# to its last 500 KB once past 1 MB.
+# (the Kobo's own system log is in RAM, gone with a reboot; the kernel's is in no log): system.log, kernel.log (its
+# warnings and errors only, levels 0 to 4: a crash's, a refused suspend's, not the Wi-Fi driver's chatter), and
+# alive.log, the uptime every 2 s for the first 30 s then every minute, each followed by a sync (its last line: when
+# the Kobo was last up). Each cut back to its last 500 KB once past 1 MB, on opening and then every minute.
 #
 #     NickelMenu: menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/launch.sh
 D=$(cd "$(dirname "$0")" && pwd)
 cd "$D" || exit 1
 mkdir -p logs
-for f in logs/reader.log logs/system.log logs/kernel.log logs/alive.log; do
-  [ "$(wc -c < "$f" 2>/dev/null || echo 0)" -gt 1000000 ] && tail -c 500000 "$f" > "$f.cut" && mv "$f.cut" "$f"
-done
+# rewritten in place, not moved: the loggers appending to them keep their file
+cut_logs() {
+  for f in logs/reader.log logs/system.log logs/kernel.log logs/alive.log; do
+    [ "$(wc -c < "$f" 2>/dev/null || echo 0)" -gt 1000000 ] && tail -c 500000 "$f" > "$f.cut" && cat "$f.cut" > "$f" \
+      && rm "$f.cut"
+  done
+}
+cut_logs
 log() { echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') launch: $*" >> "$D"/logs/reader.log; }
 
 # Nickel started as the firmware's rcS starts it (its environment from rcS, the session bus from the Nickel stopped,
@@ -90,11 +96,13 @@ echo "== $(date -u '+%Y-%m-%d %H:%M:%S UTC') uptime $(cut -d' ' -f1 /proc/uptime
   logs/kernel.log >> logs/alive.log
 logread -f >> logs/system.log 2>&1 &
 L1=$!
-cat /proc/kmsg >> logs/kernel.log 2>&1 &
+awk '/^<[0-4]>/ { print; fflush() }' /proc/kmsg >> logs/kernel.log 2>&1 &
 L2=$!
-# every 2 s for the first 30 s (a crash on opening, 2026-10-30, left nothing), then every 10 s
-(i=0; while sleep $([ $i -lt 15 ] && echo 2 || echo 10); do
-  i=$((i + 1)); echo "$(date -u '+%H:%M:%S') up $(cut -d' ' -f1 /proc/uptime) s" >> logs/alive.log; sync
+# every 2 s for the first 30 s (a crash on opening, 2026-10-30, left nothing), then every minute, the logs cut too
+(i=0; while sleep $([ $i -lt 15 ] && echo 2 || echo 60); do
+  i=$((i + 1)); echo "$(date -u '+%H:%M:%S') up $(cut -d' ' -f1 /proc/uptime) s" >> logs/alive.log
+  [ $i -gt 15 ] && cut_logs
+  sync
 done) &
 L3=$!
 # Nickel started again however the reader ends; the logs stopped
