@@ -208,19 +208,18 @@ pre { background: var(--card); border: 1px solid var(--rule); border-radius: 6px
 @media (prefers-reduced-motion: no-preference) { .layer, .zone { transition: outline-color .2s, opacity .2s; } }
 
 /* the two pages' tabs */
-nav.tabs-top { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--rule); }
+nav.tabs-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 28px; border-bottom: 1px solid var(--rule); position: sticky; top: 0; z-index: 10; background: var(--bg); }
 nav.tabs-top a { font: 600 .9rem/1 var(--body); color: var(--muted); text-decoration: none; padding: 10px 14px; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 nav.tabs-top a[aria-current="page"] { color: var(--fg); border-bottom-color: var(--tag); }
 nav.tabs-top a:hover, nav.tabs-top a:focus-visible { color: var(--fg); }
 #components > h1 { margin-bottom: .4rem; }
 
-/* the view controls (controls.js): device colour, screen day or night */
-.view { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: center; margin-top: 20px; }
-.view .pick { display: inline-flex; align-items: center; gap: 10px; font-size: .9rem; }
-.view .pick > span { font: 500 .75rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+/* the view controls (controls.js): device colour, screen day or night, at the end of the tab bar */
+.view { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; margin-inline-start: auto; padding-block: 6px; }
+.view .pick { display: inline-flex; align-items: center; gap: 8px; font-size: .85rem; }
+.view .pick > span { font: 500 .7rem/1 var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
 .view .seg { display: inline-flex; border: 1px solid var(--fg); border-radius: 6px; overflow: hidden; }
-.view .seg button { font: 600 .85rem/1 var(--body); padding: 8px 14px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
+.view .seg button { font: 600 .8rem/1 var(--body); padding: 6px 11px; border: 0; background: transparent; color: var(--fg); cursor: pointer; }
 .view .seg button + button { border-inline-start: 1px solid var(--fg); }
 .view .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .view .seg button:focus-visible { outline: 2px solid var(--tag); outline-offset: -3px; }
-.view.inbar { margin-top: 0; }

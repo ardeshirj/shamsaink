@@ -1,4 +1,4 @@
-// The view controls on both pages: the device's colour (white or black) and the screen by day or at night.
+// The view controls on both pages, in the tab bar: the device's colour (white or black) and the screen by day or at night.
 // Kept in localStorage when it is there, so the choice follows from one page to the other.
 (function () {
   const root = document.documentElement;
@@ -31,8 +31,6 @@
     apply(p.opts.some(o => o[0] === saved) ? saved : p.def);
     bar.appendChild(wrap);
   });
-  // beside the outlines checkbox where a page has that bar, else under the tabs
-  const home = document.querySelector('.bar label.sw');
-  if (home) { bar.classList.add('inbar'); home.insertAdjacentElement('afterend', bar); }
-  else document.querySelector('nav.tabs-top').insertAdjacentElement('afterend', bar);
+  // in the tab bar, outside the pages' content: the same place on both pages, pinned while scrolling
+  document.querySelector('nav.tabs-top').appendChild(bar);
 })();
