@@ -92,10 +92,16 @@ starts it again when KOReader is closed (its menu: Exit).
       - `make kobo-status`. For another host name, `make KOBO=name ...`.
 
 ## 4. Keeping it awake, and where things are
-- **Sleep is KOReader's on a Kobo,** not a power daemon's as on the Kindle: while experimenting, set its autosuspend
-  long (its device settings: to check where on the device). Asleep, its Wi-Fi and SSH are off; `make kobo-wait`
-  after waking it with its power button.
-- **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`). To check: whether it is as slow as the
-  Kindle's FUSE `/mnt/us`.
+- **Sleep is whichever is in front's,** not a power daemon's as on the Kindle. While experimenting, set by hand,
+  and set back when done:
+  - Kobo's interface: **Settings → Energy saving and privacy → Automatically go to sleep after: Never**. (Its
+    settings file has it as `[PowerOptions] AutoSleepMinutes`, 0 for never, but the interface reads that file only
+    when it starts, so changing it over SSH does nothing until then; `make kobo-status` shows the file's value.)
+  - KOReader: its own sleep setting, while it is open.
+
+  Asleep, its Wi-Fi and SSH are off: wake it with its power button, then `make kobo-wait`. KOReader's SSH server
+  stays up after KOReader is closed, so `ssh kobo` works with Kobo's interface in front too.
+- **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`): a plain partition (`/dev/mmcblk0p12`, 27 GB),
+  not FUSE as the Kindle's `/mnt/us` (13's probe, 2026-10-29).
 - **We are root** over KOReader's SSH; Kobo's system is writable, so nothing is written outside `/mnt/onboard/.adds`
   and `/tmp` by the experiment.

@@ -16,8 +16,6 @@
 #
 # The Kobo (experiment 13, docs/kobo-setup.md; KOBO is its SSH host; KOReader's SSH server, which stays up after
 # KOReader is closed):
-#   make kobo-awake      keep it awake: Kobo's own sleep timer set to never (drains the battery: undo when done)
-#   make kobo-sleep      let it sleep again, after 5 minutes untouched
 #   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
@@ -26,7 +24,8 @@ KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
-# Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never)
+# Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never). Kobo's interface reads them only
+# when it starts, so the timer is set by hand in its Settings (docs/kobo-setup.md, section 4), not here.
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 
 DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
@@ -34,7 +33,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 
 .PHONY: reader reader-install reader-log engine bench-armv7 fetch-blitz
 .PHONY: kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
-.PHONY: kobo-awake kobo-sleep kobo-status kobo-wait kobo-ssh
+.PHONY: kobo-status kobo-wait kobo-ssh
 
 reader:
 	@sh reader/build.sh
@@ -83,14 +82,6 @@ kindle-wait:
 
 kindle-ssh:
 	@$(SSH)
-
-kobo-awake:
-	@$(KOBO_SSH) 'sed -i "s/^AutoSleepMinutes=.*/AutoSleepMinutes=0/" $(KOBO_CONF) && grep "^AutoSleepMinutes=" $(KOBO_CONF)' \
-	  | sed 's/^AutoSleepMinutes=0$$/kept awake (AutoSleepMinutes=0): run make kobo-sleep when done/'
-
-kobo-sleep:
-	@$(KOBO_SSH) 'sed -i "s/^AutoSleepMinutes=.*/AutoSleepMinutes=5/" $(KOBO_CONF) && grep "^AutoSleepMinutes=" $(KOBO_CONF)' \
-	  | sed 's/^AutoSleepMinutes=5$$/sleeps after 5 minutes untouched again (AutoSleepMinutes=5)/'
 
 kobo-status:
 	@$(KOBO_SSH) 'B=/sys/class/power_supply/bd71827_bat; \
