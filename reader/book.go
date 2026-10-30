@@ -106,6 +106,9 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 	if !r.seek(r.doc, r.at) && !r.next() {
 		return nil, fmt.Errorf("%s: no pages", path)
 	}
+	if r.marks.tidy(r.text) {
+		r.marks.save()
+	}
 	return r, nil
 }
 

@@ -487,8 +487,15 @@ impl Book {
                     continue;
                 }
                 let (y, yb) = ((top - p.top + m).floor() as i32, (bottom - p.top + m).ceil() as i32);
+                // a run cut into glyph runs by its styles (a span a word, in a narrated book) walked once, from where its
+                // first part starts: each part's clusters are the whole run's
+                let mut runs = vec![];
                 for item in line.items() {
                     let parley::PositionedLayoutItem::GlyphRun(gr) = item else { continue };
+                    if runs.contains(&gr.run().index()) {
+                        continue;
+                    }
+                    runs.push(gr.run().index());
                     let mut x = x0 + gr.offset() as f64;
                     let mut word: Option<Word> = None;
                     for c in gr.run().visual_clusters() {

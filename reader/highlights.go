@@ -42,6 +42,44 @@ func (h *highlights) save() {
 	os.WriteFile(h.path, append(b, '\n'), 0o644)
 }
 
+// add keeps hl, taking in the highlights it overlaps (one span over them all), so no text is under two; its text is
+// read by text when it has none or took any in. It returns hl as kept.
+func (h *highlights) add(hl highlight, text func(doc int, from, to [2]int) string) highlight {
+	took := false
+	// again until none is left: a span made longer can reach one passed over
+	for more := true; more; {
+		more = false
+		h.list = slices.DeleteFunc(h.list, func(o highlight) bool {
+			if o.Doc != hl.Doc || !before(o.From, hl.To) || !before(hl.From, o.To) {
+				return false
+			}
+			if before(o.From, hl.From) {
+				hl.From = o.From
+			}
+			if before(hl.To, o.To) {
+				hl.To = o.To
+			}
+			more, took = true, true
+			return true
+		})
+	}
+	if took || hl.Text == "" {
+		hl.Text = text(hl.Doc, hl.From, hl.To)
+	}
+	h.list = append(h.list, hl)
+	return hl
+}
+
+// tidy takes in the highlights kept overlapping before add did; true if any were.
+func (h *highlights) tidy(text func(doc int, from, to [2]int) string) bool {
+	old := h.list
+	h.list = nil
+	for _, hl := range old {
+		h.add(hl, text)
+	}
+	return len(h.list) < len(old)
+}
+
 // before says whether (block, byte) a comes before b in the text.
 func before(a, b [2]int) bool { return a[0] < b[0] || a[0] == b[0] && a[1] < b[1] }
 
@@ -88,6 +126,11 @@ func darken(img *image.Gray, rs []image.Rectangle) {
 			}
 		}
 	}
+}
+
+// text is document doc's text from one (block, byte) to another.
+func (r *reading) text(doc int, from, to [2]int) string {
+	return r.book.Text(doc, from[0], from[1], to[0], to[1])
 }
 
 // mark greys the highlights on page n (of document doc), drawn into img.

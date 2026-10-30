@@ -483,9 +483,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				}
 				s := time.Now()
 				a, b := sel.span()
-				hl := highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}
-				hl.Text = r.book.Text(r.doc, a.Block, a.Start, b.Block, b.End)
-				r.marks.list = append(r.marks.list, hl)
+				hl := r.marks.add(highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}, r.text)
 				r.marks.save()
 				// the page drawn again with it (and the others on it), the bars gone
 				r.book.Draw(r.page(), shown.img)
