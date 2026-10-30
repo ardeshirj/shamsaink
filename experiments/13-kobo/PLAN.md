@@ -82,23 +82,42 @@ to copy):
      scp 'kobo:/mnt/onboard/.adds/indium/probe/probe-*.txt' experiments/13-kobo/out/
      ```
    **Done when** these are written down (NOTES.md).
-2. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
-   `reader/device`; the Kindle checked to still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl,
-   the page widened to 32 bits (and turned, if the framebuffer's portrait is not the panel's), its touch (screen x =
-   touch y, screen y = 1680 − touch x: NOTES.md) and the page-turn buttons. The second core switched on
-   by us for a chapter's layout and off after, as Kobo's interface does: timed against one core. Then the reader from
-   KOReader's file manager, as on the Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299
-   and 121 ms), a first open and a reopen against KOReader's crengine on the same device and books (09's table),
-   memory. **Done when** a book is read on it as on the Kindle, and the numbers are in NOTES.md.
-3. **Sound, both ways, an hour each:** narration (FarsiEPUB's *Buried Alive*) to Bluetooth headphones through
-   `mtkbtmwrpcaudiosink`, (a) from Nickel's side (Nickel running: who holds the socket, does Kobo's own audiobook
-   player get in the way), (b) inside KOReader with Nickel stopped. Counted: drop-outs, gaps between parts, how far
+Steps 2 and 3 follow both ways to host the reader on Kobo (decided 2026-10-29), since with Bluetooth on a second
+start of Nickel panics the kernel (NOTES.md, koreader/koreader#12739), which KOReader's Exit does: **inside KOReader**,
+as on the Kindle, made safe by a patch; and **without KOReader**, from NickelMenu with Nickel paused, never restarted.
+Step 4's sound is tried under both.
+
+2. **Inside KOReader: our page on its screen, and a safe exit.**
+   - `screen.go` and `touch.go` behind a small table per device (the roadmap's `reader/device`; the Kindle checked to
+     still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl, the page widened to 32 bits (and
+     turned, if the framebuffer's portrait is not the panel's), its touch (screen x = touch y, screen y = 1680 −
+     touch x: NOTES.md) and the page-turn buttons. The second core switched on by us for a chapter's layout and off
+     after, as Kobo's interface does: timed against one core. Then the reader from KOReader's file manager, as on the
+     Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299 and 121 ms), a first open and a
+     reopen against KOReader's crengine on the same device and books (09's table), memory.
+   - **The exit patch:** a KOReader user patch (`koreader/patches/`, kept across KOReader updates) that turns Exit
+     into Reboot while Kobo's Bluetooth daemon (`mtkbtd`) runs: not running until Bluetooth is first switched on in
+     a boot (13's probes before pairing), running from then on. Checked three ways: Exit with Bluetooth never on (a
+     normal exit), Exit after it was on (a reboot, NickelMenu kept), Reboot from the menu (unchanged).
+   **Done when** a book is read on it as on the Kindle, the numbers are in NOTES.md, and Exit no longer loses
+   NickelMenu.
+3. **Without KOReader: Nickel paused.** From NickelMenu, Nickel paused (`SIGSTOP`), not killed: its drivers, Wi-Fi,
+   Bluetooth and its pairing stay as they are; the touch screen and buttons taken by us (`EVIOCGRAB`); Nickel
+   resumed (`SIGCONT`) on leaving, so it never starts a second time.
+   - **First a pause test** (an hour): a script from NickelMenu that pauses Nickel, shows one page with our tool,
+     waits for a tap, resumes Nickel; with Bluetooth off and on. To find out: whether Nickel redraws once resumed
+     (or needs a nudge), whether anything watches it while paused, whether a tap made while paused reaches it after.
+   - **Then what Nickel no longer does for us while paused** (sleep and the power button, the light, battery,
+     charging): each listed with its cost to do ourselves (Plato's code, AGPL-3.0, to learn from), or handed back to
+     Nickel (e.g. the power button resumes Nickel and lets it sleep: the book then reopened from NickelMenu).
+   **Done when** the pause test is in NOTES.md and the list says whether this host is weeks or months.
+4. **Sound, under both hosts, an hour each:** narration (FarsiEPUB's *Buried Alive*) to Bluetooth headphones through
+   `mtkbtmwrpcaudiosink`, (a) inside KOReader with Nickel stopped (a tone works: NOTES.md), (b) with Nickel paused
+   (does its daemon keep the link, does Kobo's own audiobook player get in the way). Through `gst-launch-1.0`, the
+   device decoding the MP3s itself (`mpg123audiodec`) or fed by us. Counted: drop-outs, gaps between parts, how far
    the underline drifts from the voice over the hour, the start-up delay (the Kindle's `LEAD_MS`), what pairing
-   takes. Through `gst-launch-1.0` fed by us (above): first whether it plays at all from a pipe, then the hour. **Done when** we know whether read-along on the Libra Colour goes around the device as on the Kindle or not.
-4. **Started without KOReader** (only if 3 says sound is clean): from NickelMenu, Nickel stopped as KOReader does
-   and started again when left; what KOReader does for us then (sleep, the light, Wi-Fi, battery) listed with what
-   each costs to do ourselves (Plato's code, AGPL-3.0, to learn from). **Done when** the list says whether stage 5
-   on Kobo is weeks or months.
+   takes. **Done when** we know whether read-along on the Libra Colour works on its own sound path, and under which
+   host.
 
 ## Not in this experiment
 Colour pages (colour refreshes, `GCC16`/`GLRC16`), the one-core Clara BW (to time later if a Kobo becomes stage 4's
