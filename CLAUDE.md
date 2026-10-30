@@ -151,6 +151,10 @@ when drawn (`engine/patches/blitz-lazy-images.patch`); what Blitz already has ne
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.
 - **Existing tools first:** our own code only where they fall short.
+- **Structural improvements welcome** (the maintainer, 2026-10-30, after the open book became a `session` with one
+  event loop): point them out when they would pay off for the work coming next, the gain and the risk, and build them
+  on a yes, behaviour and pages checked unchanged on a device. Code goes into packages once there is enough of it
+  (highlights and narration stay in `main` for now).
 - **The reader's panels are HTML components, in modern CSS** (the maintainer, 2026-10-29): Blitz is a modern
   engine, so flex, grid, gap, custom properties and logical properties are welcome. Each panel is a template in
   `reader/ui/templates/` (drawn by the Go package `reader/ui`) built from the pieces in `components.html` (button,
