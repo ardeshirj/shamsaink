@@ -47,6 +47,8 @@ func TestPanels(t *testing.T) {
 		}
 	}
 	save("remove", drawRemove(fonts, w).img)
+	save("splash", splash(t.TempDir(), fonts, w, h))
+	save("splash-kobo", splash(t.TempDir(), fonts, 1264, 1680))
 	for _, rtl := range []bool{true, false} {
 		for _, back := range []int{0, 7} {
 			for _, share := range []float64{0, 0.25, 1} {

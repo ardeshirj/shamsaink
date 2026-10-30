@@ -128,7 +128,27 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	defer f.Close() // closed at once when left, the book too: twice does no harm
 	sleep, stopSleeps := sleeps()
 	defer stopSleeps()
-	r, err := openBook(context.Background(), path, rd.dir, o, rd.fonts, func(key string) string { return set.Direction[key] })
+	// the book opened meanwhile, and the opening screen shown if it takes longer than splashAfter (its picture first,
+	// so the engine never draws it and opens the book at once)
+	open := splash(rd.dir, rd.fonts, scr.w, scr.h)
+	type opened struct {
+		r   *reading
+		err error
+	}
+	done := make(chan opened, 1)
+	go func() {
+		r, err := openBook(context.Background(), path, rd.dir, o, rd.fonts, func(key string) string { return set.Direction[key] })
+		done <- opened{r, err}
+	}()
+	var op opened
+	select {
+	case op = <-done:
+	case <-time.After(splashAfter):
+		scr.show(open, wfGC16, true)
+		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
+		op = <-done
+	}
+	r, err := op.r, op.err
 	if err != nil {
 		return false, err
 	}
