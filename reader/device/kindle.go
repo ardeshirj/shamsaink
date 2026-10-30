@@ -1,4 +1,4 @@
-package main
+package device
 
 import (
 	"bufio"
@@ -11,9 +11,9 @@ import (
 // draws nothing, so the reader leaves the book then: KOReader, its turn again, finds powerd's message and shows its
 // screensaver, and the plugin opens the book again when the Kindle wakes.
 
-// sleeps sends true when powerd goes to the screensaver, until stop is called.
-func sleeps() (<-chan bool, func()) {
-	out := make(chan bool, 4)
+// kindleSleeps sends when powerd goes to the screensaver, until stop is called.
+func kindleSleeps() (<-chan struct{}, func()) {
+	out := make(chan struct{}, 4)
 	cmd := exec.Command("lipc-wait-event", "-m", "com.lab126.powerd", "goingToScreenSaver")
 	stdout, err := cmd.StdoutPipe()
 	if err != nil || cmd.Start() != nil {
@@ -24,7 +24,7 @@ func sleeps() (<-chan bool, func()) {
 		s := bufio.NewScanner(stdout)
 		for s.Scan() {
 			if f := strings.Fields(s.Text()); len(f) > 0 && f[0] == "goingToScreenSaver" {
-				out <- true
+				out <- struct{}{}
 			}
 		}
 	}()

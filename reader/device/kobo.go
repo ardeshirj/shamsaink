@@ -1,4 +1,4 @@
-package main
+package device
 
 import (
 	"encoding/binary"
@@ -26,7 +26,7 @@ import (
 // told) and 2 s let pass, then "mem" to /sys/power/state, a write that returns once the Kobo wakes. On MediaTek Kobos
 // a suspend while plugged in hangs the kernel, so then the Kobo stays awake behind the sleep screen until unplugged
 // or pressed again. A wake that is not a press (the charger, the battery's chip) goes back to sleep after 15 s, at
-// most 20 times in a row. On the Kindle sleep is powerd's (sleep.go).
+// most 20 times in a row. On the Kindle sleep is powerd's (kindle.go).
 const (
 	powerDev = "/dev/input/event3" // bd71828-pwrkey
 	evKey    = 1
@@ -47,11 +47,11 @@ const (
 	wifiState = "/sys/class/net/wlan0/operstate"
 )
 
-// presses sends each press of the power button until the file is closed (not on a Kobo: a channel that never sends).
-func presses(kobo bool) (io.Closer, <-chan struct{}) {
+// presses sends each press of the power button until the file is closed (not opened: a channel that never sends).
+func presses() (io.Closer, <-chan struct{}) {
 	out := make(chan struct{}, 4)
 	f, err := os.Open(powerDev)
-	if !kobo || err != nil {
+	if err != nil {
 		return io.NopCloser(nil), out
 	}
 	go func() {
@@ -127,11 +127,11 @@ func plugged() bool {
 // doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again
 // (power), then puts the light and the screen back as they were, and Wi-Fi if it was up (in the background: a few
 // seconds to connect).
-func (rd *reader) doze(power <-chan struct{}, pic *image.Gray) {
+func (d *Device) doze(power <-chan struct{}, pic *image.Gray) {
 	t := time.Now()
-	back := rd.scr.save()
-	rd.scr.show(pic, wfGC16, true)
-	rd.scr.wait()
+	back := d.Screen.Save()
+	d.Screen.Show(pic, WfGC16, true)
+	d.Screen.Wait()
 	light, _ := os.ReadFile(lightLevel)
 	sysfs(lightFile, "0")
 	wifi, _ := os.ReadFile(wifiState)
@@ -212,6 +212,8 @@ func (rd *reader) doze(power <-chan struct{}, pic *image.Gray) {
 	}
 	t = time.Now()
 	sysfs(lightFile, strings.TrimSpace(string(light)))
-	rd.scr.restore(back)
+	d.Screen.Restore(back)
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 }
+
+func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }

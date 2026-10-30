@@ -22,10 +22,10 @@ import (
 	"time"
 
 	blitz "indiumengine"
+	"indiumreader/device"
 )
 
 var (
-	touchDev = env("TOUCH", "/dev/input/event1")
 	// the settings' defaults, until set in the menu
 	fontSize   = env("FONT_SIZE", "50") // px (09: 50 looks right at 300 ppi)
 	lineHeight = env("LINE_HEIGHT", "0")
@@ -36,7 +36,7 @@ var (
 // What stays between books: the screen, the fallback fonts, the three pages' buffers and one for the menu over a
 // page.
 type reader struct {
-	scr   *screen
+	dev   *device.Device
 	fonts *blitz.Fonts
 	dir   string
 	pages drawnPages
@@ -55,7 +55,7 @@ func main() {
 	exe, _ := os.Executable()
 	rd := &reader{dir: env("INDIUM_DIR", filepath.Dir(exe))}
 	var err error
-	rd.scr, err = openScreen()
+	rd.dev, err = device.Open()
 	check(err)
 	fontsArg := 2
 	if serve {
@@ -66,22 +66,22 @@ func main() {
 	}
 	rd.pages = make(drawnPages, 3)
 	for i := range rd.pages {
-		rd.pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, rd.scr.w, rd.scr.h))}
+		rd.pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))}
 	}
-	rd.over = image.NewGray(image.Rect(0, 0, rd.scr.w, rd.scr.h))
+	rd.over = image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))
 	rd.clock = newClockFace(rd.fonts)
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {
 		// RESTORE_SCREEN: the screen found put back on leaving, for a host paused meanwhile that does not redraw once
 		// resumed (Kobo's interface, from reader/kobo/launch.sh)
-		var found saved
+		var found device.Saved
 		if os.Getenv("RESTORE_SCREEN") != "" {
-			found = rd.scr.save()
+			found = rd.dev.Screen.Save()
 		}
 		_, err := rd.read(map[string]string{"book": os.Args[1]}, t)
 		if found != nil {
-			rd.scr.restore(found)
+			rd.dev.Screen.Restore(found)
 		}
 		check(err)
 		return
@@ -118,21 +118,19 @@ func main() {
 // read opens a book (m: "book", see above) at its place and turns its pages until it is left; the touch screen is
 // let go of and the book closed before it returns.
 func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error) {
-	scr, pages, path := rd.scr, rd.pages, m["book"]
+	dev, scr, pages, path := rd.dev, rd.dev.Screen, rd.pages, m["book"]
 	set := loadSettings(rd.dir)
-	o := set.options(scr.w, scr.h)
-	f, gestures, err := touches(touchDev, scr.touchTurn())
+	o := set.options(scr.W, scr.H)
+	f, gestures, err := dev.Touches()
 	if err != nil {
 		return false, err
 	}
 	defer f.Close() // closed at once when left, the book too: twice does no harm
-	sleep, stopSleeps := sleeps()
+	sleep, stopSleeps := dev.Sleeps()
 	defer stopSleeps()
-	pf, power := presses(scr.bytes == 4) // the Kobo's power button (power.go)
-	defer pf.Close()
 	// the book opened meanwhile, and the opening screen shown if it takes longer than splashAfter (its picture first,
 	// so the engine never draws it and opens the book at once)
-	open := splash(rd.dir, rd.fonts, scr.w, scr.h)
+	open := splash(rd.dir, rd.fonts, scr.W, scr.H)
 	type opened struct {
 		r   *reading
 		err error
@@ -146,7 +144,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	select {
 	case op = <-done:
 	case <-time.After(splashAfter):
-		scr.show(open, wfGC16, true)
+		scr.Show(open, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
 		op = <-done
 	}
@@ -175,14 +173,14 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// showPage shows the page with the time on it
 	showPage := func(waveform uint32, flash bool) {
 		stamp()
-		scr.show(shown.img, waveform, flash)
+		scr.Show(shown.img, waveform, flash)
 	}
 	// minute is due at the next minute's start, for the clock on a page shown that long
 	nextMinute := func() <-chan time.Time {
 		return time.After(time.Until(time.Now().Truncate(time.Minute).Add(time.Minute)))
 	}
 	minute := nextMinute()
-	showPage(wfGC16, true) // a clean page over KOReader's
+	showPage(device.WfGC16, true) // a clean page over KOReader's
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
 		filepath.Base(path), r.doc, r.at, ms(t), r.restored, r.rtl, o.FontSize, o.LineHeight, o.Margin)
 
@@ -214,18 +212,18 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// showMenu puts the menu and the panel at the bottom over the page shown
 	showMenu := func() {
 		s := time.Now()
-		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, r.bookRTL, rd.fonts, scr.w)
-		nav = drawNav(where(), rd.fonts, scr.w, scr.h)
+		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, r.bookRTL, rd.fonts, scr.W)
+		nav = drawNav(where(), rd.fonts, scr.W, scr.H)
 		copy(rd.over.Pix, shown.img.Pix)
 		mn.over(rd.over)
 		nav.over(rd.over)
-		scr.show(rd.over, wfREAGL, false)
+		scr.Show(rd.over, device.WfREAGL, false)
 		fmt.Printf("  menu drawn in %.0f ms\n", ms(s))
 	}
 	// closeMenu takes the menu and the bottom panel off the page
 	closeMenu := func() {
 		mn, nav = nil, nil
-		showPage(wfREAGL, false)
+		showPage(device.WfREAGL, false)
 	}
 	// jump goes to page at of document doc from the menu or the table of contents, the place before it kept for
 	// "Back to page"
@@ -238,7 +236,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		mn, nav = nil, nil
 		shown = pages.get(r, r.doc, r.at, r.page())
 		pages.touch(shown)
-		showPage(wfREAGL, false)
+		showPage(device.WfREAGL, false)
 		r.keep()
 		ahead = true
 		fmt.Printf("went to document %d page %d (from document %d page %d)\n", r.doc, r.at, d, a)
@@ -254,7 +252,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			r.doc, r.at = c.doc, page-first
 			shown = pages.get(r, r.doc, r.at, page)
 			pages.touch(shown)
-			showPage(wfREAGL, false)
+			showPage(device.WfREAGL, false)
 			r.keep()
 			nar.bars = nil
 		}
@@ -265,7 +263,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		}
 		nar.bars = nar.bars[:0]
 		for _, b := range boxes {
-			bar := image.Rect(b.Min.X, b.Max.Y+3, b.Max.X, min(b.Max.Y+9, scr.h))
+			bar := image.Rect(b.Min.X, b.Max.Y+3, b.Max.X, min(b.Max.Y+9, scr.H))
 			for y := bar.Min.Y; y < bar.Max.Y; y++ {
 				for x := bar.Min.X; x < bar.Max.X; x++ {
 					rd.over.Pix[y*rd.over.Stride+x] = 0
@@ -274,7 +272,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			nar.bars = append(nar.bars, bar)
 			region = region.Union(bar)
 		}
-		scr.showPart(rd.over, region.Intersect(image.Rect(0, 0, scr.w, scr.h)), wfA2, false)
+		scr.ShowPart(rd.over, region.Intersect(image.Rect(0, 0, scr.W, scr.H)), device.WfA2, false)
 	}
 	var sel *selection // a selection being made, while a finger is held
 	unmark := -1       // the highlight the panel asks about
@@ -292,7 +290,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			sel.bars = append(sel.bars, bar)
 		}
-		scr.showPart(rd.over, old.Union(union(sel.bars)).Intersect(rd.over.Rect), wfA2, false)
+		scr.ShowPart(rd.over, old.Union(union(sel.bars)).Intersect(rd.over.Rect), device.WfA2, false)
 	}
 	// silence ends the narration, the underline erased
 	silence := func() {
@@ -302,26 +300,30 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			region = region.Union(b)
 		}
 		if !region.Empty() {
-			scr.showPart(shown.img, region, wfA2, false)
+			scr.ShowPart(shown.img, region, device.WfA2, false)
 		}
 		fmt.Printf("read aloud: stopped at word %d of %d\n", nar.next, len(nar.cues))
 		nar = nil
 		ahead = true
 	}
-	// doze sleeps until the power button is pressed again (the Kobo), the narration stopped; the clock brought up to
-	// date on waking
-	doze := func() {
-		if nar != nil {
+	// sleepNow answers the device wanting to sleep. The Kobo sleeps here, until the power button is pressed again, the
+	// narration stopped; the clock brought up to date on waking: false. The Kindle says to leave the book (true; the
+	// narration stopped when it is left).
+	sleepNow := func() (leave bool) {
+		if dev.Kind == device.Kobo && nar != nil {
 			silence()
 		}
-		rd.doze(power, sleepScreen(rd.dir, open))
+		if !dev.Doze(rd.dir, open) {
+			return true
+		}
 		for len(gestures) > 0 { // touched while asleep
 			<-gestures
 		}
 		minute = time.After(0)
+		return false
 	}
 	for {
-		var g gesture
+		var g device.Gesture
 		if nar != nil {
 			// reading aloud: the next thing due done in time (words due together: the last one underlined); a
 			// touch stops it
@@ -331,10 +333,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				continue
 			}
 			select {
-			case asleep = <-sleep:
-			case <-power:
-				doze()
-				continue
+			case <-sleep:
+				if asleep = sleepNow(); !asleep {
+					continue
+				}
 			case <-gestures:
 				silence()
 				for len(gestures) > 0 {
@@ -373,14 +375,14 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		tick := func() {
 			minute = nextMinute()
 			if !set.HideClock && mn == nil && cv == nil && sel == nil {
-				scr.showPart(shown.img, stamp(), wfREAGL, false)
+				scr.ShowPart(shown.img, stamp(), device.WfREAGL, false)
 			}
 		}
 		select {
-		case asleep = <-sleep:
-		case <-power:
-			doze()
-			continue
+		case <-sleep:
+			if asleep = sleepNow(); !asleep {
+				continue
+			}
 		case <-minute:
 			tick()
 			continue
@@ -407,10 +409,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				continue
 			}
 			select {
-			case asleep = <-sleep:
-			case <-power:
-				doze()
-				continue
+			case <-sleep:
+				if asleep = sleepNow(); !asleep {
+					continue
+				}
 			case <-minute:
 				tick()
 				continue
@@ -421,23 +423,23 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			// the table of contents shown: a swipe turns its pages (in the book's direction, or up for the next), a
 			// tap on an entry goes there, the header's button back to the page
 			switch {
-			case g.hold != notHeld:
-			case g.swipe:
-				forward := (g.dx < 0) != r.rtl
-				if abs(g.dy) > abs(g.dx) {
-					forward = g.dy < 0
+			case g.Hold != device.NotHeld:
+			case g.Swipe:
+				forward := (g.DX < 0) != r.rtl
+				if abs(g.DY) > abs(g.DX) {
+					forward = g.DY < 0
 				}
 				if n := cv.page + map[bool]int{true: 1, false: -1}[forward]; n >= 0 && n < cv.pages {
 					cv.page = n
 					cv.draw(rd.over)
-					scr.show(rd.over, wfREAGL, false)
+					scr.Show(rd.over, device.WfREAGL, false)
 				}
-			case cv.head.at(g.x, g.y) == "contents-close":
+			case cv.head.at(g.X, g.Y) == "contents-close":
 				cv.close()
 				cv = nil
-				showPage(wfREAGL, false)
+				showPage(device.WfREAGL, false)
 			default:
-				if i := cv.entryAt(g.x, g.y); i >= 0 {
+				if i := cv.entryAt(g.X, g.Y); i >= 0 {
 					cv.close()
 					cv = nil
 					jump(toc[i].doc, r.entryAt(toc[i]))
@@ -445,29 +447,29 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			continue
 		}
-		if g.hold != notHeld && !asleep {
+		if g.Hold != device.NotHeld && !asleep {
 			// a finger held on a word: on a highlight, a panel to remove it; else a selection from that word to
 			// the one under the finger, a highlight once it is lifted
 			switch {
 			case mn != nil:
-			case g.hold == held:
+			case g.Hold == device.Held:
 				words := r.book.Words(r.page())
-				i := wordAt(words, g.x, g.y)
+				i := wordAt(words, g.X, g.Y)
 				if i < 0 {
 					break
 				}
 				if unmark = r.marks.at(r.doc, words[i]); unmark >= 0 {
-					mn = drawRemove(rd.fonts, scr.w)
+					mn = drawRemove(rd.fonts, scr.W)
 					copy(rd.over.Pix, shown.img.Pix)
 					mn.over(rd.over)
-					scr.showPart(rd.over, mn.rect(), wfREAGL, false)
+					scr.ShowPart(rd.over, mn.rect(), device.WfREAGL, false)
 					break
 				}
 				sel = &selection{words: words, from: i, to: i}
 				showSel()
 			case sel != nil:
-				j := wordAt(sel.words, g.x, g.y)
-				if g.hold == dragged {
+				j := wordAt(sel.words, g.X, g.Y)
+				if g.Hold == device.Dragged {
 					if j >= 0 && j != sel.to {
 						sel.to = j
 						showSel()
@@ -487,7 +489,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				r.book.Draw(r.page(), shown.img)
 				r.mark(r.page(), r.doc, shown.img)
 				bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
-				scr.showPart(shown.img, union(bs).Union(union(sel.bars)).Intersect(shown.img.Rect), wfREAGL, false)
+				scr.ShowPart(shown.img, union(bs).Union(union(sel.bars)).Intersect(shown.img.Rect), device.WfREAGL, false)
 				fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(s))
 				sel = nil
 			}
@@ -497,20 +499,20 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		if mn != nil && !leave {
 			// the menu open: a button tapped is applied (the page laid out again if need be), a tap off the
 			// panel closes it
-			id := mn.at(g.x, g.y)
+			id := mn.at(g.X, g.Y)
 			if id == "" && nav != nil {
-				id = nav.at(g.x, g.y)
+				id = nav.at(g.X, g.Y)
 			}
 			switch {
-			case g.swipe:
+			case g.Swipe:
 			case id == "leave":
 				leave = true
 			case id == "contents":
 				s := time.Now()
 				mn, nav = nil, nil
-				cv = newContentsView(toc, r.chapter(toc), r.rtl, rd.fonts, scr.w, scr.h)
+				cv = newContentsView(toc, r.chapter(toc), r.rtl, rd.fonts, scr.W, scr.H)
 				cv.draw(rd.over)
-				scr.show(rd.over, wfREAGL, false)
+				scr.Show(rd.over, device.WfREAGL, false)
 				fmt.Printf("  contents: %d entries, %d pages, drawn in %.0f ms\n", len(toc), cv.pages, ms(s))
 			case id == "chapter-prev" || id == "chapter-next":
 				c := r.prevChapter(toc)
@@ -521,7 +523,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 					jump(toc[c].doc, r.entryAt(toc[c]))
 				}
 			case id == "bar":
-				share := nav.share(g.x, r.rtl)
+				share := nav.share(g.X, r.rtl)
 				doc, at := int(share*float64(len(r.spine))), 0
 				if !rest {
 					n := int(share * float64(r.book.Pages()-1))
@@ -571,11 +573,11 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				shown.doc = -1 // drawn again without it
 				shown = pages.get(r, r.doc, r.at, r.page())
 				pages.touch(shown)
-				showPage(wfREAGL, false)
+				showPage(device.WfREAGL, false)
 				fmt.Printf("highlight %d removed\n", unmark+1)
 				continue
 			case id == "keep-highlight":
-				scr.showPart(shown.img, mn.rect(), wfREAGL, false)
+				scr.ShowPart(shown.img, mn.rect(), device.WfREAGL, false)
 				mn = nil
 			case id != "":
 				s := time.Now()
@@ -588,7 +590,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 					ahead = true
 				}
 				if relayout {
-					o = set.options(scr.w, scr.h)
+					o = set.options(scr.W, scr.H)
 					r.relayout(o)
 					forget()
 					shown = pages.get(r, r.doc, r.at, r.page())
@@ -597,10 +599,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 						o.FontSize, o.LineHeight, o.Margin, r.doc, r.at, ms(s), r.restored)
 				}
 				showMenu()
-			case nav == nil && !image.Pt(g.x, g.y).In(mn.rect()):
-				scr.showPart(shown.img, mn.rect(), wfREAGL, false)
+			case nav == nil && !image.Pt(g.X, g.Y).In(mn.rect()):
+				scr.ShowPart(shown.img, mn.rect(), device.WfREAGL, false)
 				mn = nil
-			case nav != nil && !image.Pt(g.x, g.y).In(mn.rect()) && !image.Pt(g.x, g.y).In(nav.rect()):
+			case nav != nil && !image.Pt(g.X, g.Y).In(mn.rect()) && !image.Pt(g.X, g.Y).In(nav.rect()):
 				closeMenu()
 			}
 			if !leave {
@@ -610,9 +612,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		// taps queued while the last page's ink moved are applied together: one page drawn for all of them
 		turned, open := false, false
 		if !leave {
-			turned, open = apply(r, g, scr.w, scr.h)
+			turned, open = apply(r, g, scr.W, scr.H)
 			for len(gestures) > 0 && !open {
-				t, m := apply(r, <-gestures, scr.w, scr.h)
+				t, m := apply(r, <-gestures, scr.W, scr.H)
 				turned, open = turned || t, m
 			}
 		}
@@ -633,7 +635,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			s := time.Now()
 			r.keep()
 			k := ms(s)
-			scr.wait()
+			scr.Wait()
 			w := ms(s) - k
 			f.Close()
 			r.close()
@@ -649,7 +651,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			}
 			shown = pages.get(r, r.doc, r.at, r.page())
 			pages.touch(shown)
-			showPage(wfREAGL, false)
+			showPage(device.WfREAGL, false)
 			r.keep()
 			ahead = true
 			fmt.Printf("document %d page %d: %s, %.0f ms\n", r.doc, r.at, how, ms(s))
@@ -698,21 +700,21 @@ func (ps drawnPages) get(r *reading, doc, at, n int) *drawn {
 }
 
 // apply turns a page for a gesture, or says to open the menu (a tap on the top tenth of the screen).
-func apply(r *reading, g gesture, w, h int) (turned, menu bool) {
+func apply(r *reading, g device.Gesture, w, h int) (turned, menu bool) {
 	switch {
-	case !g.swipe && g.y < h/10:
+	case !g.Swipe && g.Y < h/10:
 		return false, true
-	case g.swipe && abs(g.dx) > abs(g.dy):
+	case g.Swipe && abs(g.DX) > abs(g.DY):
 		// a swipe towards the book's start edge turns forward, as a paper page
-		if (g.dx < 0) != r.rtl {
+		if (g.DX < 0) != r.rtl {
 			return r.next(), false
 		}
 		return r.prev(), false
-	case !g.swipe:
+	case !g.Swipe:
 		// back on the quarter by the book's start edge, forward on the rest
-		back := g.x < w/4
+		back := g.X < w/4
 		if r.rtl {
-			back = g.x >= w-w/4
+			back = g.X >= w-w/4
 		}
 		if back {
 			return r.prev(), false

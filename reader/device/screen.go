@@ -1,4 +1,4 @@
-package main
+package device
 
 import (
 	"image"
@@ -21,9 +21,9 @@ const (
 
 // The MediaTek driver's waveform modes (MTK_WAVEFORM_MODE_*, HWTCON_WAVEFORM_MODE_*: the same numbers).
 const (
-	wfGC16  = 2
-	wfREAGL = 4
-	wfA2    = 6
+	WfGC16  = 2
+	WfREAGL = 4
+	WfA2    = 6
 )
 
 type rect struct{ top, left, width, height uint32 }
@@ -48,10 +48,10 @@ type updateHwtcon struct {
 	ditherMode                    int32
 }
 
-type screen struct {
+type Screen struct {
 	f              *os.File
 	mem            []byte
-	w, h, line, y0 int
+	W, H, line, y0 int
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
 }
@@ -63,7 +63,7 @@ func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
 	return nil
 }
 
-func openScreen() (*screen, error) {
+func openScreen() (*Screen, error) {
 	f, err := os.OpenFile("/dev/fb0", os.O_RDWR, 0)
 	if err != nil {
 		return nil, err
@@ -77,21 +77,21 @@ func openScreen() (*screen, error) {
 		return nil, err
 	}
 	u32 := func(b []byte, o int) int { return int(*(*uint32)(unsafe.Pointer(&b[o]))) }
-	s := &screen{f: f, w: u32(v[:], 0), h: u32(v[:], 4), y0: u32(v[:], 20), bytes: u32(v[:], 24) / 8,
+	s := &Screen{f: f, W: u32(v[:], 0), H: u32(v[:], 4), y0: u32(v[:], 20), bytes: u32(v[:], 24) / 8,
 		line: u32(x[:], 44)}
 	s.mem, err = syscall.Mmap(int(f.Fd()), 0, u32(x[:], 20), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 	return s, err
 }
 
-// show puts a page on the screen: waits for the last refresh to end (so the two never overlap), copies the page in
+// Show puts a page on the screen: waits for the last refresh to end (so the two never overlap), copies the page in
 // and refreshes the whole screen, returning while the ink moves.
-func (s *screen) show(p *image.Gray, waveform uint32, flash bool) {
-	s.showPart(p, image.Rect(0, 0, s.w, s.h), waveform, flash)
+func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
+	s.ShowPart(p, image.Rect(0, 0, s.W, s.H), waveform, flash)
 }
 
-// showPart is show for a part of the screen only: the rows of r from p (p is the whole screen's).
-func (s *screen) showPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
-	s.wait()
+// ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
+func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
+	s.Wait()
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		src := p.Pix[y*p.Stride+r.Min.X : y*p.Stride+r.Max.X]
 		at := (s.y0+y)*s.line + r.Min.X*s.bytes
@@ -107,26 +107,26 @@ func (s *screen) showPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 	s.send(r, waveform, flash)
 }
 
-// saved is what the screen showed, from save, for restore.
-type saved []byte
+// Saved is what the screen showed, from Save, for Restore.
+type Saved []byte
 
-// save copies what the screen shows (another program's screen, before ours goes over it).
-func (s *screen) save() saved {
-	s.wait()
-	return append(saved(nil), s.mem[s.y0*s.line:(s.y0+s.h)*s.line]...)
+// Save copies what the screen shows (another program's screen, before ours goes over it).
+func (s *Screen) Save() Saved {
+	s.Wait()
+	return append(Saved(nil), s.mem[s.y0*s.line:(s.y0+s.H)*s.line]...)
 }
 
-// restore puts a saved screen back and refreshes it whole, with a flash: for a program paused meanwhile, which does
+// Restore puts a saved screen back and refreshes it whole, with a flash: for a program paused meanwhile, which does
 // not redraw once resumed (Kobo's interface, 13's step 3).
-func (s *screen) restore(b saved) {
-	s.wait()
+func (s *Screen) Restore(b Saved) {
+	s.Wait()
 	copy(s.mem[s.y0*s.line:], b)
-	s.send(image.Rect(0, 0, s.w, s.h), wfGC16, true)
-	s.wait()
+	s.send(image.Rect(0, 0, s.W, s.H), WfGC16, true)
+	s.Wait()
 }
 
 // send refreshes r of the screen with waveform (flashing if flash), returning while the ink moves.
-func (s *screen) send(r image.Rectangle, waveform uint32, flash bool) {
+func (s *Screen) send(r image.Rectangle, waveform uint32, flash bool) {
 	s.marker++
 	region := rect{uint32(r.Min.Y), uint32(r.Min.X), uint32(r.Dx()), uint32(r.Dy())}
 	mode := uint32(0)
@@ -138,14 +138,14 @@ func (s *screen) send(r image.Rectangle, waveform uint32, flash bool) {
 		ioctl(s.f.Fd(), sendUpdateMTK, unsafe.Pointer(&u))
 		return
 	}
-	if waveform == wfREAGL {
+	if waveform == WfREAGL {
 		mode = 1 // REAGL is always a full update on the Kobo's driver (it does not flash)
 	}
 	u := updateHwtcon{region: region, waveform: waveform, mode: mode, marker: s.marker}
 	ioctl(s.f.Fd(), sendUpdateHwtcon, unsafe.Pointer(&u))
 }
 
-func (s *screen) wait() {
+func (s *Screen) Wait() {
 	if s.marker > 0 {
 		m := [2]uint32{s.marker, 0}
 		ioctl(s.f.Fd(), waitComplete, unsafe.Pointer(&m))
@@ -154,9 +154,9 @@ func (s *screen) wait() {
 
 // touchTurn takes the touch screen's coordinates to this screen's: the same on the Kindle; on the Kobo, turned (13's
 // probe: screen x = touch y, screen y = the screen's height − touch x).
-func (s *screen) touchTurn() func(x, y int) (int, int) {
+func (s *Screen) touchTurn() func(x, y int) (int, int) {
 	if s.bytes == 1 {
 		return func(x, y int) (int, int) { return x, y }
 	}
-	return func(x, y int) (int, int) { return y, s.h - x }
+	return func(x, y int) (int, int) { return y, s.H - x }
 }
