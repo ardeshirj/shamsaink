@@ -69,9 +69,9 @@ func NewClock(fonts *blitz.Fonts) *Clock {
 	return f
 }
 
-// box is where the clock goes, centred on x, on a page with margin px around the text: in the top margin's middle,
+// Box is where the clock goes, centred on x, on a page with margin px around the text: in the top margin's middle,
 // or on the top edge when the margin is narrower than the clock.
-func (f *Clock) box(x, margin int) image.Rectangle {
+func (f *Clock) Box(x, margin int) image.Rectangle {
 	y := max((margin-f.h)/2, 0)
 	return image.Rect(x-f.w/2-1, y, x-f.w/2+f.w+1, y+f.h)
 }
@@ -79,7 +79,7 @@ func (f *Clock) box(x, margin int) image.Rectangle {
 // Draw puts time t into img in its box (white under it), its ink centred on x, in Farsi digits if farsi, unless
 // hidden; it returns the box.
 func (f *Clock) Draw(img *image.Gray, t time.Time, margin, x int, farsi, hidden bool) image.Rectangle {
-	r := f.box(x, margin)
+	r := f.Box(x, margin)
 	if hidden {
 		return r
 	}

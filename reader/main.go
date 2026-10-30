@@ -33,8 +33,8 @@ var (
 	leadMs     = env("LEAD_MS", "250") // experiment 12: by ear, for the maintainer's headphones
 )
 
-// What stays between books: the screen, the fallback fonts, the three pages' buffers and one for the menu over a
-// page.
+// What stays between books: the screen, the fallback fonts, the three pages' buffers (the engine's pixels only) and
+// one for the screen put together, a page and what is over it (layers.go).
 type reader struct {
 	dev   *device.Device
 	fonts *blitz.Fonts
@@ -149,7 +149,6 @@ func (ps drawnPages) get(r *reading, doc, at, n int) *drawn {
 		}
 	}
 	r.book.Draw(n, p.img)
-	r.mark(n, doc, p.img)
 	p.doc, p.at = doc, at
 	ps.touch(p)
 	return p

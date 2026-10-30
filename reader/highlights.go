@@ -133,13 +133,6 @@ func (r *reading) text(doc int, from, to [2]int) string {
 	return r.book.Text(doc, from[0], from[1], to[0], to[1])
 }
 
-// mark greys the highlights on page n (of document doc), drawn into img.
-func (r *reading) mark(n, doc int, img *image.Gray) {
-	if r.marks.in(doc) {
-		darken(img, bands(r.book.Words(n), func(w blitz.Word) bool { return r.marks.at(doc, w) >= 0 }))
-	}
-}
-
 // wordAt is the word at (x, y) among words: the one under it, else the nearest on its line within reach of a
 // finger; -1 if none.
 func wordAt(words []blitz.Word, x, y int) int {

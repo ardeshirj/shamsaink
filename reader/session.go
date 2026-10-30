@@ -34,7 +34,8 @@ type session struct {
 	minute *time.Timer // the clock's next minute
 	word   *time.Timer // the narration's next word due
 
-	shown  *drawn // the page shown
+	shown  *drawn     // the page shown
+	lay    pageLayers // what goes over it (layers.go)
 	centre ui.TextCentre
 	ahead  bool // the next page may still need drawing
 	rest   bool // documents still to paginate
@@ -260,18 +261,7 @@ func (s *session) forget() {
 	for _, p := range s.rd.pages {
 		p.doc, p.at, p.last = -1, 0, 0
 	}
-}
-
-// stamp puts the time on the page shown (or takes it off), centred over its text, returning its box.
-func (s *session) stamp() image.Rectangle {
-	x := s.centre.At(s.shown.img, max(s.o.Margin, s.rd.clock.Height()), s.o.Margin)
-	return s.rd.clock.Draw(s.shown.img, time.Now(), s.o.Margin, x, s.r.farsi, s.set.HideClock)
-}
-
-// showPage shows the page with the time on it.
-func (s *session) showPage(waveform uint32, flash bool) {
-	s.stamp()
-	s.scr.Show(s.shown.img, waveform, flash)
+	s.relayer()
 }
 
 // untilMinute is the time to the next minute's start, for the clock on a page shown that long.
@@ -281,7 +271,7 @@ func untilMinute() time.Duration { return time.Until(time.Now().Truncate(time.Mi
 func (s *session) tick() {
 	s.minute.Reset(untilMinute())
 	if !s.set.HideClock && s.mn == nil && s.cv == nil && s.sel == nil {
-		s.scr.ShowPart(s.shown.img, s.stamp(), device.WfREAGL, false)
+		s.refresh(s.clockBox(), device.WfREAGL)
 	}
 }
 
@@ -356,10 +346,7 @@ func (s *session) showMenu() {
 	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
 		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: len(s.narration) > 0, HideClock: set.HideClock}, s.rd.fonts, s.scr.W)
 	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
-	copy(s.rd.over.Pix, s.shown.img.Pix)
-	s.mn.Over(s.rd.over)
-	s.nav.Over(s.rd.over)
-	s.scr.Show(s.rd.over, device.WfREAGL, false)
+	s.showPage(device.WfREAGL, false)
 	fmt.Printf("  menu drawn in %.0f ms\n", ms(t))
 }
 
@@ -425,9 +412,7 @@ func (s *session) held(g device.Gesture) {
 		}
 		if s.unmark = r.marks.at(r.doc, words[i]); s.unmark >= 0 {
 			s.mn = ui.DrawRemove(s.rd.fonts, s.scr.W)
-			copy(s.rd.over.Pix, s.shown.img.Pix)
-			s.mn.Over(s.rd.over)
-			s.scr.ShowPart(s.rd.over, s.mn.Rect(), device.WfREAGL, false)
+			s.refresh(s.mn.Rect(), device.WfREAGL)
 			break
 		}
 		s.sel = &selection{words: words, from: i, to: i}
@@ -449,32 +434,24 @@ func (s *session) held(g device.Gesture) {
 		a, b := sel.span()
 		hl := r.marks.add(highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}, r.text)
 		r.marks.save()
-		// the page drawn again with it (and the others on it), the bars gone
-		r.book.Draw(r.page(), s.shown.img)
-		r.mark(r.page(), r.doc, s.shown.img)
-		bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
-		s.scr.ShowPart(s.shown.img, union(bs).Union(union(sel.bars)).Intersect(s.shown.img.Rect), device.WfREAGL, false)
-		fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(t))
+		// its bands (and any it took in) over the page, the bars gone
 		s.sel = nil
+		s.relayer()
+		bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
+		s.refresh(union(bs).Union(union(sel.bars)), device.WfREAGL)
+		fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(t))
 	}
 }
 
 // showSel underlines the selection's words (with A2, as the narration's), the bars it had erased.
 func (s *session) showSel() {
-	sel, over := s.sel, s.rd.over
+	sel := s.sel
 	old := union(sel.bars)
 	sel.bars = sel.bars[:0]
-	copy(over.Pix, s.shown.img.Pix)
 	for _, b := range bands(sel.words, sel.in) {
-		bar := image.Rect(b.Min.X, b.Max.Y-8, b.Max.X, b.Max.Y-2)
-		for y := bar.Min.Y; y < bar.Max.Y; y++ {
-			for x := bar.Min.X; x < bar.Max.X; x++ {
-				over.Pix[y*over.Stride+x] = 0
-			}
-		}
-		sel.bars = append(sel.bars, bar)
+		sel.bars = append(sel.bars, image.Rect(b.Min.X, b.Max.Y-8, b.Max.X, b.Max.Y-2))
 	}
-	s.scr.ShowPart(over, old.Union(union(sel.bars)).Intersect(over.Rect), device.WfA2, false)
+	s.refresh(old.Union(union(sel.bars)), device.WfA2)
 }
 
 // inMenu handles a tap with the menu open: a button tapped is applied (the page laid out again if need be), a tap off
@@ -523,24 +500,18 @@ func (s *session) inMenu(g device.Gesture) {
 		r.marks.list = append(r.marks.list[:s.unmark], r.marks.list[s.unmark+1:]...)
 		r.marks.save()
 		s.mn = nil
-		s.shown.doc = -1 // drawn again without it
-		s.shown = s.rd.pages.get(r, r.doc, r.at, r.page())
-		s.rd.pages.touch(s.shown)
+		s.relayer()
 		s.showPage(device.WfREAGL, false)
 		fmt.Printf("highlight %d removed\n", s.unmark+1)
 	case id == "keep-highlight":
-		s.scr.ShowPart(s.shown.img, s.mn.Rect(), device.WfREAGL, false)
+		rect := s.mn.Rect()
 		s.mn = nil
+		s.refresh(rect, device.WfREAGL)
 	case id != "":
 		t := time.Now()
 		relayout := s.set.change(id, r.key, r.book.LineSpacing(r.doc))
 		s.set.save(s.rd.dir)
 		r.direct(s.set.Direction[r.key])
-		if id == "clock" && s.set.HideClock { // the pages drawn again without the time
-			s.forget()
-			s.shown = s.rd.pages.get(r, r.doc, r.at, r.page())
-			s.ahead = true
-		}
 		if relayout {
 			s.o = s.set.options(s.scr.W, s.scr.H)
 			r.relayout(s.o)
@@ -552,8 +523,9 @@ func (s *session) inMenu(g device.Gesture) {
 		}
 		s.showMenu()
 	case s.nav == nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()):
-		s.scr.ShowPart(s.shown.img, s.mn.Rect(), device.WfREAGL, false)
+		rect := s.mn.Rect()
 		s.mn = nil
+		s.refresh(rect, device.WfREAGL)
 	case s.nav != nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()) && !image.Pt(g.X, g.Y).In(s.nav.Rect()):
 		s.closeMenu()
 	}
@@ -634,7 +606,7 @@ func (s *session) speak() {
 // underline marks word c: a bar under each of its boxes, the last one erased, refreshed together with A2; the page
 // turned first if the narration has crossed to another.
 func (s *session) underline(c cue) {
-	r, nar, over := s.r, s.nar, s.rd.over
+	r, nar := s.r, s.nar
 	page, boxes := r.book.Find(c.doc, c.id)
 	if page < 0 || len(boxes) == 0 {
 		return
@@ -643,27 +615,18 @@ func (s *session) underline(c cue) {
 		r.doc, r.at = c.doc, page-first
 		s.shown = s.rd.pages.get(r, r.doc, r.at, page)
 		s.rd.pages.touch(s.shown)
+		nar.bars = nil
 		s.showPage(device.WfREAGL, false)
 		r.keep()
-		nar.bars = nil
 	}
-	copy(over.Pix, s.shown.img.Pix)
-	region := image.Rectangle{}
-	for _, b := range nar.bars {
-		region = region.Union(b)
-	}
+	region := union(nar.bars)
 	nar.bars = nar.bars[:0]
 	for _, b := range boxes {
 		bar := image.Rect(b.Min.X, b.Max.Y+3, b.Max.X, min(b.Max.Y+9, s.scr.H))
-		for y := bar.Min.Y; y < bar.Max.Y; y++ {
-			for x := bar.Min.X; x < bar.Max.X; x++ {
-				over.Pix[y*over.Stride+x] = 0
-			}
-		}
 		nar.bars = append(nar.bars, bar)
 		region = region.Union(bar)
 	}
-	s.scr.ShowPart(over, region.Intersect(image.Rect(0, 0, s.scr.W, s.scr.H)), device.WfA2, false)
+	s.refresh(region, device.WfA2)
 }
 
 // silence ends the narration, the underline erased.
@@ -671,13 +634,9 @@ func (s *session) silence() {
 	nar := s.nar
 	nar.stop()
 	s.word.Stop()
-	region := image.Rectangle{}
-	for _, b := range nar.bars {
-		region = region.Union(b)
-	}
-	if !region.Empty() {
-		s.scr.ShowPart(s.shown.img, region, device.WfA2, false)
-	}
+	region := union(nar.bars)
+	nar.bars = nil
+	s.refresh(region, device.WfA2)
 	fmt.Printf("read aloud: stopped at word %d of %d\n", nar.next, len(nar.cues))
 	s.nar = nil
 	s.ahead = true
