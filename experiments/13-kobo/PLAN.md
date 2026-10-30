@@ -11,6 +11,9 @@ ones. Its board is also the Tolino Vision Color's (FBInk: device id 390, 690 whe
 should work there.
 
 ## What its source says, before the device (desk research, 2026-10-28)
+(What the device said instead, step 1 in NOTES.md: two cores but only one online, Kobo's interface switching the
+second; touch without the snow protocol; the framebuffer reporting itself portrait.)
+
 From KOReader (`frontend/device/kobo/device.lua`, `platform/kobo/koreader.sh`), FBInk (`eink/mtk-kobo.h`,
 `fbink_device_id.c`) and audiobook.koplugin (`docs/PLATFORM_AUDIO.md`, `dev/audioout/`; AGPL-3.0: to learn from, not
 to copy):
@@ -81,7 +84,9 @@ to copy):
    **Done when** these are written down (NOTES.md).
 2. **Our page on its screen:** `screen.go` and `touch.go` behind a small table per device (the roadmap's
    `reader/device`; the Kindle checked to still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl,
-   the page turned and widened into the framebuffer, its touch (mirrored y, rotation) and the page-turn buttons. Then the reader from
+   the page widened to 32 bits (and turned, if the framebuffer's portrait is not the panel's), its touch (screen x =
+   touch y, screen y = 1680 − touch x: NOTES.md) and the page-turn buttons. The second core switched on
+   by us for a chapter's layout and off after, as Kobo's interface does: timed against one core. Then the reader from
    KOReader's file manager, as on the Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299
    and 121 ms), a first open and a reopen against KOReader's crengine on the same device and books (09's table),
    memory. **Done when** a book is read on it as on the Kindle, and the numbers are in NOTES.md.

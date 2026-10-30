@@ -70,7 +70,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
   driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
   Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
-  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: two cores, MediaTek, firmware 4.x), for experiment 13
+  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8512, two Cortex-A53 cores at up to 2 GHz, the second off unless
+  switched on (Kobo's interface does it itself), 965 MB, firmware 4.46; reached with `ssh kobo`), for experiment 13
   (`experiments/13-kobo/PLAN.md`, set up as `docs/kobo-setup.md`).
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
