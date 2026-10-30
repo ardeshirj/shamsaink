@@ -42,9 +42,11 @@ the reader stands on and every dependency's licence: `design.md`, sections 6 and
 - [x] The rest of the name: `indium` → `shamsaink` (the plugin, the binary, the folders on the Kindle; a reinstall)
 - [ ] A `session` for the open book and one event loop
 - [ ] End-to-end tests on the devices (2026-10-30, the maintainer): a script from the Mac starts a book, writes a
-  scenario's taps, holds and swipes into the touch screen (as tried on the Kobo, 2026-10-30), waits for the log's
-  lines and compares the screen's pages with references, the clock's strip aside; a test EPUB of our own text, so
-  its pictures can be committed
+  scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
+  with references, the clock's strip aside. Drafted for the Kobo (`e2e/run.py`, `make e2e`; `e2e/kobo-basics.txt`:
+  a jump, pages, a highlight, the book left; pages identical run to run). Left: a test EPUB of our own text, so its
+  scenarios and pictures can be committed; the Kindle (its book opened through KOReader's plugin); read aloud and
+  sleep
 - [x] The Kindle: pages identical after the screen code's changes (with the rename's reinstall)
 - [ ] The Kindle: the book opened again on waking fails since 2026-10-29 (the touch screen's grab busy; it worked
   on 10-28). Left: a launcher of our own there may replace KOReader as host (Hosts, below)

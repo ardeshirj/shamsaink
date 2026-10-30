@@ -38,6 +38,8 @@ fetch-blitz:
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
+#   make e2e             an end-to-end test on the Kobo (e2e/run.py): SCENARIO (e2e/kobo-basics.txt by default), its
+#                        pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not committed)
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
@@ -51,7 +53,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import
+.PHONY: kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
 
 kobo-reader-install: reader
 	@$(KOBO_SSH) 'pidof shamsaink >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \
@@ -60,6 +62,10 @@ kobo-reader-install: reader
 	@scp -q reader/kobo/launch.sh reader/out/fonts/* $(KOBO):$(KOBO_DIR)/
 	@$(KOBO_SSH) 'cd $(KOBO_DIR) && mv shamsaink.new shamsaink && mv *.ttf fonts/ && rm -f cache/splash-*.gray'
 	@echo "reader and launcher copied to $(KOBO)"
+
+SCENARIO ?= e2e/kobo-basics.txt
+e2e:
+	@e2e/run.py $(if $(SAVE),--save) kobo $(SCENARIO)
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \

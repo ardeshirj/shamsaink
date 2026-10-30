@@ -1,0 +1,24 @@
+# The reader's main paths on the Kobo, with Buried Alive (FarsiEPUB's narrated copy) as the last book read: from a
+# known place (the table of contents' eighth entry, Mordeh-khor-ha), pages turned, a highlight made and removed, the
+# book left. Coordinates are the screen's pixels (1264 × 1680); the words' are this book's at text 50 px, margin 60.
+open
+tap 632 80                      # the menu: a tap on the top tenth
+expect menu drawn
+tap 152 1606                    # the bottom panel's Contents
+expect contents: 9 entries
+tap 1100 980                    # the eighth entry
+expect went to document 8 page 0
+snap chapter
+tap 300 900                     # forward: right to left, so anywhere but the right quarter
+expect document 8 page 1: drawn
+snap next
+tap 1150 900                    # back: the right quarter
+expect document 8 page 0: drawn
+hold 1120 476 to 600 476        # the second line, from its start to its middle
+expect highlight \d+ made: 1 lines
+snap highlight
+hold 1120 476                   # held on the highlight: the panel to remove it
+tap 230 91                      # Remove
+expect highlight \d+ removed
+snap removed
+close
