@@ -1,203 +1,151 @@
 # Roadmap: from the experiments to a reader (2026-10-25)
 
-Experiments 01–09 answered whether this can be done: an EPUB reader for Linux e-ink devices, Farsi done properly,
-narration followed word by word, in a static ARM binary at crengine's speed. 10 chose how the screen is refreshed.
-What follows turns that into a reader, in small stages, each with a test of being done; nothing in a stage is built
-before the maintainer says yes to it.
-
-**The approach:** start small and on top of KOReader, not instead of it. The first reader is a program KOReader's
-file manager opens a book with. KOReader is already installed, started and set up (sleep, Wi-Fi, SSH) on every
-Kindle, Kobo and PocketBook it supports, so the reader only has to own the screen and the touch while a book is open,
-and the same static ARMv7 binary can run on all of them. A stand-alone app (its own launcher, library, sleep and
-light) comes only once the reader has earned it in daily use.
-
-The parts the reader stands on on a device, and every dependency with its licence: `design.md`, sections 6 and 7.
+Experiments 01–09 showed it can be done: an EPUB reader for Linux e-ink devices, Farsi done properly, narration
+followed word by word, one static ARM binary at crengine's speed; 10 chose how the screen is refreshed. What follows
+turns that into a reader in small stages, each with a test of being done; nothing is built before the maintainer
+says yes. **The approach:** start on top of KOReader (already installed and set up on every device it supports, so
+the reader only owns the screen and touch while a book is open), and take over more only where it earns it. On the
+Kobo, the primary device, the reader is its own host since 2026-10-30; on the Kindle, KOReader stays the host. What
+the reader stands on and every dependency's licence: `design.md`, sections 6 and 7.
 
 ## Stages
 
 | Stage | What | Done when |
 |---|---|---|
-| **0. Close the proof of concept** (done, 2026-10-25) | 09's last changes committed. One `.epub` file read from `/mnt/us` (09, step 4: no cost against the unpacked folder; the program's own start is what is slow on FUSE, so the reader is kept running; memory over many books, step 5). The text size: 50 px, by eye. **Blitz is the one engine for all books** (the Go engine stays the reference). | Done |
-| **1. Refresh** (experiment 10) | **Our own ioctls in Go**, not FBInk (10's NOTES.md). Page turns REAGL without a flash (by eye, waveforms look alike in day mode; the flash shows most in night mode); the mark A2. Left: night mode driven by us, how often to flash (stage 3). | Done, but for night mode |
-| **2. A minimal reader** (experiment 11) | Opened from KOReader's file manager. One EPUB; tap or swipe to turn pages; its place kept; reopened at once from its cache (08's opening and cache through the C API, `capi.rs`); a clean way back to KOReader. | The maintainer opens a book from KOReader and reads a chapter without noticing seams |
-| **3. Daily use** | The maintainer reads with it for a week or two. Text size, line spacing and margins, page direction for books whose metadata names none (settings), progress, table of contents: whatever hurts in use. Battery drain measured against KOReader on the same pages. Memory over days of use (09, step 5: 0.1–0.2 MB more per book opened, cause not found). | It is the reader the maintainer picks for Farsi books |
-| **4. Read-along in the reader** | The narration in the reader (the underline with A2, 09). **Sound on the Kindle itself, over Bluetooth headphones** (experiment 12: Amazon's `mplay` into its mixer, nothing installed; read-along worked end to end on the device): MP3s decoded by us, the clock started with the sound, `LEAD_MS` per headphones. **But every step goes around the Kindle** (12's NOTES.md): Amazon's player tool, no playing from a pipe, and the headphones dropped 20 minutes after they connect unless Amazon's own player plays. Documented and left. **Built for the Kobo Libra Colour (decided 2026-10-30):** a tone through Kobo's own Bluetooth sink from our side worked (experiment 13). A PocketBook only for a device with a speaker. | A narrated book read and followed on a device, its sound included |
-| **5. Stand-alone** (only if 3 earns it) | Its own start (KUAL, NickelMenu, a PocketBook app), its own sleep, light and buttons, a library, a Farsi interface (drawn with Blitz as HTML: right to left for free, one drawing path). | — |
-| **Any time** | Upstream: the go-toolkit trim to Readium; the go-text justification fix; to Blitz, line culling and pictures decoded when drawn (below, "Upstream to Blitz"). Plato's engine on the bench (`bench/`), for comparison like crengine: its licence and right to left to check first. | — |
+| **0. Proof of concept** | One `.epub` read as it is (09). Text 50 px. **Blitz the one engine** (the Go engine the reference). | Done (2026-10-25) |
+| **1. Refresh** (10) | Our own ioctls in Go, not FBInk. Page turns REAGL without a flash; the mark A2. Left: night mode, how often to flash. | Done, but for night mode |
+| **2. A minimal reader** (11) | Opened from the host; tap or swipe to turn; its place kept; reopened at once from its cache; a clean way back. | A chapter read without noticing seams |
+| **3. Daily use** | A week or two of reading: settings, progress, contents, whatever hurts. Battery against KOReader; memory over days (09: 0.1–0.2 MB more per book, cause not found). | The reader picked for Farsi books |
+| **4. Read-along** | Narration in the reader, the underline with A2. **On the Kobo** (2026-10-30): Kobo's own Bluetooth sink works from our side (13). On the Kindle every step goes around Amazon (12): documented and left. A PocketBook only with a speaker. | A narrated book followed on a device, sound included |
+| **5. Stand-alone** | Its own start, sleep, light, buttons, library, a Farsi interface. Most of it on the Kobo already (below). | — |
+| **Any time** | Upstream (below). Plato's engine on the bench, its licence and right to left checked first. | — |
 
-## Stage 2, more closely
-- **Started by KOReader:** a small KOReader plugin (Lua) adds "Open with Indium" for EPUBs and runs our binary with the
-  book's path; when it exits, KOReader redraws its own screen. **The reader is kept running** once started (09, step
-  4): started from scratch on a cold open its 13 MB program alone costs ~0.64 s read from `/mnt/us` (FUSE) and its
-  fonts up to 0.2 s, so the plugin starts it once and hands it the next book after; a book in a running reader costs
-  its chapter's layout, 0.1–0.3 s. Memory allows it (09, step 5): closing a book gives its memory back (Haji Agha 65 MB
-  read through, 26 once closed); about 6 MB stays once, then 0.1–0.2 MB more per book opened, to watch in stage 3.
-  How a plugin hands over and takes back the screen and
-  input without KOReader reacting to our touches is the first thing to find out (`EVIOCGRAB` on the touch device is
-  the likely answer).
-- **Our binary owns, while it runs:** the framebuffer and its refreshes (10's code), the touch device (Linux input
-  events, read directly), the book's cache file.
-- **What changes per device:** a small table: the screen controller (10: one file per family), the touch device and
-  how its coordinates turn with the screen, the screen's size. The Kindle first, since it is the one device on hand
-  whose screen we can drive; the rest written for, and tried when a device is at hand.
-- **What KOReader keeps doing:** sleep and the power button (on Kindle the Kindle's own `powerd` sleeps; on Kobo
-  KOReader does it, so inside our reader the power button would do nothing until stage 5), Wi-Fi, SSH. On the
-  Kindle the reader leaves the book when `powerd` goes to the screensaver, for KOReader to show its own, and the
-  plugin opens the book again on waking (2026-10-28).
+## Progress (checked as it is done; the sections below say why and how)
 
-## Two hosts: KOReader, and later stand-alone (2026-10-27)
-Both are kept possible. **The rule meanwhile: KOReader stays in the plugin (`reader/indium.koplugin`) and the reader's
-`-serve` mode;** nothing else in `reader/` or `engine/` knows it. Already host-free: the engine (no device, no host),
-the book, its place and cache (`reader/book.go`), the settings and menu (`reader/menu.go`, in our own
-`settings.json`), and reading one book (`read` in `reader/main.go`: opens it, returns when it is closed; what follows is
-the host's).
-- **Not modular yet: the device.** Screen and touch (`reader/screen.go`, `touch.go`) are the Kindle PW5's (MediaTek
-  controller, `/dev/input/event1`, its coordinates as they are). Both hosts need a small table per device (screen
-  controller, touch device and how its coordinates turn, screen size), behind one interface (perhaps
-  `reader/device`): when a second device comes, whichever host.
-- **Stand-alone adds (stage 5):** a way to start it (KUAL, NickelMenu, a PocketBook app); a library to choose a book
-  (drawn with Blitz as HTML, as the menu, then the same `read`; "Close the book" back to it); and what KOReader does
-  for us now: pausing the Kindle's own interface, sleep and the power button, the light, battery and Wi-Fi. The last
-  is most of the work, the same in Go or Rust, and per device family.
-- **On the Kobo, the NickelMenu host is already most of it (2026-10-30, 13's NOTES.md, step 3):** started from
-  NickelMenu, Kobo's interface stopped while a book is open and started again on closing, as KOReader and Plato do
-  (pausing it instead, tried first, brought its watchdog's reboots and a frozen screen; a reboot instead once
-  Bluetooth has been on in the boot, the kernel's crash); screen, touch and sound (Kobo's GStreamer) are ours or Kobo's, none
-  KOReader's. Installed with no KOReader at all: NickelMenu's `KoboRoot.tgz`, our folder `.adds/shamsaink/` and one
-  NickelMenu line, all over USB (one `KoboRoot.tgz` could carry the three, as the community's one-click packages do).
-  Left: sleep and the power button while a book is open, a library to choose the book, the light, battery. On the
-  Kindle, KOReader stays the host.
+**The Kobo's host** (the primary device; "Hosts", below)
+- [x] Started from NickelMenu; Kobo's interface stopped while a book is open, started again on closing; a reboot
+  instead once Bluetooth has been on in the boot (2026-10-30)
+- [x] The power button: the sleep screen, light and Wi-Fi off, suspend; awake on the next press; Wi-Fi back after
+  waking (2026-10-30)
+- [ ] The launcher's logs: the kernel's warnings and errors only, cut back while a book is open (installed, to try)
+- [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
+- [ ] A night asleep on battery (and the open crash after a long sleep)
+- [ ] Sleep after idle minutes
+- [ ] The first page from the cache in 3 s (*Buried Alive*, a 98 MB EPUB): the second core, the opening
+- [ ] The light: a setting, and its level kept
+- [ ] The battery shown
+- [ ] A library to choose the book
+
+**The reader's code** (one `main` package until now)
+- [ ] `reader/device/`: screen, touch, the Kindle's sleep, the Kobo's power, behind `device.Open()` (built, to try on
+  both devices)
+- [ ] `reader/ui/`: the panels' drawing as a package, the templates in `reader/ui/templates/`
+- [ ] The rest of the name: `indium` → `shamsaink` (the plugin, the binary, the folders on the Kindle; a reinstall)
+- [ ] A `session` for the open book and one event loop
+- [ ] The Kindle: pages identical after the screen code's changes (with the rename's reinstall)
+
+**Read-along on the Kobo** (stage 4)
+- [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink (experiment 13)
+- [ ] One pipeline kept open a session (13's `PLAN.md`)
+- [ ] The hour: drop-outs and drift over an hour, Nickel stopped
+- [ ] Voice timing, a stepper per pair of headphones (below)
+
+**The panels** ("The reader's panels", below)
+- [x] `dioxus-native-dom` tried; the panels stay Go templates (experiment 14)
+- [x] The opening screen
+- [x] The sleep screen: pictures from `sleep/`, else the opening screen
+- [ ] The sleep screen: the book's cover or the page, a choice in the menu
+- [ ] Layers
+- [ ] Components: icon button, slider, tabs, list, battery
+- [ ] The screens of `layout.html`
+- [ ] Interface language: Follow the book, English, Farsi
+
+**Upstream** (any time; the maintainer posts)
+- [ ] go-toolkit's trim, to Readium
+- [ ] go-text's justification fix
+- [ ] Blitz: line culling
+- [ ] Blitz: pictures sized from their headers and decoded when drawn
+
+## Hosts
+Only the host knows the host: the engine, the book and its cache (`book.go`), the settings and reading one book
+(`read`, which returns when the book is closed) are host-free; the device's parts go behind `reader/device`.
+- **The Kindle: KOReader** (`reader/indium.koplugin`, the reader's `-serve` mode). "Open with Indium" on an EPUB; the
+  reader is kept running between books, since starting it from `/mnt/us` (FUSE) costs ~0.64 s cold (09; a book in a
+  running reader costs its chapter's layout, 0.1–0.3 s; closing a book gives its memory back). KOReader keeps sleep,
+  Wi-Fi and SSH: the reader leaves the book when `powerd` goes to the screensaver and the plugin reopens it on waking.
+  **A launcher of our own there** (a KUAL item, Amazon's interface stopped while reading; the plugin and `-serve`
+  gone) is decided once the Kobo's host is done (the maintainer, 2026-10-30); KOReader stays installed on both
+  devices for SSH and other tasks.
+- **The Kobo: our own host** (13's NOTES.md, `docs/kobo-setup.md`, section 7). NickelMenu starts `launch.sh`, which
+  stops Kobo's interface while a book is open and starts it again after, as KOReader and Plato do (pausing it, tried
+  first, brought its watchdog's reboots and a frozen screen); once Bluetooth has been on in the boot it reboots
+  instead (the kernel's crash on a second start of Nickel). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's,
+  none KOReader's: installed with NickelMenu's `KoboRoot.tgz`, our folder `.adds/shamsaink/` and one menu line.
 
 ## The reader's panels (2026-10-29)
-The menu, the bottom panel, the contents, the remove panel and the clock are templates in `reader/ui/` (`ui.css`,
-`components.html`, one file a panel), drawn by Blitz from HTML; `TestPanels` draws every panel in its states to look
-at and compare, `TestPanelEdges` checks every button's edges are drawn. The guidance (components, modern CSS) is in
-CLAUDE.md. Done (2026-10-29): CSS variables on `:root` for the look; flex rows with `gap` instead of spaces typed
-between buttons; a grid for the settings rows; logical properties (`inline-start`, `inline-end`), so a Farsi interface
-is `dir="rtl"` and nothing else; the progress bar a flex row, not a float (floats are off in our build).
-**The layouts (2026-10-30): `docs/layouts/`** (`layout.html`, the screens; `components.html`, the components; `style.css`, shared), the
-reference, drawn for the Kobo Libra Colour (1264 × 1680, the first target). Nothing on the page while reading; every
-control comes to the hand, as a layer over the engine's page, which is never written to: a tap brings the dock to the
-nearest edge (time, headphones, battery icon, place, and Close, Contents, Mark, Light, Text, Listen); a held margin
-shows the glance while held; a held word, the word panel (meaning, highlight in four colours, note, listen from
-here); a tapped note, the footnote in place. Light and Text open above the dock; Contents full screen. In landscape,
-two pages and the dock along the grip. The page buttons reach everything (the table in `layout.html`). The clock and the
-page number stay as switches, off by default. Components are ours, one set used everywhere (Dioxus's own are made
-for colour screens and would be restyled anyway): today's button, switch, segments and stepper, plus an icon button
-(Lucide icons, from an icon font on the device), a slider, tabs, a list and the battery. Ideas for the reading
-(smarter flashes, places by word, kashida, a dictionary, ...) are listed there too.
+Templates in `reader/ui/` (a file a panel, `components.html`, `ui.css`) drawn by Blitz; `TestPanels` draws each in
+its states, `TestPanelEdges` checks the buttons' edges; the rules (our components, modern CSS) in `CLAUDE.md`. The CSS
+uses variables, flex with `gap`, grid and logical properties, so a Farsi interface is `dir="rtl"` and nothing else.
+**The layouts, `docs/layouts/`** (2026-10-30, for the Libra Colour's 1264 × 1680), are the reference: nothing on the
+page while reading; every control a layer over the page, never written into it. A tap brings the dock (status, place,
+Close, Contents, Mark, Light, Text, Listen); a held margin the glance; a held word the word panel; a tapped note the
+footnote in place; landscape shows two pages. Components are ours, one set used everywhere. Reading ideas (smarter
+flashes, places by word, kashida, a dictionary) are listed there too.
 
-The order of work:
-1. **`dioxus-native-dom` tried with today's menu: done (2026-10-30, experiment 14), the panels stay Go templates.**
-   On the Mac, byte-identical drawings; after a tap 0.04 ms against 0.28 to lay out, drawing 1.3–1.7 ms either way
-   (it dominates); +0.7 MB binary, +1–3 MB memory, 54 crates (none GPL or MPL); it names the changed elements, but not
-   what CSS moves around them, where comparing the panel's old and new drawing gives the exact box. Whether the whole
-   reader moves to Rust is stage 5's question; the panels' HTML and CSS carry over either way.
-2. **Layers:** the page buffers hold the engine's pixels only; each control a layer (box, drawing, waveform), drawn
-   into the framebuffer's copy; the clock the first. Checked byte-identical against today's drawings.
-3. **Components:** icon button (with the icon font), slider, tabs, list, battery, each drawn by `TestPanels` and
-   checked by eye against `components.html`.
-4. **The screens of `layout.html`,** one at a time: the dock with the status, the page buttons, Light (its files on
-   the device checked first), Text, Contents, then the glance, the word panel and footnotes.
+The order: (1) `dioxus-native-dom` tried, **done** (14: identical drawings, drawing 1.3–1.7 ms either way, +0.7 MB;
+the panels stay Go templates, and their HTML and CSS carry over if the reader ever moves to Rust); (2) **layers**: the
+page buffers hold the engine's pixels only, each control a layer, the clock first, checked byte-identical; (3)
+**components**: icon button (an icon font), slider, tabs, list, battery, checked by eye against `components.html`;
+(4) **the screens of `layout.html`**, one at a time: the dock, the page buttons, Light (its files checked first),
+Text, Contents, then the glance, the word panel, footnotes.
 
-Decided pieces of 2–4 can go to sub-agents (CLAUDE.md); anything on a device and every git step stay in the main
-session.
+**Interface language** (planned): a setting, *Follow the book* (default), English, Farsi (the maintainer to
+confirm). Strings out of the templates into a table per language (`{{t "contents"}}`), whole sentences, not pieces;
+`dir` and `lang` on each panel; Farsi digits; pointing icons mirrored. Before more panels are added: cheap now,
+costly later. To check: the menu font (Parastoo; the layouts use Vazirmatn).
 
-### Interface language (2026-10-30, planned, not built)
-The menus in the book's language, English and Farsi first. The panels have English strings typed into the templates
-(`reader/ui/*.html`) and no string table or language setting yet. The Farsi dock is drawn in `docs/layouts/layout.html`
-("In Farsi"); the mirroring is free (logical properties, `dir="rtl"`).
-- **A setting, "Interface language": Follow the book (default), English, Farsi.** Following the book means a Farsi
-  classic gets Farsi menus and an English book English ones; the override is for a Farsi book on a reader who wants
-  English menus, or the reverse. (The recommendation; the maintainer to confirm.)
-- **Strings out of the templates:** one small table per language (`en`, `fa`), a `t` function in the template set
-  (`{{t "contents"}}`), `dir` and `lang` set on each panel's root. Before more panels are added, so none has to be
-  converted later.
-- **Farsi digits** for the page, the clock, the battery and the progress; the clock already uses Parastoo.
-- **To check:** the menu font (Parastoo, a fallback font already; the layouts use Vazirmatn); strings that carry a
-  value (`Book's (%s)`) need word order per language, so a whole sentence per string, not pieces; icons that point
-  (back, next) mirror, those that do not (headphones, sun) stay.
-- **Stage:** with the layouts being built, not stage 5: the string table is cheap now and costly later. A stand-alone
-  app's library and settings use the same table.
+**The opening screen** (built): ShamsaInk's mark, "by" FarsiEPUB's logo (`splash.html`, `ui/brand/`), shown when a
+book takes over 0.3 s; drawn once (60 ms on the Kobo) and kept as a picture in the cache. Not Kobo's boot screen
+(Kobo's system files, undone by every update).
 
-### The opening screen (2026-10-30, built)
-ShamsaInk's mark and name, "by" FarsiEPUB's logo (`reader/ui/splash.html`, the logos in `reader/ui/brand/`, made from
-FarsiEPUB's brand files), shown when a book is not open within 0.3 s; drawn once (60 ms on the Kobo) and kept as a
-picture in the cache, so showing it is a copy and a refresh, the ink moving while the book opens (`reader/splash.go`).
-To come: Kobo's sleep screen from the same picture (`.kobo/screensaver/`, `docs/kobo-setup.md`, section 5). Not Kobo's
-boot screen: in Kobo's system files, undone by every update.
+**The sleep screen** (built, but for the choice): a press of the power button on the Kobo shows a picture from
+`.adds/shamsaink/sleep/` (PNG or JPEG, at random; outside `.kobo/`, so never imported as a book), else the opening
+screen. Later a choice in the menu: the book's cover, or the page with a small mark. Outside a book, Nickel's own
+(`.kobo/screensaver/`); on the Kindle, KOReader's.
 
-### The sleep screen (2026-10-30, planned, not built)
-On the Kobo, Nickel is stopped while a book is open (13's NOTES.md), so sleep and the power button are the reader's:
-a press draws the sleep screen, then suspends; the next press wakes and draws the page again. What it draws, as
-KOReader's screensaver with a folder of its own:
-- **Pictures from our own folder,** `.adds/shamsaink/sleep/` (PNG or JPEG), one at random each time; outside `.kobo/`,
-  so Kobo never imports them as books (as it did `.kobo/screensaver/`).
-- **The folder empty: the opening screen,** already a picture in the cache (a copy and a refresh).
-- **Later, a choice in the menu:** the book's cover, or the page left as it is with a small mark that it sleeps.
-Outside a book, Nickel's own sleep screen (`.kobo/screensaver/`) stays as it is; the same pictures can go in both.
-On the Kindle, KOReader's screensaver stays (the reader leaves the book when `powerd` goes to sleep).
+**Voice timing** (planned, stage 4): every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) that nothing
+on our side can measure. A stepper in the Listen tab, 50 ms steps, heard at once, remembered per pair by Bluetooth
+address (today one `lead_ms` for all). Before it, one pipeline kept open a session (13's `PLAN.md`), so the stepper
+sets only the headphones' delay and not today's ~2–2.5 s of start-up.
 
-### Voice timing (2026-10-30, planned, not built)
-How late the underline follows the voice, set by the reader: every pair of headphones has its own delay (Bluetooth:
-typically 0.1–0.3 s), which nothing on our side can measure. Found by ear on the Kobo (13's NOTES.md, step 4 (a)):
-with a pipeline started per run, ~2–2.5 s, most of it the pipeline's and the link's start-up, ours to take out, not
-the reader's to set.
-- **A stepper, "Voice timing", in the Text sheet's Listen tab** (`docs/layouts/layout.html`), today's stepper
-  component, in steps of 50 ms; the change heard and seen at once while the voice plays.
-- **Remembered per pair of headphones,** keyed by their Bluetooth address, so changing pairs keeps each one's. Today
-  the reader has one value for all (`lead_ms`, `reader/menu.go`, from `LEAD_MS`), in no panel.
-- **Before it:** one pipeline kept open a session, fed silence between parts (13's `PLAN.md`), its start-up waited for
-  by our clock, so the stepper sets only the headphones' delay.
-- **Later, if a number reads badly:** "voice ahead" / "voice behind" on the player while listening, or a check (a
-  word underlined on a click, a tap when it is heard).
-- **Stage:** 4, with read-along in the reader.
-
-## Upstream to Blitz (2026-10-29: what is already there, to come back to)
-Our two patches, measured against Blitz's roadmap (#119), its tracking issues (#255 optimizations, #259 images) and a
-keyword search of its issues and PRs (cull, lazy image, image decode, image memory, image cache): **neither is
-planned or proposed there**, and neither is e-ink only. The maintainer posts from their GitHub account.
-- **Line culling** (`engine/patches/blitz-cull-lines.patch`, ~20 lines in `blitz-paint/src/render.rs`): a small PR.
-  Blitz already skips whole elements off the screen; ours skips the lines of a paragraph that is only partly on it.
-  Mention **#1012** (open: their element culling cuts off descenders hanging below a box; ours keeps a line's height
-  of slack, enough for its example but not a guarantee: first look whether Parley gives a line's ink bounds cheaply)
-  and **#809** (open PR: stacking contexts with bounds for pruning, in the same file; ours may need adjusting after
-  it). Numbers: 04's NOTES.md.
-- **Pictures decoded when drawn** (`engine/patches/blitz-lazy-images.patch`, plus our `engine/src/pictures.rs`, 130
-  lines): an issue first, the design being theirs. The patch alone keeps the file and its size; the decoding at the
-  size drawn is ours, so upstream it means decoding in blitz-paint or anyrender, a bounded cache, and the layout code
-  that reads decoded pixels (`RasterImageData`): a few hundred lines. Next to **#1221** (open PR: caps cached decoded
-  images at 32 MB; still decodes each at full size), **#896** (open: who decodes, Blitz or the renderer), **#795**
-  (merged: a decoding copy removed, asked for by Blitz's maintainer while profiling memory) and **#286** (open:
-  memory). Numbers: a scan's 76 MB (08's NOTES.md).
-- **The `image` crate's formats: nothing to propose.** `blitz-dom` already takes it with every format off, and the
-  program picks them (ours: `engine/Cargo.toml`), at Blitz 21edc92.
-- **Fragmented (paginated) layout** is in Blitz's backlog (#119): if it comes, our pagination (`lib.rs`) could move
-  into Blitz.
+## Upstream to Blitz (2026-10-29)
+Neither patch is planned or proposed there (its roadmap #119, tracking issues #255 and #259, a search of issues and
+PRs), and neither is e-ink only. The maintainer posts.
+- **Line culling** (`engine/patches/blitz-cull-lines.patch`, ~20 lines): a small PR. Blitz skips whole elements off
+  the screen; ours skips the lines of a paragraph partly on it. Mention #1012 (culling cuts off descenders; ours keeps
+  a line's height of slack: see first whether Parley gives a line's ink bounds) and #809 (stacking contexts, same
+  file). Numbers: 04's NOTES.md.
+- **Pictures decoded when drawn** (`blitz-lazy-images.patch` and our `pictures.rs`): an issue first, the design being
+  theirs (decoding in blitz-paint or anyrender, a bounded cache: a few hundred lines). Next to #1221 (a 32 MB cap, still
+  full size), #896 (who decodes), #795 and #286 (memory). Numbers: a scan's 76 MB (08).
+- Nothing to propose on the `image` crate's formats (already off in `blitz-dom`). Paginated layout is in Blitz's
+  backlog (#119): if it comes, ours could move into Blitz.
 
 ## Why this order
-- The hard, device-specific parts (input, refresh, the Go↔Blitz opening path) are met in stage 2 with the least
-  around them, and stage 1 has settled the one with a licence question.
-- Reading every day (stage 3) decides what the reader needs, before anything is designed for it.
-- Everything a stand-alone app would need (sleep, light, a library, a launcher) KOReader already does, so it can
-  wait until it is worth doing.
+The device-specific parts are met early with the least around them; daily reading decides what the reader needs
+before anything is designed for it; what a stand-alone app needs, KOReader already does, so it waits until it is worth
+doing (on the Kobo it now was).
 
 ## Licence and brand (decided 2026-10-30)
-The code under **Apache-2.0** (`LICENSE`, `NOTICE`): permissive like Readium (BSD) and Blitz, which our patches are
-for; its section 6 grants no rights to names or logos. **The brand reserved** (`BRAND.md`): the names ShamsaInk and
-FarsiEPUB and their marks; a changed version shipped to others uses its own (the opening screen's three files).
-Code from KOReader, Plato (AGPL-3.0) or FBInk (GPL) is read as a reference, never copied. **At the first release:**
-the licences and notices of what is linked in (215 crates, `cargo-about`; the Go modules, `go-licenses`;
-`docs/design.md`, section 7), and the licence texts of the fonts shipped (Parastoo, DejaVu); public or not still the
-maintainer's to decide.
+**Apache-2.0** (`LICENSE`, `NOTICE`), permissive like Readium and Blitz; **the brand reserved** (`BRAND.md`: the
+names ShamsaInk and FarsiEPUB and their marks). Code from KOReader, Plato (AGPL) or FBInk (GPL) is read, never
+copied. **At a first release:** the notices of what is linked in (215 crates with `cargo-about`, the Go modules with
+`go-licenses`; `design.md`, section 7) and the fonts' licences (Parastoo, DejaVu). Public or not: the maintainer's.
 
 ## Not decided
-- Whether stage 5 happens at all.
-- **All Rust, without go-toolkit** (raised 2026-10-26; to decide by stage 4). Moving only the screen and touch code
-  to Rust gains nothing while Go runs the program; the question is the whole reader. For: the Go reader starts in
-  ~480 ms cold, 110 warm, against 60–70 and 20 for a Rust-only binary (paid once if it is kept running), 21 MB
-  against ~13, one toolchain instead of Rust + Go + cgo + zig; Go's first reason (no cgo) went with Blitz. Against:
-  go-toolkit is the existing tool (tables of contents, page lists, positions and locators, obfuscated fonts,
-  direction, and SMIL for read-along) and Rust has no Readium. Before deciding: where the 480 ms goes (the binary on
-  FUSE, Go's runtime, go-toolkit's start), and what go-toolkit does for us checked against Rust's EPUB crates, SMIL
-  first. Since: decoding MP3 on the Kindle, Rust's symphonia is 70× real time, Go's go-mp3 5× (experiment 12, step 6). Independent of KOReader (stage 5) is a separate question: its device work is the same in either language.
+- **All Rust, without go-toolkit** (raised 2026-10-26; by stage 4). For: the Go reader starts in ~480 ms cold, 110
+  warm, against 60–70 and 20 for Rust alone; 21 MB against ~13; one toolchain instead of Rust, Go, cgo and zig;
+  symphonia decodes MP3 70× real time on the Kindle, go-mp3 5× (12). Against: go-toolkit is the existing tool
+  (contents, page lists, locators, obfuscated fonts, direction, SMIL) and Rust has no Readium. First: where the 480
+  ms goes, and go-toolkit's part checked against Rust's EPUB crates, SMIL first. Moving only the device code to Rust
+  gains nothing while Go runs the program.

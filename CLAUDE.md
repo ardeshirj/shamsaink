@@ -138,6 +138,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   book: none of 08's opening or the cache), input, sound on the device.
 
 ## Next steps: `docs/roadmap.md`
+Its **Progress** checklist (near the top) is kept current: an item checked once it is done and tried, new work
+added there as it is decided.
 The roadmap (2026-10-25): close the proof of concept (stage 0, done: text 50 px, one EPUB from `/mnt/us`,
 Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened from KOReader's file manager** (2:
 one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
