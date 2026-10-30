@@ -55,6 +55,15 @@ dot are hidden in Finder (Cmd-Shift-. shows them).
    diskutil eject /Volumes/KOBOeReader
    ```
    NickelMenu's menu (the "More" tab, or the menu at the top) then has **KOReader**.
+6. **KOReader's exit patch** (MediaTek Kobos, Bluetooth used): with Bluetooth on since the last start, KOReader's
+   Exit makes the Kobo's kernel panic as Nickel restarts, and NickelMenu is lost (koreader/koreader#12739). Our
+   patch turns that Exit into a reboot. Once `ssh kobo` works (section 3), or over USB into `.adds/koreader/patches/`:
+   ```sh
+   ssh kobo 'mkdir -p /mnt/onboard/.adds/koreader/patches'
+   scp experiments/13-kobo/koreader-patch/2-kobo-mtk-bt-exit.lua kobo:/mnt/onboard/.adds/koreader/patches/
+   ```
+   Then **Restart KOReader** from its exit menu (it reads patches when it starts); its `crash.log` says `Applying
+   patch: ./patches/2-kobo-mtk-bt-exit.lua`. Without the patch: with Bluetooth on, leave KOReader with **Reboot**.
 
 KOReader on a Kobo stops Kobo's interface while it runs (unlike the Kindle's, which stays paused beside it) and
 starts it again when KOReader is closed (its menu: Exit).

@@ -95,7 +95,7 @@ Step 4's sound is tried under both.
      after, as Kobo's interface does: timed against one core. Then the reader from KOReader's file manager, as on the
      Kindle. Measured: a page turn REAGL and the A2 underline (the Kindle's: 296–299 and 121 ms), a first open and a
      reopen against KOReader's crengine on the same device and books (09's table), memory.
-   - **The exit patch:** a KOReader user patch (`koreader/patches/`, kept across KOReader updates) that turns Exit
+   - **The exit patch** (done, 2026-10-29: NOTES.md): a KOReader user patch (`koreader/patches/`, kept across KOReader updates) that turns Exit
      into Reboot while Kobo's Bluetooth daemon (`mtkbtd`) runs: not running until Bluetooth is first switched on in
      a boot (13's probes before pairing), running from then on. Checked three ways: Exit with Bluetooth never on (a
      normal exit), Exit after it was on (a reboot, NickelMenu kept), Reboot from the menu (unchanged).

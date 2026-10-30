@@ -4,7 +4,7 @@ The plan and the desk research before the device: `PLAN.md`. This file records e
 
 0. Set up (done, 2026-10-29, below).
 1. The probe (done, 2026-10-29, below).
-2. Inside KOReader: our page on its screen, and a safe exit (to do).
+2. Inside KOReader: our page on its screen (to do), and a safe exit (done, 2026-10-29, below).
 3. Without KOReader: Nickel paused (to do).
 4. Sound, under both hosts (a first tone, 2026-10-29, below; the hour to do).
 
@@ -97,3 +97,33 @@ watches it while paused, and sleep and the power button (ours while it is paused
 **Both ways, then (decided 2026-10-29):** inside KOReader made safe by a user patch (Exit becomes Reboot while
 `mtkbtd` runs: it was not running in this boot's probes before pairing, and was after), and without KOReader with
 Nickel paused. PLAN.md, steps 2 and 3.
+
+## Step 2, the safe exit: a KOReader user patch (2026-10-29, `koreader-patch/`)
+
+`2-kobo-mtk-bt-exit.lua`, copied to `koreader/patches/` on the Kobo (loaded at KOReader's "late" stage; kept across
+KOReader updates): on a MediaTek Kobo, while `mtkbtd` runs, a plain Exit (code 0) becomes a reboot. It wraps
+`UIManager.quit`: the exit code becomes 88, which `koreader.sh` takes as Reboot or Power off and leaves without
+running `nickel.sh`, and `sleep 3 && reboot` is started first, so the reboot comes after KOReader has saved and
+exited. Restart (85), USB mode (86), Reboot and Power off (88) go through as they are. (Read from KOReader
+v2026.07.2's source: `reader.lua`, `uimanager.lua`'s `reboot_action`, `platform/kobo/koreader.sh`. LuaJIT's
+`os.execute` on the Kobo returns 0 for success, 256 for failure.)
+
+Checked on the Kobo, firmware 4.46.23852, KOReader v2026.07.2:
+1. **Exit, Bluetooth never on in that boot** (`mtkbtd` not running): a normal exit to Nickel, NickelMenu kept.
+2. **Exit after Bluetooth was switched on** (`mtkbtd` running): its log, `kobo-mtk-bt-exit: Bluetooth's daemon runs,
+   so Exit reboots instead of restarting Nickel`, `Tearing down UIManager with exit code: 88`; the Kobo rebooted,
+   NickelMenu kept.
+3. **Reboot from KOReader's menu:** a normal reboot.
+
+**`mtkbtd` as the test, checked:** switched off again in Kobo's interface, Bluetooth leaves `mtkbtd` and
+`btservice` running (only the driver's use count drops to 0), so Exit still reboots: the safe side, as #12739 has
+the crash once Bluetooth was ever on in a boot (connected or not, on or off again; only KOReader's auto-standby,
+switching it off at the driver, was seen to make Exit safe). And `mtkbtd` is started at boot when Bluetooth was on at
+the last shutdown (a low process id, 1101), so Exit then reboots even if Bluetooth is not touched in that boot: more
+cautious than needed, never less.
+
+**Seen once, not reproduced:** with Bluetooth on and KOReader open, Wi-Fi did not come up (no answer to ping), and
+switching it on in KOReader rebooted the Kobo: likely the same kernel bug (#12739 reports Wi-Fi off and on, after
+Bluetooth was on, as a trigger). A later toggle worked, with Bluetooth's state then uncertain. So, as a caution:
+with Bluetooth on, Wi-Fi left alone inside KOReader. **NickelMenu survived that crash**, which happened with Nickel
+stopped: it is lost only when the crash comes as Nickel starts (its safety switch), not after any crash.
