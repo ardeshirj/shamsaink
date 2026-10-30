@@ -71,7 +71,10 @@ the Kobo it earned it sooner than planned.)
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
 
 **7. A library** (today the launcher opens the newest or the last book)
-- [ ] A list to choose the book, from group 6's components
+- [x] The layout: two options in `docs/layouts/layout.html`, text rows and rows with covers (2026-10-30)
+- [ ] A keyboard layer (English and Farsi) for the library's search; not designed yet
+- [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
+  from group 6's list component; covers after, with a cache of them
 
 **8. Read-along on the Kobo**
 - [ ] One pipeline kept open a session (13's `PLAN.md`)
