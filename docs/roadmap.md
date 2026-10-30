@@ -112,6 +112,21 @@ The menus in the book's language, English and Farsi first. The panels have Engli
 - **Stage:** with the layouts being built, not stage 5: the string table is cheap now and costly later. A stand-alone
   app's library and settings use the same table.
 
+### Voice timing (2026-10-30, planned, not built)
+How late the underline follows the voice, set by the reader: every pair of headphones has its own delay (Bluetooth:
+typically 0.1–0.3 s), which nothing on our side can measure. Found by ear on the Kobo (13's NOTES.md, step 4 (a)):
+with a pipeline started per run, ~2–2.5 s, most of it the pipeline's and the link's start-up, ours to take out, not
+the reader's to set.
+- **A stepper, "Voice timing", in the Text sheet's Listen tab** (`docs/layouts/layout.html`), today's stepper
+  component, in steps of 50 ms; the change heard and seen at once while the voice plays.
+- **Remembered per pair of headphones,** keyed by their Bluetooth address, so changing pairs keeps each one's. Today
+  the reader has one value for all (`lead_ms`, `reader/menu.go`, from `LEAD_MS`), in no panel.
+- **Before it:** one pipeline kept open a session, fed silence between parts (13's `PLAN.md`), its start-up waited for
+  by our clock, so the stepper sets only the headphones' delay.
+- **Later, if a number reads badly:** "voice ahead" / "voice behind" on the player while listening, or a check (a
+  word underlined on a click, a tap when it is heard).
+- **Stage:** 4, with read-along in the reader.
+
 ## Upstream to Blitz (2026-10-29: what is already there, to come back to)
 Our two patches, measured against Blitz's roadmap (#119), its tracking issues (#255 optimizations, #259 images) and a
 keyword search of its issues and PRs (cull, lazy image, image decode, image memory, image cache): **neither is
