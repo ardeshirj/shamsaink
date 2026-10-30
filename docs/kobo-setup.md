@@ -91,7 +91,19 @@ starts it again when KOReader is closed (its menu: Exit).
         ```
       - `make kobo-status`. For another host name, `make KOBO=name ...`.
 
-## 4. Keeping it awake, and where things are
+## 4. Books and the sleep screen
+- **Books:** copied anywhere on the Kobo outside dot-folders (we use `Books/`: over USB, or
+  `scp book.epub kobo:/mnt/onboard/Books/`). Kobo imports them only after a USB connection is ejected: copies over
+  SSH and a restart are not enough.
+- **Sleep screen pictures** (a feature Kobo does not document, there since firmware 4.13): pictures in
+  `.kobo/screensaver/` (`ssh kobo 'mkdir -p /mnt/onboard/.kobo/screensaver'`, then `scp`), and in **Settings →
+  Energy saving and privacy**, **Show current read** on (and **Show book covers full screen**). Kobo then shows one
+  of them, at random, where it would show the current book's cover. So a book has to have been opened, bought or
+  copied alike: with no current read it shows its stock screen (checked 2026-10-29). Emptying the folder or turning
+  Show current read off brings the cover or the stock screen back. Reported on MobileRead: the info line (battery,
+  title) no longer shows with the folder there.
+
+## 5. Keeping it awake, and where things are
 - **Sleep is whichever is in front's,** not a power daemon's as on the Kindle. While experimenting, set by hand,
   and set back when done:
   - Kobo's interface: **Settings → Energy saving and privacy → Automatically go to sleep after: Never**. (Its
