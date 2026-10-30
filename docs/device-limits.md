@@ -46,7 +46,7 @@ upstream, and where it was found. A new one goes here when found.
 - What: the Bluetooth service (`acsbtfd`) disconnects headphones `btfd.btpowersave.timeout` seconds (1200) after
   they connect unless Amazon's player manager is playing; our sound through `mplay` does not count, and the player
   manager plays only Audible and its speech voice.
-- What we do: nothing yet (stage 4: ask the user once to turn the timeout off, or reconnect when dropped). Changing
+- What we do: nothing yet (with read-along: ask the user once to turn the timeout off, or reconnect when dropped). Changing
   the setting reaches the service only when it restarts.
 - Found: experiment 12 (`experiments/12-sound/NOTES.md`).
 

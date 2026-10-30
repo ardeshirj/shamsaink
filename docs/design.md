@@ -1,7 +1,7 @@
 # ShamsaInk's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
 What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
-the reader stands on on a device, where we stand against crengine, and what it all depends on. The stages ahead are in `roadmap.md`; the details and every
+the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `roadmap.md`; the details and every
 measurement in the experiments' NOTES.md files (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
 
 ## 1. The layers
@@ -143,7 +143,7 @@ flowchart LR
   text, between the edges most of the page's lines share, measured on the page's ink (the book's own margins count;
   0.2 ms a page on the Mac). Drawing it in each book's own font was tried: ~70 ms more a book opened on the Kindle.
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
-  API or moved, for no measured cost today. An idea for stage 5 (roadmap, "The reader's panels").
+  API or moved, for no measured cost today. An idea for later (roadmap, "The reader's panels").
 
 ## 3. The engines
 
@@ -158,7 +158,7 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 
 ## 4. On the device
 
-What the reader stands on on an e-ink device: stage 2's reader, opened from KOReader's file manager, built and in use
+What the reader stands on on an e-ink device: the minimal reader, opened from KOReader's file manager, built and in use
 on the Kindle Paperwhite 11th gen (2026-10-29). Screen and touch are still the Kindle's alone (`reader/screen.go`,
 `touch.go`); a table per device comes with the second device (experiment 13, a Kobo).
 
@@ -180,8 +180,8 @@ flowchart LR
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
 | sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |
-| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); which device stage 4 is for, to decide |
-| launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | stage 5 only |
+| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); read-along on the Kobo to come (roadmap, group 8) |
+| launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | the Kobo's (NickelMenu, `launch.sh`); the Kindle's later |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
 
 **Waveforms** (10, by eye): page turns REAGL without a flash (they look alike in day mode; a flash shows most in night
@@ -236,7 +236,7 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | rayon | both cores | MIT / Apache-2.0 | yes |
 | Linux's framebuffer, mxcfb/MediaTek and input interfaces | screen and touch | the kernel's interface (numbers and struct layouts, no code) | called |
 | go-text | the Go engine | BSD-3 / Unlicense | only if the Go engine stays (the reference) |
-| KOReader | stage 2's host | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) read as a reference, nothing copied. The plugin runs inside it: its licence to check |
+| KOReader | the Kindle's host | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) read as a reference, nothing copied. The plugin runs inside it: its licence to check |
 | FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
 | crengine | the bar to measure against | GPL-2.0 | no |
 | the Kindle's `powerd`, `lipc`, `mplay` | sleep watched; sound | Amazon's | no: run as commands |

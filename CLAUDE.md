@@ -140,15 +140,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   book: none of 08's opening or the cache), input, sound on the device.
 
 ## Next steps: `docs/roadmap.md`
-Its **Progress** checklist (near the top) is kept current: an item checked once it is done and tried, new work
-added there as it is decided.
-The roadmap (2026-10-25): close the proof of concept (stage 0, done: text 50 px, one EPUB from `/mnt/us`,
-Blitz as the one engine); refresh (1, experiment 10); **a minimal reader opened from KOReader's file manager** (2:
-one EPUB, touch, its place kept, 08's cache through the C API; KOReader keeps sleep and Wi-Fi); daily use (3);
-read-along in the reader (4, sound on a PocketBook); a stand-alone app only if 3 earns it (5). Upstream any time
-(the maintainer posts from their GitHub account): the go-toolkit trim to Readium; the go-text justification bug; to
-Blitz, the line culling (`engine/patches/blitz-cull-lines.patch`) and pictures sized from their headers and decoded
-when drawn (`engine/patches/blitz-lazy-images.patch`); what Blitz already has near them: roadmap, "Upstream to Blitz".
+Its **Progress** list (near the top) is one checklist, kept current: groups 0 to 4 done, in the order they were done
+(the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
+rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/layouts/`: layers,
+interface language, components, the dock); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
+and upstream (the maintainer posts from their GitHub account); (9) the Kindle, later. An item is checked once done
+and tried on a device and stays in its group; new work goes where it belongs as it is decided.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.

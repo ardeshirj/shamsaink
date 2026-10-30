@@ -1,77 +1,103 @@
-# Roadmap: from the experiments to a reader (2026-10-25)
+# Roadmap: from the experiments to a reader (2026-10-25; in order of priority since 2026-10-30)
 
-Experiments 01–09 showed it can be done: an EPUB reader for Linux e-ink devices, Farsi done properly, narration
-followed word by word, one static ARM binary at crengine's speed; 10 chose how the screen is refreshed. What follows
-turns that into a reader in small stages, each with a test of being done; nothing is built before the maintainer
-says yes. **The approach:** start on top of KOReader (already installed and set up on every device it supports, so
-the reader only owns the screen and touch while a book is open), and take over more only where it earns it. On the
-Kobo, the primary device, the reader is its own host since 2026-10-30; on the Kindle, KOReader stays the host. What
-the reader stands on and every dependency's licence: `design.md`, sections 6 and 7.
+Experiments 01–14 showed it can be done: an EPUB reader for Linux e-ink devices, Farsi done properly, narration
+followed word by word, one static ARM binary at crengine's speed. The reader now runs on the **Kobo Libra Colour**, the
+primary device, as its own host (started from NickelMenu, Kobo's interface stopped while a book is open), and on the
+Kindle inside KOReader. What follows is the work left, **in order of priority**, each item checked once done and tried
+on a device; nothing is built before the maintainer says yes. What the reader stands on and every dependency's
+licence: `design.md`, sections 6 and 7.
 
-## Stages
+## Where it stands (2026-10-30)
+Next: **daily use on the Kobo**, a week or two of reading Farsi books on it (group 5). Done when it is the reader
+picked for Farsi books.
 
-| Stage | What | Done when |
-|---|---|---|
-| **0. Proof of concept** | One `.epub` read as it is (09). Text 50 px. **Blitz the one engine** (the Go engine the reference). | Done (2026-10-25) |
-| **1. Refresh** (10) | Our own ioctls in Go, not FBInk. Page turns REAGL without a flash; the mark A2. Left: night mode, how often to flash. | Done, but for night mode |
-| **2. A minimal reader** (11) | Opened from the host; tap or swipe to turn; its place kept; reopened at once from its cache; a clean way back. | A chapter read without noticing seams |
-| **3. Daily use** | A week or two of reading: settings, progress, contents, whatever hurts. Battery against KOReader; memory over days (09: 0.1–0.2 MB more per book, cause not found). | The reader picked for Farsi books |
-| **4. Read-along** | Narration in the reader, the underline with A2. **On the Kobo** (2026-10-30): Kobo's own Bluetooth sink works from our side (13). On the Kindle every step goes around Amazon (12): documented and left. A PocketBook only with a speaker. | A narrated book followed on a device, sound included |
-| **5. Stand-alone** | Its own start, sleep, light, buttons, library, a Farsi interface. Most of it on the Kobo already (below). | — |
-| **Any time** | Upstream (below). Plato's engine on the bench, its licence and right to left checked first. | — |
+## Progress: one list, how we got here and what is left
+Groups 0 to 4 are done, in the order they were done; from group 5 on, in order of priority. An item is checked once
+done and tried on a device, and stays in its group; new work goes where it belongs as it is decided. The sections
+below say why and how. (The first plan, 2026-10-25, was stages: proof of concept, refresh, a minimal reader inside
+KOReader, daily use, read-along, stand-alone. Start on top of KOReader and take over more only where it earned it; on
+the Kobo it earned it sooner than planned.)
 
-## Progress (checked as it is done; the sections below say why and how)
+**0. Proof of concept** (experiments 01–09)
+- [x] The engines compared against crengine and Chromium (01–05): our own layout on go-text, crengine, webrender,
+  Blitz; Blitz the one engine, the Go engine the reference
+- [x] At crengine's speed on a device (06–08, the reMarkable 2): glyphs, the chapter opened first, pictures decoded
+  when drawn, both cores, a cache file per book
+- [x] On a real screen (09, the Kindle): one `.epub` read as it is, text 50 px, a word underlined at its narration's
+  time
 
-**The Kobo's host** (the primary device; "Hosts", below)
+**1. Refresh** (experiment 10)
+- [x] Our own ioctls in Go, not FBInk; page turns REAGL without a flash, the mark A2 (night mode: group 9)
+
+**2. A minimal reader** (experiment 11, the Kindle, inside KOReader)
+- [x] Opened from the host, tap or swipe to turn, its place kept, reopened at once from its cache, a clean way back
+- [x] The menu's settings, the table of contents, highlights
+- [x] Read aloud with sound (12: Amazon's `mplay`; every step goes around Amazon)
+- [x] The opening screen
+
+**3. The Kobo's own host** (experiment 13; "Hosts", below)
 - [x] Started from NickelMenu; Kobo's interface stopped while a book is open, started again on closing; a reboot
   instead once Bluetooth has been on in the boot (2026-10-30)
 - [x] The power button: the sleep screen, light and Wi-Fi off, suspend; awake on the next press; Wi-Fi back after
   waking (2026-10-30)
-- [ ] The launcher's logs: the kernel's warnings and errors only, cut back while a book is open (installed, to try)
-- [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
-- [ ] A night asleep on battery (and the open crash after a long sleep)
-- [ ] Sleep after idle minutes
-- [ ] The first page from the cache in 3 s (*Buried Alive*, a 98 MB EPUB): the second core, the opening
-- [ ] The light: a setting, and its level kept
-- [ ] The battery shown
-- [ ] A library to choose the book
+- [x] The sleep screen: pictures from `sleep/`, else the opening screen
+- [x] The launcher's logs: the kernel's warnings and errors only, cut back while a book is open (2026-10-30)
+- [x] The stray Wi-Fi loaders Nickel leaves stopped (2026-10-30; `device-limits.md`)
+- [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink
 
-**The reader's code** (one `main` package until now)
+**4. The reader's code** (2026-10-30)
 - [x] `reader/device/`: screen, touch, the Kindle's sleep, the Kobo's power, behind `device.Open()` (tried on both)
 - [x] `reader/ui/`: the panels' drawing as a package, the templates in `reader/ui/templates/`
 - [x] The rest of the name: `indium` → `shamsaink` (the plugin, the binary, the folders on the Kindle; a reinstall)
-- [ ] A `session` for the open book and one event loop
-- [ ] End-to-end tests on the devices (2026-10-30, the maintainer): a script from the Mac starts a book, writes a
-  scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
-  with references, the clock's strip aside. Drafted for the Kobo (`e2e/run.py`, `make e2e`; `e2e/kobo-basics.txt`:
-  a jump, pages, a highlight, the book left; pages identical run to run). Left: a test EPUB of our own text, so its
-  scenarios and pictures can be committed; the Kindle (its book opened through KOReader's plugin); read aloud and
-  sleep
-- [x] The Kindle: pages identical after the screen code's changes (with the rename's reinstall)
-- [ ] The Kindle: the book opened again on waking fails since 2026-10-29 (the touch screen's grab busy; it worked
-  on 10-28). Left: a launcher of our own there may replace KOReader as host (Hosts, below)
+- [x] A `session` for the open book and one event loop (tried on the Kobo; the Kindle: group 9)
+- [x] `dioxus-native-dom` tried; the panels stay Go templates (experiment 14)
 
-**Read-along on the Kobo** (stage 4)
-- [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink (experiment 13)
+**5. Daily use on the Kobo** (next)
+- [ ] A night asleep on battery (and the crash seen on opening after a long sleep)
+- [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
+- [ ] Sleep after idle minutes (a timer on the session's loop)
+- [ ] The light: a setting, and its level kept
+- [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
+- [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
+  more per book, cause not found)
+
+**6. The layout** (`docs/layouts/`; "The reader's panels", below)
+- [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
+- [ ] Interface language: Follow the book, English, Farsi (decided before more panels)
+- [ ] Components: icon button, slider, tabs, list, battery
+- [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
+- [ ] The other screens of `layout.html`: the page buttons, Light, Text, Contents, the glance, the word panel,
+  footnotes
+- [ ] The sleep screen: the book's cover or the page, a choice in the menu
+
+**7. A library** (today the launcher opens the newest or the last book)
+- [ ] A list to choose the book, from group 6's components
+
+**8. Read-along on the Kobo**
 - [ ] One pipeline kept open a session (13's `PLAN.md`)
 - [ ] The hour: drop-outs and drift over an hour, Nickel stopped
 - [ ] Voice timing, a stepper per pair of headphones (below)
 
-**The panels** ("The reader's panels", below)
-- [x] `dioxus-native-dom` tried; the panels stay Go templates (experiment 14)
-- [x] The opening screen
-- [x] The sleep screen: pictures from `sleep/`, else the opening screen
-- [ ] The sleep screen: the book's cover or the page, a choice in the menu
-- [ ] Layers
-- [ ] Components: icon button, slider, tabs, list, battery
-- [ ] The screens of `layout.html`
-- [ ] Interface language: Follow the book, English, Farsi
+**Alongside** (with each group, not a phase of its own)
+- [ ] End-to-end tests on the devices (2026-10-30, the maintainer): a script from the Mac starts a book, writes a
+  scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
+  with references, the clock's strip aside. Drafted for the Kobo (`e2e/run.py`, `make e2e`; `e2e/kobo-basics.txt`:
+  a jump, pages, a highlight, the book left; pages identical run to run). Left: a test EPUB of our own text, so its
+  scenarios and pictures can be committed; a scenario with each new feature; read aloud and sleep; the Kindle
+- Upstream (any time; the maintainer posts):
+  - [ ] go-toolkit's trim, to Readium
+  - [ ] go-text's justification fix
+  - [ ] Blitz: line culling
+  - [ ] Blitz: pictures sized from their headers and decoded when drawn
+  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`device-limits.md`)
 
-**Upstream** (any time; the maintainer posts)
-- [ ] go-toolkit's trim, to Readium
-- [ ] go-text's justification fix
-- [ ] Blitz: line culling
-- [ ] Blitz: pictures sized from their headers and decoded when drawn
+**9. The Kindle** (later: the Kobo is the primary device)
+- [x] Pages identical after the screen code's changes (with the rename's reinstall)
+- [ ] The session and one event loop tried there
+- [ ] The book opened again on waking fails since 2026-10-29 (the touch screen's grab busy; it worked on 10-28)
+- [ ] A launcher of our own (a KUAL item, Amazon's interface stopped while reading), in place of KOReader's plugin
+  ("Hosts", below)
+- [ ] Night mode, driven by us (refresh, experiment 10)
 
 ## Hosts
 Only the host knows the host: the engine, the book and its cache (`book.go`), the settings and reading one book
@@ -120,7 +146,7 @@ book takes over 0.3 s; drawn once (60 ms on the Kobo) and kept as a picture in t
 screen. Later a choice in the menu: the book's cover, or the page with a small mark. Outside a book, Nickel's own
 (`.kobo/screensaver/`); on the Kindle, KOReader's.
 
-**Voice timing** (planned, stage 4): every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) that nothing
+**Voice timing** (planned, read-along): every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) that nothing
 on our side can measure. A stepper in the Listen tab, 50 ms steps, heard at once, remembered per pair by Bluetooth
 address (today one `lead_ms` for all). Before it, one pipeline kept open a session (13's `PLAN.md`), so the stepper
 sets only the headphones' delay and not today's ~2–2.5 s of start-up.
@@ -139,9 +165,11 @@ PRs), and neither is e-ink only. The maintainer posts.
   backlog (#119): if it comes, ours could move into Blitz.
 
 ## Why this order
-The device-specific parts are met early with the least around them; daily reading decides what the reader needs
-before anything is designed for it; what a stand-alone app needs, KOReader already does, so it waits until it is worth
-doing (on the Kobo it now was).
+Daily use decides what the reader needs before anything more is designed for it, so what blocks a week of reading on
+the Kobo comes first. The layout comes before the library and the rest because the library and every new screen are
+built from its layers and components, and the interface language is cheapest decided before more panels exist.
+Read-along waits until daily reading is steady, as its sound runs through the same session. The Kindle waits: the
+Kobo is the primary device, and the Kindle reads well enough inside KOReader meanwhile.
 
 ## Licence and brand (decided 2026-10-30)
 **Apache-2.0** (`LICENSE`, `NOTICE`), permissive like Readium and Blitz; **the brand reserved** (`BRAND.md`: the
@@ -150,7 +178,7 @@ copied. **At a first release:** the notices of what is linked in (215 crates wit
 `go-licenses`; `design.md`, section 7) and the fonts' licences (Parastoo, DejaVu). Public or not: the maintainer's.
 
 ## Not decided
-- **All Rust, without go-toolkit** (raised 2026-10-26; by stage 4). For: the Go reader starts in ~480 ms cold, 110
+- **All Rust, without go-toolkit** (raised 2026-10-26; decided before read-along on the Kobo). For: the Go reader starts in ~480 ms cold, 110
   warm, against 60–70 and 20 for Rust alone; 21 MB against ~13; one toolchain instead of Rust, Go, cgo and zig;
   symphonia decodes MP3 70× real time on the Kindle, go-mp3 5× (12). Against: go-toolkit is the existing tool
   (contents, page lists, locators, obfuscated fonts, direction, SMIL) and Rust has no Readium. First: where the 480
