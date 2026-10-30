@@ -19,6 +19,8 @@
 #   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
+#   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
+#                        once into out/); the Kobo is ejected: unplug it
 
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
@@ -27,13 +29,15 @@ KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
 # Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never). Kobo's interface reads them only
 # when it starts, so the timer is set by hand in its Settings (docs/kobo-setup.md, section 4), not here.
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
+NM_VERSION ?= 0.6.0
+NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 
 DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
   -v eink-gocache:/root/.cache/go-build eink-rust
 
 .PHONY: reader reader-install reader-log engine bench-armv7 fetch-blitz
 .PHONY: kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
-.PHONY: kobo-status kobo-wait kobo-ssh
+.PHONY: kobo-status kobo-wait kobo-ssh kobo-nickelmenu
 
 reader:
 	@sh reader/build.sh
@@ -97,3 +101,15 @@ kobo-wait:
 
 kobo-ssh:
 	@$(KOBO_SSH)
+
+# Over USB: without NickelMenu, KOReader (and its SSH server) cannot be started. Kobo installs .kobo/KoboRoot.tgz
+# once unplugged (and deletes it).
+KOBO_USB = /Volumes/KOBOeReader
+kobo-nickelmenu: $(NM_TGZ)
+	@[ -d $(KOBO_USB)/.kobo ] || { echo "the Kobo is not connected: plug it in and tap Connect"; exit 1; }
+	@cp $(NM_TGZ) $(KOBO_USB)/.kobo/KoboRoot.tgz && dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null
+	@echo "NickelMenu $(NM_VERSION) copied, Kobo ejected: unplug it, it installs and restarts (about a minute)"
+
+$(NM_TGZ):
+	@mkdir -p out
+	@curl -fsSL -o $@ https://github.com/pgaskin/NickelMenu/releases/download/v$(NM_VERSION)/KoboRoot.tgz

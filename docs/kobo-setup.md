@@ -64,6 +64,8 @@ dot are hidden in Finder (Cmd-Shift-. shows them).
    ```
    Then **Restart KOReader** from its exit menu (it reads patches when it starts); its `crash.log` says `Applying
    patch: ./patches/2-kobo-mtk-bt-exit.lua`. Without the patch: with Bluetooth on, leave KOReader with **Reboot**.
+   **The other order crashes too:** after a normal Exit (Nickel started again), switching Bluetooth on panics the
+   kernel; restart the Kobo before using Bluetooth. NickelMenu lost to a crash: `make kobo-nickelmenu` (over USB).
 
 KOReader on a Kobo stops Kobo's interface while it runs (unlike the Kindle's, which stays paused beside it) and
 starts it again when KOReader is closed (its menu: Exit).
@@ -112,7 +114,32 @@ starts it again when KOReader is closed (its menu: Exit).
   Show current read off brings the cover or the stock screen back. Reported on MobileRead: the info line (battery,
   title) no longer shows with the folder there.
 
-## 5. Keeping it awake, and where things are
+## 5. Plato (optional)
+[Plato](https://github.com/baskerville/plato) (AGPL-3.0) is a stand-alone reader for Kobo, worth having beside
+KOReader to compare: it stops Nickel when it starts and starts it again when it quits, as KOReader does. It knows
+the Libra Colour (`monza`). Its guide points to MobileRead's one-click packages; by hand:
+1. Download `plato-VERSION.zip` from its [releases](https://github.com/baskerville/plato/releases) (0.9.45 in
+   2026-10). Its files are at the top of the zip, with no folder around them, so it is unzipped *into*
+   `.adds/plato/`: over USB, `unzip -o plato-VERSION.zip -d /Volumes/KOBOeReader/.adds/plato` (then `dot_clean -m
+   /Volumes/KOBOeReader`); or over SSH, unzipped on the Mac and sent with `tar`, which leaves no `._` files:
+   ```sh
+   mkdir plato && unzip -q plato-VERSION.zip -d plato
+   ssh kobo 'mkdir -p /mnt/onboard/.adds/plato'
+   COPYFILE_DISABLE=1 tar -C plato -cf - . | ssh kobo 'tar -xf - -C /mnt/onboard/.adds/plato'
+   ```
+2. Its NickelMenu item (Plato's own line, from its `contrib/NickelMenu/plato`):
+   ```sh
+   ssh kobo "echo 'menu_item:main:Plato:cmd_spawn:quiet:/mnt/onboard/.adds/plato/plato.sh' \
+     > /mnt/onboard/.adds/nm/plato"
+   ```
+3. **NickelMenu → Plato.** Its library is the books on the Kobo's storage.
+
+**With Bluetooth used since the last start, leave Plato with Reboot, not Quit:** Quit starts Nickel again (its
+`plato.sh` runs `nickel.sh`), the same kernel panic as KOReader's Exit (section 2, step 6), and there is no patch for
+Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, crashed the Kobo; the same bug in the
+other order). After a normal Quit, restart the Kobo before using Bluetooth.
+
+## 6. Keeping it awake, and where things are
 - **Sleep is whichever is in front's,** not a power daemon's as on the Kindle. While experimenting, set by hand,
   and set back when done:
   - Kobo's interface: **Settings → Energy saving and privacy → Automatically go to sleep after: Never**. (Its

@@ -127,3 +127,13 @@ switching it on in KOReader rebooted the Kobo: likely the same kernel bug (#1273
 Bluetooth was on, as a trigger). A later toggle worked, with Bluetooth's state then uncertain. So, as a caution:
 with Bluetooth on, Wi-Fi left alone inside KOReader. **NickelMenu survived that crash**, which happened with Nickel
 stopped: it is lost only when the crash comes as Nickel starts (its safety switch), not after any crash.
+
+## The other order: Nickel restarted first, then Bluetooth (2026-10-29)
+
+Plato (0.9.45, installed as `docs/kobo-setup.md` section 5) quit with Bluetooth off, a normal restart of Nickel;
+**then Bluetooth switched on in Nickel: the Kobo crashed** (NickelMenu lost; put back with `make kobo-nickelmenu`).
+#12739 has the same order (start KOReader, Exit, turn on Bluetooth, … the device reboots). So the rule is wider than
+"no exit after Bluetooth": **Nickel started a second time and Bluetooth, in either order, in one boot**, panic the
+kernel. The exit patch covers only "Bluetooth first, then Exit"; after any normal exit from KOReader or Plato, the
+Kobo is restarted before Bluetooth is used. Plato quits the same way as KOReader (`plato.sh` runs `nickel.sh` unless
+its Reboot was chosen), with no patch. Pausing Nickel (step 3) never starts it twice, so it meets neither order.
