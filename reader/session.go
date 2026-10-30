@@ -45,8 +45,11 @@ type session struct {
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
 
-	narration []cue
-	nar       *narrator // the narration, while it plays
+	narrated  bool       // the book has a narration
+	narration []cue      // its words, once read
+	cued      chan []cue // its words, read after the first page is shown (nil once taken)
+	uncue     func()     // stops their reading
+	nar       *narrator  // the narration, while it plays
 
 	sel    *selection // a selection being made, while a finger is held
 	unmark int        // the highlight the panel asks about
@@ -87,21 +90,20 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 		}
 		s.r = r
 		t1 := time.Now()
-		s.narration = cues(context.Background(), r.pub)
-		t2 := time.Now()
+		s.narrated = narrated(r.pub)
 		s.toc = contents(r.pub.Manifest.TableOfContents, r.spine)
-		t3 := time.Now()
+		t2 := time.Now()
 		s.forget()
 		// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest
 		// ago, so a turn forward is only its ink, and a turn back finds the page it came from
 		s.shown = rd.pages.get(r, r.doc, r.at, r.page())
-		fmt.Printf("  opened %.0f ms, narration %.0f ms (%d words), contents %.0f ms, page drawn %.0f ms\n",
-			ms(t0)-ms(t1), ms(t1)-ms(t2), len(s.narration), ms(t2)-ms(t3), ms(t3))
+		fmt.Printf("  opened %.0f ms, narration and contents %.0f ms, page drawn %.0f ms\n",
+			ms(t0)-ms(t1), ms(t1)-ms(t2), ms(t2))
 		done <- nil
 	}()
 	select {
 	case err = <-done:
-	case <-time.After(ui.SplashAfter):
+	case <-time.After(ui.SplashAfter - time.Since(t)): // from when the book was asked for, so its flash ends sooner
 		s.scr.Show(s.splash, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
 		err = <-done
@@ -117,7 +119,31 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
 		filepath.Base(path), s.r.doc, s.r.at, ms(t), s.r.restored, s.r.rtl, s.o.FontSize, s.o.LineHeight, s.o.Margin)
 	s.ahead, s.rest = true, !s.r.restored
+	s.readCues()
 	return s, nil
+}
+
+// readCues reads the narration's words in the background (seconds for a long book), for readAloud to take.
+func (s *session) readCues() {
+	s.uncue = func() {}
+	if !s.narrated {
+		return
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	s.cued = make(chan []cue, 1)
+	s.uncue = func() {
+		cancel()
+		if s.cued != nil {
+			<-s.cued
+			s.cued = nil
+		}
+	}
+	go func() {
+		t := time.Now()
+		cs := cues(ctx, s.r.pub)
+		fmt.Printf("  narration read: %d words in %.0f ms\n", len(cs), ms(t))
+		s.cued <- cs
+	}()
 }
 
 // close lets go of the touch screen and closes the book (both done already when it was left: twice does no harm).
@@ -125,6 +151,7 @@ func (s *session) close() {
 	s.stop()
 	s.minute.Stop()
 	s.word.Stop()
+	s.uncue()
 	s.r.close()
 }
 
@@ -256,6 +283,7 @@ func (s *session) leave() {
 	s.scr.Wait()
 	w := ms(t) - k
 	s.stop()
+	s.uncue()
 	s.r.close()
 	fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms%s\n", s.r.doc, s.r.at, k, w,
 		ms(t)-k-w, map[bool]string{true: " (going to sleep)"}[s.asleep])
@@ -271,7 +299,9 @@ func (s *session) forget() {
 }
 
 // untilMinute is the time to the next minute's start, for the clock on a page shown that long.
-func untilMinute() time.Duration { return time.Until(time.Now().Truncate(time.Minute).Add(time.Minute)) }
+func untilMinute() time.Duration {
+	return time.Until(time.Now().Truncate(time.Minute).Add(time.Minute))
+}
 
 // tick refreshes the clock's box on its own, unless something is over the page or it is hidden.
 func (s *session) tick() {
@@ -350,7 +380,7 @@ func (s *session) showMenu() {
 	t := time.Now()
 	set, r := s.set, s.r
 	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
-		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: len(s.narration) > 0, HideClock: set.HideClock}, s.rd.fonts, s.scr.W)
+		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: s.narrated, HideClock: set.HideClock}, s.rd.fonts, s.scr.W)
 	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
 	s.showPage(device.WfREAGL, false)
 	fmt.Printf("  menu drawn in %.0f ms\n", ms(t))
@@ -540,6 +570,10 @@ func (s *session) inMenu(g device.Gesture) {
 // readAloud starts the narration from the first narrated word on the page shown.
 func (s *session) readAloud() {
 	r := s.r
+	if s.cued != nil { // still being read: waited for
+		s.narration = <-s.cued
+		s.cued = nil
+	}
 	first := -1
 	for i, c := range s.narration {
 		if c.doc < r.doc {

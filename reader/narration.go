@@ -8,11 +8,13 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"sync/atomic"
 	"time"
 
 	"github.com/readium/go-toolkit/pkg/guidednavigation"
+	"github.com/readium/go-toolkit/pkg/manifest"
 	"github.com/readium/go-toolkit/pkg/pub"
 
 	blitz "indiumengine"
@@ -33,7 +35,16 @@ type cue struct {
 	at         float64 // s, on the narration's clock from where it started
 }
 
-// cues is the book's narration, the words in reading order (spine, then the SMIL's order); none if it has none.
+// narrated says whether the book has a narration, without reading it.
+func narrated(p *pub.Publication) bool {
+	s, ok := p.FindService(pub.MediaOverlayService_Name).(pub.GuidedNavigationService)
+	return ok && slices.ContainsFunc(p.Manifest.ReadingOrder, func(l manifest.Link) bool {
+		return s.HasGuideForResource(l.Href.String())
+	})
+}
+
+// cues is the book's narration, the words in reading order (spine, then the SMIL's order); none if it has none, and
+// those read so far if ctx is cancelled (Buried Alive's 23771 words: 2.7 s on the Kobo).
 func cues(ctx context.Context, p *pub.Publication) []cue {
 	s, ok := p.FindService(pub.MediaOverlayService_Name).(pub.GuidedNavigationService)
 	if !ok {
@@ -52,6 +63,9 @@ func cues(ctx context.Context, p *pub.Publication) []cue {
 	}
 	for i, l := range p.Manifest.ReadingOrder {
 		href := l.Href.String()
+		if ctx.Err() != nil {
+			break
+		}
 		if !s.HasGuideForResource(href) {
 			continue
 		}
