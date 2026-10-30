@@ -62,6 +62,26 @@ start_nickel() {
     [ "$PLATFORM" != freescale ] && udevadm trigger &
   ) > /dev/null 2>&1
   log "Nickel started again"
+  stray_loaders &
+}
+# Nickel starts the Wi-Fi chip's loader (wmt_launcher) each time it starts, as if the Kobo had just booted: a second
+# one waits for the chip's device, which the first holds, failing every 2 s for good (KOReader and Plato leave them
+# too; nine took Wi-Fi down until a reboot, 2026-10-30). Every one but the first stopped for 30 s, once Nickel has
+# started its own; they never had the chip.
+stray_loaders() {
+  i=0
+  stopped=" "
+  while [ $i -lt 15 ]; do
+    sleep 2
+    i=$((i + 1))
+    first=$(for p in $(pidof wmt_launcher); do echo "$(cut -d' ' -f22 /proc/"$p"/stat) $p"; done | sort -n | head -n 1)
+    for p in $(pidof wmt_launcher); do
+      # one stuck in the kernel dies when its wait ends, within 2 s
+      case "$stopped" in *" $p "*) continue ;; esac
+      [ "$p" != "${first#* }" ] && kill -9 "$p" 2>/dev/null && stopped="$stopped$p " &&
+        log "Wi-Fi loader $p stopped (a stray, Nickel's)"
+    done
+  done
 }
 if [ "$1" = nickel ]; then
   pidof nickel > /dev/null && { echo "Nickel is running"; exit 1; }
