@@ -42,7 +42,7 @@ the Kobo it earned it sooner than planned.)
   waking (2026-10-30)
 - [x] The sleep screen: pictures from `sleep/`, else the opening screen
 - [x] The launcher's logs: the kernel's warnings and errors only, cut back while a book is open (2026-10-30)
-- [x] The stray Wi-Fi loaders Nickel leaves stopped (2026-10-30; `device-limits.md`)
+- [x] The stray Wi-Fi loaders Nickel leaves stopped (2026-10-30; `devices/kobo.md`)
 - [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink
 
 **4. The reader's code** (2026-10-30)
@@ -89,7 +89,7 @@ the Kobo it earned it sooner than planned.)
   - [ ] go-text's justification fix
   - [ ] Blitz: line culling
   - [ ] Blitz: pictures sized from their headers and decoded when drawn
-  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`device-limits.md`)
+  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo.md`)
 
 **9. The Kindle** (later: the Kobo is the primary device)
 - [x] Pages identical after the screen code's changes (with the rename's reinstall)

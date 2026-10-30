@@ -134,9 +134,7 @@ starts it again when KOReader is closed (its menu: Exit).
 - **We are root** over KOReader's SSH; Kobo's system is writable, so nothing is written outside `/mnt/onboard/.adds`
   and `/tmp` by the experiment.
 
-## 5. Books and the sleep screen
-- **Books:** anywhere outside dot-folders (we use `Books/`), over USB or `scp book.epub kobo:/mnt/onboard/Books/`.
-  Kobo imports them only when a USB connection ends: connect it, tap Connect, `make kobo-import`.
+## 5. The sleep screen
 - **Sleep screen pictures** (undocumented, since firmware 4.13): PNGs in `.kobo/screensaver/`, and **Settings →
   Energy saving and privacy → Show current read** on (and **Show book covers full screen**). Kobo shows one at random
   where the current book's cover would be; with no current read it shows its stock screen (checked 2026-10-29). Per
@@ -178,11 +176,11 @@ and Plato do (a reboot instead once Bluetooth has been on in the boot; `reader/k
 the Mac (refused while a book is open):
 ```sh
 make kobo-reader-install
-scp BOOK.epub kobo:/mnt/onboard/.adds/shamsaink/books/
+scp BOOK.epub kobo:/mnt/onboard/.adds/shamsaink/books/SOURCE/
 ssh kobo "echo 'menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/launch.sh' \
   > /mnt/onboard/.adds/nm/shamsaink"
 ```
-**NickelMenu → ShamsaInk** opens the newest EPUB in `books/`; the menu (a tap on the top tenth) → Close the book
+**Books** are in `.adds/shamsaink/books/`, one folder per source, and NickelMenu → ShamsaInk opens the newest (the paths and how to open a given one: `devices/kobo.md`, "Paths"). The menu (a tap on the top tenth) → Close the book
 goes back to Kobo's interface, its home screen after its boot animation (a few seconds). The logs, in `logs/`: `reader.log`, and while a book is open the system's and
 the kernel's (`system.log`, `kernel.log`) and `alive.log` (when the Kobo was last up); `make kobo-reader-log`. If
 the screen ever stays ours, over SSH: `sh /mnt/onboard/.adds/shamsaink/launch.sh nickel`. Not yet: the page-turn and
