@@ -20,6 +20,9 @@ for f in logs/reader.log logs/system.log logs/kernel.log logs/alive.log; do
   [ "$(wc -c < "$f" 2>/dev/null || echo 0)" -gt 1000000 ] && tail -c 500000 "$f" > "$f.cut" && mv "$f.cut" "$f"
 done
 log() { echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') launch: $*" >> logs/reader.log; }
+# on storage at once, so a crash in the first seconds still shows the launcher started
+log "started, uptime $(cut -d' ' -f1 /proc/uptime) s"
+sync
 N=$(pidof nickel)
 [ -n "$N" ] || { log "Nickel is not running (KOReader in front?): not started"; exit 1; }
 # Nickel's start, in seconds after boot (/proc/PID/stat's 22nd field, in clock ticks of 100 a second): about 20 s at
@@ -38,7 +41,10 @@ logread -f >> logs/system.log 2>&1 &
 L1=$!
 cat /proc/kmsg >> logs/kernel.log 2>&1 &
 L2=$!
-(while sleep 10; do echo "$(date -u '+%H:%M:%S') up $(cut -d' ' -f1 /proc/uptime) s" >> logs/alive.log; sync; done) &
+# every 2 s for the first 30 s (a crash on opening, 2026-10-30, left nothing), then every 10 s
+(i=0; while sleep $([ $i -lt 15 ] && echo 2 || echo 10); do
+  i=$((i + 1)); echo "$(date -u '+%H:%M:%S') up $(cut -d' ' -f1 /proc/uptime) s" >> logs/alive.log; sync
+done) &
 L3=$!
 # Nickel first; sickel once Nickel has had time to answer again (in the background: NickelMenu does not wait); the
 # logs stopped
