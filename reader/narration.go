@@ -93,7 +93,7 @@ type narrator struct {
 
 // newNarrator plans the narration from word first: a new part where the file changes or the clips go back.
 func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) *narrator {
-	n := &narrator{cues: append([]cue(nil), all[first:]...), read: read, lead: lead, dir: "/var/tmp/indium",
+	n := &narrator{cues: append([]cue(nil), all[first:]...), read: read, lead: lead, dir: "/var/tmp/shamsaink",
 		signal: make(chan struct{}, 1), quit: make(chan struct{})}
 	var p *part
 	for i := range n.cues {
@@ -198,7 +198,7 @@ func (n *narrator) play(i int) {
 	p := n.parts[i]
 	cmd := exec.Command("mplay", "-r", strconv.Itoa(p.rate), "-c", strconv.Itoa(p.ch), p.raw)
 	if err := cmd.Start(); err != nil {
-		fmt.Fprintln(os.Stderr, "indium: mplay:", err)
+		fmt.Fprintln(os.Stderr, "shamsaink: mplay:", err)
 		return
 	}
 	n.plays = append(n.plays, cmd)

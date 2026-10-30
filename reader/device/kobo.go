@@ -90,7 +90,7 @@ func sleepScreen(dir string, fallback *image.Gray) *image.Gray {
 	defer f.Close()
 	src, _, err := image.Decode(f)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "indium: sleep screen:", filepath.Base(path), err)
+		fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(path), err)
 		return fallback
 	}
 	r := fallback.Rect
@@ -170,7 +170,7 @@ func (d *Device) doze(power <-chan struct{}, pic *image.Gray) {
 			break
 		}
 		if err := sysfs("/sys/power/state-extended", "1"); err != nil {
-			fmt.Fprintln(os.Stderr, "indium: sleep:", err)
+			fmt.Fprintln(os.Stderr, "shamsaink: sleep:", err)
 		}
 		// a press while the drivers get ready cancels
 		cancel := false

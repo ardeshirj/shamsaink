@@ -2,12 +2,12 @@
 
 **The name** (2026-10-30): ShamsaInk (`shamsaink` in code), two parts like FarsiEPUB and rtlbook. A *shamsa* (شمسه,
 "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript, the first thing a
-reader saw on opening a book; *ink* is the illuminator's and the screen's. Searched 2026-10-30: no product or project
-of that name, `shamsaink` free on GitHub and crates.io. Before it: Indium (2026-10-23, after indium tin oxide, E Ink's
+reader saw on opening a book; *ink* is the illuminator's and the screen's. Searched 2026-10-30: no product or project of
+that name, `shamsaink` free on GitHub and crates.io. Before it: Indium (2026-10-23, after indium tin oxide, E Ink's
 front electrode) and inkreader. The repo and its folder are `shamsaink` (`ardeshirj/shamsaink`, `~/Github/shamsaink`)
-since 2026-10-30. Still named the old way until renamed: the reader's binary, KOReader plugin and folders on the
-devices (`indium`, `indium.koplugin`, `/mnt/us/indium`: to rename with a reinstall). Staying as they are: Go module and Docker image names (`indiumengine`, `indiumreader`, `einkengine`,
-`eink-*`), and old paths in the experiments' notes.
+since 2026-10-30. Renamed 2026-10-30: the reader's binary (`shamsaink`), KOReader plugin (`shamsaink.koplugin`) and
+folders on the devices (`/mnt/us/shamsaink`). Staying as they are: Go module and Docker image names (`indiumengine`,
+`indiumreader`, `einkengine`, `eink-*`), and old paths in the experiments' notes.
 
 Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, now `ardeshirj/shamsaink` (public or not decided
 once it does something). A side project

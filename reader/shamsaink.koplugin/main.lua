@@ -1,9 +1,10 @@
 --[[--
-Indium from KOReader: "Open with Indium" on an EPUB's long-press dialog (file manager, History, Collections, search).
+ShamsaInk from KOReader: "Open with ShamsaInk" on an EPUB's long-press dialog (file manager, History, Collections,
+search).
 KOReader lets go of its input devices (it grabs them, EVIOCGRAB), hands the book to the reader (started the first
 time, then kept running) and waits until it is left, then takes the devices back the way it opened them at start and
 redraws its screen. The reader, its fallback fonts and its log are in
-/mnt/us/indium.
+/mnt/us/shamsaink.
 --]]--
 
 local Device = require("device")
@@ -14,10 +15,10 @@ local logger = require("logger")
 local time = require("ui/time")
 local util = require("util")
 
-local dir = "/mnt/us/indium"
+local dir = "/mnt/us/shamsaink"
 
-local Indium = WidgetContainer:extend{
-    name = "indium",
+local ShamsaInk = WidgetContainer:extend{
+    name = "shamsaink",
     is_doc_only = false,
 }
 
@@ -37,7 +38,7 @@ local function run(cmd)
     for _, path in ipairs(paths) do
         Device.input:close(path)
     end
-    logger.info("indium: released", table.concat(paths, " "), "; running", cmd, ";", night())
+    logger.info("shamsaink: released", table.concat(paths, " "), "; running", cmd, ";", night())
     local t = time.now()
     local p = io.popen(cmd, "r")
     local line = p:read("*l")
@@ -52,7 +53,7 @@ local function run(cmd)
             Device.input:open(path)
         end
     end
-    logger.info("indium: exit", status, line, "after", ran, "ms; took back", table.concat(paths, " "), "in",
+    logger.info("shamsaink: exit", status, line, "after", ran, "ms; took back", table.concat(paths, " "), "in",
         time.to_ms(time.since(t)) - ran, "ms;", night())
     if line == "asleep" then
         -- not redrawn: KOReader's screensaver goes over it, and the book is opened again on waking
@@ -62,14 +63,14 @@ local function run(cmd)
     local r = time.now()
     UIManager:setDirty("all", "full")
     UIManager:forceRePaint()
-    logger.info("indium: KOReader redrawn in", time.to_ms(time.since(r)), "ms")
+    logger.info("shamsaink: KOReader redrawn in", time.to_ms(time.since(r)), "ms")
     return line
 end
 
 -- The reader is kept running (it starts once: its start is slow from /mnt/us) and handed each book through two pipes
 -- in RAM: the book written to `in` (lines of "key value": "book PATH"), then a line read from `out` when the book is left, or its end if the
 -- reader died meanwhile.
-local pipes = "/var/tmp/indium"
+local pipes = "/var/tmp/shamsaink"
 
 -- The book left when the Kindle went to sleep: the reader leaves it for KOReader to show its screensaver (KOReader
 -- finds powerd's message waiting once it runs again), and it is opened again once the Kindle wakes.
@@ -86,7 +87,7 @@ local function open(file)
         "if ! alive; then",
         "  rm -rf $P && mkdir -p $P && mkfifo $P/in $P/out &&",
         "  echo \"== $(date -u '+%Y-%m-%d %H:%M UTC') started\" >> " .. log .. " &&",
-        "  (cd " .. dir .. " && exec ./indium -serve $P fonts >> " .. log .. " 2>&1 &);",
+        "  (cd " .. dir .. " && exec ./shamsaink -serve $P fonts >> " .. log .. " 2>&1 &);",
         "  i=0; while [ ! -s $P/pid ] && [ $i -lt 100 ]; do usleep 100000; i=$((i+1)); done;",
         "fi;",
         -- written only to a reader alive, else the write would wait for one forever
@@ -106,21 +107,21 @@ local function open(file)
 end
 
 -- On waking: KOReader takes its screensaver off, then the book left for it is opened again.
-if not Device.indium_wakes then
-    Device.indium_wakes = true
+if not Device.shamsaink_wakes then
+    Device.shamsaink_wakes = true
     local outofScreenSaver = Device.outofScreenSaver
     Device.outofScreenSaver = function(self, source)
         outofScreenSaver(self, source)
         if asleep_in then
             local file = asleep_in
             asleep_in = nil
-            logger.info("indium: woken, opening", file, "again")
+            logger.info("shamsaink: woken, opening", file, "again")
             open(file)
         end
     end
 end
 
-FileManager.addFileDialogButtons(FileManager, "indium", function(file, is_file)
+FileManager.addFileDialogButtons(FileManager, "shamsaink", function(file, is_file)
     if is_file and file:lower():match("%.epub$") then
         local function closeFileDialog()
             local chooser = FileManager.instance and FileManager.getMenuInstance()
@@ -130,7 +131,7 @@ FileManager.addFileDialogButtons(FileManager, "indium", function(file, is_file)
         end
         return {
             {
-                text = "Open with Indium",
+                text = "Open with ShamsaInk",
                 callback = function()
                     closeFileDialog()
                     open(file)
@@ -140,4 +141,4 @@ FileManager.addFileDialogButtons(FileManager, "indium", function(file, is_file)
     end
 end)
 
-return Indium
+return ShamsaInk

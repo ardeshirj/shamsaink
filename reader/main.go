@@ -1,14 +1,14 @@
-// indium: the minimal reader (experiment 11; docs/roadmap.md, stage 2). Opens an EPUB at its place, turns pages by
+// shamsaink: the minimal reader (experiment 11; docs/roadmap.md, stage 2). Opens an EPUB at its place, turns pages by
 // tap or swipe (in the book's direction: a right-to-left book turns forward on the left), keeps its place and the
 // book's cache in DIR/places and DIR/cache, and lays the rest of the book out between touches. A tap on the top tenth
-// of the screen opens the menu: the settings (DIR/settings.json) and a way back. Run by KOReader's plugin (indium.koplugin), which lets go of the touch screen first and
-// redraws after.
+// of the screen opens the menu: the settings (DIR/settings.json) and a way back. Run by KOReader's plugin
+// (shamsaink.koplugin), which lets go of the touch screen first and redraws after.
 //
-//	indium BOOK.epub [FONTS_DIR|-]        one book, then exit
-//	indium -serve PIPES [FONTS_DIR|-]     kept running: a book for each message written to PIPES/in, "left" written
-//	                                      to PIPES/out when it is left (the plugin's way: the program starts once)
+//	shamsaink BOOK.epub [FONTS_DIR|-]       one book, then exit
+//	shamsaink -serve PIPES [FONTS_DIR|-]    kept running: a book for each message written to PIPES/in, "left" written
+//	                                        to PIPES/out when it is left (the plugin's way: the program starts once)
 //
-// A message is lines of "key value": "book PATH". DIR: $INDIUM_DIR, or the folder the program is in.
+// A message is lines of "key value": "book PATH". DIR: $SHAMSAINK_DIR, or the folder the program is in.
 package main
 
 import (
@@ -48,13 +48,13 @@ type reader struct {
 func main() {
 	serve := len(os.Args) > 2 && os.Args[1] == "-serve"
 	if len(os.Args) < 2 || os.Args[1] == "-serve" && !serve {
-		fmt.Fprintln(os.Stderr, "indium BOOK.epub [FONTS_DIR|-]\nindium -serve PIPES [FONTS_DIR|-]")
+		fmt.Fprintln(os.Stderr, "shamsaink BOOK.epub [FONTS_DIR|-]\nshamsaink -serve PIPES [FONTS_DIR|-]")
 		os.Exit(2)
 	}
 	t := time.Now()
 	started := sinceStart()
 	exe, _ := os.Executable()
-	rd := &reader{dir: env("INDIUM_DIR", filepath.Dir(exe))}
+	rd := &reader{dir: env("SHAMSAINK_DIR", filepath.Dir(exe))}
 	var err error
 	rd.dev, err = device.Open()
 	check(err)
@@ -108,7 +108,7 @@ func main() {
 		check(err)
 		asleep, err := rd.read(m, t)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, "indium:", err)
+			fmt.Fprintln(os.Stderr, "shamsaink:", err)
 		}
 		// "asleep": left as the Kindle went to sleep, to be opened again when it wakes
 		fmt.Fprintln(out, map[bool]string{false: "left", true: "asleep"}[asleep])
@@ -350,7 +350,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				if p := nar.parts[min(nar.started, len(nar.parts)-1)]; nar.started < len(nar.parts) && !now.Before(at(p.at)) {
 					<-p.done // decoded in the background while the part before played: late only if that was short
 					if p.err != nil {
-						fmt.Fprintln(os.Stderr, "indium: read aloud:", p.err)
+						fmt.Fprintln(os.Stderr, "shamsaink: read aloud:", p.err)
 						silence()
 						continue
 					}
@@ -556,7 +556,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				nar.wake()
 				w := ms(s)
 				if err := nar.begin(); err != nil {
-					fmt.Fprintln(os.Stderr, "indium: read aloud:", err)
+					fmt.Fprintln(os.Stderr, "shamsaink: read aloud:", err)
 					nar = nil
 					continue
 				}
@@ -769,7 +769,7 @@ func env(k, d string) string {
 
 func check(err error) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "indium:", err)
+		fmt.Fprintln(os.Stderr, "shamsaink:", err)
 		os.Exit(1)
 	}
 }

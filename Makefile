@@ -6,7 +6,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 
 # --- Development ---
 #
-#   make reader          the reader: reader/out/indium (static ARMv7, stripped), for both devices
+#   make reader          the reader: reader/out/shamsaink (static ARMv7, stripped), for both devices
 #   make engine          the engine and its tools, native (engine/target/release), for checks on the Mac
 #   make bench-armv7     the bench's commands for ARMv7 (bench/bin/armv7)
 #   make fetch-blitz     Blitz at its pinned commit with our patches (engine/blitz)
@@ -42,7 +42,7 @@ fetch-blitz:
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
 # The reader on the Kobo, started from NickelMenu (docs/kobo-setup.md, section 7): in .adds/shamsaink, the program
-# named shamsaink there (reader/out/indium here, until the Kindle's is renamed too)
+# named shamsaink there, as in reader/out
 KOBO_DIR = /mnt/onboard/.adds/shamsaink
 # Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never). Kobo's interface reads them only
 # when it starts, so the timer is set by hand in its Settings (docs/kobo-setup.md, section 4), not here.
@@ -54,9 +54,9 @@ KOBO_USB = /Volumes/KOBOeReader
 .PHONY: kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import
 
 kobo-reader-install: reader
-	@$(KOBO_SSH) 'pidof shamsaink indium >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \
+	@$(KOBO_SSH) 'pidof shamsaink >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \
 	  mkdir -p $(KOBO_DIR)/fonts $(KOBO_DIR)/books $(KOBO_DIR)/sleep'
-	@scp -q reader/out/indium $(KOBO):$(KOBO_DIR)/shamsaink.new
+	@scp -q reader/out/shamsaink $(KOBO):$(KOBO_DIR)/shamsaink.new
 	@scp -q reader/kobo/launch.sh reader/out/fonts/* $(KOBO):$(KOBO_DIR)/
 	@$(KOBO_SSH) 'cd $(KOBO_DIR) && mv shamsaink.new shamsaink && mv *.ttf fonts/ && rm -f cache/splash-*.gray'
 	@echo "reader and launcher copied to $(KOBO)"
@@ -115,17 +115,17 @@ SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 .PHONY: kindle-reader-install kindle-reader-log kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
 
 kindle-reader-install: reader
-	@$(SSH) 'mkdir -p /mnt/us/indium'
+	@$(SSH) 'mkdir -p /mnt/us/shamsaink'
 	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
-	@scp -q reader/out/indium $(KINDLE):/mnt/us/indium/indium.new
-	@$(SSH) 'mv /mnt/us/indium/indium.new /mnt/us/indium/indium'
+	@scp -q reader/out/shamsaink $(KINDLE):/mnt/us/shamsaink/shamsaink.new
+	@$(SSH) 'mv /mnt/us/shamsaink/shamsaink.new /mnt/us/shamsaink/shamsaink'
 	@# a reader kept running is stopped, so the next book starts the new one
-	@$(SSH) 'kill $$(cat /var/tmp/indium/pid 2>/dev/null) 2>/dev/null; true'
-	@scp -qr reader/indium.koplugin $(KINDLE):/mnt/us/koreader/plugins/
+	@$(SSH) 'kill $$(cat /var/tmp/shamsaink/pid 2>/dev/null) 2>/dev/null; true'
+	@scp -qr reader/shamsaink.koplugin $(KINDLE):/mnt/us/koreader/plugins/
 	@echo "reader and plugin copied to $(KINDLE)"
 
 kindle-reader-log:
-	@$(SSH) 'tail -n 40 /mnt/us/indium/log.txt'
+	@$(SSH) 'tail -n 40 /mnt/us/shamsaink/log.txt'
 
 kindle-awake:
 	@$(SSH) 'lipc-set-prop com.lab126.powerd preventScreenSaver 1 && lipc-get-prop com.lab126.powerd preventScreenSaver' \

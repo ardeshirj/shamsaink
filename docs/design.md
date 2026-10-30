@@ -164,7 +164,7 @@ on the Kindle Paperwhite 11th gen (2026-10-29). Screen and touch are still the K
 
 ```mermaid
 flowchart LR
-  ko["KOReader (the host)<br/>file manager, SSH, Wi-Fi,<br/>its screensaver"] -- "our plugin: Open with Indium<br/>(the book's path, through a pipe)" --> app["Indium reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
+  ko["KOReader (the host)<br/>file manager, SSH, Wi-Fi,<br/>its screensaver"] -- "our plugin: Open with ShamsaInk<br/>(the book's path, through a pipe)" --> app["ShamsaInk reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
   app -- "left · asleep" --> ko
   app --> scr["screen: /dev/fb0, mapped;<br/>refresh ioctls, a file<br/>per controller family"]
   app --> inp["touch and buttons:<br/>/dev/input/eventN, grabbed<br/>while the reader runs"]
@@ -176,7 +176,7 @@ flowchart LR
 | Part | What it does | Whose | State |
 |---|---|---|---|
 | KOReader | the host: its file manager starts the reader; it keeps SSH, Wi-Fi, its screensaver and (on Kobo) sleep | KOReader, AGPL-3 | on the Kindle (v2026.07.1) |
-| the plugin | "Open with Indium" in KOReader's file manager. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/indium`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/indium.koplugin`) | in use on the Kindle |
+| the plugin | "Open with ShamsaInk" in KOReader's file manager. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/shamsaink`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/shamsaink.koplugin`) | in use on the Kindle |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
 | sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |

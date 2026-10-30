@@ -53,7 +53,7 @@ func Splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 	b.Draw(0, img)
 	os.MkdirAll(filepath.Dir(path), 0o755)
 	if err := os.WriteFile(path, img.Pix, 0o644); err != nil {
-		fmt.Fprintln(os.Stderr, "indium: the opening screen not kept:", err)
+		fmt.Fprintln(os.Stderr, "shamsaink: the opening screen not kept:", err)
 	}
 	fmt.Printf("  opening screen drawn in %.0f ms\n", ms(t))
 	return img

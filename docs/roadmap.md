@@ -37,12 +37,13 @@ the reader stands on and every dependency's licence: `design.md`, sections 6 and
 - [ ] A library to choose the book
 
 **The reader's code** (one `main` package until now)
-- [ ] `reader/device/`: screen, touch, the Kindle's sleep, the Kobo's power, behind `device.Open()` (built, to try on
-  both devices)
-- [ ] `reader/ui/`: the panels' drawing as a package, the templates in `reader/ui/templates/`
-- [ ] The rest of the name: `indium` → `shamsaink` (the plugin, the binary, the folders on the Kindle; a reinstall)
+- [x] `reader/device/`: screen, touch, the Kindle's sleep, the Kobo's power, behind `device.Open()` (tried on both)
+- [x] `reader/ui/`: the panels' drawing as a package, the templates in `reader/ui/templates/`
+- [x] The rest of the name: `indium` → `shamsaink` (the plugin, the binary, the folders on the Kindle; a reinstall)
 - [ ] A `session` for the open book and one event loop
-- [ ] The Kindle: pages identical after the screen code's changes (with the rename's reinstall)
+- [x] The Kindle: pages identical after the screen code's changes (with the rename's reinstall)
+- [ ] The Kindle: the book opened again on waking fails since 2026-10-29 (the touch screen's grab busy; it worked
+  on 10-28). Left: a launcher of our own there may replace KOReader as host (Hosts, below)
 
 **Read-along on the Kobo** (stage 4)
 - [x] A tone, then a chapter's narration, through Kobo's own Bluetooth sink (experiment 13)
@@ -69,7 +70,7 @@ the reader stands on and every dependency's licence: `design.md`, sections 6 and
 ## Hosts
 Only the host knows the host: the engine, the book and its cache (`book.go`), the settings and reading one book
 (`read`, which returns when the book is closed) are host-free; the device's parts go behind `reader/device`.
-- **The Kindle: KOReader** (`reader/indium.koplugin`, the reader's `-serve` mode). "Open with Indium" on an EPUB; the
+- **The Kindle: KOReader** (`reader/shamsaink.koplugin`, the reader's `-serve` mode). "Open with ShamsaInk" on an EPUB; the
   reader is kept running between books, since starting it from `/mnt/us` (FUSE) costs ~0.64 s cold (09; a book in a
   running reader costs its chapter's layout, 0.1–0.3 s; closing a book gives its memory back). KOReader keeps sleep,
   Wi-Fi and SSH: the reader leaves the book when `powerd` goes to the screensaver and the plugin reopens it on waking.
