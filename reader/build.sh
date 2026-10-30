@@ -1,7 +1,7 @@
 #!/bin/sh
 # On the Mac: builds the reader as a static 32-bit ARM binary (the engine's Rust library for armv7 musl with NEON
 # and both cores, then Go through cgo with zig, stripped) in the eink-rust image: reader/out/indium.
-# `make reader-install` copies it and the KOReader plugin to the Kindle.
+# `make kindle-reader-install` and `make kobo-reader-install` copy it to the devices.
 #
 #     sh reader/build.sh
 set -e
