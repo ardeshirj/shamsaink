@@ -116,7 +116,25 @@ starts it again when KOReader is closed (its menu: Exit).
         ```
       - `make kobo-status`. For another host name, `make KOBO=name ...`.
 
-## 4. Books and the sleep screen
+## 4. Keeping it awake, and where things are
+- **Awake, and its Wi-Fi up, while experimenting:** sleep and Wi-Fi are whichever is in front's, not a power
+  daemon's as on the Kindle. Set by hand, and set back when done:
+  - **Kobo's interface, sleep:** Settings → Energy saving and privacy → **Automatically go to sleep after: Never**.
+  - **Kobo's interface, Wi-Fi** (2026-10-30): it switches Wi-Fi off after a few idle minutes even when it never
+    sleeps.
+    1. Type `devmodeon` in its search bar and search (nothing says it worked).
+    2. Settings → Device information → Developer options → **Force Wi-Fi On**, ticked.
+  - **KOReader:** its own sleep setting, while it is open.
+
+  For everyday reading: sleep back on, Force Wi-Fi On unticked (battery); `devmodeoff` in the search bar leaves
+  developer mode (said to open more of the Kobo to its network). Asleep, its Wi-Fi and SSH are off: wake it with
+  its power button, then `make kobo-wait`.
+- **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`): a plain partition (`/dev/mmcblk0p12`, 27 GB),
+  not FUSE as the Kindle's `/mnt/us` (13's probe, 2026-10-29).
+- **We are root** over KOReader's SSH; Kobo's system is writable, so nothing is written outside `/mnt/onboard/.adds`
+  and `/tmp` by the experiment.
+
+## 5. Books and the sleep screen
 - **Books:** anywhere outside dot-folders (we use `Books/`), over USB or `scp book.epub kobo:/mnt/onboard/Books/`.
   Kobo imports them only when a USB connection ends: connect it, tap Connect, `make kobo-import`.
 - **Sleep screen pictures** (undocumented, since firmware 4.13): PNGs in `.kobo/screensaver/`, and **Settings →
@@ -128,7 +146,7 @@ starts it again when KOReader is closed (its menu: Exit).
   `make kobo-import`: `ExcludeSyncFolders=(\\.(?!kobo|adobe).+|([^.][^/]*/)+\\..+|\\.kobo/screensaver.*)`. Keep other
   picture folders out of `.kobo/`.
 
-## 5. Plato (optional)
+## 6. Plato (optional)
 [Plato](https://github.com/baskerville/plato) (AGPL-3.0) is a stand-alone reader for Kobo, worth having beside
 KOReader to compare: it stops Nickel when it starts and starts it again when it quits, as KOReader does. It knows
 the Libra Colour (`monza`). Its guide points to MobileRead's one-click packages; by hand:
@@ -152,21 +170,3 @@ the Libra Colour (`monza`). Its guide points to MobileRead's one-click packages;
 `plato.sh` runs `nickel.sh`), the same kernel panic as KOReader's Exit (section 2, step 6), and there is no patch for
 Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, crashed the Kobo; the same bug in the
 other order). After a normal Quit, restart the Kobo before using Bluetooth.
-
-## 6. Keeping it awake, and where things are
-- **Awake, and its Wi-Fi up, while experimenting:** sleep and Wi-Fi are whichever is in front's, not a power
-  daemon's as on the Kindle. Set by hand, and set back when done:
-  - **Kobo's interface, sleep:** Settings → Energy saving and privacy → **Automatically go to sleep after: Never**.
-  - **Kobo's interface, Wi-Fi** (2026-10-30): it switches Wi-Fi off after a few idle minutes even when it never
-    sleeps.
-    1. Type `devmodeon` in its search bar and search (nothing says it worked).
-    2. Settings → Device information → Developer options → **Force Wi-Fi On**, ticked.
-  - **KOReader:** its own sleep setting, while it is open.
-
-  For everyday reading: sleep back on, Force Wi-Fi On unticked (battery); `devmodeoff` in the search bar leaves
-  developer mode (said to open more of the Kobo to its network). Asleep, its Wi-Fi and SSH are off: wake it with
-  its power button, then `make kobo-wait`.
-- **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`): a plain partition (`/dev/mmcblk0p12`, 27 GB),
-  not FUSE as the Kindle's `/mnt/us` (13's probe, 2026-10-29).
-- **We are root** over KOReader's SSH; Kobo's system is writable, so nothing is written outside `/mnt/onboard/.adds`
-  and `/tmp` by the experiment.

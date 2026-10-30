@@ -131,7 +131,7 @@ stopped: it is lost only when the crash comes as Nickel starts (its safety switc
 
 ## The other order: Nickel restarted first, then Bluetooth (2026-10-29)
 
-Plato (0.9.45, installed as `docs/kobo-setup.md` section 5) quit with Bluetooth off, a normal restart of Nickel;
+Plato (0.9.45, installed as `docs/kobo-setup.md` section 6) quit with Bluetooth off, a normal restart of Nickel;
 **then Bluetooth switched on in Nickel: the Kobo crashed** (NickelMenu lost; put back with `make kobo-nickelmenu`).
 #12739 has the same order (start KOReader, Exit, turn on Bluetooth, … the device reboots). So the rule is wider than
 "no exit after Bluetooth": **Nickel started a second time and Bluetooth, in either order, in one boot**, panic the
@@ -186,7 +186,7 @@ step 3's host (Nickel paused).
 ## Wi-Fi and Bluetooth switched off when idle (2026-10-30, desk research; on the device to do)
 
 Kobo's interface switches Wi-Fi off after a few idle minutes, sleep set to never or not: `[DeveloperSettings]
-ForceWifiOn=true` keeps it on (`docs/kobo-setup.md`, section 6, as the Developer options' "Force Wi-Fi On"). Added
+ForceWifiOn=true` keeps it on (`docs/kobo-setup.md`, section 4, as the Developer options' "Force Wi-Fi On"). Added
 here first as that line in `.kobo/Kobo/Kobo eReader.conf`, with KOReader in front (the interface reads the file only
 when it starts and rewrites it while it runs; the file before it kept as `Kobo eReader.conf.before-forcewifi`), and
 shown ticked in Developer options after a restart: the file and the menu are one setting.
