@@ -83,7 +83,7 @@ Only the host knows the host: the engine, the book and its cache (`book.go`), th
   none KOReader's: installed with NickelMenu's `KoboRoot.tgz`, our folder `.adds/shamsaink/` and one menu line.
 
 ## The reader's panels (2026-10-29)
-Templates in `reader/ui/` (a file a panel, `components.html`, `ui.css`) drawn by Blitz; `TestPanels` draws each in
+Templates in `reader/ui/templates/` (a file a panel, `components.html`, `ui.css`) drawn by Blitz; `TestPanels` draws each in
 its states, `TestPanelEdges` checks the buttons' edges; the rules (our components, modern CSS) in `CLAUDE.md`. The CSS
 uses variables, flex with `gap`, grid and logical properties, so a Farsi interface is `dir="rtl"` and nothing else.
 **The layouts, `docs/layouts/`** (2026-10-30, for the Libra Colour's 1264 × 1680), are the reference: nothing on the

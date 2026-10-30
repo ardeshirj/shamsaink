@@ -23,6 +23,7 @@ import (
 
 	blitz "indiumengine"
 	"indiumreader/device"
+	"indiumreader/ui"
 )
 
 var (
@@ -41,7 +42,7 @@ type reader struct {
 	dir   string
 	pages drawnPages
 	over  *image.Gray
-	clock *clockFace
+	clock *ui.Clock
 }
 
 func main() {
@@ -69,7 +70,7 @@ func main() {
 		rd.pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))}
 	}
 	rd.over = image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))
-	rd.clock = newClockFace(rd.fonts)
+	rd.clock = ui.NewClock(rd.fonts)
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {
@@ -128,9 +129,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	defer f.Close() // closed at once when left, the book too: twice does no harm
 	sleep, stopSleeps := dev.Sleeps()
 	defer stopSleeps()
-	// the book opened meanwhile, and the opening screen shown if it takes longer than splashAfter (its picture first,
+	// the book opened meanwhile, and the opening screen shown if it takes longer than ui.SplashAfter (its picture first,
 	// so the engine never draws it and opens the book at once)
-	open := splash(rd.dir, rd.fonts, scr.W, scr.H)
+	open := ui.Splash(rd.dir, rd.fonts, scr.W, scr.H)
 	type opened struct {
 		r   *reading
 		err error
@@ -143,7 +144,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	var op opened
 	select {
 	case op = <-done:
-	case <-time.After(splashAfter):
+	case <-time.After(ui.SplashAfter):
 		scr.Show(open, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
 		op = <-done
@@ -165,10 +166,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// so a turn forward is only its ink, and a turn back finds the page it came from
 	shown := pages.get(r, r.doc, r.at, r.page())
 	// stamp puts the time on the page shown (or takes it off), centred over its text, returning its box
-	var centre textCentre
+	var centre ui.TextCentre
 	stamp := func() image.Rectangle {
-		x := centre.at(shown.img, max(o.Margin, rd.clock.h), o.Margin)
-		return rd.clock.draw(shown.img, time.Now(), o.Margin, x, r.farsi, set.HideClock)
+		x := centre.At(shown.img, max(o.Margin, rd.clock.Height()), o.Margin)
+		return rd.clock.Draw(shown.img, time.Now(), o.Margin, x, r.farsi, set.HideClock)
 	}
 	// showPage shows the page with the time on it
 	showPage := func(waveform uint32, flash bool) {
@@ -184,39 +185,40 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
 		filepath.Base(path), r.doc, r.at, ms(t), r.restored, r.rtl, o.FontSize, o.LineHeight, o.Margin)
 
-	ahead := true       // the next page may still need drawing
-	rest := !r.restored // documents still to paginate
-	var mn, nav *menu   // the menu and the panel at the bottom, while open
+	ahead := true         // the next page may still need drawing
+	rest := !r.restored   // documents still to paginate
+	var mn, nav *ui.Panel // the menu and the panel at the bottom, while open
 	toc := contents(r.pub.Manifest.TableOfContents, r.spine)
-	var cv *contentsView                  // the table of contents, while shown
+	var cv *ui.Contents                   // the table of contents, while shown
 	backDoc, backAt, backPage := -1, 0, 0 // the place before the last jump, and its page then
 	// where says where the reader is, for the bottom panel
-	where := func() progress {
-		p := progress{rtl: r.rtl, page: r.page() + 1, back: backPage}
+	where := func() ui.Progress {
+		p := ui.Progress{RTL: r.rtl, Page: r.page() + 1, Back: backPage}
 		if c := r.chapter(toc); c >= 0 {
-			p.chapter = toc[c].title
+			p.Chapter = toc[c].title
 		}
 		first, last := r.book.Layout(r.doc)
-		p.at, p.of = r.at+1, last-first
+		p.At, p.Of = r.at+1, last-first
 		if !rest {
-			p.total = r.book.Pages()
-			p.share = float64(r.page()) / float64(max(p.total-1, 1))
+			p.Total = r.book.Pages()
+			p.Share = float64(r.page()) / float64(max(p.Total-1, 1))
 		} else {
-			p.share = (float64(r.doc) + float64(r.at)/float64(max(p.of, 1))) / float64(len(r.spine))
+			p.Share = (float64(r.doc) + float64(r.at)/float64(max(p.Of, 1))) / float64(len(r.spine))
 		}
 		if backDoc < 0 {
-			p.back = 0
+			p.Back = 0
 		}
 		return p
 	}
 	// showMenu puts the menu and the panel at the bottom over the page shown
 	showMenu := func() {
 		s := time.Now()
-		mn = drawMenu(set, r.key, r.book.LineSpacing(r.doc), len(narration) > 0, r.bookRTL, rd.fonts, scr.W)
-		nav = drawNav(where(), rd.fonts, scr.W, scr.H)
+		mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
+			Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: len(narration) > 0, HideClock: set.HideClock}, rd.fonts, scr.W)
+		nav = ui.DrawNav(where(), rd.fonts, scr.W, scr.H)
 		copy(rd.over.Pix, shown.img.Pix)
-		mn.over(rd.over)
-		nav.over(rd.over)
+		mn.Over(rd.over)
+		nav.Over(rd.over)
 		scr.Show(rd.over, device.WfREAGL, false)
 		fmt.Printf("  menu drawn in %.0f ms\n", ms(s))
 	}
@@ -429,18 +431,18 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				if abs(g.DY) > abs(g.DX) {
 					forward = g.DY < 0
 				}
-				if n := cv.page + map[bool]int{true: 1, false: -1}[forward]; n >= 0 && n < cv.pages {
-					cv.page = n
-					cv.draw(rd.over)
+				if n := cv.Page() + map[bool]int{true: 1, false: -1}[forward]; n >= 0 && n < cv.Pages() {
+					cv.SetPage(n)
+					cv.Draw(rd.over)
 					scr.Show(rd.over, device.WfREAGL, false)
 				}
-			case cv.head.at(g.X, g.Y) == "contents-close":
-				cv.close()
+			case cv.HeadAt(g.X, g.Y) == "contents-close":
+				cv.Close()
 				cv = nil
 				showPage(device.WfREAGL, false)
 			default:
-				if i := cv.entryAt(g.X, g.Y); i >= 0 {
-					cv.close()
+				if i := cv.EntryAt(g.X, g.Y); i >= 0 {
+					cv.Close()
 					cv = nil
 					jump(toc[i].doc, r.entryAt(toc[i]))
 				}
@@ -459,10 +461,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 					break
 				}
 				if unmark = r.marks.at(r.doc, words[i]); unmark >= 0 {
-					mn = drawRemove(rd.fonts, scr.W)
+					mn = ui.DrawRemove(rd.fonts, scr.W)
 					copy(rd.over.Pix, shown.img.Pix)
-					mn.over(rd.over)
-					scr.ShowPart(rd.over, mn.rect(), device.WfREAGL, false)
+					mn.Over(rd.over)
+					scr.ShowPart(rd.over, mn.Rect(), device.WfREAGL, false)
 					break
 				}
 				sel = &selection{words: words, from: i, to: i}
@@ -499,9 +501,9 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 		if mn != nil && !leave {
 			// the menu open: a button tapped is applied (the page laid out again if need be), a tap off the
 			// panel closes it
-			id := mn.at(g.X, g.Y)
+			id := mn.At(g.X, g.Y)
 			if id == "" && nav != nil {
-				id = nav.at(g.X, g.Y)
+				id = nav.At(g.X, g.Y)
 			}
 			switch {
 			case g.Swipe:
@@ -510,10 +512,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 			case id == "contents":
 				s := time.Now()
 				mn, nav = nil, nil
-				cv = newContentsView(toc, r.chapter(toc), r.rtl, rd.fonts, scr.W, scr.H)
-				cv.draw(rd.over)
+				cv = ui.NewContents(uiEntries(toc), r.chapter(toc), r.rtl, rd.fonts, scr.W, scr.H)
+				cv.Draw(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
-				fmt.Printf("  contents: %d entries, %d pages, drawn in %.0f ms\n", len(toc), cv.pages, ms(s))
+				fmt.Printf("  contents: %d entries, %d pages, drawn in %.0f ms\n", len(toc), cv.Pages(), ms(s))
 			case id == "chapter-prev" || id == "chapter-next":
 				c := r.prevChapter(toc)
 				if id == "chapter-next" {
@@ -523,7 +525,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 					jump(toc[c].doc, r.entryAt(toc[c]))
 				}
 			case id == "bar":
-				share := nav.share(g.X, r.rtl)
+				share := nav.Share(g.X, r.rtl)
 				doc, at := int(share*float64(len(r.spine))), 0
 				if !rest {
 					n := int(share * float64(r.book.Pages()-1))
@@ -577,7 +579,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 				fmt.Printf("highlight %d removed\n", unmark+1)
 				continue
 			case id == "keep-highlight":
-				scr.ShowPart(shown.img, mn.rect(), device.WfREAGL, false)
+				scr.ShowPart(shown.img, mn.Rect(), device.WfREAGL, false)
 				mn = nil
 			case id != "":
 				s := time.Now()
@@ -599,10 +601,10 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 						o.FontSize, o.LineHeight, o.Margin, r.doc, r.at, ms(s), r.restored)
 				}
 				showMenu()
-			case nav == nil && !image.Pt(g.X, g.Y).In(mn.rect()):
-				scr.ShowPart(shown.img, mn.rect(), device.WfREAGL, false)
+			case nav == nil && !image.Pt(g.X, g.Y).In(mn.Rect()):
+				scr.ShowPart(shown.img, mn.Rect(), device.WfREAGL, false)
 				mn = nil
-			case nav != nil && !image.Pt(g.X, g.Y).In(mn.rect()) && !image.Pt(g.X, g.Y).In(nav.rect()):
+			case nav != nil && !image.Pt(g.X, g.Y).In(mn.Rect()) && !image.Pt(g.X, g.Y).In(nav.Rect()):
 				closeMenu()
 			}
 			if !leave {
@@ -742,6 +744,15 @@ func sinceStart() string {
 }
 
 func abs(v int) int { return max(v, -v) }
+
+// uiEntries are the table of contents as the contents view shows it.
+func uiEntries(es []entry) []ui.Entry {
+	out := make([]ui.Entry, len(es))
+	for i, e := range es {
+		out[i] = ui.Entry{Title: e.title, Depth: e.depth}
+	}
+	return out
+}
 
 func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }
 

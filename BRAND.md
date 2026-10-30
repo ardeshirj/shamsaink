@@ -9,7 +9,7 @@ section 6). This file says what those are and how they may be used.
   squares at its centre; on e-ink, black and white (`mark-1bit`).
 - **FarsiEPUB's logo:** its star, with one saffron dot, and the wordmark "FarsiEPUB".
 - **Where they are here:** `reader/ui/brand/` (`shamsaink.png`, `farsiepub.png`) and the opening screen that shows
-  them, `reader/ui/splash.html`.
+  them, `reader/ui/templates/splash.html`.
 
 Both are made from FarsiEPUB's brand files, the source of truth for the marks, their colours and their rules
 (`brand/` in FarsiEPUB's repository): the PNGs here are copies at the size drawn (how, in `reader/splash.go`).
@@ -18,7 +18,7 @@ Both are made from FarsiEPUB's brand files, the source of truth for the marks, t
 - **Builds of this project, unmodified,** show them as they are.
 - **Anyone may name the project** when writing about it, linking to it or saying their work is based on it.
 - **A version with changes, shipped to others,** uses its own name and logo: replace the two pictures in
-  `reader/ui/brand/` and the words in `reader/ui/splash.html` (nothing else in the reader shows the brand), and do not
+  `reader/ui/brand/` and the words in `reader/ui/templates/splash.html` (nothing else in the reader shows the brand), and do not
   present it as ShamsaInk or as made by FarsiEPUB.
 - **Not without asking:** the names or marks on another product, or in a way that suggests endorsement.
 

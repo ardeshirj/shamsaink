@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	blitz "indiumengine"
+	"indiumreader/ui"
 )
 
 // On a real book (BOOK, an .epub; FONTS a fallback fonts folder; OUT a folder for the pictures): "Next chapter"
@@ -72,20 +73,15 @@ func TestContents(t *testing.T) {
 		png.Encode(f, img)
 	}
 	r.seek(toc[visited[len(visited)/2]].doc, 0)
-	v := newContentsView(toc, r.chapter(toc), r.rtl, fonts, w, h)
-	defer v.close()
+	v := ui.NewContents(uiEntries(toc), r.chapter(toc), r.rtl, fonts, w, h)
+	defer v.Close()
 	img := image.NewGray(image.Rect(0, 0, w, h))
-	v.draw(img)
+	v.Draw(img)
 	save("contents.png", img)
-	nav := drawNav(progress{chapter: "a chapter's title", at: 3, of: 12, page: 40, total: 160, share: 0.25, back: 7,
-		rtl: r.rtl}, fonts, w, h)
+	nav := ui.DrawNav(ui.Progress{Chapter: "a chapter's title", At: 3, Of: 12, Page: 40, Total: 160, Share: 0.25, Back: 7,
+		RTL: r.rtl}, fonts, w, h)
 	page := image.NewGray(image.Rect(0, 0, w, h))
 	r.book.Draw(r.page(), page)
-	nav.over(page)
-	for _, id := range navIDs {
-		if b, ok := nav.buttons[id]; !ok || b.Empty() {
-			t.Errorf("button %s not on the panel", id)
-		}
-	}
+	nav.Over(page)
 	save("nav.png", page)
 }

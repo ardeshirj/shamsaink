@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"fmt"
@@ -11,21 +11,21 @@ import (
 	blitz "indiumengine"
 )
 
-// The opening screen (roadmap, "An opening screen"): shown when a book is not open within splashAfter, so a quick
+// The opening screen (roadmap, "An opening screen"): shown when a book is not open within SplashAfter, so a quick
 // open goes straight to its page (the opening screen's flash would hold the page back ~0.4 s). Drawn once from
-// ui/splash.html and kept as a picture in DIR/cache (a new one whenever the template or the screen's size changes),
+// templates/splash.html and kept as a picture in DIR/cache (a new one whenever the template or the screen's size changes),
 // so showing it is a copy and a refresh, the ink moving while the book opens.
-const splashAfter = 300 * time.Millisecond
+const SplashAfter = 300 * time.Millisecond
 
 type splashData struct{ Top int }
 
-// splash is the opening screen for a screen w × h: read from DIR/cache, else drawn and kept there.
-func splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
-	// the logos, in ui/brand, made from FarsiEPUB's brand folder (our Blitz draws no SVG), read by the engine as files
+// Splash is the opening screen for a screen w × h: read from DIR/cache, else drawn and kept there.
+func Splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
+	// the logos, in brand/, made from FarsiEPUB's brand folder (our Blitz draws no SVG), read by the engine as files
 	// beside the page: ShamsaInk's mark, from brand/shamsaink/mark-1bit.svg (rsvg-convert -w 240 -h 240 -b white),
 	// and FarsiEPUB's logo, from brand/farsiepub/logo.svg (rsvg-convert -h 60 -b white)
-	mark, _ := uiFiles.ReadFile("ui/brand/shamsaink.png")
-	logo, _ := uiFiles.ReadFile("ui/brand/farsiepub.png")
+	mark, _ := files.ReadFile("brand/shamsaink.png")
+	logo, _ := files.ReadFile("brand/farsiepub.png")
 	html, _ := render("splash.html", splashData{Top: h * 3 / 10})
 	sum := fnv.New32a()
 	sum.Write([]byte(html))

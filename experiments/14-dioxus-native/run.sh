@@ -3,7 +3,7 @@
 # On the Mac in Docker (image eink-rust): builds the spike (native, with Dioxus), runs both variants N times (default
 # 20), then the two static ARMv7 builds (sizes). Writes out/*.png and out/results.txt.
 #     sh experiments/14-dioxus-native/run.sh [N]
-# Needs reader/out/kfonts (fallback fonts) and html/menu-50.html, html/menu-52.html (what reader/ui.go's `render`
+# Needs reader/out/kfonts (fallback fonts) and html/menu-50.html, html/menu-52.html (what reader/ui/ui.go's `render`
 # makes for the menu, see NOTES.md).
 set -e
 cd "$(dirname "$0")/../.."

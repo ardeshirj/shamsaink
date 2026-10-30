@@ -123,9 +123,9 @@ same engine as the book: **Go writes the HTML, Rust only draws it.** Nothing in 
 
 ```mermaid
 flowchart LR
-  tpl["reader/ui/<br/>a template per panel,<br/>components.html, ui.css"] --> rnd["render (ui.go)<br/>Go's html/template<br/>→ HTML + the buttons' ids"]
+  tpl["reader/ui/templates/<br/>a template per panel,<br/>components.html, ui.css"] --> rnd["render (ui/ui.go)<br/>Go's html/template<br/>→ HTML + the buttons' ids"]
   rnd -- "the HTML, as a one-chapter book" --> eng["Blitz engine<br/>lays out, draws<br/>into Go's buffer"]
-  eng -- "Find: each id's boxes" --> taps["the panel's buttons<br/>(menu.go: a tap → an id)"]
+  eng -- "Find: each id's boxes" --> taps["the panel's buttons<br/>(ui/panel.go: a tap → an id)"]
   eng --> scr["the panel's area<br/>refreshed on the screen"]
 ```
 
@@ -139,7 +139,7 @@ flowchart LR
 - **A tap redraws the panel:** the settings change in Go, the panel is rendered and laid out again, and only its area
   is refreshed. No state lives in the HTML; on e-ink nothing animates, and a panel is small next to its refresh.
 - **The clock** is drawn once as glyphs by the engine (in Parastoo, FarsiEPUB's font) and put together for each
-  time: a page turn costs no layout, and its own box is refreshed once a minute (`clock.go`). It is centred over the
+  time: a page turn costs no layout, and its own box is refreshed once a minute (`ui/clock.go`). It is centred over the
   text, between the edges most of the page's lines share, measured on the page's ink (the book's own margins count;
   0.2 ms a page on the Mac). Drawing it in each book's own font was tried: ~70 ms more a book opened on the Kindle.
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C

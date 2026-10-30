@@ -1,4 +1,4 @@
-//! The menu as Dioxus components, the same markup and classes as reader/ui/components.html and menu.html.
+//! The menu as Dioxus components, the same markup and classes as reader/ui/templates/components.html and menu.html.
 use crate::common::*;
 use blitz_dom::{Document as _, DocumentConfig};
 use blitz_traits::shell::{ColorScheme, Viewport};
@@ -10,7 +10,7 @@ use std::any::Any;
 use std::rc::Rc;
 use std::time::Instant;
 
-const UI_CSS: &str = include_str!("../../../reader/ui/ui.css");
+const UI_CSS: &str = include_str!("../../../reader/ui/templates/ui.css");
 
 #[component]
 fn Button(id: String, label: String, #[props(default)] on: bool, onclick: EventHandler<()>) -> Element {

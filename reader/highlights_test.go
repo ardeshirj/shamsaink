@@ -4,8 +4,6 @@ package main
 
 import (
 	"image"
-	"image/png"
-	"os"
 	"testing"
 
 	blitz "indiumengine"
@@ -55,23 +53,5 @@ func TestWordAt(t *testing.T) {
 		if got := wordAt(testWords, c.x, c.y); got != c.want {
 			t.Errorf("(%d, %d): %d, want %d", c.x, c.y, got, c.want)
 		}
-	}
-}
-
-// The panel's two buttons are found, apart. FONTS and PANEL_PNG as TestMenu's.
-func TestRemovePanel(t *testing.T) {
-	var fonts *blitz.Fonts
-	if d := os.Getenv("FONTS"); d != "" {
-		fonts = blitz.LoadFonts(d)
-	}
-	m := drawRemove(fonts, 1236)
-	a, b := m.buttons["remove-highlight"], m.buttons["keep-highlight"]
-	if a.Empty() || b.Empty() || a.Overlaps(b) || !a.In(m.img.Bounds()) || !b.In(m.img.Bounds()) {
-		t.Errorf("buttons %v", m.buttons)
-	}
-	if p := os.Getenv("PANEL_PNG"); p != "" {
-		f, _ := os.Create(p)
-		defer f.Close()
-		png.Encode(f, m.img)
 	}
 }

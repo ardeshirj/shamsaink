@@ -133,7 +133,7 @@ sup.note { font-size: .6em; line-height: 0; padding: 0 .15em; border: .14cqw sol
 .foot p { margin: 0; font-family: var(--display); font-size: 1.05em; line-height: 1.45; }
 .zone { position: absolute; display: grid; place-items: center; font: 500 2.3cqw/1.25 var(--mono); color: var(--tag); text-align: center; opacity: 0; }
 
-/* ---- our components, as the reader draws them (reader/ui/ui.css), and the new ones ---- */
+/* ---- our components, as the reader draws them (reader/ui/templates/ui.css), and the new ones ---- */
 .b { display: inline-block; border: .24cqw solid var(--ink); border-radius: .4em; padding: .05em .6em; white-space: nowrap; }
 .b.fill { background: var(--ink); color: var(--paper); }
 .b.focus { outline: .45cqw solid var(--ink); outline-offset: .3em; }

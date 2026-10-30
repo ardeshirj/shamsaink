@@ -1,18 +1,24 @@
-package main
+// Package ui draws the reader's panels: the menu, the panels at the bottom and for removing a highlight, the table of
+// contents, the clock in the top margin and the opening screen. Each is HTML (templates/) drawn by the engine; the
+// reader (package main) hands this package plain data and gets pictures and the places of buttons back.
+package ui
 
 import (
 	"embed"
 	"fmt"
 	"html/template"
+	"image"
 	"strings"
+	"time"
 )
 
-// The panels' HTML is in ui/: the shared rules (ui.css), the pieces (components.html) and a template for each panel.
+// The panels' HTML is in templates/: the shared rules (ui.css), the pieces (components.html) and a template for each
+// panel. brand/ has the logos.
 //
-//go:embed ui
-var uiFiles embed.FS
+//go:embed templates brand
+var files embed.FS
 
-var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(uiFiles, "ui/*.html", "ui/*.css"))
+var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(files, "templates/*.html", "templates/*.css"))
 
 // A button, as the templates draw it; On: ticked (for a choice).
 type button struct {
@@ -47,8 +53,8 @@ func uiFuncs(ids *[]string) template.FuncMap {
 	}
 }
 
-// render fills in the template name (a file of ui/) with data: the HTML, and the ids of the buttons it drew, which
-// drawPanel looks for.
+// render fills in the template name (a file of templates/) with data: the HTML, and the ids of the buttons it drew,
+// which drawPanel looks for.
 func render(name string, data any) (html string, ids []string) {
 	t, err := uiTemplates.Clone()
 	if err == nil {
@@ -57,5 +63,15 @@ func render(name string, data any) (html string, ids []string) {
 			return b.String(), ids
 		}
 	}
-	panic(fmt.Sprintf("ui/%s: %v", name, err))
+	panic(fmt.Sprintf("ui/templates/%s: %v", name, err))
 }
+
+func union(rs []image.Rectangle) image.Rectangle {
+	var u image.Rectangle
+	for _, r := range rs {
+		u = u.Union(r)
+	}
+	return u
+}
+
+func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }

@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"bytes"
@@ -11,18 +11,21 @@ import (
 )
 
 // The clock in the page's top margin (hidden in the menu): the time of day, 24 hours, from the Kindle's clock and
-// its time zone (/etc/localtime), in Parastoo, centred over the text (textCentre). Its digits are drawn once by the
+// its time zone (/etc/localtime), in Parastoo, centred over the text (TextCentre). Its digits are drawn once by the
 // engine and put together for each time, so a page turn costs no layout; on a page shown a while, only its own box is
 // refreshed, once a minute. A book in Farsi gets Farsi digits (۲۰:۴۸), still hours first on the left, as digits run
 // left to right in Farsi too.
-type clockFace struct {
+type Clock struct {
 	glyphs map[rune]*image.Gray // "0" to "9", "۰" to "۹" and ":", each the line's height
 	w, h   int                  // the box's size: the widest digit four times and the colon
 }
 
 const clockSize = 30 // px
 
-func newClockFace(fonts *blitz.Fonts) *clockFace {
+// Height is the clock box's height in px.
+func (f *Clock) Height() int { return f.h }
+
+func NewClock(fonts *blitz.Fonts) *Clock {
 	const chars = "0123456789:۰۱۲۳۴۵۶۷۸۹"
 	type char struct{ ID, Char string }
 	d := struct {
@@ -41,7 +44,7 @@ func newClockFace(fonts *blitz.Fonts) *clockFace {
 	b.Layout(0)
 	whole := image.NewGray(image.Rect(0, 0, 800, 200))
 	b.Draw(0, whole)
-	f := &clockFace{glyphs: map[rune]*image.Gray{}}
+	f := &Clock{glyphs: map[rune]*image.Gray{}}
 	// each glyph cut from the whole line's height, so digits from different fonts keep one baseline
 	boxes := map[rune]image.Rectangle{}
 	line := image.Rectangle{}
@@ -68,14 +71,14 @@ func newClockFace(fonts *blitz.Fonts) *clockFace {
 
 // box is where the clock goes, centred on x, on a page with margin px around the text: in the top margin's middle,
 // or on the top edge when the margin is narrower than the clock.
-func (f *clockFace) box(x, margin int) image.Rectangle {
+func (f *Clock) box(x, margin int) image.Rectangle {
 	y := max((margin-f.h)/2, 0)
 	return image.Rect(x-f.w/2-1, y, x-f.w/2+f.w+1, y+f.h)
 }
 
-// draw puts time t into img in its box (white under it), its ink centred on x, in Farsi digits if farsi, unless
+// Draw puts time t into img in its box (white under it), its ink centred on x, in Farsi digits if farsi, unless
 // hidden; it returns the box.
-func (f *clockFace) draw(img *image.Gray, t time.Time, margin, x int, farsi, hidden bool) image.Rectangle {
+func (f *Clock) Draw(img *image.Gray, t time.Time, margin, x int, farsi, hidden bool) image.Rectangle {
 	r := f.box(x, margin)
 	if hidden {
 		return r
@@ -121,23 +124,23 @@ func (f *clockFace) draw(img *image.Gray, t time.Time, margin, x int, farsi, hid
 	return r
 }
 
-// textCentre is the x the clock is centred on: halfway between the edges the page's lines of text share, by their
+// TextCentre is the x the clock is centred on: halfway between the edges the page's lines of text share, by their
 // ink (lineEdges, sharedEdge), so the book's own margins inside ours count; on a page without such edges (a title, a
 // picture, ragged lines), the last page's that had them, else the page's middle. (Measured on the ink, not the
 // engine's word boxes: in some right-to-left books those do not lie on the text.)
-type textCentre struct {
+type TextCentre struct {
 	x, margin int
 }
 
-// at is the centre for the page in img, its text below row top.
-func (c *textCentre) at(img *image.Gray, top, margin int) int {
+// At is the centre for the page in img, its text below row top.
+func (c *TextCentre) At(img *image.Gray, top, margin int) int {
 	lefts, rights := lineEdges(img, top)
 	l, lok := sharedEdge(lefts, false)
 	r, rok := sharedEdge(rights, true)
 	if lok && rok {
-		*c = textCentre{(l + r) / 2, margin}
+		*c = TextCentre{(l + r) / 2, margin}
 	} else if c.x == 0 || c.margin != margin {
-		*c = textCentre{img.Rect.Dx() / 2, margin}
+		*c = TextCentre{img.Rect.Dx() / 2, margin}
 	}
 	return c.x
 }
