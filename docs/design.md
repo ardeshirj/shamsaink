@@ -138,8 +138,10 @@ flowchart LR
   so panels are checked by drawing them: `TestPanels`, `TestPanelEdges`.
 - **A tap redraws the panel:** the settings change in Go, the panel is rendered and laid out again, and only its area
   is refreshed. No state lives in the HTML; on e-ink nothing animates, and a panel is small next to its refresh.
-- **The clock** is drawn once as glyphs by the engine and put together for each time: a page turn costs no layout,
-  and its own box is refreshed once a minute (`clock.go`).
+- **The clock** is drawn once as glyphs by the engine (in Parastoo, FarsiEPUB's font) and put together for each
+  time: a page turn costs no layout, and its own box is refreshed once a minute (`clock.go`). It is centred over the
+  text, between the edges most of the page's lines share, measured on the page's ink (the book's own margins count;
+  0.2 ms a page on the Mac). Drawing it in each book's own font was tried: ~70 ms more a book opened on the Kindle.
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
   API or moved, for no measured cost today. An idea for stage 5 (roadmap, "The reader's panels").
 

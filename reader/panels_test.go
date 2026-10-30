@@ -80,7 +80,7 @@ func TestPanels(t *testing.T) {
 	for i := range img.Pix {
 		img.Pix[i] = 255
 	}
-	newClockFace(fonts).draw(img, time.Date(2026, 10, 29, 20, 48, 0, 0, time.UTC), 60, false, false)
+	newClockFace(fonts).draw(img, time.Date(2026, 10, 29, 20, 48, 0, 0, time.UTC), 60, w/2, false, false)
 	save("clock", img.SubImage(image.Rect(0, 0, w, 200)))
 }
 

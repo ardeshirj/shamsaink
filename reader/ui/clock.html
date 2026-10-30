@@ -1,3 +1,5 @@
+{{/* The clock's digits, each in a span of its own, in Parastoo (FarsiEPUB's font; one of the fallback fonts). A space
+between them, so none is cut out with a piece of its neighbour. */ -}}
 {{template "head" ""}}<style>
-html { font-size: {{.Size}}px; color: #333; }
-</style></head><body><p>{{range .Chars}}<span id="{{.ID}}">{{.Char}}</span>{{end}}</p></body></html>
+html { font-size: {{.Size}}px; color: #333; font-family: Parastoo, serif; }
+</style></head><body><p>{{range .Chars}}<span id="{{.ID}}">{{.Char}}</span> {{end}}</p></body></html>

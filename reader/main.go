@@ -135,8 +135,12 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 	// three pages drawn, each with its place: between touches the next page is drawn into the one shown longest ago,
 	// so a turn forward is only its ink, and a turn back finds the page it came from
 	shown := pages.get(r, r.doc, r.at, r.page())
-	// stamp puts the time on the page shown (or takes it off), returning its box
-	stamp := func() image.Rectangle { return rd.clock.draw(shown.img, time.Now(), o.Margin, r.farsi, set.HideClock) }
+	// stamp puts the time on the page shown (or takes it off), centred over its text, returning its box
+	var centre textCentre
+	stamp := func() image.Rectangle {
+		x := centre.at(shown.img, max(o.Margin, rd.clock.h), o.Margin)
+		return rd.clock.draw(shown.img, time.Now(), o.Margin, x, r.farsi, set.HideClock)
+	}
 	// showPage shows the page with the time on it
 	showPage := func(waveform uint32, flash bool) {
 		stamp()
