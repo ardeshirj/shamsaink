@@ -182,3 +182,25 @@ a session (fed silence between parts, `PLAN.md`): then only the headphones' own 
 
 Not yet: the hour (drop-outs, drift over it), the reader itself on the Kobo (its own screen code, `reader/`), and
 step 3's host (Nickel paused).
+
+## Wi-Fi and Bluetooth switched off when idle (2026-10-30, desk research; on the device to do)
+
+Kobo's interface switches Wi-Fi off after a few idle minutes, sleep set to never or not: `[DeveloperSettings]
+ForceWifiOn=true` keeps it on (`docs/kobo-setup.md`, section 6, as the Developer options' "Force Wi-Fi On"). Added
+here first as that line in `.kobo/Kobo/Kobo eReader.conf`, with KOReader in front (the interface reads the file only
+when it starts and rewrites it while it runs; the file before it kept as `Kobo eReader.conf.before-forcewifi`), and
+shown ticked in Developer options after a restart: the file and the menu are one setting.
+
+**Bluetooth's idle switch-off is Kobo's interface's too,** not the kernel's or `mtkbtd`'s: from kobo-btpt's source
+(MIT, a page-turner plugin for the interface, `src/btpt.cc`), the interface has a `BluetoothHeartbeat` whose
+`beat()` keeps Bluetooth on; Kobo's audiobook player calls it while it plays, kobo-btpt every second for 10 minutes
+after the last button press. Without it the interface switches Bluetooth off after some idle time (~150 s, one
+user's recollection, MobileRead). A user on an Elipsa found `ForceWifiOn` kept Bluetooth on as well (one chip for
+both).
+
+**For us:** it applies only while the interface runs. Inside KOReader the interface is stopped, so nothing switches
+Bluetooth off for idleness (none seen between today's runs); with it paused (step 3), presumably neither, to check
+in the pause test. Where it matters is before KOReader, the headphones connected in the interface: to check there,
+with `ForceWifiOn`, Wi-Fi pinged for 10 idle minutes, then the headphones left idle 5 minutes.
+
+Sources: https://www.mobileread.com/forums/showthread.php?p=4211676, https://github.com/tsowell/kobo-btpt.

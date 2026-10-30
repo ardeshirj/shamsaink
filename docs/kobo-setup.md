@@ -5,6 +5,20 @@ it, started from NickelMenu, its SSH server and a key (step 0 of `experiments/13
 1). **Written before the device is here,** from KOReader's Kobo installation page (its wiki) and the Kindle's setup:
 each step to be checked on the device, and this note taken off when it is.
 
+## Each session, quickly (2026-10-30)
+Once sections 1–6 are done. The order matters: Kobo's interface started a second time in a boot and Bluetooth, in
+either order, crash the Kobo (13's NOTES.md).
+1. **Restart the Kobo** (power button held → Restart), unless just switched on.
+2. **In Kobo's interface:** Wi-Fi connected; headphones on and **connected** in Settings → Bluetooth (paired is not
+   enough: `a2dp not ready`).
+3. **NickelMenu → KOReader;** in KOReader, Network → SSH server on. Its Wi-Fi left alone from here.
+4. **On the Mac:** `make kobo-status` (if no answer: the address in KOReader's SSH pop-up, into `~/.ssh/config`).
+5. **To finish:** KOReader → Reboot (or Exit: the exit patch reboots). Never a plain return to Kobo's interface with
+   Bluetooth on.
+
+Warning sign: `ssh kobo` answering with Kobo's interface in front means KOReader was closed in this boot: restart
+before switching Bluetooth on.
+
 ## 1. Kobo's own first setup
 Do Kobo's setup first (language, Wi-Fi, account), as any new Kobo, and update its firmware if it offers. Note the
 firmware version (Settings → Device information) for the probe (the plan's step 1) and for the KOReader build
@@ -140,15 +154,18 @@ Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, cra
 other order). After a normal Quit, restart the Kobo before using Bluetooth.
 
 ## 6. Keeping it awake, and where things are
-- **Sleep is whichever is in front's,** not a power daemon's as on the Kindle. While experimenting, set by hand,
-  and set back when done:
-  - Kobo's interface: **Settings → Energy saving and privacy → Automatically go to sleep after: Never**. (Its
-    settings file has it as `[PowerOptions] AutoSleepMinutes`, 0 for never, but the interface reads that file only
-    when it starts, so changing it over SSH does nothing until then; `make kobo-status` shows the file's value.)
-  - KOReader: its own sleep setting, while it is open.
+- **Awake, and its Wi-Fi up, while experimenting:** sleep and Wi-Fi are whichever is in front's, not a power
+  daemon's as on the Kindle. Set by hand, and set back when done:
+  - **Kobo's interface, sleep:** Settings → Energy saving and privacy → **Automatically go to sleep after: Never**.
+  - **Kobo's interface, Wi-Fi** (2026-10-30): it switches Wi-Fi off after a few idle minutes even when it never
+    sleeps.
+    1. Type `devmodeon` in its search bar and search (nothing says it worked).
+    2. Settings → Device information → Developer options → **Force Wi-Fi On**, ticked.
+  - **KOReader:** its own sleep setting, while it is open.
 
-  Asleep, its Wi-Fi and SSH are off: wake it with its power button, then `make kobo-wait`. KOReader's SSH server
-  stays up after KOReader is closed, so `ssh kobo` works with Kobo's interface in front too.
+  For everyday reading: sleep back on, Force Wi-Fi On unticked (battery); `devmodeoff` in the search bar leaves
+  developer mode (said to open more of the Kobo to its network). Asleep, its Wi-Fi and SSH are off: wake it with
+  its power button, then `make kobo-wait`.
 - **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`): a plain partition (`/dev/mmcblk0p12`, 27 GB),
   not FUSE as the Kindle's `/mnt/us` (13's probe, 2026-10-29).
 - **We are root** over KOReader's SSH; Kobo's system is writable, so nothing is written outside `/mnt/onboard/.adds`
