@@ -84,7 +84,7 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		}
 		return data, nil
 	}
-	key := fmt.Sprintf("%s-%d-%d", filepath.Base(abs), st.Size(), st.ModTime().Unix())
+	key := bookKey(filepath.Base(abs), st.Size(), st.ModTime())
 	r := &reading{
 		pub:     p,
 		spine:   spine,
@@ -100,7 +100,10 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 	r.direct(direction(key))
 	r.make(o)
 	if b, err := os.ReadFile(r.place); err == nil {
-		fmt.Sscan(string(b), &r.doc, &r.at)
+		var share float64 // the old form has none
+		if n, _ := fmt.Sscan(string(b), &r.doc, &r.at, &share); n < 2 {
+			r.doc, r.at = 0, 0
+		}
 	}
 	r.doc = min(max(r.doc, 0), len(spine)-1)
 	if !r.seek(r.doc, r.at) && !r.next() {
@@ -204,14 +207,23 @@ func (r *reading) close() {
 	}
 }
 
-// keep writes the place, and the cache once every document is paginated (once).
-func (r *reading) keep() {
-	os.MkdirAll(filepath.Dir(r.place), 0o755)
-	os.MkdirAll(filepath.Dir(r.cache), 0o755)
-	os.WriteFile(r.place, []byte(fmt.Sprintf("%d %d\n", r.doc, r.at)), 0o644)
+// share is how much of the book is read, 0 to 1: by pages once every document is paginated (rest false), else by
+// documents, the page's share of its own added.
+func (r *reading) share(rest bool) float64 {
+	if !rest {
+		return float64(r.page()) / float64(max(r.book.Pages()-1, 1))
+	}
+	first, last := r.book.Layout(r.doc)
+	return (float64(r.doc) + float64(r.at)/float64(max(last-first, 1))) / float64(len(r.spine))
+}
+
+// keep writes the place with the share read, and the cache once every document is paginated (once). The caller says
+// whether the rest of the book is still being paginated: the session owns that, and the share depends on it.
+func (r *reading) keep(rest bool) {
+	writeFile(r.place, []byte(fmt.Sprintf("%d %d %.4f\n", r.doc, r.at, r.share(rest))))
 	if !r.saved {
 		if data := r.book.Save(); data != nil {
-			os.WriteFile(r.cache, data, 0o644)
+			writeFile(r.cache, data)
 			r.saved = true
 		}
 	}

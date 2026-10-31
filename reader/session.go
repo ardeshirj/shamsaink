@@ -218,7 +218,7 @@ func (s *session) idle() bool {
 		return true
 	case s.rest:
 		if s.rest = s.r.book.LayoutNext(); !s.rest {
-			s.r.keep()
+			s.r.keep(s.rest)
 			fmt.Printf("every document paginated after %.0f ms, %d pages\n", ms(s.t), s.r.book.Pages())
 		}
 		return true
@@ -278,7 +278,7 @@ func (s *session) leave() {
 		s.silence()
 	}
 	t := time.Now()
-	s.r.keep()
+	s.r.keep(s.rest)
 	k := ms(t)
 	s.scr.Wait()
 	w := ms(t) - k
@@ -316,7 +316,7 @@ func (s *session) show() {
 	s.shown = s.rd.pages.get(s.r, s.r.doc, s.r.at, s.r.page())
 	s.rd.pages.touch(s.shown)
 	s.showPage(device.WfREAGL, false)
-	s.r.keep()
+	s.r.keep(s.rest)
 	s.ahead = true
 }
 
@@ -337,7 +337,7 @@ func (s *session) turn(g device.Gesture) {
 		if turned { // pages turned before the menu was asked for
 			s.shown = s.rd.pages.get(s.r, s.r.doc, s.r.at, s.r.page())
 			s.rd.pages.touch(s.shown)
-			s.r.keep()
+			s.r.keep(s.rest)
 			s.ahead = true
 		}
 		s.showMenu()
@@ -365,10 +365,8 @@ func (s *session) where() ui.Progress {
 	p.At, p.Of = r.at+1, last-first
 	if !s.rest {
 		p.Total = r.book.Pages()
-		p.Share = float64(r.page()) / float64(max(p.Total-1, 1))
-	} else {
-		p.Share = (float64(r.doc) + float64(r.at)/float64(max(p.Of, 1))) / float64(len(r.spine))
 	}
+	p.Share = r.share(s.rest)
 	if s.backDoc < 0 {
 		p.Back = 0
 	}
@@ -657,7 +655,7 @@ func (s *session) underline(c cue) {
 		s.rd.pages.touch(s.shown)
 		nar.bars = nil
 		s.showPage(device.WfREAGL, false)
-		r.keep()
+		r.keep(s.rest)
 	}
 	region := union(nar.bars)
 	nar.bars = nar.bars[:0]

@@ -38,7 +38,7 @@ func loadSettings(dir string) *settings {
 
 func (s *settings) save(dir string) {
 	b, _ := json.MarshalIndent(s, "", "  ")
-	os.WriteFile(filepath.Join(dir, "settings.json"), append(b, '\n'), 0o644)
+	writeFile(filepath.Join(dir, "settings.json"), append(b, '\n'))
 }
 
 func (s *settings) options(w, h int) blitz.Options {

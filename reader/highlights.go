@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -31,15 +32,19 @@ type highlights struct {
 func loadHighlights(dir, key string) *highlights {
 	h := &highlights{path: filepath.Join(dir, "highlights", key+".json")}
 	if b, err := os.ReadFile(h.path); err == nil {
-		json.Unmarshal(b, &h.list)
+		if err := json.Unmarshal(b, &h.list); err != nil {
+			// kept for a person to look at; the next save would write over it
+			h.list = nil
+			os.Rename(h.path, h.path+".bad")
+			fmt.Printf("highlights: %s does not parse (%v); kept as %s.bad\n", h.path, err, filepath.Base(h.path))
+		}
 	}
 	return h
 }
 
 func (h *highlights) save() {
-	os.MkdirAll(filepath.Dir(h.path), 0o755)
 	b, _ := json.MarshalIndent(h.list, "", "  ")
-	os.WriteFile(h.path, append(b, '\n'), 0o644)
+	writeFile(h.path, append(b, '\n'))
 }
 
 // add keeps hl, taking in the highlights it overlaps (one span over them all), so no text is under two; its text is
