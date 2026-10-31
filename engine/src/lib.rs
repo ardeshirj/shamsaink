@@ -566,10 +566,13 @@ impl Book {
 }
 
 /// The fonts in a folder, each as its generic family by its file name ("Mono", "Serif" or "Sans" in it; others are
-/// skipped), for `Book::new`.
+/// skipped), for `Book::new`; in the order of their names, so a generic family's first font is the same on every
+/// system (a folder's own order is the file system's: the Kobo's lists by name, Docker's not).
 pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
     let mut out = vec![];
-    for e in std::fs::read_dir(dir).unwrap().flatten() {
+    let mut entries: Vec<_> = std::fs::read_dir(dir).unwrap().flatten().collect();
+    entries.sort_by_key(|e| e.file_name());
+    for e in entries {
         let name = e.file_name().to_string_lossy().into_owned();
         let generic = if name.contains("Mono") {
             "monospace"
