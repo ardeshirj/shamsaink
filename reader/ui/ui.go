@@ -42,6 +42,8 @@ func uiFuncs(ids *[]string) template.FuncMap {
 	}
 	return template.FuncMap{
 		"id":  add,
+		"t":   word,
+		"num": num,
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}

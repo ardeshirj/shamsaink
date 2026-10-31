@@ -7,4 +7,4 @@ div.fill { width: {{.Width}}%; background: var(--ink); border-radius: 11px; }
 <p class="t">{{.Chapter}}</p>
 <p>{{.Where}}</p>
 <div class="bar" id="{{id "bar"}}"><div class="fill"></div></div>
-<div class="row">{{template "button" btn "contents" "Contents"}}{{template "button" btn "chapter-prev" "Previous chapter"}}{{template "button" btn "chapter-next" "Next chapter"}}{{if .Back}}{{template "button" btn "back" .Back}}{{end}}</div></body></html>
+<div class="row">{{template "button" btn "contents" (t "contents")}}{{template "button" btn "chapter-prev" (t "prev-chapter")}}{{template "button" btn "chapter-next" (t "next-chapter")}}{{if .Back}}{{template "button" btn "back" .Back}}{{end}}</div></body></html>

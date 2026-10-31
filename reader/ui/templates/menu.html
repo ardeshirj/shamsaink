@@ -1,6 +1,6 @@
 {{template "head" ""}}</head><body>
-<div class="row">{{template "button" btn "leave" "Close the book"}}{{template "button" btn "reset" "Reset settings"}}{{if .Narrated}}{{template "button" btn "read-aloud" "Read aloud"}}{{end}}</div>
-<div class="set">{{template "stepper" step "Text size" "size" .Size}}{{template "stepper" step .LinesName "lines" .Lines}}{{template "stepper" step "Margins" "margin" .Margin}}{{template "switch" pick "clock" "Clock" (not .HideClock)}}</div>
-<p>Page turns (this book):</p>
-{{template "segments" list (pick "dir-" (printf "Book's (%s)" .BookDir) (eq .Dir "")) (pick "dir-rtl" "Right to left" (eq .Dir "rtl")) (pick "dir-ltr" "Left to right" (eq .Dir "ltr"))}}
+<div class="row">{{template "button" btn "leave" (t "close-book")}}{{template "button" btn "reset" (t "reset-settings")}}{{if .Narrated}}{{template "button" btn "read-aloud" (t "read-aloud")}}{{end}}</div>
+<div class="set">{{template "stepper" step (t "text-size") "size" .Size}}{{template "stepper" step .LinesName "lines" .Lines}}{{template "stepper" step (t "margins") "margin" .Margin}}{{template "switch" pick "clock" (t "clock") (not .HideClock)}}</div>
+<p>{{t "page-turns-book"}}</p>
+{{template "segments" list (pick "dir-" (t "dir-book" .BookDir) (eq .Dir "")) (pick "dir-rtl" (t "dir-rtl") (eq .Dir "rtl")) (pick "dir-ltr" (t "dir-ltr") (eq .Dir "ltr"))}}
 </body></html>

@@ -46,13 +46,13 @@ type menuData struct {
 // DrawMenu draws the menu for m.
 func DrawMenu(m Menu, fonts *blitz.Fonts, w int) *Panel {
 	// the line spacing as it is, and whether it is the book's own
-	lines, linesName := m.Lines, "Line spacing (the book's)"
+	lines, linesName := m.Lines, word("line-spacing-book")
 	if m.LineHeight > 0 {
-		lines, linesName = m.LineHeight, "Line spacing"
+		lines, linesName = m.LineHeight, word("line-spacing")
 	}
 	html, ids := render("menu.html", menuData{
 		Size: fmt.Sprintf("%g px", m.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
-		Margin: fmt.Sprintf("%d px", m.Margin), Dir: m.Dir, BookDir: map[bool]string{true: "RTL", false: "LTR"}[m.BookRTL],
+		Margin: fmt.Sprintf("%d px", m.Margin), Dir: m.Dir, BookDir: map[bool]string{true: word("dir-rtl-short"), false: word("dir-ltr-short")}[m.BookRTL],
 		Narrated: m.Narrated, HideClock: m.HideClock,
 	})
 	return drawPanel(html, ids, fonts, w, menuHeight)
@@ -135,17 +135,17 @@ type navData struct {
 // DrawNav draws the bottom panel, opened with the menu: where the reader is, a bar to tap to go anywhere in the book,
 // the table of contents, the chapters before and after, and the way back after a jump.
 func DrawNav(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
-	book := fmt.Sprintf("page %d", p.Page)
+	book := word("page", p.Page)
 	if p.Total > 0 {
-		book = fmt.Sprintf("page %d of %d", p.Page, p.Total)
+		book = word("page-of", p.Page, p.Total)
 	}
-	d := navData{Chapter: p.Chapter, Where: fmt.Sprintf("%d of %d in this part · %s", p.At, p.Of, book),
+	d := navData{Chapter: p.Chapter, Where: word("where", p.At, p.Of, book),
 		Dir: "ltr", Width: fmt.Sprintf("%.1f", 100*min(max(p.Share, 0), 1))}
 	if p.RTL {
 		d.Dir = "rtl"
 	}
 	if p.Back > 0 {
-		d.Back = fmt.Sprintf("Back to page %d", p.Back)
+		d.Back = word("back-to-page", p.Back)
 	}
 	html, ids := render("nav.html", d)
 	m := drawPanel(html, ids, fonts, w, navHeight)
