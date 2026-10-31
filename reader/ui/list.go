@@ -32,7 +32,7 @@ type pagerData struct {
 
 // NewList lays out the rows of html (n of them, with the ids e0 to e(n-1)) under head on a screen w by h, row cur
 // (-1: none) and its page shown first. With pager there is a bar at the bottom with the page's number and the buttons
-// list-prev and list-next, and the rows end above it.
+// list-prev and list-next, and the rows end above it; it is left out when the rows all fit on one page.
 func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz.Fonts, w, h int) *List {
 	v := &List{head: head, rtl: rtl, fonts: fonts, w: w, h: h}
 	lh := h - head.img.Rect.Dy()
@@ -52,6 +52,9 @@ func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz
 	}
 	if cur >= 0 {
 		v.page = max(v.on[cur], 0)
+	}
+	if v.pages <= 1 { // everything on one page: no pager, its room left empty
+		v.pager = nil
 	}
 	if v.pager != nil {
 		v.pager = v.drawPager(v.page, v.pages)
@@ -99,6 +102,9 @@ func (v *List) Draw(img *image.Gray) {
 	}
 	copy(img.Pix, v.head.img.Pix)
 	copy(img.Pix[v.head.img.Rect.Dy()*img.Stride:], v.img.Pix)
+	for i := (v.head.img.Rect.Dy() + v.img.Rect.Dy()) * img.Stride; i < len(img.Pix); i++ { // under the rows
+		img.Pix[i] = 255
+	}
 	if v.pager != nil {
 		if v.paged != v.page { // the count changed
 			v.pager = v.drawPager(v.page, v.pages)

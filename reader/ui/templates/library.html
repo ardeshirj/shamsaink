@@ -1,26 +1,27 @@
 {{/* The library's rows (library.go): a book a row, in its title's direction, every row as high as the others: the title
-(bold for the book read last; headphones after it when the book is narrated), the author (an empty line if none), and a thin bar of the share read, its room kept
-(invisible) for a book that is not being read; how much is read (or "new", framed as a tag) at the end of the first line. The engine
-cuts pages between blocks of text but never inside a heading, so the three lines are one heading (each line's height its
-own, the heading's none), the share read after it in the page, put on the title's line. The page itself is always left
-to right, whatever the interface's language: each row has the direction of its own title. */ -}}
+(bold for the book read last; headphones after it when the book is narrated) and the author (an empty line if none);
+at the end of the title's line how much is read, as a short bar (full for a finished book), or "new", framed as a
+tag. A line under every row, so each bar is in its own book's row. The engine cuts pages between blocks
+of text but never inside a heading, so the two lines are one heading (each line's height its own, the heading's none),
+the share read after it in the page, put on the title's line. The page itself is always left to right, whatever the
+interface's language: each row has the direction of its own title. */ -}}
 {{template "head" "ltr"}}<style>
 html { font-family: serif; }
 ul { list-style: none; margin: 0; padding: 0; }
-li { position: relative; padding: 0.2em 0; border-bottom: 2px solid #999; }
-/* a row with a bar has no line under it: the bar is the line (the line's room kept, the rows all as high) */
-li.bar { border-bottom-color: transparent; }
+li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; }
 li[dir="rtl"] h3 { text-align: right; }
-h3 .t { line-height: 1.2; }
+h3 .t { line-height: 1.25; }
+/* Farsi's letters reach higher and lower than Latin ones: its lines taller */
+li[dir="rtl"] h3 .t, li[dir="rtl"] h3 .a { line-height: 1.35; }
 h3 .nar .i { font-size: 0.9em; line-height: 1.2; }
 h3 .a { font-size: 0.85em; line-height: 1.2; color: #444; }
-li .pct { position: absolute; top: 0.2em; inset-inline-end: 0; font-size: 0.9em; line-height: 1.33; white-space: nowrap; }
-li .pct.tag { top: 0.3em; font-size: 0.75em; line-height: 1.3; padding: 0 0.4em; border: 2px solid var(--ink); border-radius: 0.3em; }
-h3 .prog { display: inline-block; width: 100%; height: 0.25em; margin-top: 0.12em; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 0.3em; }
-h3 .prog.none { border-color: transparent; }
-h3 .prog i { display: block; height: 100%; background: var(--ink); }
+li .pct { position: absolute; top: 0.35em; inset-inline-end: 0; display: flex; align-items: center; gap: 0.4em; height: 1.39em; font-size: 0.9em; line-height: 1.33; white-space: nowrap; }
+/* the share read as a short bar, filled from the row's start */
+li .pct .prog { display: flex; width: 3.5em; height: 0.4em; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 0.3em; }
+li .pct .prog i { display: block; height: 100%; background: var(--ink); }
+li .pct.tag { height: auto; top: 0.45em; font-size: 0.75em; line-height: 1.3; padding: 0 0.4em; border: 2px solid var(--ink); border-radius: 0.3em; }
 </style></head><body><ul>
-{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}" class="{{if .Width}}bar{{end}}">
-<h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span><br><span class="prog{{if not .Width}} none{{end}}">{{if .Width}}<i style="width: {{.Width}}%"></i>{{end}}</span></h3>
-<span class="pct{{if .New}} tag{{end}}">{{.Read}}</span></li>{{end}}</ul></body></html>
+{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}">
+<h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
+{{if or .Width .New}}<span class="pct{{if .New}} tag{{end}}">{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul></body></html>

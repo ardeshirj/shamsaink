@@ -94,11 +94,10 @@ func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 		switch {
 		case b.New:
 			r.Read = word("new")
-		case b.Read >= 0:
-			r.Read = word("percent", num(b.Read))
-			if !b.Finished {
-				r.Width = fmt.Sprint(b.Read)
-			}
+		case b.Finished:
+			r.Width = "100"
+		case b.Read >= 0: // the share read as a bar alone, no number
+			r.Width = fmt.Sprint(b.Read)
 		}
 		rows = append(rows, r)
 	}
