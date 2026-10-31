@@ -2,8 +2,9 @@
 # On the Kobo, from NickelMenu: a book read with Kobo's interface (Nickel) stopped, and started again once the book is
 # closed, as KOReader and Plato do (13's NOTES.md, step 3: pausing Nickel instead brought its watchdog's reboots, a
 # frozen screen and a power button nobody heard). Bluetooth is left alone: started a second time in a boot with
-# Bluetooth on, Nickel panics the kernel (13's NOTES.md), so then the Kobo is rebooted instead. BOOK: the first argument,
-# else the newest EPUB in books/ or one folder down (by source: farsiepub/, rtlbook/, ...; docs/devices/kobo/setup.md, 7).
+# Bluetooth on, Nickel panics the kernel (13's NOTES.md), so then the Kobo is rebooted instead. The first argument: a book
+# to read; without one, the library (books/ and one folder down, by source: farsiepub/, rtlbook/, ...;
+# docs/devices/kobo/setup.md, 7), where a book is chosen and the library comes back when it is left.
 #
 # The logs, in logs/: reader.log (ours and the reader's), and while a book is open, kept on storage for after a crash
 # (the Kobo's own system log is in RAM, gone with a reboot; the kernel's is in no log): system.log, kernel.log (its
@@ -94,8 +95,8 @@ log "started, uptime $(cut -d' ' -f1 /proc/uptime) s"
 sync
 N=$(pidof nickel)
 [ -n "$N" ] || { log "Nickel is not running (KOReader in front?): not started"; exit 1; }
-BOOK=${1:-$(ls -t books/*.epub books/*/*.epub 2>/dev/null | head -n 1)}
-[ -f "$BOOK" ] || { log "no book (books/*.epub, books/*/*.epub)"; exit 1; }
+BOOK=$1
+[ -z "$BOOK" ] || [ -f "$BOOK" ] || { log "no book $BOOK"; exit 1; }
 # what rcS gave Nickel that we cannot rebuild: the session bus, the Wi-Fi interface and module, the platform
 tr '\0' '\n' < /proc/"$N"/environ | grep -E '^(DBUS_SESSION_BUS_ADDRESS|INTERFACE|WIFI_MODULE|PLATFORM|PRODUCT)=' \
   > nickel.env
@@ -110,7 +111,7 @@ while pidof nickel > /dev/null && [ $i -lt 20 ]; do usleep 250000; i=$((i + 1));
 pidof nickel > /dev/null && log "Nickel still running after 5 s"
 # udev would wait on Nickel's FIFO with nobody reading it
 rm -f /tmp/nickel-hardware-status
-log "Nickel ($N) stopped in $((i * 250)) ms; reading $BOOK"
+log "Nickel ($N) stopped in $((i * 250)) ms; ${BOOK:+reading $BOOK}${BOOK:-the library}"
 
 echo "== $(date -u '+%Y-%m-%d %H:%M:%S UTC') uptime $(cut -d' ' -f1 /proc/uptime) s" | tee -a logs/system.log \
   logs/kernel.log >> logs/alive.log
@@ -132,5 +133,5 @@ leave() {
 }
 trap leave EXIT
 trap 'exit 1' HUP INT TERM
-./shamsaink "$BOOK" fonts >> logs/reader.log 2>&1
+./shamsaink "${BOOK:--library}" fonts >> logs/reader.log 2>&1
 log "reader exited ($?)"

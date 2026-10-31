@@ -47,6 +47,24 @@ func TestPanels(t *testing.T) {
 		}
 	}
 	save("remove", DrawRemove(fonts, w).img)
+	save("library-menu", DrawLibraryMenu(fonts, w).img)
+	books := []Book{
+		{Title: "Buried Alive", Author: "Arnold Bennett", Source: "FarsiEPUB", Read: 62, Now: true},
+		{Title: "رود کم‌آب", Author: "مارا الیس", Source: "rtlbook", Read: 100, RTL: true},
+		{Title: "The Adventures of Sherlock Holmes", Author: "A. Conan Doyle", Source: "Standard Ebooks", Read: -1},
+		{Title: "Haji agha ocr", Source: "Archive", Read: 4},
+	}
+	for i := range 12 {
+		books = append(books, Book{Title: fmt.Sprintf("A new book %d", i), Author: "Someone", New: true, Read: -1})
+	}
+	lib := NewLibrary(books, Bar{Start: "magnifying-glass", Time: "20:48", Battery: 82, Menu: true}, fonts, w, h)
+	for page := range min(lib.Pages(), 2) {
+		lib.SetPage(page)
+		img := image.NewGray(image.Rect(0, 0, w, h))
+		lib.Draw(img)
+		save(fmt.Sprintf("library-page%d", page), img)
+	}
+	lib.Close()
 	save("splash", Splash(t.TempDir(), fonts, w, h))
 	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680))
 	for _, rtl := range []bool{true, false} {

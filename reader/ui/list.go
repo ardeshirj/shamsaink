@@ -24,10 +24,10 @@ type List struct {
 	on    []int // each row's page
 }
 
-// pagerData is what templates/pager.html draws: the buttons' labels and the count, in the list's direction.
+// pagerData is what templates/pager.html draws: the count, in the list's direction.
 type pagerData struct {
-	Dir, Prev, Next, Count string
-	CountDir               string // the count's own direction: the interface language's, not the list's
+	Dir, Count string
+	CountDir   string // the count's own direction: the interface language's, not the list's
 }
 
 // NewList lays out the rows of html (n of them, with the ids e0 to e(n-1)) under head on a screen w by h, row cur
@@ -62,7 +62,7 @@ func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz
 
 // drawPager draws the bar for page (from 0) of pages, at the bottom of the screen with a line on its top edge.
 func (v *List) drawPager(page, pages int) *Panel {
-	d := pagerData{Dir: "ltr", Prev: "‹", Next: "›", Count: word("page-n-of", num(page+1), num(max(pages, 1)))}
+	d := pagerData{Dir: "ltr", Count: word("page-n-of", num(page+1), num(max(pages, 1)))}
 	d.CountDir = "ltr"
 	if lang != "en" {
 		d.CountDir = "rtl"

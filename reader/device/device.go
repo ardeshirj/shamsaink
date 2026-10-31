@@ -6,6 +6,9 @@ package device
 import (
 	"image"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 )
@@ -69,6 +72,20 @@ func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 	}
 	d.doze(sleepScreen(dir, fallback))
 	return true
+}
+
+// Battery is the battery's charge in per cent, from the kernel's power supplies (the first that has one); -1 if none
+// says.
+func (d *Device) Battery() int {
+	files, _ := filepath.Glob("/sys/class/power_supply/*/capacity")
+	for _, f := range files {
+		if b, err := os.ReadFile(f); err == nil {
+			if n, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil {
+				return n
+			}
+		}
+	}
+	return -1
 }
 
 func env(k, def string) string {

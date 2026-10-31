@@ -5,6 +5,8 @@
 // (shamsaink.koplugin), which lets go of the touch screen first and redraws after.
 //
 //	shamsaink BOOK.epub [FONTS_DIR|-]       one book, then exit
+//	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
+//	                                        exits when the library is left (the Kobo's launcher)
 //	shamsaink -serve PIPES [FONTS_DIR|-]    kept running: a book for each message written to PIPES/in, "left" written
 //	                                        to PIPES/out when it is left (the plugin's way: the program starts once)
 //
@@ -47,7 +49,7 @@ type reader struct {
 func main() {
 	serve := len(os.Args) > 2 && os.Args[1] == "-serve"
 	if len(os.Args) < 2 || os.Args[1] == "-serve" && !serve {
-		fmt.Fprintln(os.Stderr, "shamsaink BOOK.epub [FONTS_DIR|-]\nshamsaink -serve PIPES [FONTS_DIR|-]")
+		fmt.Fprintln(os.Stderr, "shamsaink BOOK.epub [FONTS_DIR|-]\nshamsaink -library [FONTS_DIR|-]\nshamsaink -serve PIPES [FONTS_DIR|-]")
 		os.Exit(2)
 	}
 	t := time.Now()
@@ -79,7 +81,12 @@ func main() {
 		if os.Getenv("RESTORE_SCREEN") != "" {
 			found = rd.dev.Screen.Save()
 		}
-		_, err := rd.read(map[string]string{"book": os.Args[1]}, t)
+		var err error
+		if os.Args[1] == "-library" {
+			err = rd.browse(t)
+		} else {
+			_, err = rd.read(map[string]string{"book": os.Args[1]}, t)
+		}
 		if found != nil {
 			rd.dev.Screen.Restore(found)
 		}

@@ -34,6 +34,11 @@ var words = map[string]map[string]string{
 		"by":                "by",
 		"page-n-of":         "%s of %s",
 		"battery":           "%d%%",
+		"percent":           "%s%%",
+		"new":               "new",
+		"library":           "Library",
+		"leave-to-kobo":     "Leave to Kobo",
+		"cancel":            "Cancel",
 	},
 }
 
