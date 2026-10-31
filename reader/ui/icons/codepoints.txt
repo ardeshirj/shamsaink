@@ -23,3 +23,7 @@ arrow-counter-clockwise e038
 arrows-down-up e098
 sign-out e42a
 gear e270
+check-circle e184
+circle e18a
+info e2ce
+trash e4a6

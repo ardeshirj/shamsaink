@@ -1,0 +1,15 @@
+{{/* A book's menu (library.go, DrawBookMenu), opened by a finger held on its row in the library: a narrow list at the
+row's end, under the row (over it when there is no room under), an entry a row with its icon, as the library's menu.
+Mark as finished (or not finished, for a book that is), Start again (a book opened: its place forgotten, its highlights
+kept), Details, and Remove book, set apart by an ink line as the library menu's last entry. */ -}}
+{{template "head" "ltr"}}<style>
+ul.menu { list-style: none; margin: 0; margin-inline-start: auto; padding: 0; width: max-content; border: var(--line) solid var(--ink); border-radius: var(--radius); }
+.menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
+.menu li + li { border-top: 2px solid #999; }
+.menu li:last-child { border-top: var(--line) solid var(--ink); }
+</style></head><body>
+<ul class="menu" id="book-menu">
+{{- if .Finished}}<li id="{{id "book-unfinish"}}">{{icon "circle"}}{{t "mark-unfinished"}}</li>{{else}}<li id="{{id "book-finish"}}">{{icon "check-circle"}}{{t "mark-finished"}}</li>{{end}}
+{{- if .Opened}}<li id="{{id "book-again"}}">{{icon "arrow-counter-clockwise"}}{{t "start-again"}}</li>{{end}}
+<li id="{{id "book-details"}}">{{icon "info"}}{{t "details"}}</li>
+<li id="{{id "book-remove"}}">{{icon "trash"}}{{t "remove-book"}}</li></ul></body></html>

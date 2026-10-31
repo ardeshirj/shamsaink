@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"html/template"
+	"image"
 	"strings"
 
 	blitz "shamsainkengine"
@@ -58,4 +61,33 @@ func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 	delete(p.buttons, "topbar-title")
 	delete(p.buttons, "topbar-title-text")
 	return p
+}
+
+// DrawBattery draws the battery's level (percent) in a box hanging from the bar (under px high) under its battery,
+// whose box on the screen is batt (the bar's Box("topbar-battery")); w px wide. No buttons: any tap closes it.
+func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
+	const margin = 40 // the page's margin in drawPanelIn
+	d := struct {
+		Level  string
+		Margin template.CSS
+	}{Level: word("percent", num(percent))}
+	if RTL() { // the battery at the left: the box's left edge under its left edge
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: %dpx; margin-right: auto;", max(batt.Min.X-margin, 0)))
+	} else {
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-batt.Max.X, 0)))
+	}
+	html, ids := render("battery.html", d)
+	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 300)
+	m.y0 += under
+	return m
+}
+
+// DrawLight draws the Light panel directly under the bar (under px from the top): the light's level (per cent) and its
+// warmth (0 to warmMax) as sliders, their tracks alone showing them (no numbers), and the button to clean the screen.
+// Its buttons: light-dec, light, light-inc, warmth-dec, warmth, warmth-inc and clean.
+func DrawLight(level, warmth, warmMax, under int, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("light.html", struct{ LevelShare, WarmthShare float64 }{float64(level) / 100, float64(warmth) / float64(max(warmMax, 1))})
+	m := drawPanel(html, ids, fonts, w, 900) // at most (Farsi's lines are taller): cut to its buttons
+	m.y0 = under
+	return m
 }

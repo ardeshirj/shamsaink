@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	blitz "shamsainkengine"
 )
@@ -46,7 +47,7 @@ func TestPanels(t *testing.T) {
 			}
 		}
 	}
-	save("remove", DrawRemove(fonts, w).img)
+	save("remove", DrawHighlightRemove(fonts, w).img)
 	for _, code := range []string{"en", "fa"} { // the Light panel under the bar
 		SetLanguage(code)
 		save("light-"+code, DrawLight(40, 7, 10, 160, fonts, w).img)
@@ -86,8 +87,12 @@ func TestPanels(t *testing.T) {
 		v := view
 		v.Filter = f
 		var shown []Book // the books under the filter
+		now := time.Date(2026, 10, 31, 12, 0, 0, 0, time.UTC)
 		for _, b := range books {
 			if f == 3 || f == 1 && b.New || f == 2 && b.Finished || f == 0 && !b.New && !b.Finished {
+				if f == 1 || f == 2 { // New and Finished: when each was added or finished, over a year
+					b.When = AddedWhen(now.AddDate(0, 0, -[]int{0, 1, 3, 20, 400}[len(shown)%5]), now)
+				}
 				shown = append(shown, b)
 			}
 		}
@@ -117,6 +122,39 @@ func TestPanels(t *testing.T) {
 		save(name+"-panel", p.img)
 		if p.y0 != under || under == 0 {
 			t.Errorf("%s: panel at %d, want %d", name, p.y0, under)
+		}
+		lib.Close()
+	}
+	// a book's menu, details and the question before removing it, by a row held: under it, or over the last row
+	for _, row := range []int{2, -1} {
+		lib := NewLibrary(books, LibraryHead(topBar, view, fonts, w), fonts, w, h)
+		if row < 0 { // the last row of the first page
+			for i := range books {
+				if lib.on[i] == 0 {
+					row = i
+				}
+			}
+		}
+		for _, name := range []string{"menu", "menu-finished", "menu-new", "details", "remove"} {
+			var p *Panel
+			switch name {
+			case "menu", "menu-finished", "menu-new":
+				p = DrawBookMenu(name == "menu-finished", name != "menu-new", fonts, w)
+			case "details":
+				p = DrawBookDetails(BookDetails{Title: books[row].Title, Author: books[row].Author, RTL: books[row].RTL, Lang: "fa",
+					Source: "farsiepub", File: "a-long-file-name_of-a-book-ocr.epub", Size: 3 << 20, Narrated: true, Opened: true, Read: 42,
+					Added: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), LastRead: time.Date(2026, 10, 30, 0, 0, 0, 0, time.UTC)}, fonts, w)
+			case "remove":
+				p = DrawBookRemove(books[row].Title, books[row].RTL, fonts, w)
+			}
+			p.Hang(lib.EntryBox(row), lib.HeadHeight(), lib.RowsBottom())
+			img := image.NewGray(image.Rect(0, 0, w, h))
+			lib.Draw(img)
+			p.Over(img)
+			save(fmt.Sprintf("library-book-%s-row%d", name, row), img)
+			if r := p.Rect(); r.Max.Y > lib.RowsBottom() || r.Min.Y < lib.HeadHeight() || r.Overlaps(lib.EntryBox(row)) {
+				t.Errorf("book %s by row %d: at %v, the row at %v", name, row, r, lib.EntryBox(row))
+			}
 		}
 		lib.Close()
 	}
@@ -179,7 +217,7 @@ func TestPanels(t *testing.T) {
 		for _, tab := range []string{"text", "page"} {
 			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60}, fonts, w, h).img)
 		}
-		save("lang-"+code+"-remove", DrawRemove(fonts, w).img)
+		save("lang-"+code+"-remove", DrawHighlightRemove(fonts, w).img)
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}}, 1, RTL(), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		cv.Draw(img)
@@ -344,11 +382,15 @@ func TestPanelEdges(t *testing.T) {
 	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"light":     DrawLight(40, 3, 10, 160, fonts, w), "light-fa": func() *Panel { SetLanguage("fa"); defer SetLanguage("en"); return DrawLight(40, 3, 10, 160, fonts, w) }(),
-		"remove": DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
+		"remove": DrawHighlightRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
-		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {
+		"library-sort": DrawLibrarySort(0, 320, fonts, w), "library-book-menu": DrawBookMenu(false, true, fonts, w),
+		"library-book-remove": DrawBookRemove("A title", false, fonts, w)} {
 		for id, r := range m.buttons {
+			if last, ok := listRows[name]; ok && id != last { // a list's rows: grey lines between them, its border under the last
+				continue
+			}
 			if strings.HasPrefix(id, "topbar-") || iconButtons[id] {
 				// an icon button has no border: some ink inside its box instead
 				ink := false
@@ -373,6 +415,9 @@ func TestPanelEdges(t *testing.T) {
 		}
 	}
 }
+
+// The panels that are a list whose rows are its buttons, by their last row's id.
+var listRows = map[string]string{"library-book-menu": "book-remove"}
 
 // The buttons that are an icon alone (no border), besides the bar's.
 var iconButtons = map[string]bool{"list-sort": true, "contents-close": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,

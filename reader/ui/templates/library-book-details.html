@@ -1,0 +1,13 @@
+{{/* A book's details (DrawBookDetails), from its menu, in the menu's place: a box as wide as the page, the title (in its
+own direction) and the author, then a row a fact, its name at the start and its value after. Read only: any tap
+closes it. */ -}}
+{{template "head" "ltr"}}<style>
+div.box { border: var(--line) solid var(--ink); border-radius: var(--radius); padding: 0.5em 0.8em 0.6em; }
+div.box h3 { margin: 0; font-size: 1em; }
+div.box p.a { margin: 0 0 0.4em; font-size: 0.85em; color: #444; }
+dl { display: grid; grid-template-columns: max-content 1fr; column-gap: 1em; row-gap: 0.15em; margin: 0; font-size: 0.85em; }
+dt { color: #444; }
+dd { margin: 0; overflow-wrap: anywhere; }
+</style></head><body>
+<div class="box" id="book-details-box"><h3 dir="{{.Dir}}"{{textlang .Title}}>{{.Title}}</h3><p class="a" dir="{{.Dir}}"{{textlang .Author}}>{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</p>
+<dl>{{range .Rows}}<dt>{{index . 0}}</dt><dd{{textlang (index . 1)}}>{{index . 1}}</dd>{{end}}</dl></div></body></html>

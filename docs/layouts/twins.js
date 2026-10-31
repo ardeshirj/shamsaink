@@ -1,6 +1,6 @@
 // layout.html: beside each screen, its right to left twin (Farsi), to see both at once. The twin is a copy of the
 // screen: every layer dir=rtl, the interface's Farsi words where the reader has them (words.js, made from
-// reader/ui/words.go by gen-words.py), Farsi digits; the book's page gets the Farsi sample text of the page that
+// reader/ui/words/*.json by gen-words.py), Farsi digits; the book's page gets the Farsi sample text of the page that
 // is already Farsi. Book titles and words the reader has no Farsi for stay as drawn: a gap to fill. A screen that is
 // Farsi already (its own figure) gets no twin.
 (function () {

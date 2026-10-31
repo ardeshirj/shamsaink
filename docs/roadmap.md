@@ -138,7 +138,7 @@ Text, Contents, then the glance, the word panel, footnotes.
 
 **Interface language** (built 2026-10-31, not yet tried on the Kobo): decided with the maintainer: **one switch, no list**,
 "Follow book language", on by default. On: the menus and panels are in the book's language when there is a table for it
-(`ui/words.go`: English, Farsi), else English; the library is always English (the language is for reading a book). Off: English
+(`ui/words/en.json`, `fa.json`), else English; the library is always English (the language is for reading a book). Off: English
 everywhere. The choice is global, never per book, kept in `settings.json` as `english_only` (absent: following, so an
 old file stays valid). It lives in the library's menu only (the bar's ≡; a book's menu has Leave alone): the entry **Settings**
 (gear) opens a small panel in the menu's place, no title, with the switch at the row's far end; a tap

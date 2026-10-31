@@ -19,7 +19,9 @@ type shelfBook struct {
 	libBook
 	opened bool
 	when   time.Time
-	share  float64 // 0 to 1; -1 when opened but not known
+	share  float64   // 0 to 1; -1 when opened but not known
+	mark   int       // marked by hand (librarybook.go): 1 finished, -1 not finished, 0 neither
+	marked time.Time // when it was marked
 }
 
 // shelfOf reads every book's place file.
@@ -27,7 +29,8 @@ func shelfOf(books []libBook, dir string) []shelfBook {
 	out := make([]shelfBook, len(books))
 	for i, b := range books {
 		w, s, ok := placeOf(dir, b.Key)
-		out[i] = shelfBook{b, ok, w, s}
+		m, at := markOf(dir, b.Key, ok, s)
+		out[i] = shelfBook{b, ok, w, s, m, at}
 	}
 	return out
 }
@@ -35,16 +38,31 @@ func shelfOf(books []libBook, dir string) []shelfBook {
 // The share from which a book counts as finished.
 const finishedShare = 0.98
 
-func (b shelfBook) finished() bool { return b.opened && b.share >= finishedShare }
+// finished: as marked, else read to the end.
+func (b shelfBook) finished() bool {
+	if b.mark != 0 {
+		return b.mark > 0
+	}
+	return b.opened && b.share >= finishedShare
+}
+
+// finishedAt is when a finished book was finished: when it was marked so, else when it was last read.
+func (b shelfBook) finishedAt() time.Time {
+	if b.mark > 0 {
+		return b.marked
+	}
+	return b.when
+}
 
 // in says whether the book is under filter f (an index of ui.FilterNames): Reading is opened and not finished (a
-// share not known is reading), New is never opened, Finished is opened and read to the end, All is every book.
+// share not known is reading), New is never opened nor marked finished, Finished is read to the end or marked so, All
+// is every book.
 func (b shelfBook) in(f int) bool {
 	switch f {
 	case 0:
 		return b.opened && !b.finished()
 	case 1:
-		return !b.opened
+		return !b.opened && !b.finished()
 	case 2:
 		return b.finished()
 	}

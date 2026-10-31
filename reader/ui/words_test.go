@@ -3,6 +3,7 @@ package ui
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 // Every language has the same words as English, with the same slots (%d, %s).
@@ -56,5 +57,19 @@ func TestSetLanguage(t *testing.T) {
 	SetLanguage("de")
 	if RTL() || num(5) != "5" || word("page-of", 3, 12) != "page 3 of 12" || word("percent", num(82)) != "82%" {
 		t.Errorf("de: %v %q", RTL(), word("page-of", 3, 12))
+	}
+}
+
+// When a book was added, as its row says it.
+func TestAddedWhen(t *testing.T) {
+	now := time.Date(2026, 10, 31, 0, 30, 0, 0, time.Local)
+	for _, c := range []struct {
+		ago  time.Duration
+		want string
+	}{{0, "Today"}, {time.Hour, "Yesterday"}, {49 * time.Hour, "3 Days"}, {6 * 24 * time.Hour, "6 Days"},
+		{8 * 24 * time.Hour, "23 Oct"}, {300 * 24 * time.Hour, "4 Jan"}, {400 * 24 * time.Hour, "26 Sep 2025"}} {
+		if got := AddedWhen(now.Add(-c.ago), now); got != c.want {
+			t.Errorf("%v ago: %q, want %q", c.ago, got, c.want)
+		}
 	}
 }

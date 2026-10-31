@@ -40,8 +40,8 @@ func (rd *reader) browse(t time.Time) error {
 
 // choose shows the library and waits for a book to be chosen: its path, or "" when the library is left. A swipe or
 // the pager turns its pages; the filters under the bar choose which books; the sort button at the end of the filters
-// opens a panel to sort them; the bar's menu leaves. The power button sleeps (the Kobo) and wakes on
-// the library. What is chosen is kept (shelf.go).
+// opens a panel to sort them; a finger held on a book opens its menu (librarybook.go); the bar's menu leaves. The power button sleeps (the Kobo) and wakes on
+// the library. What is chosen is kept (libraryshelf.go).
 func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	scr := rd.dev.Screen
 	all := shelfOf(scanLibrary(rd.dir), rd.dir)
@@ -66,9 +66,15 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 		sortBooks(items, view.sortOf(filter))
 		rows := make([]ui.Book, len(items))
 		for i, b := range items {
-			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.opened && ui.FilterNames[filter] != "new",
+			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.opened && !b.finished() && ui.FilterNames[filter] != "new",
 				Finished: b.finished(), Narrated: b.Narrated,
 				RTL: persian([]string{bookLang(b.libBook)}, false)}
+			switch ui.FilterNames[filter] {
+			case "new":
+				rows[i].When = ui.AddedWhen(time.Unix(b.Added, 0), time.Now())
+			case "finished":
+				rows[i].When = ui.AddedWhen(b.finishedAt(), time.Now())
+			}
 			if b.opened && b.share >= 0 {
 				rows[i].Read = int(b.share*100 + 0.5)
 			}
@@ -121,6 +127,29 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 	}
+	// a book's menu, its details or the question before it is removed, by the row held (librarybook.go)
+	held, bookPanel := -1, "" // the row, and which of them ("menu", "details", "remove")
+	showBook := func(p *ui.Panel, kind string) {
+		r := image.Rectangle{}
+		if panel != nil {
+			r = panel.Rect()
+		}
+		p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
+		panel, bookPanel = p, kind
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, scr.H).Intersect(r.Union(panel.Rect())), device.WfREAGL, false)
+	}
+	// after a book changed: the library scanned again, on the same page if it still has one
+	changed := func() {
+		page := v.Page()
+		all = shelfOf(scanLibrary(rd.dir), rd.dir)
+		panel, held, bookPanel = nil, -1, ""
+		build()
+		v.SetPage(min(page, max(v.Pages()-1, 0)))
+		v.Draw(rd.over)
+		scr.Show(rd.over, device.WfREAGL, false)
+	}
 	// the language panel in the menu's place
 	openLang := func() {
 		old := panel.Rect()
@@ -146,10 +175,57 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, old.Min.Y, scr.W, old.Union(panel.Rect()).Max.Y), wf, false)
 			}
+		case e.Hold == device.Held && panel == nil && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
+			held = v.EntryAt(e.X, e.Y)
+			b := items[held]
+			showBook(ui.DrawBookMenu(b.finished(), b.opened, rd.fonts, scr.W), "menu")
+			fmt.Printf("library: %s held: its menu\n", b.Path)
 		case e.Hold != device.NotHeld:
 		case panel != nil:
 			id := panel.At(e.X, e.Y)
 			switch {
+			case bookPanel == "menu" && (id == "book-finish" || id == "book-unfinish"):
+				b := items[held]
+				if err := setMark(rd.dir, b.Key, id == "book-finish"); err != nil {
+					fmt.Fprintln(os.Stderr, "shamsaink: mark:", err)
+				}
+				fmt.Printf("library: %s marked %s\n", b.Path, map[bool]string{true: "finished", false: "not finished"}[id == "book-finish"])
+				changed()
+			case bookPanel == "menu" && id == "book-again":
+				b := items[held]
+				if err := startAgain(rd.dir, b.Key); err != nil {
+					fmt.Fprintln(os.Stderr, "shamsaink: start again:", err)
+				}
+				fmt.Printf("library: %s started again\n", b.Path)
+				changed()
+			case bookPanel == "menu" && id == "book-details":
+				b := items[held]
+				d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: bookLang(b.libBook), Source: b.Source,
+					File: filepath.Base(b.Path), RTL: persian([]string{bookLang(b.libBook)}, false), Narrated: b.Narrated,
+					Opened: b.opened, Finished: b.finished(), Read: -1, Added: time.Unix(b.Added, 0)}
+				if st, err := os.Stat(filepath.Join(rd.dir, b.Path)); err == nil {
+					d.Size = st.Size()
+				}
+				if b.opened {
+					d.LastRead = b.when
+					if b.share >= 0 {
+						d.Read = int(b.share*100 + 0.5)
+					}
+				}
+				showBook(ui.DrawBookDetails(d, rd.fonts, scr.W), "details")
+				fmt.Printf("library: %s details\n", b.Path)
+			case bookPanel == "menu" && id == "book-remove":
+				b := items[held]
+				showBook(ui.DrawBookRemove(b.Title, persian([]string{bookLang(b.libBook)}, false), rd.fonts, scr.W), "remove")
+				fmt.Printf("library: %s: remove?\n", b.Path)
+			case bookPanel == "remove" && id == "book-remove-yes":
+				b := items[held]
+				if err := removeBook(rd.dir, b.libBook, set); err != nil {
+					fmt.Fprintln(os.Stderr, "shamsaink: remove:", err)
+				} else {
+					fmt.Printf("library: %s removed\n", b.Path)
+				}
+				changed()
 			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
@@ -188,6 +264,10 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				}
 			default:
 				r := image.Rect(0, 0, scr.W, panel.Rect().Max.Y)
+				if bookPanel != "" { // by its row: only its own box
+					r = panel.Rect()
+				}
+				held, bookPanel = -1, ""
 				panel, langOpen, lightOpen, topBar.LightOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false
 				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 				v.Draw(rd.over)

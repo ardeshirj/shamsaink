@@ -1,0 +1,10 @@
+{{/* Asking before a book is removed (DrawBookRemove), from its menu, in the menu's place: what is removed, then Remove
+and Keep. Removing deletes the book's file and all the reader keeps for it; nothing else asks again. */ -}}
+{{template "head" "ltr"}}<style>
+div.box { border: var(--line) solid var(--ink); border-radius: var(--radius); padding: 0.5em 0.8em 0.4em; }
+div.box p { margin: 0 0 0.3em; }
+div.box p.t { font-weight: bold; }
+div.box p.n { font-size: 0.85em; color: #444; }
+</style></head><body>
+<div class="box" id="book-remove-box"><p>{{t "remove-book-q"}}</p><p class="t" dir="{{.Dir}}"{{textlang .Title}}>{{.Title}}</p><p class="n">{{t "remove-book-note"}}</p>
+<div class="row">{{template "button" btn "book-remove-yes" (t "remove")}}{{template "button" btn "book-remove-no" (t "keep")}}</div></div></body></html>

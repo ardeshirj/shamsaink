@@ -147,4 +147,17 @@ func (v *List) EntryAt(x, y int) int {
 	return -1
 }
 
+// EntryBox is where row i is on the screen (on the page shown or not).
+func (v *List) EntryBox(i int) image.Rectangle {
+	return v.at[i].Add(image.Pt(0, v.head.img.Rect.Dy()))
+}
+
+// RowsBottom is where the rows' room ends on the screen: the pager's top, else the screen's bottom.
+func (v *List) RowsBottom() int {
+	if v.pager != nil {
+		return v.pager.y0
+	}
+	return v.h
+}
+
 func (v *List) Close() { v.list.Close() }

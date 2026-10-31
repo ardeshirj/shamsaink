@@ -497,7 +497,7 @@ func (s *session) held(g device.Gesture) {
 			break
 		}
 		if s.unmark = r.marks.at(r.doc, words[i]); s.unmark >= 0 {
-			s.mn = ui.DrawRemove(s.rd.fonts, s.scr.W)
+			s.mn = ui.DrawHighlightRemove(s.rd.fonts, s.scr.W)
 			s.refresh(s.mn.Rect(), device.WfREAGL)
 			break
 		}

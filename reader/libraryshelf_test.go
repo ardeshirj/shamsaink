@@ -12,7 +12,7 @@ import (
 func testShelf() []shelfBook {
 	t0 := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
 	mk := func(path, title, author, lang string, added int64, opened bool, ago time.Duration, share float64) shelfBook {
-		return shelfBook{libBook{Path: path, Key: path, Title: title, Author: author, Lang: lang, Added: added}, opened, t0.Add(-ago), share}
+		return shelfBook{libBook{Path: path, Key: path, Title: title, Author: author, Lang: lang, Added: added}, opened, t0.Add(-ago), share, 0, time.Time{}}
 	}
 	return []shelfBook{
 		mk("a", "banana", "Zed", "fa-IR", 10, true, time.Hour, 0.5),
