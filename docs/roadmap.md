@@ -63,7 +63,8 @@ the Kobo it earned it sooner than planned.)
 
 **6. The layout** (`docs/layouts/`; "The reader's panels", below)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
-- [ ] Interface language: Follow the book, English, Farsi (decided before more panels)
+- [ ] Interface language: one switch, "Follow book language" (on: the book's, English or Farsi; off: English), in the
+  bar's menu › Settings (built 2026-10-31, not yet tried on the Kobo)
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [ ] The other screens of `layout.html`: the page buttons, Light, Text, Contents, the glance, the word panel,
@@ -125,8 +126,8 @@ uses variables, flex with `gap`, grid and logical properties, so a Farsi interfa
 **The layouts, `docs/layouts/`** (2026-10-30, for the Libra Colour's 1264 × 1680), are the reference: nothing on the
 page while reading; every control a layer over the page, never written into it. A tap brings the dock (status, place,
 Close, Contents, Mark, Light, Text, Listen); a held margin the glance; a held word the word panel; a tapped note the
-footnote in place; landscape shows two pages. Components are ours, one set used everywhere. Reading ideas (smarter
-flashes, places by word, kashida, a dictionary) are listed there too.
+footnote in place; landscape shows two pages. Components are ours, one set used everywhere. The layouts are the
+reference only; decisions and ideas live here (the ideas for the reading, below).
 
 The order: (1) `dioxus-native-dom` tried, **done** (14: identical drawings, drawing 1.3–1.7 ms either way, +0.7 MB;
 the panels stay Go templates, and their HTML and CSS carry over if the reader ever moves to Rust); (2) **layers**: the
@@ -135,10 +136,29 @@ page buffers hold the engine's pixels only, each control a layer, the clock firs
 (4) **the screens of `layout.html`**, one at a time: the dock, the page buttons, Light (its files checked first),
 Text, Contents, then the glance, the word panel, footnotes.
 
-**Interface language** (planned): a setting, *Follow the book* (default), English, Farsi (the maintainer to
-confirm). Strings out of the templates into a table per language (`{{t "contents"}}`), whole sentences, not pieces;
-`dir` and `lang` on each panel; Farsi digits; pointing icons mirrored. Before more panels are added: cheap now,
-costly later. To check: the menu font (Parastoo; the layouts use Vazirmatn).
+**Interface language** (built 2026-10-31, not yet tried on the Kobo): decided with the maintainer: **one switch, no list**,
+"Follow book language", on by default. On: the menus and panels are in the book's language when there is a table for it
+(`ui/words.go`: English, Farsi), else English; the library is always English (the language is for reading a book). Off: English
+everywhere. The choice is global, never per book, kept in `settings.json` as `english_only` (absent: following, so an
+old file stays valid). It lives in the library's menu only (the bar's ≡; a book's menu has Leave alone): the entry **Settings**
+(gear) opens a small panel in the menu's place, no title, with the switch at the row's far end; a tap
+applies it at once (everything shown is drawn again in the new language and direction, only the panel's box refreshed
+on opening). Strings are out of the templates into a table per language (`{{t "contents"}}`, whole sentences with
+`%d`/`%s` slots), a test checks the tables have the same keys; Farsi digits; `dir` and `lang` on each panel; pointing
+icons mirrored (`.flip` in right to left). To check on the Kobo: the menu font (Parastoo; the layouts use Vazirmatn), the
+Farsi wording (the maintainer to review), that the library is always English, so no mirrored library exists (a Farsi title among English ones keeps its own
+direction); the launch opening screen (drawn before the shelf is scanned).
+
+**Ideas for the reading** (moved here 2026-10-31 from `docs/layouts/layout.html`, now a reference alone): *smarter
+flashes* (hold the old page and the new one, count how much ink changed, flash only when ghosting would show, after a
+picture or a heavy page, not every N pages); *you were here* (places kept by word, not page: on reopening, and after a
+text size change reflows the pages, the word you were at underlined for a moment); *time left at your pace* ("12 min
+left in chapter" learnt from how fast you turn pages in this book, not a fixed rate); *a reading ruler* (an optional
+underline under the current line, moved by the buttons line by line: dense classical text, dyslexia); *the light by a
+swipe* (up or down along one edge of the page, nothing drawn); *warmth follows the day* (warm light, warmer in the
+evening by the clock); *kashida* (Persian lines justified by stretching letters, not widening spaces; whether Blitz can,
+to check first); *a dictionary* (for Farsi classics, Attar, Rumi, Bayhaqi, a gloss of old words; English too; an offline
+dictionary's licence, to find).
 
 **The opening screen** (built): ShamsaInk's mark, "by" FarsiEPUB's logo (`splash.html`, `ui/brand/`), shown when a
 book takes over 0.3 s; drawn once (60 ms on the Kobo) and kept as a picture in the cache. Not Kobo's boot screen

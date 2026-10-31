@@ -1,4 +1,5 @@
-// The view controls on both pages, in the tab bar: the device's colour (white or black) and the screen by day or at night.
+// The view controls on both pages, in the tab bar: the device's colour (white or black), the screen by day or at night,
+// and on layout.html the outline switch.
 // Kept in localStorage when it is there, so the choice follows from one page to the other.
 (function () {
   const root = document.documentElement;
@@ -31,6 +32,9 @@
     apply(p.opts.some(o => o[0] === saved) ? saved : p.def);
     bar.appendChild(wrap);
   });
+  // the outline switch (layout.html only) joins them: it is a view control too
+  const sw = document.querySelector('label.sw');
+  if (sw) bar.appendChild(sw);
   // in the tab bar, outside the pages' content: the same place on both pages, pinned while scrolling
   document.querySelector('nav.tabs-top').appendChild(bar);
 })();
