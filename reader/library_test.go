@@ -137,9 +137,6 @@ func TestLibraryOrder(t *testing.T) {
 	if got[0] != want[0] || got[1] != want[1] || got[2] != want[2] || got[3] != want[3] {
 		t.Errorf("order %v; want %v", got, want)
 	}
-	if k := lastRead(order); k != m["books/a.epub"].Key {
-		t.Errorf("last read %q", k)
-	}
 	if p := progress(dir, m["books/broken.epub"]); p != 0.5 {
 		t.Errorf("progress %v; want 0.5", p)
 	}

@@ -1,0 +1,11 @@
+{{/* The screen for a book that is slow to open from the library (splash.go, Loading): ShamsaInk's mark and a line.
+Top: the space above it, px. */ -}}
+{{template "head" ""}}<style>
+html { font-size: 40px; }
+body { padding-top: {{.Top}}px; text-align: center; }
+.mark { display: block; margin: 0 auto 1.2em; }
+p { font-size: 1em; color: #555; margin: 0; }
+</style></head><body>
+<img class="mark" src="brand/shamsaink.png" width="240" height="240">
+<p>{{t "opening"}}</p>
+</body></html>

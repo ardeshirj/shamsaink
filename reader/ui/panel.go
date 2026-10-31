@@ -41,14 +41,13 @@ type Menu struct {
 	Dir        string  // the direction set for this book: "", "rtl" or "ltr"
 	BookRTL    bool    // the book itself reads right to left
 	Narrated   bool    // it can be read aloud
-	HideClock  bool
 }
 
 // The menu's numbers and choices, for templates/menu.html.
 type menuData struct {
 	Size, LinesName, Lines, Margin string
 	Dir, BookDir                   string
-	Narrated, HideClock            bool
+	Narrated                       bool
 }
 
 // DrawMenu draws the menu for m.
@@ -61,7 +60,7 @@ func DrawMenu(m Menu, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("menu.html", menuData{
 		Size: fmt.Sprintf("%g px", m.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
 		Margin: fmt.Sprintf("%d px", m.Margin), Dir: m.Dir, BookDir: map[bool]string{true: word("dir-rtl-short"), false: word("dir-ltr-short")}[m.BookRTL],
-		Narrated: m.Narrated, HideClock: m.HideClock,
+		Narrated: m.Narrated,
 	})
 	return drawPanel(html, ids, fonts, w, menuHeight)
 }

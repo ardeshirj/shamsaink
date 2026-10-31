@@ -46,7 +46,6 @@ type reading struct {
 	key      string // the book's name, size and date
 	bookRTL  bool   // as go-toolkit says (its stated direction, else its language; neither: left to right, as Readium)
 	rtl      bool   // as the pages turn: the book's, or as set for it
-	farsi    bool   // in Farsi, as its metadata says; none said: if it reads right to left (the clock's digits)
 	doc, at  int
 	cache    string // DIR/cache/: by the book's name, size and date; safe to delete (laid out again)
 	place    string // DIR/places/: the same name; deleting it starts the book again
@@ -96,7 +95,6 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		place:   filepath.Join(dir, "places", key+".place"),
 		marks:   loadHighlights(dir, key),
 	}
-	r.farsi = persian(p.Manifest.Metadata.Languages, r.bookRTL)
 	r.direct(direction(key))
 	r.make(o)
 	if b, err := os.ReadFile(r.place); err == nil {

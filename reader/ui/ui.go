@@ -1,6 +1,6 @@
 // Package ui draws the reader's panels: the menu, the panels at the bottom and for removing a highlight, the table of
-// contents, the clock in the top margin and the opening screen. Each is HTML (templates/) drawn by the engine; the
-// reader (package main) hands this package plain data and gets pictures and the places of buttons back.
+// contents and the opening screen. Each is HTML (templates/) drawn by the engine; the reader (package main) hands
+// this package plain data and gets pictures and the places of buttons back.
 package ui
 
 import (
@@ -60,6 +60,15 @@ func glyph(name string) template.HTML {
 	return template.HTML(fmt.Sprintf("&#x%x;", cp))
 }
 
+// pointing says whether an icon is an arrow that points: it is mirrored in right to left.
+func pointing(name string) bool {
+	switch name {
+	case "arrow-left", "caret-left", "caret-right", "sign-out":
+		return true
+	}
+	return false
+}
+
 // An icon button, as the templates draw it; On: drawn filled; Flip: mirrored in right to left (an arrow that points).
 type iconButton struct {
 	ID       string
@@ -96,11 +105,21 @@ func uiFuncs(ids *[]string) template.FuncMap {
 		"t":   word,
 		"num": num,
 		"icon": func(name string) template.HTML {
+			if pointing(name) {
+				return `<span class="i flip">` + glyph(name) + `</span>`
+			}
 			return `<span class="i">` + glyph(name) + `</span>`
 		},
+		"uilang": func() string { // the interface's language for a page's lang, "" for English (the default)
+			if lang == "en" {
+				return ""
+			}
+			return lang
+		},
+		"rtlui": RTL,
 		"ibtn": func(id, name string, on bool) iconButton {
 			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
-				Flip: name == "arrow-left" || name == "caret-left" || name == "caret-right"}
+				Flip: pointing(name)}
 		},
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
 		"pick": func(id, label string, on bool) button {

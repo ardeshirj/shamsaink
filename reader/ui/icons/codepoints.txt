@@ -22,3 +22,4 @@ arrows-clockwise e094
 arrow-counter-clockwise e038
 arrows-down-up e098
 sign-out e42a
+gear e270

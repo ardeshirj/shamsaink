@@ -133,17 +133,6 @@ func sortBooks(books []shelfBook, sort string) {
 	})
 }
 
-// lastRead is the key of the book read most recently, "" if none was opened.
-func lastRead(books []shelfBook) (key string) {
-	var when time.Time
-	for _, b := range books {
-		if b.opened && b.when.After(when) {
-			key, when = b.Key, b.when
-		}
-	}
-	return key
-}
-
 // The choices as kept: the filter, the sort of each filter.
 type libraryView struct {
 	Filter string            `json:"filter,omitempty"`

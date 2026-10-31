@@ -15,14 +15,13 @@ type Book struct {
 	Narrated      bool // it has narration (media overlays): a headphones mark after its title
 	Finished      bool // read to the end: no bar
 	RTL           bool // its title reads right to left
-	Now           bool // the book read last
 }
 
 // The library's rows, for templates/library.html.
 type libraryRow struct {
 	ID, Title, Author string
 	Read, Width, Dir  string // the share read as shown, its bar's width in per cent ("" for no bar), the row's direction
-	Now, New          bool   // New: "new" drawn as a tag
+	New               bool   // New: "new" drawn as a tag
 	Narrated          bool   // a headphones mark after the title
 }
 
@@ -88,7 +87,7 @@ func stack(top, bottom *Panel) *Panel {
 func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []libraryRow
 	for i, b := range books {
-		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, Now: b.Now, New: b.New, Narrated: b.Narrated, Dir: "ltr"}
+		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, New: b.New, Narrated: b.Narrated, Dir: "ltr"}
 		if b.RTL {
 			r.Dir = "rtl"
 		}
@@ -118,15 +117,29 @@ func segmentsOf(prefix string, names, labels []string, on int) []button {
 }
 
 // DrawLibraryMenu draws the library's menu: a narrow list hanging from the bar's menu button, directly under the bar
-// (under px from the top), at the bar's end (the left when rtl): leave to Kobo's interface (leave), a row an entry.
-func DrawLibraryMenu(under int, rtl bool, fonts *blitz.Fonts, w int) *Panel {
-	d := struct{ Dir string }{"ltr"}
-	if rtl {
+// (under px from the top), at the bar's end (the left when the interface is right to left, in a Farsi book): Settings (language,
+// only with settings: the library's, never a book's) and leave to Kobo's interface (leave), a row an entry.
+func DrawLibraryMenu(under int, settings bool, fonts *blitz.Fonts, w int) *Panel {
+	d := struct {
+		Dir      string
+		Settings bool
+	}{"ltr", settings}
+	if RTL() {
 		d.Dir = "rtl"
 	}
 	html, ids := render("library-menu.html", d)
 	m := drawPanelIn(html, ids, "menu-list", fonts, w, 600) // at most: cut to the list
 	m.y0 += under
+	return m
+}
+
+// DrawLibraryLanguage draws the language panel, directly under the bar (under px from the top), in place of the menu it
+// was opened from: no title, one row, "Follow book language" and its switch at the row's far end (the button
+// lang-follow; follow says whether it is on).
+func DrawLibraryLanguage(follow bool, under int, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("library-language.html", struct{ Follow bool }{follow})
+	m := drawPanel(html, ids, fonts, w, 400) // at most: cut to its switch
+	m.y0 = under
 	return m
 }
 

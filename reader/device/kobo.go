@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -125,6 +126,10 @@ func sysfs(path, v string) error {
 	return err
 }
 
+// lightDelay is how long the light stays on after the sleep screen is shown, so the screen settles before the light
+// goes out.
+const lightDelay = 2 * time.Second
+
 // plugged says whether the Kobo is on a charger (charging or full: anything but discharging, as KOReader reads it).
 func plugged() bool {
 	b, err := os.ReadFile(batteryStatus)
@@ -140,9 +145,11 @@ func (d *Device) doze(pic *image.Gray) {
 	defer d.dozing.Store(false)
 	t := time.Now()
 	back := d.Screen.Save()
+	light, _ := os.ReadFile(lightLevel)
+	lit, _ := strconv.Atoi(strings.TrimSpace(string(light)))
 	d.Screen.Show(pic, WfGC16, true)
 	d.Screen.Wait()
-	light, _ := os.ReadFile(lightLevel)
+	time.Sleep(lightDelay)
 	sysfs(lightFile, "0")
 	wifi, _ := os.ReadFile(wifiState)
 	defer func() {
@@ -221,7 +228,7 @@ func (d *Device) doze(pic *image.Gray) {
 		break
 	}
 	t = time.Now()
-	sysfs(lightFile, strings.TrimSpace(string(light)))
+	sysfs(lightFile, strconv.Itoa(lit))
 	d.Screen.Restore(back)
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 }

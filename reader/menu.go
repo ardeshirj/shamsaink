@@ -14,12 +14,14 @@ import (
 
 // The settings, in DIR/settings.json: text size, line spacing and margins for every book, the page direction by book.
 type settings struct {
-	FontSize   float32           `json:"font_size"`            // px
-	LineHeight float32           `json:"line_height"`          // as CSS's unitless line-height over the book's own; 0: the book's
-	Margin     int               `json:"margin"`               // px
-	LeadMs     int               `json:"lead_ms"`              // read-along: the words underlined this much after the sound starts, for the headphones' own delay
-	HideClock  bool              `json:"hide_clock,omitempty"` // the clock in the top margin hidden
-	Direction  map[string]string `json:"direction,omitempty"`  // by book (its key, as its cache's name): "rtl" or "ltr"
+	FontSize   float32           `json:"font_size"`           // px
+	LineHeight float32           `json:"line_height"`         // as CSS's unitless line-height over the book's own; 0: the book's
+	Margin     int               `json:"margin"`              // px
+	LeadMs     int               `json:"lead_ms"`             // read-along: the words underlined this much after the sound starts, for the headphones' own delay
+	Direction  map[string]string `json:"direction,omitempty"` // by book (its key, as its cache's name): "rtl" or "ltr"
+	// The interface's language (lang.go): the menus follow the book's language unless this is set ("Follow book language"
+	// off: English everywhere). Stored as the opposite so that a file from before it, without the key, follows the book.
+	EnglishOnly bool `json:"english_only,omitempty"`
 }
 
 // defaults are the settings before any is set (the environment's, else the reader's own).
@@ -62,11 +64,8 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 	case "reset":
 		// every setting back to its default (the book's line spacing), the direction too for this book
 		d := defaults()
-		s.FontSize, s.LineHeight, s.Margin, s.HideClock = d.FontSize, d.LineHeight, d.Margin, d.HideClock
+		s.FontSize, s.LineHeight, s.Margin = d.FontSize, d.LineHeight, d.Margin
 		delete(s.Direction, key)
-	case "clock":
-		s.HideClock = !s.HideClock
-		return false
 	case "dir-", "dir-rtl", "dir-ltr":
 		if s.Direction == nil {
 			s.Direction = map[string]string{}

@@ -59,9 +59,6 @@ func TestSorts(t *testing.T) {
 			t.Errorf("%s: %v; want %v", sort, got, want)
 		}
 	}
-	if k := lastRead(testShelf()); k != "b" {
-		t.Errorf("last read %q", k)
-	}
 }
 
 func TestLibraryView(t *testing.T) {

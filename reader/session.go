@@ -15,7 +15,7 @@ import (
 )
 
 // A session: one book open, from its first page shown until it is left. One loop runs it (run): the device's events
-// (touches, sleep) come in one channel, the clock's minute and the narration's next word are timers, and the work
+// (touches, sleep) come in one channel, the narration's next word is a timer, and the work
 // between them (the next page drawn ahead, the next document laid out) is done while nothing is waiting. Each event
 // goes to one handler.
 type session struct {
@@ -32,14 +32,12 @@ type session struct {
 	stop    func()        // lets go of the touch screen and stops listening for sleep
 	pending *device.Event // an event taken from the channel and not handled yet
 
-	minute *time.Timer // the clock's next minute
-	word   *time.Timer // the narration's next word due
+	word *time.Timer // the narration's next word due
 
-	shown  *drawn     // the page shown
-	lay    pageLayers // what goes over it (layers.go)
-	centre ui.TextCentre
-	ahead  bool // the next page may still need drawing
-	rest   bool // documents still to paginate
+	shown *drawn     // the page shown
+	lay   pageLayers // what goes over it (layers.go)
+	ahead bool       // the next page may still need drawing
+	rest  bool       // documents still to paginate
 
 	mn, nav                   *ui.Panel    // the menu and the panel at the bottom, while open
 	bar, list                 *ui.Panel    // with them the bar over the menu, and its ≡ list while open
@@ -57,6 +55,8 @@ type session struct {
 	unmark int        // the highlight the panel asks about
 
 	left, asleep bool // the book left (asleep: as the Kindle went to sleep)
+
+	langCode  string // the book's language (lang.go), for the interface's
 }
 
 // read opens a book (m: "book", see main) at its place and turns its pages until it is left; the touch screen is let
@@ -72,7 +72,7 @@ func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error
 }
 
 // open opens the book at path and shows its page: the book opened, its narration and contents read and its page drawn
-// meanwhile, and the opening screen shown if that takes longer than ui.SplashAfter (its picture first, so the engine
+// meanwhile, and the opening screen shown if that takes longer than ui.SplashAfter, or the library's own loading screen (its picture first, so the engine
 // never draws it and opens the book at once).
 func (rd *reader) open(path string, t time.Time) (*session, error) {
 	s := &session{rd: rd, dev: rd.dev, scr: rd.dev.Screen, set: loadSettings(rd.dir), t: t, backDoc: -1, unmark: -1}
@@ -106,7 +106,11 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	select {
 	case err = <-done:
 	case <-time.After(ui.SplashAfter - time.Since(t)): // from when the book was asked for, so its flash ends sooner
-		s.scr.Show(s.splash, device.WfGC16, true)
+		screen := s.splash
+		if rd.lib { // from the library: its own screen, the opening one is for starting
+			screen = ui.Loading(rd.dir, rd.fonts, s.scr.W, s.scr.H)
+		}
+		s.scr.Show(screen, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
 		err = <-done
 	}
@@ -114,9 +118,10 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 		s.stop()
 		return nil, err
 	}
-	s.minute = time.NewTimer(untilMinute())
 	s.word = time.NewTimer(time.Hour)
 	s.word.Stop()
+	s.langCode = bookLanguage(s.r.pub.Manifest.Metadata.Languages, s.r.pub.Manifest.Metadata.Title())
+	s.applyLanguage()
 	s.showPage(device.WfGC16, true) // a clean page over KOReader's
 	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
 		filepath.Base(path), s.r.doc, s.r.at, ms(t), s.r.restored, s.r.rtl, s.o.FontSize, s.o.LineHeight, s.o.Margin)
@@ -151,7 +156,6 @@ func (s *session) readCues() {
 // close lets go of the touch screen and closes the book (both done already when it was left: twice does no harm).
 func (s *session) close() {
 	s.stop()
-	s.minute.Stop()
 	s.word.Stop()
 	s.uncue()
 	s.r.close()
@@ -171,21 +175,16 @@ func (s *session) run() {
 	}
 }
 
-// next handles the next event, waiting for one if block; false if none was waiting. The clock waits while the
-// narration plays (its refresh would hold the next word back).
+// next handles the next event, waiting for one if block; false if none was waiting.
 func (s *session) next(block bool) bool {
-	var minute, word <-chan time.Time
+	var word <-chan time.Time
 	if s.nar != nil {
 		word = s.word.C
-	} else {
-		minute = s.minute.C
 	}
 	if block {
 		select {
 		case e := <-s.events:
 			s.input(e)
-		case <-minute:
-			s.tick()
 		case <-word:
 			s.speak()
 		}
@@ -194,8 +193,6 @@ func (s *session) next(block bool) bool {
 	select {
 	case e := <-s.events:
 		s.input(e)
-	case <-minute:
-		s.tick()
 	case <-word:
 		s.speak()
 	default:
@@ -259,7 +256,7 @@ func (s *session) drain() {
 }
 
 // sleep answers the device wanting to sleep, the narration stopped. The Kobo sleeps here, until the power button is
-// pressed again, the clock brought up to date on waking; on the Kindle the book is left, for KOReader to show its
+// pressed again; on the Kindle the book is left, for KOReader to show its
 // screensaver (the plugin opens it again on waking).
 func (s *session) sleep() {
 	if s.nar != nil {
@@ -271,7 +268,6 @@ func (s *session) sleep() {
 		return
 	}
 	s.drain()
-	s.minute.Reset(0)
 }
 
 // leave keeps the place, waits for the ink, lets go of the touch screen and closes the book.
@@ -298,19 +294,6 @@ func (s *session) forget() {
 		p.doc, p.at, p.last = -1, 0, 0
 	}
 	s.relayer()
-}
-
-// untilMinute is the time to the next minute's start, for the clock on a page shown that long.
-func untilMinute() time.Duration {
-	return time.Until(time.Now().Truncate(time.Minute).Add(time.Minute))
-}
-
-// tick refreshes the clock's box on its own, unless something is over the page or it is hidden.
-func (s *session) tick() {
-	s.minute.Reset(untilMinute())
-	if !s.set.HideClock && s.mn == nil && s.cv == nil && s.sel == nil {
-		s.refresh(s.clockBox(), device.WfREAGL)
-	}
 }
 
 // show shows the page the reading is at, drawn already or now, the place kept and the next page to draw ahead.
@@ -378,16 +361,24 @@ func (s *session) where() ui.Progress {
 // showMenu puts the menu and the panel at the bottom over the page shown.
 func (s *session) showMenu() {
 	t := time.Now()
-	set, r := s.set, s.r
-	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
-		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: s.narrated, HideClock: set.HideClock}, s.rd.fonts, s.scr.W)
-	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
 	s.list = nil
-	s.drawBar()
-	s.mn.SetY(s.bar.Rect().Dy())
+	s.drawMenu()
 	s.showPage(device.WfREAGL, false)
 	fmt.Printf("  menu drawn in %.0f ms\n", ms(t))
 }
+
+// drawMenu draws the menu, the panel at the bottom and the bar over them, in the interface's language.
+func (s *session) drawMenu() {
+	set, r := s.set, s.r
+	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
+		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: s.narrated}, s.rd.fonts, s.scr.W)
+	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
+	s.drawBar()
+	s.mn.SetY(s.bar.Rect().Dy())
+}
+
+// applyLanguage sets the interface's language for this book and the settings (lang.go).
+func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
 // drawBar draws the bar over the menu (docs/layouts/layout.html, "the bar"): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
@@ -505,7 +496,11 @@ func (s *session) showSel() {
 func (s *session) inMenu(g device.Gesture) {
 	r := s.r
 	if s.nav != nil && s.list != nil { // the bar's ≡ list: Leave, else a tap anywhere closes it
-		if !g.Swipe && s.list.At(g.X, g.Y) == "leave" {
+		id := ""
+		if !g.Swipe {
+			id = s.list.At(g.X, g.Y)
+		}
+		if id == "leave" {
 			s.rd.quit = true
 			s.leave()
 			return
@@ -528,7 +523,7 @@ func (s *session) inMenu(g device.Gesture) {
 	case id == "bar-start": // back to the library
 		s.leave()
 	case id == "bar-menu":
-		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W)
+		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
 		s.drawBar()
 		s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
 	case strings.HasPrefix(id, "bar-"): // the light, the title: nothing yet

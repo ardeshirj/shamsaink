@@ -2,8 +2,9 @@
 (bold for the book read last; headphones after it when the book is narrated), the author (an empty line if none), and a thin bar of the share read, its room kept
 (invisible) for a book that is not being read; how much is read (or "new", framed as a tag) at the end of the first line. The engine
 cuts pages between blocks of text but never inside a heading, so the three lines are one heading (each line's height its
-own, the heading's none), the share read after it in the page, put on the title's line. */ -}}
-{{template "head" ""}}<style>
+own, the heading's none), the share read after it in the page, put on the title's line. The page itself is always left
+to right, whatever the interface's language: each row has the direction of its own title. */ -}}
+{{template "head" "ltr"}}<style>
 html { font-family: serif; }
 ul { list-style: none; margin: 0; padding: 0; }
 li { position: relative; padding: 0.2em 0; border-bottom: 2px solid #999; }
@@ -11,7 +12,6 @@ li { position: relative; padding: 0.2em 0; border-bottom: 2px solid #999; }
 li.bar { border-bottom-color: transparent; }
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; }
 li[dir="rtl"] h3 { text-align: right; }
-li.now h3 .t { font-weight: bold; }
 h3 .t { line-height: 1.2; }
 h3 .nar .i { font-size: 0.9em; line-height: 1.2; }
 h3 .a { font-size: 0.85em; line-height: 1.2; color: #444; }
@@ -21,6 +21,6 @@ h3 .prog { display: inline-block; width: 100%; height: 0.25em; margin-top: 0.12e
 h3 .prog.none { border-color: transparent; }
 h3 .prog i { display: block; height: 100%; background: var(--ink); }
 </style></head><body><ul>
-{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}" class="{{if .Now}}now{{end}}{{if .Width}} bar{{end}}">
+{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}" class="{{if .Width}}bar{{end}}">
 <h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span><br><span class="prog{{if not .Width}} none{{end}}">{{if .Width}}<i style="width: {{.Width}}%"></i>{{end}}</span></h3>
 <span class="pct{{if .New}} tag{{end}}">{{.Read}}</span></li>{{end}}</ul></body></html>

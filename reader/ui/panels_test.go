@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	blitz "shamsainkengine"
 )
@@ -37,18 +36,16 @@ func TestPanels(t *testing.T) {
 		png.Encode(f, img)
 	}
 	for _, narrated := range []bool{true, false} {
-		for _, hide := range []bool{false, true} {
-			for _, dir := range []string{"", "rtl", "ltr"} {
-				for _, lh := range []float32{0, 1.35} {
-					m := DrawMenu(Menu{FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir, BookRTL: true, Narrated: narrated, HideClock: hide}, fonts, w)
-					save(fmt.Sprintf("menu-narrated%v-hide%v-dir%s-lh%g", narrated, hide, dir, lh), m.img)
-				}
+		for _, dir := range []string{"", "rtl", "ltr"} {
+			for _, lh := range []float32{0, 1.35} {
+				m := DrawMenu(Menu{FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir, BookRTL: true, Narrated: narrated}, fonts, w)
+				save(fmt.Sprintf("menu-narrated%v-dir%s-lh%g", narrated, dir, lh), m.img)
 			}
 		}
 	}
 	save("remove", DrawRemove(fonts, w).img)
 	books := []Book{
-		{Title: "Buried Alive", Author: "Arnold Bennett", Read: 62, Now: true, Narrated: true},
+		{Title: "Buried Alive", Author: "Arnold Bennett", Read: 62, Narrated: true},
 		{Title: "رود کم‌آب", Author: "مارا الیس", Read: 100, Finished: true, RTL: true},
 		{Title: "The Adventures of Sherlock Holmes", Author: "A. Conan Doyle", Read: -1},
 		{Title: "Haji agha ocr", Read: 4},
@@ -84,7 +81,7 @@ func TestPanels(t *testing.T) {
 		lib := NewLibrary(books, LibraryHead(bar, v, fonts, w), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		lib.Draw(img)
-		p, under := DrawLibraryMenu(lib.BarHeight(), false, fonts, w), lib.BarHeight()
+		p, under := DrawLibraryMenu(lib.BarHeight(), true, fonts, w), lib.BarHeight()
 		if v.SortOn {
 			under = lib.HeadHeight()
 			p = DrawLibrarySort(1, under, fonts, w)
@@ -97,21 +94,72 @@ func TestPanels(t *testing.T) {
 		}
 		lib.Close()
 	}
-	// the menu with a right-to-left bar (the library's is never one today): the list at the left, under the bar's end
-	{
-		v, rbar := view, bar
-		v.MenuOn, rbar.RTL = true, true
-		lib := NewLibrary(books, LibraryHead(rbar, v, fonts, w), fonts, w, h)
-		img := image.NewGray(image.Rect(0, 0, w, h))
-		lib.Draw(img)
-		p := DrawLibraryMenu(lib.BarHeight(), true, fonts, w)
-		p.Over(img)
-		save("library-menu-open-rtl", img)
-		if p.x0 >= w/2 || p.y0 != lib.BarHeight() {
-			t.Errorf("rtl menu at (%d, %d), want the left, at %d", p.x0, p.y0, lib.BarHeight())
+	// the language panel under the library's bar (its menu's entry Settings opens it): the switch at the row's far end, on
+	// and off. The library is always English, and a book's menu has no Settings; the book's bar, menu, panels and
+	// contents in Farsi are drawn mirrored.
+	defer SetLanguage("en")
+	for _, code := range []string{"en", "fa"} {
+		SetLanguage(code)
+		if code == "en" { // the library, and its Settings, are English only
+			v := view
+			v.MenuOn = true
+			bar := Bar{Time: "20:48", Battery: 82, Menu: true}
+			lib := NewLibrary(books, LibraryHead(bar, v, fonts, w), fonts, w, h)
+			for _, follow := range []bool{true, false} {
+				img := image.NewGray(image.Rect(0, 0, w, h))
+				lib.Draw(img)
+				p := DrawLibraryLanguage(follow, lib.BarHeight(), fonts, w)
+				p.Over(img)
+				save(fmt.Sprintf("library-language-%s-follow%v", code, follow), img)
+				save(fmt.Sprintf("library-language-%s-follow%v-panel", code, follow), p.img)
+				r, ok := p.buttons["lang-follow"]
+				if !ok || r.Empty() || !r.In(p.img.Bounds()) {
+					t.Errorf("%s: switch %v (found %v)", code, r, ok)
+				} else if r.Max.X <= w-60 || r.Min.X <= w/2 {
+					t.Errorf("%s: switch at %v, not at the row's far end", code, r)
+				}
+				if p.y0 != lib.BarHeight() {
+					t.Errorf("%s: panel at %d, want %d", code, p.y0, lib.BarHeight())
+				}
+			}
+			img := image.NewGray(image.Rect(0, 0, w, h))
+			lib.Draw(img)
+			m := DrawLibraryMenu(lib.BarHeight(), true, fonts, w)
+			m.Over(img)
+			save("library-menu-"+code, img)
+			save("library-menu-"+code+"-panel", m.img)
+			for _, id := range []string{"language", "leave"} {
+				if r, ok := m.buttons[id]; !ok || r.Empty() || !r.In(m.img.Bounds()) {
+					t.Errorf("%s: menu entry %s: %v (found %v)", code, id, r, ok)
+				}
+			}
+			if m.buttons["language"].Max.Y > m.buttons["leave"].Min.Y {
+				t.Errorf("%s: Settings is not above Leave", code)
+			}
+			lib.Close()
 		}
-		lib.Close()
+		// a book's menu, in the book's language: Leave alone, no Settings
+		bm := DrawLibraryMenu(160, false, fonts, w)
+		if _, ok := bm.buttons["language"]; ok {
+			t.Errorf("%s: a book's menu has Settings", code)
+		}
+		if _, ok := bm.buttons["leave"]; !ok {
+			t.Errorf("%s: a book's menu has no Leave", code)
+		}
+		save("lang-"+code+"-book-menu", bm.img)
+		for _, n := range []int{5, 100} {
+			save(fmt.Sprintf("lang-%s-bar-library%d", code, n), DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: n, Menu: true}, fonts, w).img)
+		}
+		save("lang-"+code+"-menu", DrawMenu(Menu{FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60, BookRTL: true, Narrated: true}, fonts, w).img)
+		save("lang-"+code+"-remove", DrawRemove(fonts, w).img)
+		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}}, 1, RTL(), fonts, w, h)
+		img := image.NewGray(image.Rect(0, 0, w, h))
+		cv.Draw(img)
+		save("lang-"+code+"-contents", img)
+		cv.Close()
+		save("lang-"+code+"-nav", DrawNav(Progress{Chapter: "Chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, RTL: RTL()}, fonts, w, h).img)
 	}
+	SetLanguage("en")
 	// no books: an empty list
 	lib := NewLibrary(nil, LibraryHead(bar, view, fonts, w), fonts, w, h)
 	img := image.NewGray(image.Rect(0, 0, w, h))
@@ -120,6 +168,7 @@ func TestPanels(t *testing.T) {
 	lib.Close()
 	save("splash", Splash(t.TempDir(), fonts, w, h))
 	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680))
+	save("loading-kobo", Loading(t.TempDir(), fonts, 1264, 1680))
 	for _, rtl := range []bool{true, false} {
 		for _, back := range []int{0, 7} {
 			for _, share := range []float64{0, 0.25, 1} {
@@ -176,12 +225,6 @@ func TestPanels(t *testing.T) {
 		}
 		v.Close()
 	}
-	img = image.NewGray(image.Rect(0, 0, w, h))
-	for i := range img.Pix {
-		img.Pix[i] = 255
-	}
-	NewClock(fonts).Draw(img, time.Date(2026, 10, 29, 20, 48, 0, 0, time.UTC), 60, w/2, false, false)
-	save("clock", img.SubImage(image.Rect(0, 0, w, 200)))
 }
 
 // testList is a list of the entries es with a pager, the way a library would build one: rows from a template of its own.
@@ -260,7 +303,7 @@ func TestPanelEdges(t *testing.T) {
 	for name, m := range map[string]*Panel{"menu": DrawMenu(Menu{FontSize: 50, Lines: 1.16, Margin: 60, Narrated: true}, fonts, w),
 		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head, "bar": bar,
 		"library-head": LibraryHead(Bar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
-		"library-menu": DrawLibraryMenu(160, false, fonts, w), "library-menu-rtl": DrawLibraryMenu(160, true, fonts, w),
+		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {
 		for id, r := range m.buttons {
 			if strings.HasPrefix(id, "bar-") || id == "list-sort" {

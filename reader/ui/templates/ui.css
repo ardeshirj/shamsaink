@@ -8,6 +8,8 @@
   --gap: 0.5em;         /* between buttons side by side, and between rows of them */
 }
 html { font-family: sans-serif; }
+/* in Farsi the panels are set in Parastoo, as the bar's title is; text in other scripts falls back per glyph */
+html:lang(fa) { font-family: Parastoo, serif; }
 body { margin: 0; }
 p { margin: 0.3em 0; }
 

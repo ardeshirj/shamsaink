@@ -29,7 +29,7 @@ type barData struct {
 // there are headphones), bar-light, which is always there, and bar-menu (if the bar has the menu).
 func DrawBar(b Bar, fonts *blitz.Fonts, w int) *Panel {
 	d := barData{Bar: b, Dir: "ltr"}
-	if b.RTL {
+	if b.RTL || RTL() { // the interface's language mirrors the bar too
 		d.Dir = "rtl"
 	}
 	draw := func() *Panel {

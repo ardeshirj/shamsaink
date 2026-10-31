@@ -43,8 +43,8 @@ type reader struct {
 	dir   string
 	pages drawnPages
 	over  *image.Gray
-	clock *ui.Clock
 	quit  bool // Leave chosen in a book's ≡: out of the library too
+	lib   bool // books are opened from the library: a slow one shows the loading screen, not the opening one
 }
 
 func main() {
@@ -72,7 +72,6 @@ func main() {
 		rd.pages[i] = &drawn{img: image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))}
 	}
 	rd.over = image.NewGray(image.Rect(0, 0, rd.dev.Screen.W, rd.dev.Screen.H))
-	rd.clock = ui.NewClock(rd.fonts)
 	// started: from the process's start to main (the program read, Go's runtime and every package's init), to 10 ms
 	fmt.Printf("started: main after %s, fonts and screen %.0f ms more\n", started, ms(t))
 	if !serve {

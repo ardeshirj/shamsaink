@@ -17,6 +17,10 @@ import (
 // comes back to the library, scanned again for the book's place.
 func (rd *reader) browse(t time.Time) error {
 	splash := ui.Splash(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H)
+	// the opening screen at once, before the shelf is scanned and the library drawn: starting takes a while (the program
+	// loads, the books are read) and the screen shows Kobo's until then
+	rd.dev.Screen.Show(splash, device.WfGC16, true)
+	rd.lib = true
 	for {
 		path, err := rd.choose(t, splash)
 		if err != nil || path == "" {
@@ -40,10 +44,12 @@ func (rd *reader) browse(t time.Time) error {
 func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	scr := rd.dev.Screen
 	all := shelfOf(scanLibrary(rd.dir), rd.dir)
-	last := lastRead(all)
 	view, _ := loadView(rd.dir)
 	filter := startFilter(view, countsOf(all))
 	lv := ui.LibraryView{}
+	set := loadSettings(rd.dir)
+	// the library is always in English; a book's language applies inside the book (lang.go)
+	ui.SetLanguage("en")
 	bar := ui.Bar{Time: time.Now().Format("15:04"), Battery: rd.dev.Battery(), Menu: true}
 	var v *ui.List
 	var items []shelfBook // the rows
@@ -61,7 +67,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 		for i, b := range items {
 			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.opened && ui.FilterNames[filter] != "new",
 				Finished: b.finished(), Narrated: b.Narrated,
-				RTL: persian([]string{bookLang(b.libBook)}, false), Now: b.Key == last}
+				RTL: persian([]string{bookLang(b.libBook)}, false)}
 			if b.opened && b.share >= 0 {
 				rows[i].Read = int(b.share*100 + 0.5)
 			}
@@ -97,17 +103,27 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	}
 	// the panel under the bar (the menu) or the filters (sort), while open
 	var panel *ui.Panel
+	langOpen := false // the panel is the language panel, not the menu
 	open := func(menu bool) {
+		langOpen = false
 		lv.MenuOn, lv.SortOn = menu, !menu
 		v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
 		if menu {
-			panel = ui.DrawLibraryMenu(v.BarHeight(), bar.RTL, rd.fonts, scr.W)
+			panel = ui.DrawLibraryMenu(v.BarHeight(), true, rd.fonts, scr.W)
 		} else {
 			panel = ui.DrawLibrarySort(slices.Index(ui.SortNames, view.sortOf(filter)), v.HeadHeight(), rd.fonts, scr.W)
 		}
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+	}
+	// the language panel in the menu's place
+	openLang := func() {
+		old := panel.Rect()
+		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.BarHeight(), rd.fonts, scr.W)
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
 	}
 	for e := range events {
 		head := v.HeadAt(e.X, e.Y)
@@ -125,6 +141,17 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
+			case id == "language" && lv.MenuOn && !langOpen:
+				langOpen = true
+				openLang()
+			case id == "lang-follow" && langOpen:
+				set.EnglishOnly = !set.EnglishOnly
+				set.save(rd.dir)
+				build() // the head drawn with the menu button still on
+				v.Draw(rd.over)
+				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.BarHeight(), rd.fonts, scr.W)
+				panel.Over(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
 			case strings.HasPrefix(id, "sort-"):
 				view.setSort(filter, strings.TrimPrefix(id, "sort-"))
 				keep()
@@ -133,7 +160,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				scr.Show(rd.over, device.WfREAGL, false)
 			default:
 				r := image.Rect(0, 0, scr.W, panel.Rect().Max.Y)
-				panel, lv.MenuOn, lv.SortOn = nil, false, false
+				panel, langOpen, lv.MenuOn, lv.SortOn = nil, false, false, false
 				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
