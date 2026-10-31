@@ -10,11 +10,11 @@ import (
 type Bar struct {
 	Start             string // the icon at the start, its button "bar-start": "arrow-left" (back to the library) or "magnifying-glass" (search); "" for none
 	Title             string
-	Time              string // "20:48", drawn in the interface's digits; "" hides it
+	Time              string // "03:04" (12 hours, with its leading zero now that it stands apart in the middle), drawn in the interface's digits; "" hides it
 	Phones            bool   // headphones connected: their button "bar-phones"
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
 	MenuOn            bool   // the same for the menu button
-	Battery           int    // percent; < 0 hides it
+	Battery           int    // percent, drawn as a box filled to it (its button "bar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "bar-menu" at the end (the library)
 	RTL               bool
 }
@@ -30,7 +30,7 @@ type barData struct {
 func DrawBar(b Bar, fonts *blitz.Fonts, w int) *Panel {
 	d := barData{Bar: b, Dir: "ltr"}
 	d.Time = digits(b.Time) // in the interface's digits
-	if b.RTL || RTL() { // the interface's language mirrors the bar too
+	if b.RTL || RTL() {     // the interface's language mirrors the bar too
 		d.Dir = "rtl"
 	}
 	draw := func() *Panel {

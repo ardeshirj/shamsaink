@@ -15,22 +15,18 @@ var words = map[string]map[string]string{
 		"line-spacing-book": "Line spacing (the book's)",
 		"margins":           "Margins",
 		"page-turns-book":   "Page turns (this book):",
-		"dir-book":          "Book's (%s)",
+		"dir-book":          "Book's",
 		"dir-rtl":           "Right to left",
 		"dir-ltr":           "Left to right",
-		"dir-rtl-short":     "RTL",
-		"dir-ltr-short":     "LTR",
 		"remove-highlight":  "Remove highlight",
 		"keep":              "Keep",
 		"contents":          "Contents",
-		"back-to-book":      "Back to the book",
 		"back-to-page":      "Back to page %d",
 		"page":              "page %d",
 		"page-of":           "page %d of %d",
 		"by":                "by",
 		"opening":           "Opening the book…",
 		"page-n-of":         "%s of %s",
-		"battery":           "%d%%",
 		"percent":           "%s%%",
 		"new":               "new",
 		"library":           "Library",
@@ -54,7 +50,7 @@ var words = map[string]map[string]string{
 		"text":              "Text",
 		"page-tab":          "Page",
 		"reset":             "Reset",
-		"done":              "Done",
+		"px":                "%s px",
 	},
 	"fa": {
 		"text-size":         "اندازهٔ متن",
@@ -62,22 +58,18 @@ var words = map[string]map[string]string{
 		"line-spacing-book": "فاصلهٔ خطوط (کتاب)",
 		"margins":           "حاشیه‌ها",
 		"page-turns-book":   "ورق زدن (این کتاب):",
-		"dir-book":          "طبق کتاب (%s)",
+		"dir-book":          "طبق کتاب",
 		"dir-rtl":           "راست به چپ",
 		"dir-ltr":           "چپ به راست",
-		"dir-rtl-short":     "راست‌به‌چپ",
-		"dir-ltr-short":     "چپ‌به‌راست",
 		"remove-highlight":  "حذف نشانه",
 		"keep":              "نگه‌دار",
 		"contents":          "فهرست",
-		"back-to-book":      "بازگشت به کتاب",
 		"back-to-page":      "بازگشت به صفحهٔ %d",
 		"page":              "صفحهٔ %d",
 		"page-of":           "صفحهٔ %d از %d",
 		"by":                "از",
 		"opening":           "در حال باز کردن کتاب…",
 		"page-n-of":         "%s از %s",
-		"battery":           "%d٪",
 		"percent":           "%s٪",
 		"new":               "جدید",
 		"library":           "کتابخانه",
@@ -101,7 +93,7 @@ var words = map[string]map[string]string{
 		"text":              "متن",
 		"page-tab":          "صفحه",
 		"reset":             "بازنشانی",
-		"done":              "تمام",
+		"px":                "%s پیکسل",
 	},
 }
 
@@ -152,6 +144,14 @@ func word(key string, args ...any) string {
 
 // num is n in the interface's digits: Latin for English, Farsi (۰ to ۹) otherwise.
 func num(n int) string { return digits(fmt.Sprint(n)) }
+
+// decimal is a number written with a point ("1.16") in the interface's digits and decimal separator (Farsi: ۱٫۱۶).
+func decimal(s string) string {
+	if lang == "en" {
+		return s
+	}
+	return strings.ReplaceAll(digits(s), ".", "٫")
+}
 
 // digits is s with its Latin digits in the interface's (a time, "20:48").
 func digits(s string) string {

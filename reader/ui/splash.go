@@ -17,6 +17,10 @@ import (
 // so showing it is a copy and a refresh, the ink moving while the book opens.
 const SplashAfter = 3 * time.Second
 
+// SplashFor is how long the opening screen shown when the reader starts stays at least, so it is seen, not flashed by
+// when the library is ready sooner.
+const SplashFor = 2 * time.Second
+
 type splashData struct{ Top int }
 
 // Splash is the opening screen for a screen w × h: read from DIR/cache, else drawn and kept there.

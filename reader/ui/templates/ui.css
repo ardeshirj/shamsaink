@@ -7,17 +7,20 @@
   --pad: 0.05em 0.6em;  /* inside a button */
   --gap: 0.5em;         /* between buttons side by side, and between rows of them */
 }
-html { font-family: sans-serif; }
-/* in Farsi the panels are set in Parastoo, as the bar's title is; text in other scripts falls back per glyph */
-html:lang(fa) { font-family: Parastoo, serif; }
+/* The panels in DejaVu Sans, Farsi in Parastoo: the whole page when the interface is in Farsi (its html's lang), and in
+   English each piece of Farsi text marked lang="fa" (a book's title, a chapter's, a library row: textlang). By the
+   attribute, since the engine does not apply :lang(); fonts named, not generic families, whose first font depends on
+   the fonts folder. */
+html { font-family: "DejaVu Sans", sans-serif; }
+[lang="fa"] { font-family: Parastoo, serif; }
 body { margin: 0; }
 p { margin: 0.3em 0; }
 
 /* A row of buttons (and words), wrapped when it is too long, the same room across and down. */
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); margin: 0.3em 0; }
 
-span.b { display: inline-block; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }
-span.b.fill { background: var(--ink); color: var(--paper); }
+/* a button: its words, and an icon before them centred on them */
+span.b { display: inline-flex; align-items: center; gap: 0.3em; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }
 
 /* The switch: a track with a knob, the knob at the end when on. */
 span.s { display: inline-block; width: 2.4em; height: 1.2em; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.6em; }

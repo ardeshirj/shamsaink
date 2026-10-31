@@ -21,7 +21,7 @@ func TestText(t *testing.T) {
 	const w, h = 1236, 1648
 	var m *Panel
 	for tab, want := range map[string][]string{"text": textIDs, "page": pageIDs} {
-		m = DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 1.35, Lines: 1.16, Margin: 60, Dir: "rtl", BookRTL: true}, fonts, w, h)
+		m = DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 1.35, Lines: 1.16, Margin: 60, Dir: "rtl"}, fonts, w, h)
 		if r := m.Rect(); r.Max.Y != h || r.Min.Y <= h/3 {
 			t.Errorf("%s: sheet at %v, want at the bottom of %d", tab, r, h)
 		}
@@ -38,7 +38,7 @@ func TestText(t *testing.T) {
 			}
 		}
 	}
-	m = DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60, Dir: "rtl", BookRTL: true}, fonts, w, h)
+	m = DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60, Dir: "rtl"}, fonts, w, h)
 	// a tap goes to the button under it, or the nearest: on either side of a shared border, near a button, not far
 	rtl, ltr := m.buttons["dir-rtl"], m.buttons["dir-ltr"]
 	mid := (rtl.Min.Y+rtl.Max.Y)/2 + m.y0
@@ -67,8 +67,8 @@ func TestText(t *testing.T) {
 
 // The buttons the sheet's two tabs and the dock are expected to have.
 var textIDs = []string{"tab-text", "tab-page", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
-	"reset", "done"}
-var pageIDs = []string{"tab-text", "tab-page", "dir-", "dir-rtl", "dir-ltr", "reset", "done"}
+	"reset"}
+var pageIDs = []string{"tab-text", "tab-page", "dir-", "dir-rtl", "dir-ltr", "reset"}
 var dockIDs = []string{"chapter-prev", "bar", "chapter-next", "back", "contents", "text", "read-aloud"}
 
 // The dock has its buttons, found on it, at the bottom of the screen; the way back and Listen only when there are.

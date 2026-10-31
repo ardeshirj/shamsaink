@@ -45,6 +45,8 @@ type reader struct {
 	over  *image.Gray
 	quit  bool // Leave chosen in a book's ≡: out of the library too
 	lib   bool // books are opened from the library: a slow one shows the loading screen, not the opening one
+
+	splashUntil time.Time // the opening screen shown at the start stays at least until then (ui.SplashFor)
 }
 
 func main() {

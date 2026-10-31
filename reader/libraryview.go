@@ -20,6 +20,7 @@ func (rd *reader) browse(t time.Time) error {
 	// the opening screen at once, before the shelf is scanned and the library drawn: starting takes a while (the program
 	// loads, the books are read) and the screen shows Kobo's until then
 	rd.dev.Screen.Show(splash, device.WfGC16, true)
+	rd.splashUntil = time.Now().Add(ui.SplashFor)
 	rd.lib = true
 	for {
 		path, err := rd.choose(t, splash)
@@ -50,7 +51,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	set := loadSettings(rd.dir)
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
-	bar := ui.Bar{Time: time.Now().Format("15:04"), Battery: rd.dev.Battery(), Menu: true}
+	bar := ui.Bar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Menu: true}
 	var v *ui.List
 	var items []shelfBook // the rows
 	// build lays out the library again for the view's choices, on its first page
@@ -80,6 +81,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	build()
 	defer func() { v.Close() }()
 	v.Draw(rd.over)
+	time.Sleep(time.Until(rd.splashUntil)) // the opening screen seen for SplashFor at the start (nothing later)
 	scr.Show(rd.over, device.WfGC16, true)
 	fmt.Printf("library: %d books, %d rows, %d pages, shown in %.0f ms\n", len(all), len(items), v.Pages(), ms(t))
 
@@ -171,6 +173,10 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				forward = e.DY < 0
 			}
 			turn(map[bool]int{true: 1, false: -1}[forward])
+		case head == "bar-battery": // its level in a box under it, closed by the next tap (the panel's default)
+			panel = ui.DrawBattery(bar.Battery, v.BarHeight(), v.HeadBox("bar-battery"), rd.fonts, scr.W)
+			panel.Over(rd.over)
+			scr.ShowPart(rd.over, panel.Rect(), device.WfREAGL, false)
 		case head == "bar-menu":
 			open(true)
 		case head == "list-sort":

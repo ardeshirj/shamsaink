@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"html/template"
 	"image"
 	"strings"
 
@@ -39,19 +40,18 @@ type Text struct {
 	Lines      float32 // the line spacing as laid out now (shown when LineHeight is 0)
 	Margin     int     // px
 	Dir        string  // the direction set for this book: "", "rtl" or "ltr"
-	BookRTL    bool    // the book itself reads right to left
 }
 
 // The sheet's numbers and choices, for templates/text.html.
 type textData struct {
 	Tab                            string
 	Size, LinesName, Lines, Margin string
-	Dir, BookDir                   string
+	Dir                            string
 }
 
 // DrawText draws the Text sheet for x at the bottom of a screen h px high, a line on its top edge. Its buttons:
-// tab-text and tab-page, then the tab's (size-, lines- and margin-dec and -inc; or dir-, dir-rtl and dir-ltr), reset
-// and done.
+// tab-text and tab-page, then the tab's (size-, lines- and margin-dec and -inc; or dir-, dir-rtl and dir-ltr), and
+// reset.
 func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 	// the line spacing as it is, and whether it is the book's own
 	lines, linesName := x.Lines, word("line-spacing-book")
@@ -59,8 +59,8 @@ func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 		lines, linesName = x.LineHeight, word("line-spacing")
 	}
 	html, ids := render("text.html", textData{Tab: x.Tab,
-		Size: fmt.Sprintf("%g px", x.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
-		Margin: fmt.Sprintf("%d px", x.Margin), Dir: x.Dir, BookDir: map[bool]string{true: word("dir-rtl-short"), false: word("dir-ltr-short")}[x.BookRTL],
+		Size: word("px", decimal(fmt.Sprintf("%g", x.FontSize))), LinesName: linesName, Lines: decimal(fmt.Sprintf("%.2f", lines)),
+		Margin: word("px", num(x.Margin)), Dir: x.Dir,
 	})
 	return atBottom(drawPanel(html, ids, fonts, w, sheetHeight), h)
 }
@@ -135,6 +135,9 @@ func drawPanelIn(html string, ids []string, box string, fonts *blitz.Fonts, w, h
 	}
 	return m
 }
+
+// Box is where the button id is on the screen (empty if the panel has none).
+func (m *Panel) Box(id string) image.Rectangle { return m.buttons[id].Add(image.Pt(m.x0, m.y0)) }
 
 // At is the button tapped at (x, y) on the screen, with some room around each for a finger: the nearest, for buttons
 // side by side (a bar's segments share a border); "" if none.
@@ -239,4 +242,23 @@ func (m *Panel) Share(x int, rtl bool) float64 {
 		s = 1 - s
 	}
 	return min(max(s, 0), 1)
+}
+
+// DrawBattery draws the battery's level (percent) in a box hanging from the bar (under px high) under its battery,
+// whose box on the screen is batt (the bar's Box("bar-battery")); w px wide. No buttons: any tap closes it.
+func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
+	const margin = 40 // the page's margin in drawPanelIn
+	d := struct {
+		Level  string
+		Margin template.CSS
+	}{Level: word("percent", num(percent))}
+	if RTL() { // the battery at the left: the box's left edge under its left edge
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: %dpx; margin-right: auto;", max(batt.Min.X-margin, 0)))
+	} else {
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-batt.Max.X, 0)))
+	}
+	html, ids := render("battery.html", d)
+	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 300)
+	m.y0 += under
+	return m
 }

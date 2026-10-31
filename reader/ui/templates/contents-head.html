@@ -1,1 +1,6 @@
-{{template "head" ""}}<style>.row > span { font-weight: bold; }</style></head><body><div class="row">{{template "button" btn "contents-close" (t "back-to-book")}}<span>{{t "contents"}}</span></div></body></html>
+{{/* The table of contents' header (contents.go): as the top bar, a back arrow at the start (back to the page, mirrored
+in right to left) and the title in bold beside it. */ -}}
+{{template "head" ""}}<style>
+div.head { display: flex; align-items: center; gap: 0.5em; }
+.head .title { font-weight: bold; }
+</style></head><body><div class="head">{{template "iconbutton" ibtn "contents-close" "arrow-left" false}}<span class="title">{{t "contents"}}</span></div></body></html>

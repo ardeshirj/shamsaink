@@ -41,12 +41,30 @@ func TestPanels(t *testing.T) {
 				if tab == "page" && lh > 0 || tab == "text" && dir != "" {
 					continue
 				}
-				m := DrawText(Text{Tab: tab, FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir, BookRTL: true}, fonts, w, h)
+				m := DrawText(Text{Tab: tab, FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir}, fonts, w, h)
 				save(fmt.Sprintf("text-%s-dir%s-lh%g", tab, dir, lh), m.img)
 			}
 		}
 	}
 	save("remove", DrawRemove(fonts, w).img)
+	// the battery's level under the battery, in both languages: its edge under the battery's
+	for _, code := range []string{"en", "fa"} {
+		SetLanguage(code)
+		b := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "8:48", Battery: 82, Menu: true}, fonts, w)
+		batt := b.Box("bar-battery")
+		lvl := DrawBattery(82, b.Rect().Dy(), batt, fonts, w)
+		img := image.NewGray(image.Rect(0, 0, w, 400))
+		for i := range img.Pix {
+			img.Pix[i] = 255
+		}
+		b.Over(img)
+		lvl.Over(img)
+		save("battery-"+code, img)
+		if r := lvl.Rect(); r.Min.Y != b.Rect().Dy() || code == "en" && abs(r.Max.X-batt.Max.X) > 4 || code == "fa" && abs(r.Min.X-batt.Min.X) > 4 {
+			t.Errorf("%s: level at %v, battery at %v", code, r, batt)
+		}
+	}
+	SetLanguage("en")
 	books := []Book{
 		{Title: "Buried Alive", Author: "Arnold Bennett", Read: 62, Narrated: true},
 		{Title: "رود کم‌آب", Author: "مارا الیس", Read: 100, Finished: true, RTL: true},
@@ -154,13 +172,20 @@ func TestPanels(t *testing.T) {
 			save(fmt.Sprintf("lang-%s-bar-library%d", code, n), DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: n, Menu: true}, fonts, w).img)
 		}
 		for _, tab := range []string{"text", "page"} {
-			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60, BookRTL: true}, fonts, w, h).img)
+			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60}, fonts, w, h).img)
 		}
 		save("lang-"+code+"-remove", DrawRemove(fonts, w).img)
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}}, 1, RTL(), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		cv.Draw(img)
 		save("lang-"+code+"-contents", img)
+		cv.Close()
+		// a Farsi book's contents, in either language: its entries right to left, in Parastoo
+		cv = NewContents([]Entry{{Title: "دیباچه"}, {Title: "بخش یکم: مرده‌خورها"}, {Title: "باران از صبح", Depth: 1}, {Title: "کوچهٔ خالی", Depth: 1},
+			{Title: "بخش دوم: سفر به ماه"}}, 2, true, fonts, w, h)
+		img = image.NewGray(image.Rect(0, 0, w, h))
+		cv.Draw(img)
+		save("lang-"+code+"-contents-farsi-book", img)
 		cv.Close()
 		save("lang-"+code+"-dock", DrawDock(Progress{Chapter: "Chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, RTL: RTL()}, fonts, w, h).img)
 	}
@@ -344,5 +369,7 @@ func TestPanelEdges(t *testing.T) {
 }
 
 // The buttons that are an icon alone (no border), besides the bar's.
-var iconButtons = map[string]bool{"list-sort": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,
+var iconButtons = map[string]bool{"list-sort": true, "contents-close": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,
 	"read-aloud": true}
+
+func abs(n int) int { return max(n, -n) }

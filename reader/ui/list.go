@@ -126,6 +126,9 @@ func (v *List) SetHead(head *Panel) { v.head = head }
 // HeadAt is the header's button at (x, y) on the screen, "" if none.
 func (v *List) HeadAt(x, y int) string { return v.head.At(x, y) }
 
+// HeadBox is where the header's button id is on the screen.
+func (v *List) HeadBox(id string) image.Rectangle { return v.head.Box(id) }
+
 // PagerAt is the pager's button at (x, y) on the screen, list-prev or list-next, "" if none.
 func (v *List) PagerAt(x, y int) string {
 	if v.pager == nil {

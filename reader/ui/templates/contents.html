@@ -1,5 +1,4 @@
 {{template "head" .Dir}}<style>
-html { font-family: serif; }
 p { margin: 0; padding: 0.35em 0.3em; }
 p.cur { font-weight: bold; background: #d8d8d8; }
-</style></head><body>{{range .Entries}}<p id="{{.ID}}"{{if .Cur}} class="cur"{{end}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}</body></html>
+</style></head><body>{{range .Entries}}<p id="{{.ID}}"{{textlang .Title}}{{if .Cur}} class="cur"{{end}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}</body></html>

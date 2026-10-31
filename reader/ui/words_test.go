@@ -44,14 +44,17 @@ func TestSetLanguage(t *testing.T) {
 		}
 	}
 	SetLanguage("fa")
-	if !RTL() || num(2026) != "۲۰۲۶" || word("page-of", 3, 12) != "صفحهٔ ۳ از ۱۲" || word("battery", 82) != "۸۲٪" {
-		t.Errorf("fa: %v %q %q %q", RTL(), num(2026), word("page-of", 3, 12), word("battery", 82))
+	if !RTL() || num(2026) != "۲۰۲۶" || word("page-of", 3, 12) != "صفحهٔ ۳ از ۱۲" || word("percent", num(82)) != "۸۲٪" {
+		t.Errorf("fa: %v %q %q %q", RTL(), num(2026), word("page-of", 3, 12), word("percent", num(82)))
+	}
+	if decimal("1.16") != "۱٫۱۶" || word("px", num(60)) != "۶۰ پیکسل" {
+		t.Errorf("fa: %q %q", decimal("1.16"), word("px", num(60)))
 	}
 	if digits("20:48") != "۲۰:۴۸" {
 		t.Errorf("fa: the time %q", digits("20:48"))
 	}
 	SetLanguage("de")
-	if RTL() || num(5) != "5" || word("page-of", 3, 12) != "page 3 of 12" || word("battery", 82) != "82%" {
+	if RTL() || num(5) != "5" || word("page-of", 3, 12) != "page 3 of 12" || word("percent", num(82)) != "82%" {
 		t.Errorf("de: %v %q", RTL(), word("page-of", 3, 12))
 	}
 }

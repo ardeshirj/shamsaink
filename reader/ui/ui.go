@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // The panels' HTML is in templates/: the shared rules (ui.css), the pieces (components.html) and a template for each
@@ -84,7 +85,6 @@ type button struct {
 	On        bool
 	Count     string // shown after the label, smaller (segments)
 	Dir       string // the label's own direction, "" for the page's (segments)
-	Fill      bool   // drawn filled: the panel's main button
 }
 
 // A row with a minus, a value and a plus: the buttons are name-dec and name-inc.
@@ -117,13 +117,13 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			}
 			return lang
 		},
-		"rtlui": RTL,
+		"rtlui":    RTL,
+		"textlang": textLang,
 		"ibtn": func(id, name string, on bool) iconButton {
 			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
 				Flip: pointing(name)}
 		},
-		"btn":  func(id, label string) button { return button{ID: add(id), Label: label} },
-		"fill": func(id, label string) button { return button{ID: add(id), Label: label, Fill: true} },
+		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}
 		},
@@ -151,6 +151,17 @@ func render(name string, data any) (html string, ids []string) {
 		}
 	}
 	panic(fmt.Sprintf("ui/templates/%s: %v", name, err))
+}
+
+// textLang is the lang attribute for a piece of text that is not the interface's (a book's title, a chapter's): " lang=\"fa\""
+// when it is in the Arabic script, so it is set in Parastoo (ui.css), else nothing.
+func textLang(s string) template.HTMLAttr {
+	for _, r := range s {
+		if unicode.Is(unicode.Arabic, r) {
+			return ` lang="fa"`
+		}
+	}
+	return ""
 }
 
 func union(rs []image.Rectangle) image.Rectangle {

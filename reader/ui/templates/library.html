@@ -6,7 +6,6 @@ of text but never inside a heading, so the two lines are one heading (each line'
 the share read after it in the page, put on the title's line. The page itself is always left to right, whatever the
 interface's language: each row has the direction of its own title. */ -}}
 {{template "head" "ltr"}}<style>
-html { font-family: serif; }
 ul { list-style: none; margin: 0; padding: 0; }
 li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; }
@@ -22,6 +21,6 @@ li .pct .prog { display: flex; width: 3.5em; height: 0.4em; box-sizing: border-b
 li .pct .prog i { display: block; height: 100%; background: var(--ink); }
 li .pct.tag { height: auto; top: 0.45em; font-size: 0.75em; line-height: 1.3; padding: 0 0.4em; border: 2px solid var(--ink); border-radius: 0.3em; }
 </style></head><body><ul>
-{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}">
+{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}"{{textlang .Title}}>
 <h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
 {{if or .Width .New}}<span class="pct{{if .New}} tag{{end}}">{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul></body></html>

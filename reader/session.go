@@ -42,7 +42,8 @@ type session struct {
 	mn                        *ui.Panel    // the panel asking whether to remove a highlight, while open
 	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
 	tab                       string       // the sheet's tab: "text" or "page"
-	bar, list                 *ui.Panel    // with them the bar at the top, and its ≡ list while open
+	bar, list                 *ui.Panel    // with them the bar at the top, and its ≡ list (or the battery's level) while open
+	level                     bool         // the list is the battery's level, not ≡'s
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -415,7 +416,7 @@ func (s *session) drawMenu() {
 func (s *session) drawSheet() {
 	set, r := s.set, s.r
 	s.sheet = ui.DrawText(ui.Text{Tab: s.tab, FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc),
-		Margin: set.Margin, Dir: set.Direction[r.key], BookRTL: r.bookRTL}, s.rd.fonts, s.scr.W, s.scr.H)
+		Margin: set.Margin, Dir: set.Direction[r.key]}, s.rd.fonts, s.scr.W, s.scr.H)
 }
 
 // applyLanguage sets the interface's language for this book and the settings (lang.go).
@@ -424,8 +425,8 @@ func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnl
 // drawBar draws the bar over the dock (docs/layouts/layout.html, "the bar"): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawBar() {
-	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("15:04"),
-		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil}, s.rd.fonts, s.scr.W)
+	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
+		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && !s.level}, s.rd.fonts, s.scr.W)
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
@@ -463,7 +464,7 @@ func (s *session) inContents(g device.Gesture) {
 			cv.Draw(s.rd.over)
 			s.scr.Show(s.rd.over, device.WfREAGL, false)
 		}
-	case cv.HeadAt(g.X, g.Y) == "contents-close":
+	case cv.HeadAt(g.X, g.Y) == "contents-close": // back to the page, as every panel from the dock
 		cv.Close()
 		s.cv = nil
 		s.showPage(device.WfREAGL, false)
@@ -567,7 +568,12 @@ func (s *session) inMenu(g device.Gesture) {
 	case g.Swipe:
 	case id == "bar-start": // back to the library
 		s.leave()
+	case id == "bar-battery": // its level in a box under it, closed by the next tap
+		b := s.dev.Battery()
+		s.list, s.level = ui.DrawBattery(b, s.bar.Rect().Dy(), s.bar.Box("bar-battery"), s.rd.fonts, s.scr.W), true
+		s.refresh(s.list.Rect(), device.WfREAGL)
 	case id == "bar-menu":
+		s.level = false
 		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
 		s.drawBar()
 		s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
@@ -613,8 +619,6 @@ func (s *session) inMenu(g device.Gesture) {
 		s.nav = nil
 		s.drawSheet()
 		s.refresh(rect.Union(s.sheet.Rect()), device.WfREAGL)
-	case id == "done":
-		s.closeMenu()
 	case id == "remove-highlight":
 		r.marks.list = append(r.marks.list[:s.unmark], r.marks.list[s.unmark+1:]...)
 		r.marks.save()

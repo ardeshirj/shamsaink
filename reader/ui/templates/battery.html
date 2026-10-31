@@ -1,0 +1,6 @@
+{{/* The battery's level (DrawBattery): a small box hanging from the bar under its battery, as the menu's list hangs
+from ≡, opened by a tap on the battery and closed by any tap. Its edge lines up with the battery's: the right one in
+English, the left one in Farsi (Margin: the room between it and the page's edge, set by DrawBattery). */ -}}
+{{template "head" ""}}<style>
+div.level { width: max-content; padding: 0.35em 0.8em; border: var(--line) solid var(--ink); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); {{.Margin}} }
+</style></head><body><div class="level" id="level">{{.Level}}</div></body></html>
