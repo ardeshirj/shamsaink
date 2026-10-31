@@ -1,0 +1,5 @@
+{{/* The bar under a paged list: the previous button, the page's number of the pages, the next button. In a
+right-to-left list the row runs from the right, so the previous button is on the right. */}}
+{{template "head" .Dir}}<style>
+.pager { justify-content: space-between; }
+</style></head><body><div class="row pager">{{template "button" btn "list-prev" .Prev}}<span dir="{{.CountDir}}">{{.Count}}</span>{{template "button" btn "list-next" .Next}}</div></body></html>

@@ -77,12 +77,86 @@ func TestPanels(t *testing.T) {
 		}
 		v.Close()
 	}
+	for _, rtl := range []bool{true, false} {
+		v := testList(rtl, es, fonts, w, h)
+		if v.Pages() < 2 {
+			t.Errorf("list: %d pages, want at least 2", v.Pages())
+		}
+		for page := range 2 {
+			v.SetPage(page)
+			img := image.NewGray(image.Rect(0, 0, w, h))
+			v.Draw(img)
+			save(fmt.Sprintf("list-pager-rtl%v-page%d", rtl, page), img)
+		}
+		v.Close()
+	}
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	for i := range img.Pix {
 		img.Pix[i] = 255
 	}
 	NewClock(fonts).Draw(img, time.Date(2026, 10, 29, 20, 48, 0, 0, time.UTC), 60, w/2, false, false)
 	save("clock", img.SubImage(image.Rect(0, 0, w, 200)))
+}
+
+// testList is a list of the entries es with a pager, the way a library would build one: rows from a template of its own.
+func testList(rtl bool, es []Entry, fonts *blitz.Fonts, w, h int) *List {
+	dir := "ltr"
+	if rtl {
+		dir = "rtl"
+	}
+	html := `<html dir="` + dir + `"><head><style>p { margin: 0; padding: 0.35em 0.3em; }</style></head><body>`
+	for i, e := range es {
+		html += fmt.Sprintf(`<p id="e%d">%s</p>`, i, e.Title)
+	}
+	html += `</body></html>`
+	headHTML, headIDs := render("contents-head.html", nil)
+	return NewList(drawPanel(headHTML, headIDs, fonts, w, 300), html, len(es), -1, true, rtl, fonts, w, h)
+}
+
+// The pager's buttons are found at their centres, and the rows of page 1 are still found under the header.
+func TestPagerAt(t *testing.T) {
+	var fonts *blitz.Fonts
+	if d := os.Getenv("FONTS"); d != "" {
+		fonts = blitz.LoadFonts(d)
+	}
+	const w, h = 1236, 1648
+	var es []Entry
+	for i := range 40 {
+		es = append(es, Entry{Title: fmt.Sprintf("Row %d", i)})
+	}
+	for _, rtl := range []bool{true, false} {
+		v := testList(rtl, es, fonts, w, h)
+		v.SetPage(1)
+		img := image.NewGray(image.Rect(0, 0, w, h))
+		v.Draw(img)
+		for _, id := range []string{"list-prev", "list-next"} {
+			r := v.pager.buttons[id].Add(image.Pt(0, v.pager.y0))
+			if got := v.PagerAt((r.Min.X+r.Max.X)/2, (r.Min.Y+r.Max.Y)/2); got != id {
+				t.Errorf("rtl %v: PagerAt(centre of %s) = %q", rtl, id, got)
+			}
+		}
+		if p, n := v.pager.buttons["list-prev"], v.pager.buttons["list-next"]; (p.Min.X < n.Min.X) == rtl {
+			t.Errorf("rtl %v: previous at %v, next at %v", rtl, p, n)
+		}
+		if got := v.PagerAt(w/2, v.head.img.Rect.Dy()+10); got != "" {
+			t.Errorf("PagerAt on the list = %q", got)
+		}
+		found := 0
+		for i := range es {
+			if v.on[i] != 1 {
+				continue
+			}
+			r := v.at[i]
+			if got := v.EntryAt((r.Min.X+r.Max.X)/2, (r.Min.Y+r.Max.Y)/2+v.head.img.Rect.Dy()); got != i {
+				t.Errorf("rtl %v: EntryAt(row %d) = %d", rtl, i, got)
+			}
+			found++
+		}
+		if found == 0 {
+			t.Errorf("rtl %v: no rows on page 1", rtl)
+		}
+		v.Close()
+	}
 }
 
 // Every button's bottom edge is drawn on its panel: a page ends at its last line of text, so a box whose edge lies

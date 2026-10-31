@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"image"
 
 	blitz "indiumengine"
 )
@@ -13,17 +12,9 @@ type Entry struct {
 	Depth int
 }
 
-// The table of contents as shown: a header with a way back, and the list under it, laid out and paginated by the
-// engine (right to left for a right-to-left book), each entry's page and box on it.
-type Contents struct {
-	head  *Panel
-	list  *blitz.Book
-	pages int
-	page  int
-	img   *image.Gray // the list's page shown
-	at    []image.Rectangle
-	on    []int // each entry's page
-}
+// The table of contents as shown: a header with a way back, and the list under it (a List: laid out and paginated by
+// the engine, right to left for a right-to-left book, each entry's page and box on it), without a pager.
+type Contents struct{ *List }
 
 // The list's entries as the template draws them: Pad is the indent in em.
 type contentsEntry struct {
@@ -54,49 +45,5 @@ func NewContents(es []Entry, cur int, rtl bool, fonts *blitz.Fonts, w, h int) *C
 	html, _ := render("contents.html", d)
 	headHTML, headIDs := render("contents-head.html", nil)
 	head := drawPanel(headHTML, headIDs, fonts, w, 300)
-	hh := head.img.Rect.Dy()
-	o := blitz.Options{Width: w, Height: h - hh, Margin: 40, FontSize: 44}
-	v := &Contents{
-		head: head,
-		list: blitz.New([]string{"contents.html"}, func(string) ([]byte, error) { return []byte(html), nil }, o, fonts),
-		img:  image.NewGray(image.Rect(0, 0, w, h-hh)),
-	}
-	v.list.Layout(0)
-	v.pages = v.list.Pages()
-	for i := range es {
-		p, rs := v.list.Find(0, fmt.Sprint("e", i))
-		v.on = append(v.on, p)
-		v.at = append(v.at, union(rs))
-	}
-	if cur >= 0 {
-		v.page = max(v.on[cur], 0)
-	}
-	return v
+	return &Contents{NewList(head, html, len(es), cur, false, rtl, fonts, w, h)}
 }
-
-// Pages is how many pages the list has, Page the one shown (from 0), SetPage turns to page n.
-func (v *Contents) Pages() int    { return v.pages }
-func (v *Contents) Page() int     { return v.page }
-func (v *Contents) SetPage(n int) { v.page = n }
-
-// Draw draws the view's page into the screen's page img.
-func (v *Contents) Draw(img *image.Gray) {
-	v.list.Draw(v.page, v.img)
-	copy(img.Pix, v.head.img.Pix)
-	copy(img.Pix[v.head.img.Rect.Dy()*img.Stride:], v.img.Pix)
-}
-
-// HeadAt is the header's button at (x, y) on the screen, "" if none.
-func (v *Contents) HeadAt(x, y int) string { return v.head.At(x, y) }
-
-// EntryAt is the entry tapped at (x, y) on the screen, -1 if none.
-func (v *Contents) EntryAt(x, y int) int {
-	for i, r := range v.at {
-		if v.on[i] == v.page && image.Pt(x, y-v.head.img.Rect.Dy()).In(r.Inset(-8)) {
-			return i
-		}
-	}
-	return -1
-}
-
-func (v *Contents) Close() { v.list.Close() }
