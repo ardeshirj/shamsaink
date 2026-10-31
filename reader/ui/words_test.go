@@ -47,6 +47,9 @@ func TestSetLanguage(t *testing.T) {
 	if !RTL() || num(2026) != "۲۰۲۶" || word("page-of", 3, 12) != "صفحهٔ ۳ از ۱۲" || word("battery", 82) != "۸۲٪" {
 		t.Errorf("fa: %v %q %q %q", RTL(), num(2026), word("page-of", 3, 12), word("battery", 82))
 	}
+	if digits("20:48") != "۲۰:۴۸" {
+		t.Errorf("fa: the time %q", digits("20:48"))
+	}
 	SetLanguage("de")
 	if RTL() || num(5) != "5" || word("page-of", 3, 12) != "page 3 of 12" || word("battery", 82) != "82%" {
 		t.Errorf("de: %v %q", RTL(), word("page-of", 3, 12))

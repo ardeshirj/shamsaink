@@ -10,7 +10,7 @@ import (
 type Bar struct {
 	Start             string // the icon at the start, its button "bar-start": "arrow-left" (back to the library) or "magnifying-glass" (search); "" for none
 	Title             string
-	Time              string // "20:48"; "" hides it
+	Time              string // "20:48", drawn in the interface's digits; "" hides it
 	Phones            bool   // headphones connected: their button "bar-phones"
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
 	MenuOn            bool   // the same for the menu button
@@ -29,6 +29,7 @@ type barData struct {
 // there are headphones), bar-light, which is always there, and bar-menu (if the bar has the menu).
 func DrawBar(b Bar, fonts *blitz.Fonts, w int) *Panel {
 	d := barData{Bar: b, Dir: "ltr"}
+	d.Time = digits(b.Time) // in the interface's digits
 	if b.RTL || RTL() { // the interface's language mirrors the bar too
 		d.Dir = "rtl"
 	}

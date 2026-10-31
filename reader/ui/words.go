@@ -151,8 +151,10 @@ func word(key string, args ...any) string {
 }
 
 // num is n in the interface's digits: Latin for English, Farsi (۰ to ۹) otherwise.
-func num(n int) string {
-	s := fmt.Sprint(n)
+func num(n int) string { return digits(fmt.Sprint(n)) }
+
+// digits is s with its Latin digits in the interface's (a time, "20:48").
+func digits(s string) string {
 	if lang == "en" {
 		return s
 	}
