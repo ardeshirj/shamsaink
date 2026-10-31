@@ -229,16 +229,23 @@ nav.tabs-top a:hover, nav.tabs-top a:focus-visible { color: var(--fg); }
 
 /* Library: book rows (text) and book rows with a cover */
 .books { list-style: none; margin: 0; padding: 0; display: grid; }
-.books li { display: grid; grid-template-columns: 1fr auto; gap: .1em 1em; align-items: center; padding: .42em 0; border-bottom: .12cqw solid var(--hair); font-family: var(--display); }
-.books li.with-cover { grid-template-columns: 3.2em 1fr auto; gap: .1em .8em; padding: .5em 0; }
+/* a row: the title and how far, then "author · source" small; the progress bar only while reading, its room kept in
+   every row so all rows are the same height */
+.books li { display: grid; grid-template-columns: 1fr auto; grid-template-rows: auto auto .45em; gap: .05em 1em; align-items: baseline; padding: .36em 0; border-bottom: .12cqw solid var(--hair); font-family: var(--display); }
+.books li[dir="rtl"] { font-family: var(--farsi); }
+.books li.with-cover { grid-template-columns: 3.2em 1fr auto; gap: .05em .8em; padding: .5em 0; align-items: center; }
 .books .cover { grid-row: span 3; height: 4.4em; border: .24cqw solid var(--ink); border-radius: .2em; background: repeating-linear-gradient(135deg, var(--hair) 0 .3em, transparent .3em .6em); }
-.books .t { font-size: 1.05em; }
-.books .a { font-size: .85em; opacity: .75; }
-.books .src { font-size: .75em; letter-spacing: .02em; border: .12cqw solid var(--ink); border-radius: .3em; padding: 0 .4em; justify-self: end; }
+.books .t { font-size: 1.05em; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.books .m { grid-column: 1 / -1; font-size: .8em; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .books .pct { font-variant-numeric: tabular-nums; font-size: .9em; justify-self: end; }
 .books li.now .t::before { content: "▸ "; }
-.books .prog { grid-column: 1 / -1; height: .3em; }
-.books li.with-cover .prog { grid-column: 2 / -1; }
+.books .prog { grid-column: 1 / -1; grid-row: 3; height: .25em; align-self: end; }
+.books li.with-cover .m, .books li.with-cover .prog { grid-column: 2 / -1; }
+/* the library's filters: segments with their counts */
+.g .n { font-size: .8em; opacity: .75; font-variant-numeric: tabular-nums; }
+.menu { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: .6em .8em; }
+.menu .name { font-size: .9em; }
+.menu .sep { grid-column: 1 / -1; border-top: .12cqw solid var(--hair); }
 .search { display: flex; align-items: center; gap: .5em; border: .24cqw solid var(--ink); border-radius: .4em; padding: .2em .6em; opacity: .85; }
 .search .ic { flex: none; }
 /* The bar: the same component as the library's header and over a book (or the dock's first row): the context action
@@ -279,3 +286,18 @@ h3.group { margin: 2.2rem 0 .2rem; padding-top: .8rem; border-top: .12cqw solid 
 h3.group + .lede { margin: 0; }
 [dir="rtl"] .ic.flip { transform: scaleX(-1); }
 .b:has(> .ic:only-child) { padding: .05em .5em; }
+/* the filter row: the segments, and the list's sort button at its end */
+.filters { display: flex; align-items: center; gap: .4em; }
+.filters .g { flex: 1; }
+/* "new", framed as a tag */
+.books .pct.tag { font-size: .72em; border: .24cqw solid var(--ink); border-radius: .3em; padding: 0 .4em; }
+/* a row with a progress bar: no line under it, the bar is the line */
+.books li:has(.prog) { border-bottom-color: transparent; }
+/* the bar's menu: a narrow list hanging from ≡ at the bar's end, an entry a row with its icon, lines between */
+.drop-list { position: relative; align-self: flex-end; margin-inline-end: 2cqw; width: max-content; min-width: 30%; border: .24cqw solid var(--ink); border-top: 0; border-radius: 0 0 .5em .5em; }
+.drop-list ul { list-style: none; margin: 0; padding: 0; }
+.drop-list li { display: flex; align-items: center; gap: .6em; padding: .55em .8em; border-bottom: .12cqw solid var(--hair); }
+.drop-list li:last-child { border-bottom: 0; border-top: .12cqw solid var(--ink); }
+.drop-list svg.ic { width: 1.35em; height: 1.35em; }
+/* a narrated book: headphones after its title */
+.books .nar { width: .9em; height: .9em; vertical-align: -.1em; }
