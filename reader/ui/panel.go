@@ -173,10 +173,10 @@ const dockHeight = 700 // px, at most
 
 // The dock's words and numbers, for templates/dock.html.
 type dockData struct {
-	Chapter, Page, Back, Left, Share string // Back: the way back's label, "" for none
-	Dir, Side, Width                 string // the book's direction and the side it starts from (left, right), its filled share in per cent
-	Ticks                            []string
-	Narrated                         bool
+	Chapter, Page, Back, Left string // Back: the way back's label, "" for none
+	Dir, Side, Width          string // the book's direction and the side it starts from (left, right), its filled share in per cent
+	Ticks                     []string
+	Narrated                  bool
 }
 
 // DrawDock draws the dock at the bottom of a screen h px high, opened with the bar: where the reader is, a bar to tap
@@ -184,7 +184,7 @@ type dockData struct {
 // buttons: chapter-prev, bar, chapter-next, back (after a jump), contents, text and read-aloud (if narrated).
 func DrawDock(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
 	pct := func(f float64) string { return fmt.Sprintf("%.1f", 100*min(max(f, 0), 1)) }
-	d := dockData{Chapter: p.Chapter, Page: word("dock-page", p.Page), Share: word("percent", num(int(100*min(max(p.Share, 0), 1)+0.5))),
+	d := dockData{Chapter: p.Chapter, Page: word("dock-page", p.Page),
 		Dir: "ltr", Side: "left", Width: pct(p.Share), Narrated: p.Narrated}
 	if p.Total > 0 {
 		d.Page = word("dock-page-of", p.Page, p.Total)
@@ -268,13 +268,10 @@ func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w
 }
 
 // DrawLight draws the Light panel directly under the bar (under px from the top): the light's level (per cent) and its
-// warmth (0 to warmMax) as sliders, and the button to clean the screen. Its buttons: light-dec, light, light-inc,
-// warmth-dec, warmth, warmth-inc and clean.
+// warmth (0 to warmMax) as sliders, their tracks alone showing them (no numbers), and the button to clean the screen.
+// Its buttons: light-dec, light, light-inc, warmth-dec, warmth, warmth-inc and clean.
 func DrawLight(level, warmth, warmMax, under int, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("light.html", struct {
-		Level, Warmth           string
-		LevelShare, WarmthShare float64
-	}{word("percent", num(level)), word("page-n-of", num(warmth), num(warmMax)), float64(level) / 100, float64(warmth) / float64(max(warmMax, 1))})
+	html, ids := render("light.html", struct{ LevelShare, WarmthShare float64 }{float64(level) / 100, float64(warmth) / float64(max(warmMax, 1))})
 	m := drawPanel(html, ids, fonts, w, 900) // at most (Farsi's lines are taller): cut to its buttons
 	m.y0 = under
 	return m

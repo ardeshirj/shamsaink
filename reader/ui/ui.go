@@ -87,11 +87,13 @@ type button struct {
 	Dir       string // the label's own direction, "" for the page's (segments)
 }
 
-// A slider: its name and value, its track (the id a tap on it gives, filled to Share per cent) between a minus and a
-// plus (the buttons id-dec and id-inc).
+// A slider: its name and value, its track (the id a tap on it gives, filled to Share per cent) between the buttons for
+// less and more (id-dec and id-inc), each an icon (Less, More: their names).
 type slider struct {
 	Name, Value, Track, Share string
 	Dec, Inc                  button
+	Less, More                string
+	Sized                     bool
 }
 
 // A row with a minus, a value and a plus: the buttons are name-dec and name-inc.
@@ -141,9 +143,9 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			}
 			return bs
 		},
-		"slide": func(name, id, value string, share float64) slider {
+		"slide": func(name, id, value string, share float64, less, more string, sized bool) slider {
 			return slider{name, value, add(id), fmt.Sprintf("%.1f", 100*min(max(share, 0), 1)),
-				button{ID: add(id + "-dec"), Label: "−"}, button{ID: add(id + "-inc"), Label: "+"}}
+				button{ID: add(id + "-dec")}, button{ID: add(id + "-inc")}, less, more, sized}
 		},
 		"step": func(name, id, value string) stepper {
 			return stepper{name, value, button{ID: add(id + "-dec"), Label: "−"}, button{ID: add(id + "-inc"), Label: "+"}}

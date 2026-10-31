@@ -107,6 +107,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	var panel *ui.Panel
 	langOpen := false  // the panel is the language panel, not the menu
 	lightOpen := false // the panel is the Light panel (light.go)
+	slide := ""        // its slider a held finger moves
 	open := func(menu bool) {
 		langOpen = false
 		lv.MenuOn, lv.SortOn = menu, !menu
@@ -137,6 +138,14 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 					<-events
 				}
 			}
+		case e.Hold != device.NotHeld && lightOpen && panel != nil: // a slider's knob held and moved
+			if refresh, wf := rd.slideLight(set, panel, &slide, e.Gesture); refresh {
+				old := panel.Rect()
+				panel = rd.drawLight(v.TopBarHeight())
+				v.Draw(rd.over)
+				panel.Over(rd.over)
+				scr.ShowPart(rd.over, image.Rect(0, old.Min.Y, scr.W, old.Union(panel.Rect()).Max.Y), wf, false)
+			}
 		case e.Hold != device.NotHeld:
 		case panel != nil:
 			id := panel.At(e.X, e.Y)
@@ -162,7 +171,10 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				open(false)
 				scr.Show(rd.over, device.WfREAGL, false)
 			case lightOpen && id != "": // the light changed, or the screen cleaned; the panel stays open
-				changed, clean := rd.lightTap(set, panel, id, e.X)
+				if e.Swipe && id != "light" && id != "warmth" { // only a slider's knob is dragged
+					break
+				}
+				changed, clean := rd.lightTap(set, panel, id, e.X+e.DX) // a drag: where the finger was lifted
 				if clean || changed {
 					old := panel.Rect()
 					panel = rd.drawLight(v.TopBarHeight())

@@ -44,6 +44,7 @@ type session struct {
 	tab                       string       // the sheet's tab: "text" or "page"
 	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
 	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's) or "light"
+	slide                     string       // the Light panel's slider a held finger moves ("light", "warmth"), "" for none
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -243,6 +244,12 @@ func (s *session) input(e device.Event) {
 		s.drain()
 	case s.cv != nil:
 		s.inContents(e.Gesture)
+	case e.Hold != device.NotHeld && s.list != nil && s.kind == "light": // a slider's knob held and moved
+		if refresh, wf := s.rd.slideLight(s.set, s.list, &s.slide, e.Gesture); refresh {
+			old := s.list.Rect()
+			s.list = s.rd.drawLight(s.topBar.Rect().Dy())
+			s.refresh(old.Union(s.list.Rect()), wf)
+		}
 	case e.Hold != device.NotHeld:
 		s.held(e.Gesture)
 	case s.mn != nil || s.nav != nil || s.sheet != nil:
@@ -541,6 +548,10 @@ func (s *session) inMenu(g device.Gesture) {
 		id := ""
 		if !g.Swipe {
 			id = s.list.At(g.X, g.Y)
+		} else if s.kind == "light" { // a slider's knob dragged: the value where the finger was lifted
+			if id = s.list.At(g.X, g.Y); id != "light" && id != "warmth" {
+				id = ""
+			}
 		}
 		if id == "leave" {
 			s.rd.quit = true
@@ -548,7 +559,7 @@ func (s *session) inMenu(g device.Gesture) {
 			return
 		}
 		if s.kind == "light" && id != "" { // the light changed, or the screen cleaned; the panel stays open
-			changed, clean := s.rd.lightTap(s.set, s.list, id, g.X)
+			changed, clean := s.rd.lightTap(s.set, s.list, id, g.X+g.DX)
 			switch {
 			case clean:
 				s.showPage(device.WfGC16, true)

@@ -8,7 +8,7 @@ import (
 )
 
 // The Light panel (ui.DrawLight), opened by the bar's sun in the library and in a book: the light's level by 5, its
-// warmth by 1, or either where its track is tapped; kept in the settings (light, warmth) and set again when the reader
+// warmth by 1, or either where its track is tapped or its knob dragged to (where the finger is lifted: one refresh); kept in the settings (light, warmth) and set again when the reader
 // starts (main), so the reader's light is kept from one start to the next.
 
 // drawLight draws the Light panel under the bar (under px from the top), with the light as it is.
@@ -55,4 +55,28 @@ func (rd *reader) lightTap(set *settings, p *ui.Panel, id string, x int) (change
 	set.Light, set.Warmth = &l, &w
 	set.save(rd.dir)
 	return l != level || w != warmth, false
+}
+
+// slideLight follows a finger held on the Light panel p: held on a slider's track, that slider (*slide) follows it
+// as it moves (refresh: the panel to draw again, with A2 while it moves) and stops where it is lifted (with REAGL, the
+// A2 frames cleaned). A finger held anywhere else does nothing.
+func (rd *reader) slideLight(set *settings, p *ui.Panel, slide *string, g device.Gesture) (refresh bool, waveform uint32) {
+	switch g.Hold {
+	case device.Held:
+		if id := p.At(g.X, g.Y); id == "light" || id == "warmth" {
+			*slide = id
+		}
+		return false, 0
+	case device.Dragged, device.Dropped:
+		if *slide == "" {
+			return false, 0
+		}
+		changed, _ := rd.lightTap(set, p, *slide, g.X)
+		if g.Hold == device.Dropped {
+			*slide = ""
+			return true, device.WfREAGL
+		}
+		return changed, device.WfA2
+	}
+	return false, 0
 }

@@ -56,7 +56,7 @@ the Kobo it earned it sooner than planned.)
 - [ ] A night asleep on battery (and the crash seen on opening after a long sleep)
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
 - [ ] Sleep after idle minutes (a timer on the session's loop)
-- [ ] The light: a setting, and its level kept
+- [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
   more per book, cause not found)
