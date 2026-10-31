@@ -1,0 +1,30 @@
+{{/* The top bar (topbar.go): the same at the top of the library and over a book. Three columns: the button at the start and
+the title; the time in the middle of the screen, away from the icons; at the end the headphones, the light, the
+battery and the menu. In right to left it mirrors on its own.
+The engine does not clip text, so DrawTopBar cuts a long title itself, with an ellipsis, comparing the boxes of the title
+and of the words in it (not buttons: DrawTopBar drops them from the panel). */ -}}
+{{template "head" .Dir}}<style>
+/* the outer columns as wide as each other, so the time is in the middle of the screen */
+div.topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 0.8em; }
+div.topbar .lead { display: flex; align-items: center; gap: 0.5em; min-width: 0; }
+.topbar .title { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-width: 0; width: 0; white-space: nowrap; font-weight: bold; }
+div.topbar .end { display: flex; align-items: center; justify-content: flex-end; gap: 0.55em; }
+/* the status (the time, the battery) a little smaller than the buttons; the time larger in Farsi, whose digits in
+   Parastoo are small for their size (the battery the same size in both) */
+div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
+[lang="fa"] div.topbar .time { font-size: 1.08em; }
+/* the battery: a box filled to its share and a nub, always drawn from the left */
+.batt { display: flex; align-items: center; gap: 0.3em; }
+.batt .cell { display: flex; direction: ltr; align-items: center; }
+.batt .box { display: flex; width: 1.7em; height: 0.85em; box-sizing: border-box; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.18em; }
+.batt .box i { display: block; height: 100%; background: var(--ink); border-radius: 0.06em; }
+.batt .nub { width: 0.14em; height: 0.38em; background: var(--ink); border-radius: 0 0.08em 0.08em 0; }
+</style></head><body>
+<div class="topbar"><div class="lead">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div></div>
+<span class="time">{{.Time}}</span><span class="end">
+{{- if .Phones}}{{template "iconbutton" ibtn "topbar-phones" "headphones" .PhonesOn}}{{end -}}
+{{template "iconbutton" ibtn "topbar-light" "sun" .LightOn -}}
+{{- if ge .Battery 0}}<span class="batt" id="{{id "topbar-battery"}}"><span class="cell"><span class="box"><i style="width: {{.Battery}}%"></i></span><span class="nub"></span></span></span>{{end -}}
+{{- if .Menu}}{{template "iconbutton" ibtn "topbar-menu" "list" .MenuOn}}{{end -}}
+</span></div>
+</body></html>

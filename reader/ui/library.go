@@ -45,9 +45,9 @@ type LibraryView struct {
 // LibraryHead draws the library's head (docs/layouts/layout.html, "Library"): the bar, its title the library's, and under it
 // the filters and the sort button, with no line under them. Its buttons are the bar's, filter-reading, filter-new,
 // filter-finished and filter-all, and list-sort.
-func LibraryHead(bar Bar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
-	bar.Title = word("library")
-	bar.Start, bar.MenuOn = "magnifying-glass", v.MenuOn // search: no action until there is a keyboard
+func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
+	topBar.Title = word("library")
+	topBar.Start, topBar.MenuOn = "magnifying-glass", v.MenuOn // search: no action until there is a keyboard
 	var fs []button
 	for i, name := range FilterNames {
 		fs = append(fs, button{ID: "filter-" + name, Label: word(filterWords[i]), Count: num(v.Counts[i]), On: i == v.Filter})
@@ -63,7 +63,7 @@ func LibraryHead(bar Bar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
 			filters.img.Pix[y*filters.img.Stride+x] = 255
 		}
 	}
-	return stack(DrawBar(bar, fonts, w), filters)
+	return stack(DrawTopBar(topBar, fonts, w), filters)
 }
 
 // stack is the panel top with the panel bottom under it, as one; the buttons of both, and under is where the

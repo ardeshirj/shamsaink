@@ -51,7 +51,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	set := loadSettings(rd.dir)
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
-	bar := ui.Bar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Menu: true}
+	topBar := ui.TopBar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Menu: true}
 	var v *ui.List
 	var items []shelfBook // the rows
 	// build lays out the library again for the view's choices, on its first page
@@ -76,7 +76,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 		if v != nil {
 			v.Close()
 		}
-		v = ui.NewLibrary(rows, ui.LibraryHead(bar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
+		v = ui.NewLibrary(rows, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 	}
 	build()
 	defer func() { v.Close() }()
@@ -110,9 +110,9 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	open := func(menu bool) {
 		langOpen = false
 		lv.MenuOn, lv.SortOn = menu, !menu
-		v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
+		v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 		if menu {
-			panel = ui.DrawLibraryMenu(v.BarHeight(), true, rd.fonts, scr.W)
+			panel = ui.DrawLibraryMenu(v.TopBarHeight(), true, rd.fonts, scr.W)
 		} else {
 			panel = ui.DrawLibrarySort(slices.Index(ui.SortNames, view.sortOf(filter)), v.HeadHeight(), rd.fonts, scr.W)
 		}
@@ -123,7 +123,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	// the language panel in the menu's place
 	openLang := func() {
 		old := panel.Rect()
-		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.BarHeight(), rd.fonts, scr.W)
+		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
@@ -152,7 +152,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				set.save(rd.dir)
 				build() // the head drawn with the menu button still on
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.BarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
 			case strings.HasPrefix(id, "sort-"):
@@ -165,7 +165,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				changed, clean := rd.lightTap(set, panel, id, e.X)
 				if clean || changed {
 					old := panel.Rect()
-					panel = rd.drawLight(v.BarHeight())
+					panel = rd.drawLight(v.TopBarHeight())
 					v.Draw(rd.over)
 					panel.Over(rd.over)
 					if clean {
@@ -176,8 +176,8 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				}
 			default:
 				r := image.Rect(0, 0, scr.W, panel.Rect().Max.Y)
-				panel, langOpen, lightOpen, bar.LightOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false
-				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
+				panel, langOpen, lightOpen, topBar.LightOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false
+				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
 			}
@@ -187,20 +187,20 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				forward = e.DY < 0
 			}
 			turn(map[bool]int{true: 1, false: -1}[forward])
-		case head == "bar-light": // the Light panel under the bar, the sun filled
+		case head == "topbar-light": // the Light panel under the top bar, the sun filled
 			if _, _, ok := rd.dev.Light(); ok {
-				lightOpen, bar.LightOn = true, true
-				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
-				panel = rd.drawLight(v.BarHeight())
+				lightOpen, topBar.LightOn = true, true
+				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
+				panel = rd.drawLight(v.TopBarHeight())
 				v.Draw(rd.over)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 			}
-		case head == "bar-battery": // its level in a box under it, closed by the next tap (the panel's default)
-			panel = ui.DrawBattery(bar.Battery, v.BarHeight(), v.HeadBox("bar-battery"), rd.fonts, scr.W)
+		case head == "topbar-battery": // its level in a box under it, closed by the next tap (the panel's default)
+			panel = ui.DrawBattery(topBar.Battery, v.TopBarHeight(), v.HeadBox("topbar-battery"), rd.fonts, scr.W)
 			panel.Over(rd.over)
 			scr.ShowPart(rd.over, panel.Rect(), device.WfREAGL, false)
-		case head == "bar-menu":
+		case head == "topbar-menu":
 			open(true)
 		case head == "list-sort":
 			open(false)

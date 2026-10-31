@@ -55,8 +55,8 @@ func TestPanels(t *testing.T) {
 	// the battery's level under the battery, in both languages: its edge under the battery's
 	for _, code := range []string{"en", "fa"} {
 		SetLanguage(code)
-		b := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "8:48", Battery: 82, Menu: true}, fonts, w)
-		batt := b.Box("bar-battery")
+		b := DrawTopBar(TopBar{Start: "arrow-left", Title: "Title", Time: "8:48", Battery: 82, Menu: true}, fonts, w)
+		batt := b.Box("topbar-battery")
 		lvl := DrawBattery(82, b.Rect().Dy(), batt, fonts, w)
 		img := image.NewGray(image.Rect(0, 0, w, 400))
 		for i := range img.Pix {
@@ -80,7 +80,7 @@ func TestPanels(t *testing.T) {
 	for i := range 12 {
 		books = append(books, Book{Title: fmt.Sprintf("A new book %d", i), Author: "Someone", New: true, Read: -1})
 	}
-	bar := Bar{Time: "20:48", Battery: 82, Menu: true}
+	topBar := TopBar{Time: "20:48", Battery: 82, Menu: true}
 	view := LibraryView{Counts: [4]int{4, 12, 1, 17}}
 	for f, name := range FilterNames {
 		v := view
@@ -91,7 +91,7 @@ func TestPanels(t *testing.T) {
 				shown = append(shown, b)
 			}
 		}
-		lib := NewLibrary(shown, LibraryHead(bar, v, fonts, w), fonts, w, h)
+		lib := NewLibrary(shown, LibraryHead(topBar, v, fonts, w), fonts, w, h)
 		for page := range min(lib.Pages(), 2) {
 			lib.SetPage(page)
 			img := image.NewGray(image.Rect(0, 0, w, h))
@@ -104,10 +104,10 @@ func TestPanels(t *testing.T) {
 	for _, name := range []string{"library-menu-open", "library-sort-open"} {
 		v := view
 		v.MenuOn, v.SortOn = name == "library-menu-open", name != "library-menu-open"
-		lib := NewLibrary(books, LibraryHead(bar, v, fonts, w), fonts, w, h)
+		lib := NewLibrary(books, LibraryHead(topBar, v, fonts, w), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		lib.Draw(img)
-		p, under := DrawLibraryMenu(lib.BarHeight(), true, fonts, w), lib.BarHeight()
+		p, under := DrawLibraryMenu(lib.TopBarHeight(), true, fonts, w), lib.TopBarHeight()
 		if v.SortOn {
 			under = lib.HeadHeight()
 			p = DrawLibrarySort(1, under, fonts, w)
@@ -129,12 +129,12 @@ func TestPanels(t *testing.T) {
 		if code == "en" { // the library, and its Settings, are English only
 			v := view
 			v.MenuOn = true
-			bar := Bar{Time: "20:48", Battery: 82, Menu: true}
-			lib := NewLibrary(books, LibraryHead(bar, v, fonts, w), fonts, w, h)
+			topBar := TopBar{Time: "20:48", Battery: 82, Menu: true}
+			lib := NewLibrary(books, LibraryHead(topBar, v, fonts, w), fonts, w, h)
 			for _, follow := range []bool{true, false} {
 				img := image.NewGray(image.Rect(0, 0, w, h))
 				lib.Draw(img)
-				p := DrawLibraryLanguage(follow, lib.BarHeight(), fonts, w)
+				p := DrawLibraryLanguage(follow, lib.TopBarHeight(), fonts, w)
 				p.Over(img)
 				save(fmt.Sprintf("library-language-%s-follow%v", code, follow), img)
 				save(fmt.Sprintf("library-language-%s-follow%v-panel", code, follow), p.img)
@@ -144,13 +144,13 @@ func TestPanels(t *testing.T) {
 				} else if r.Max.X <= w-60 || r.Min.X <= w/2 {
 					t.Errorf("%s: switch at %v, not at the row's far end", code, r)
 				}
-				if p.y0 != lib.BarHeight() {
-					t.Errorf("%s: panel at %d, want %d", code, p.y0, lib.BarHeight())
+				if p.y0 != lib.TopBarHeight() {
+					t.Errorf("%s: panel at %d, want %d", code, p.y0, lib.TopBarHeight())
 				}
 			}
 			img := image.NewGray(image.Rect(0, 0, w, h))
 			lib.Draw(img)
-			m := DrawLibraryMenu(lib.BarHeight(), true, fonts, w)
+			m := DrawLibraryMenu(lib.TopBarHeight(), true, fonts, w)
 			m.Over(img)
 			save("library-menu-"+code, img)
 			save("library-menu-"+code+"-panel", m.img)
@@ -174,7 +174,7 @@ func TestPanels(t *testing.T) {
 		}
 		save("lang-"+code+"-book-menu", bm.img)
 		for _, n := range []int{5, 100} {
-			save(fmt.Sprintf("lang-%s-bar-library%d", code, n), DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: n, Menu: true}, fonts, w).img)
+			save(fmt.Sprintf("lang-%s-topbar-library%d", code, n), DrawTopBar(TopBar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: n, Menu: true}, fonts, w).img)
 		}
 		for _, tab := range []string{"text", "page"} {
 			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60}, fonts, w, h).img)
@@ -196,7 +196,7 @@ func TestPanels(t *testing.T) {
 	}
 	SetLanguage("en")
 	// no books: an empty list
-	lib := NewLibrary(nil, LibraryHead(bar, view, fonts, w), fonts, w, h)
+	lib := NewLibrary(nil, LibraryHead(topBar, view, fonts, w), fonts, w, h)
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	lib.Draw(img)
 	save("library-empty", img)
@@ -219,18 +219,18 @@ func TestPanels(t *testing.T) {
 		p := Progress{Chapter: long + " and longer still, a chapter's title", At: at, Of: 12, Page: 40, Share: 0.4, Ticks: ticks}
 		save(fmt.Sprintf("dock-long-at%d", at), DrawDock(p, fonts, w, h).img)
 	}
-	book := Bar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
-	save("bar-library", DrawBar(Bar{Start: "magnifying-glass", Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
-	save("bar-book-ltr", DrawBar(book, fonts, w).img)
+	book := TopBar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
+	save("topbar-library", DrawTopBar(TopBar{Start: "magnifying-glass", Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
+	save("topbar-book-ltr", DrawTopBar(book, fonts, w).img)
 	rtl := book
 	rtl.RTL, rtl.Title = true, "رود کم‌آب"
-	save("bar-book-rtl", DrawBar(rtl, fonts, w).img)
+	save("topbar-book-rtl", DrawTopBar(rtl, fonts, w).img)
 	rtl.Title = long
-	save("bar-book-rtl-long", DrawBar(rtl, fonts, w).img)
+	save("topbar-book-rtl-long", DrawTopBar(rtl, fonts, w).img)
 	for _, n := range []int{5, 100} {
 		b := book
 		b.Battery, b.PhonesOn = n, true
-		save(fmt.Sprintf("bar-battery%d", n), DrawBar(b, fonts, w).img)
+		save(fmt.Sprintf("topbar-battery%d", n), DrawTopBar(b, fonts, w).img)
 	}
 	var es []Entry
 	for i := range 40 {
@@ -340,16 +340,16 @@ func TestPanelEdges(t *testing.T) {
 	p := Progress{Chapter: "A chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, Ticks: []float64{0.3}, Narrated: true}
 	v := NewContents([]Entry{{Title: "One"}, {Title: "Two"}}, 0, false, fonts, w, h)
 	defer v.Close()
-	bar := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
+	topBar := DrawTopBar(TopBar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
 	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"light":     DrawLight(40, 3, 10, 160, fonts, w), "light-fa": func() *Panel { SetLanguage("fa"); defer SetLanguage("en"); return DrawLight(40, 3, 10, 160, fonts, w) }(),
-		"remove": DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "bar": bar,
-		"library-head": LibraryHead(Bar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
+		"remove": DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
+		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {
 		for id, r := range m.buttons {
-			if strings.HasPrefix(id, "bar-") || iconButtons[id] {
+			if strings.HasPrefix(id, "topbar-") || iconButtons[id] {
 				// an icon button has no border: some ink inside its box instead
 				ink := false
 				for y := r.Min.Y; y < r.Max.Y; y++ {

@@ -114,8 +114,8 @@ func (v *List) Draw(img *image.Gray) {
 	}
 }
 
-// BarHeight is the height of the header's first panel (the bar of the library's head): where a panel under it goes.
-func (v *List) BarHeight() int { return v.head.under }
+// TopBarHeight is the height of the header's first panel (the bar of the library's head): where a panel under it goes.
+func (v *List) TopBarHeight() int { return v.head.under }
 
 // HeadHeight is the height of the whole header.
 func (v *List) HeadHeight() int { return v.head.img.Rect.Dy() }

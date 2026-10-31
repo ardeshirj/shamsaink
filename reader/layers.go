@@ -53,7 +53,7 @@ func (s *session) compose(r image.Rectangle) *image.Gray {
 	}
 	panels := []*ui.Panel{s.mn, s.nav, s.sheet}
 	if s.nav != nil || s.sheet != nil { // the bar over the dock or the sheet, and the bar's list
-		panels = append(panels, s.bar, s.list)
+		panels = append(panels, s.topBar, s.list)
 	}
 	for _, m := range panels {
 		if m != nil && m.Rect().Overlaps(r) {

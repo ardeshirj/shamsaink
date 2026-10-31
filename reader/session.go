@@ -42,7 +42,7 @@ type session struct {
 	mn                        *ui.Panel    // the panel asking whether to remove a highlight, while open
 	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
 	tab                       string       // the sheet's tab: "text" or "page"
-	bar, list                 *ui.Panel    // with them the bar at the top, and its ≡ list (or the battery's level) while open
+	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
 	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's) or "light"
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
@@ -409,7 +409,7 @@ func (s *session) drawMenu() {
 	} else {
 		s.nav = ui.DrawDock(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
 	}
-	s.drawBar()
+	s.drawTopBar()
 }
 
 // drawSheet draws the Text sheet at its tab, from the settings and the book.
@@ -422,10 +422,10 @@ func (s *session) drawSheet() {
 // applyLanguage sets the interface's language for this book and the settings (lang.go).
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
-// drawBar draws the bar over the dock (docs/layouts/layout.html, "the bar"): back to the library at its start, the
+// drawTopBar draws the bar over the dock (docs/layouts/layout.html, "the bar"): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
-func (s *session) drawBar() {
-	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
+func (s *session) drawTopBar() {
+	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
 		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light"}, s.rd.fonts, s.scr.W)
 }
 
@@ -554,14 +554,14 @@ func (s *session) inMenu(g device.Gesture) {
 				s.showPage(device.WfGC16, true)
 			case changed:
 				old := s.list.Rect()
-				s.list = s.rd.drawLight(s.bar.Rect().Dy())
+				s.list = s.rd.drawLight(s.topBar.Rect().Dy())
 				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
 			}
 			return
 		}
-		rect := s.list.Rect().Union(s.bar.Rect())
+		rect := s.list.Rect().Union(s.topBar.Rect())
 		s.list = nil
-		s.drawBar()
+		s.drawTopBar()
 		s.refresh(rect, device.WfREAGL)
 		return
 	}
@@ -569,7 +569,7 @@ func (s *session) inMenu(g device.Gesture) {
 	id := ""
 	panels := []*ui.Panel{s.mn}
 	if s.mn == nil {
-		panels = []*ui.Panel{s.sheet, s.nav, s.bar}
+		panels = []*ui.Panel{s.sheet, s.nav, s.topBar}
 	}
 	for _, p := range panels {
 		if p != nil && id == "" && !g.Swipe {
@@ -578,24 +578,24 @@ func (s *session) inMenu(g device.Gesture) {
 	}
 	switch {
 	case g.Swipe:
-	case id == "bar-start": // back to the library
+	case id == "topbar-start": // back to the library
 		s.leave()
-	case id == "bar-battery": // its level in a box under it, closed by the next tap
+	case id == "topbar-battery": // its level in a box under it, closed by the next tap
 		b := s.dev.Battery()
-		s.list, s.kind = ui.DrawBattery(b, s.bar.Rect().Dy(), s.bar.Box("bar-battery"), s.rd.fonts, s.scr.W), "level"
+		s.list, s.kind = ui.DrawBattery(b, s.topBar.Rect().Dy(), s.topBar.Box("topbar-battery"), s.rd.fonts, s.scr.W), "level"
 		s.refresh(s.list.Rect(), device.WfREAGL)
-	case id == "bar-light": // the Light panel under the bar, the sun filled
+	case id == "topbar-light": // the Light panel under the bar, the sun filled
 		if _, _, ok := s.dev.Light(); ok {
-			s.list, s.kind = s.rd.drawLight(s.bar.Rect().Dy()), "light"
-			s.drawBar()
-			s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
+			s.list, s.kind = s.rd.drawLight(s.topBar.Rect().Dy()), "light"
+			s.drawTopBar()
+			s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 		}
-	case id == "bar-menu":
+	case id == "topbar-menu":
 		s.kind = "menu"
-		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
-		s.drawBar()
-		s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
-	case strings.HasPrefix(id, "bar-"): // the headphones, the title: nothing yet
+		s.list = ui.DrawLibraryMenu(s.topBar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
+		s.drawTopBar()
+		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
+	case strings.HasPrefix(id, "topbar-"): // the headphones, the title: nothing yet
 	case id == "contents":
 		t := time.Now()
 		s.nav, s.sheet = nil, nil
@@ -611,7 +611,7 @@ func (s *session) inMenu(g device.Gesture) {
 		if c >= 0 {
 			s.jump(s.toc[c].doc, r.entryAt(s.toc[c]))
 		}
-	case id == "bar":
+	case id == "progress":
 		share := s.nav.Share(g.X, r.rtl)
 		doc, at := int(share*float64(len(r.spine))), 0
 		if !s.rest {
@@ -683,7 +683,7 @@ func (s *session) inMenu(g device.Gesture) {
 
 // over says whether (x, y) is on the bar, the dock or the sheet.
 func (s *session) over(x, y int) bool {
-	for _, p := range []*ui.Panel{s.bar, s.nav, s.sheet} {
+	for _, p := range []*ui.Panel{s.topBar, s.nav, s.sheet} {
 		if p != nil && image.Pt(x, y).In(p.Rect()) {
 			return true
 		}

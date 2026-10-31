@@ -69,7 +69,7 @@ func TestText(t *testing.T) {
 var textIDs = []string{"tab-text", "tab-page", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
 	"reset"}
 var pageIDs = []string{"tab-text", "tab-page", "dir-", "dir-rtl", "dir-ltr", "reset"}
-var dockIDs = []string{"chapter-prev", "bar", "chapter-next", "back", "contents", "text", "read-aloud"}
+var dockIDs = []string{"chapter-prev", "progress", "chapter-next", "back", "contents", "text", "read-aloud"}
 
 // The dock has its buttons, found on it, at the bottom of the screen; the way back and Listen only when there are.
 func TestDock(t *testing.T) {

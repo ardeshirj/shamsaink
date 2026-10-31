@@ -235,7 +235,7 @@ func DrawDock(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
 }
 
 // Share is the share of the dock's bar at x, in the book's direction.
-func (m *Panel) Share(x int, rtl bool) float64 { return m.ShareAt("bar", x, rtl) }
+func (m *Panel) Share(x int, rtl bool) float64 { return m.ShareAt("progress", x, rtl) }
 
 // ShareAt is the share of the button id (a bar, a slider's track) at x on the screen, from its start side (the right
 // when rtl).
@@ -249,7 +249,7 @@ func (m *Panel) ShareAt(id string, x int, rtl bool) float64 {
 }
 
 // DrawBattery draws the battery's level (percent) in a box hanging from the bar (under px high) under its battery,
-// whose box on the screen is batt (the bar's Box("bar-battery")); w px wide. No buttons: any tap closes it.
+// whose box on the screen is batt (the bar's Box("topbar-battery")); w px wide. No buttons: any tap closes it.
 func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
 	const margin = 40 // the page's margin in drawPanelIn
 	d := struct {
