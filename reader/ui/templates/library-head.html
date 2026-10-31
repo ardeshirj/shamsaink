@@ -1,0 +1,8 @@
+{{/* The library's filters, under its bar (library.go): one choice of Reading, New, Finished and All, each with how many
+books it has, and at the end the button of the panel that sorts the books. */ -}}
+{{template "head" ""}}<style>
+.filters { display: flex; align-items: center; gap: 0.4em; margin: 0.3em 0; }
+.filters .g { flex: 1; }
+/* open: inverted, as Phosphor's filled arrows look the same as its outline ones */
+span.open span.tb { background: var(--ink); color: white; border-radius: var(--radius); }
+</style></head><body><div class="filters">{{template "segments" reg .Filters}}<span{{if .SortOn}} class="open"{{end}}>{{template "iconbutton" ibtn "list-sort" "arrows-down-up" .SortOn}}</span></div></body></html>

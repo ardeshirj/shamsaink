@@ -13,11 +13,11 @@ div.bar .end { display: flex; align-items: center; gap: 0.55em; flex: none; font
 .batt .box i { display: block; height: 100%; background: var(--ink); border-radius: 0.06em; }
 .batt .nub { width: 0.14em; height: 0.38em; background: var(--ink); border-radius: 0 0.08em 0.08em 0; }
 </style></head><body>
-<div class="bar">{{template "iconbutton" ibtn "bar-start" .Start false}}<div class="title" id="{{id "bar-title"}}"><span id="{{id "bar-title-text"}}">{{.Title}}</span></div><span class="end">
+<div class="bar">{{if .Start}}{{template "iconbutton" ibtn "bar-start" .Start false}}{{end}}<div class="title" id="{{id "bar-title"}}"><span id="{{id "bar-title-text"}}">{{.Title}}</span></div><span class="end">
 {{- if .Time}}<span>{{.Time}}</span>{{end -}}
 {{- if .Phones}}{{template "iconbutton" ibtn "bar-phones" "headphones" .PhonesOn}}{{end -}}
 {{template "iconbutton" ibtn "bar-light" "sun" .LightOn -}}
 {{- if ge .Battery 0}}<span class="batt"><span class="cell"><span class="box"><i style="width: {{.Battery}}%"></i></span><span class="nub"></span></span><span>{{t "battery" .Battery}}</span></span>{{end -}}
-{{- if .Menu}}{{template "iconbutton" ibtn "bar-menu" "list" false}}{{end -}}
+{{- if .Menu}}{{template "iconbutton" ibtn "bar-menu" "list" .MenuOn}}{{end -}}
 </span></div>
 </body></html>

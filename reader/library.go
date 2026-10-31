@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/zip"
-	"cmp"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -19,14 +18,19 @@ import (
 
 // A book in the library: its file, what its metadata says, and how far it has been read.
 type libBook struct {
-	Path   string `json:"path"` // relative to DIR
-	Key    string `json:"key"`  // as openBook's: base name, size, modification time
-	Title  string `json:"title"`
-	Author string `json:"author"`
-	Lang   string `json:"lang"`
-	Source string `json:"source"` // its folder under books/ ("farsiepub"), "" when directly in books/
-	Added  int64  `json:"added"`  // the file's modification time, Unix seconds
+	Path     string `json:"path"` // relative to DIR
+	Key      string `json:"key"`  // as openBook's: base name, size, modification time
+	Title    string `json:"title"`
+	Author   string `json:"author"`
+	Lang     string `json:"lang"`
+	Source   string `json:"source"`             // its folder under books/ ("farsiepub"), "" when directly in books/
+	Added    int64  `json:"added"`              // the file's modification time, Unix seconds
+	Narrated bool   `json:"narrated,omitempty"` // it has media overlays (SMIL in its manifest)
+	V        int    `json:"v,omitempty"`        // metaVersion when read; older entries are read again
 }
+
+// metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too.
+const metaVersion = 1
 
 // bookKey is a book's key from its file's name, size and modification time, as openBook makes it.
 func bookKey(name string, size int64, mod time.Time) string {
@@ -70,11 +74,11 @@ func scanLibrary(dir string) []libBook {
 		}
 		rel = filepath.ToSlash(rel)
 		key := bookKey(filepath.Base(f), st.Size(), st.ModTime())
-		if b, ok := known[rel+"\x00"+key]; ok {
+		if b, ok := known[rel+"\x00"+key]; ok && b.V == metaVersion {
 			books = append(books, b)
 			continue
 		}
-		b := libBook{Path: rel, Key: key, Added: st.ModTime().Unix()}
+		b := libBook{Path: rel, Key: key, Added: st.ModTime().Unix(), V: metaVersion}
 		if parts := strings.Split(rel, "/"); len(parts) == 3 {
 			b.Source = parts[1]
 		}
@@ -84,6 +88,7 @@ func scanLibrary(dir string) []libBook {
 			fmt.Printf("library: %s: %v\n", rel, err)
 		}
 		b.Title, b.Author, b.Lang = strings.TrimSpace(m.Title), strings.TrimSpace(m.Author), strings.TrimSpace(m.Lang)
+		b.Narrated = m.Narrated
 		if b.Title == "" {
 			b.Title = tidyName(filepath.Base(f))
 		}
@@ -108,12 +113,16 @@ func tidyName(name string) string {
 	return string(unicode.ToUpper(c)) + name[n:]
 }
 
-// meta is what an EPUB's package document says of the book.
-type meta struct{ Title, Author, Lang string }
+// meta is what an EPUB's package document says of the book: Narrated when its manifest has a media overlay (SMIL).
+type meta struct {
+	Title, Author, Lang string
+	Narrated            bool
+}
 
 const dcNS = "http://purl.org/dc/elements/1.1/"
 
-// epubMeta reads the first title, creator and language of the EPUB's package document, with the standard library
+// epubMeta reads the first title, creator and language of the EPUB's package document, and whether its manifest has a
+// media overlay, with the standard library
 // only (go-toolkit is heavier). On an error it returns what it found, if anything, with the error.
 func epubMeta(file string) (m meta, err error) {
 	z, err := zip.OpenReader(file)
@@ -169,7 +178,18 @@ func epubMeta(file string) (m meta, err error) {
 			}
 			return m, err
 		}
+		if ee, ok := tok.(xml.EndElement); ok && ee.Name.Local == "manifest" {
+			return m, nil // the metadata comes before it
+		}
 		se, ok := tok.(xml.StartElement)
+		if ok && se.Name.Local == "item" {
+			for _, a := range se.Attr {
+				if a.Name.Local == "media-type" && a.Value == "application/smil+xml" {
+					m.Narrated = true
+				}
+			}
+			continue
+		}
 		if !ok || se.Name.Space != dcNS {
 			continue
 		}
@@ -190,9 +210,6 @@ func epubMeta(file string) (m meta, err error) {
 		}
 		if *dst == "" {
 			*dst = strings.TrimSpace(s)
-		}
-		if m.Title != "" && m.Author != "" && m.Lang != "" {
-			return m, nil
 		}
 	}
 }
@@ -223,37 +240,4 @@ func progress(dir string, b libBook) float64 {
 		return share
 	}
 	return 0
-}
-
-// libraryOrder is the books in the order to show: the one read most recently, the others read (most recent first),
-// then those never opened, newest added first. A book is read when its place file exists, and when is the file's
-// time.
-func libraryOrder(books []libBook, dir string) []libBook {
-	type entry struct {
-		b    libBook
-		when time.Time
-		read bool
-	}
-	es := make([]entry, len(books))
-	for i, b := range books {
-		w, _, ok := placeOf(dir, b.Key)
-		es[i] = entry{b, w, ok}
-	}
-	slices.SortStableFunc(es, func(a, b entry) int {
-		if a.read != b.read {
-			if a.read {
-				return -1
-			}
-			return 1
-		}
-		if a.read {
-			return b.when.Compare(a.when)
-		}
-		return cmp.Compare(b.b.Added, a.b.Added)
-	})
-	out := make([]libBook, len(es))
-	for i, e := range es {
-		out[i] = e.b
-	}
-	return out
 }

@@ -90,7 +90,13 @@ func (v *List) SetPage(n int) { v.page = n }
 
 // Draw draws the view's page into the screen's page img: the header, the list's page and the pager.
 func (v *List) Draw(img *image.Gray) {
-	v.list.Draw(v.page, v.img)
+	if v.pages > 0 {
+		v.list.Draw(v.page, v.img)
+	} else { // no rows: the engine has no page to draw
+		for i := range v.img.Pix {
+			v.img.Pix[i] = 255
+		}
+	}
 	copy(img.Pix, v.head.img.Pix)
 	copy(img.Pix[v.head.img.Rect.Dy()*img.Stride:], v.img.Pix)
 	if v.pager != nil {
@@ -101,6 +107,15 @@ func (v *List) Draw(img *image.Gray) {
 		v.pager.Over(img)
 	}
 }
+
+// BarHeight is the height of the header's first panel (the bar of the library's head): where a panel under it goes.
+func (v *List) BarHeight() int { return v.head.under }
+
+// HeadHeight is the height of the whole header.
+func (v *List) HeadHeight() int { return v.head.img.Rect.Dy() }
+
+// SetHead puts another header, of the same height, in place of the list's (the bar with a button drawn on).
+func (v *List) SetHead(head *Panel) { v.head = head }
 
 // HeadAt is the header's button at (x, y) on the screen, "" if none.
 func (v *List) HeadAt(x, y int) string { return v.head.At(x, y) }

@@ -47,23 +47,76 @@ func TestPanels(t *testing.T) {
 		}
 	}
 	save("remove", DrawRemove(fonts, w).img)
-	save("library-menu", DrawLibraryMenu(fonts, w).img)
 	books := []Book{
-		{Title: "Buried Alive", Author: "Arnold Bennett", Source: "FarsiEPUB", Read: 62, Now: true},
-		{Title: "رود کم‌آب", Author: "مارا الیس", Source: "rtlbook", Read: 100, RTL: true},
-		{Title: "The Adventures of Sherlock Holmes", Author: "A. Conan Doyle", Source: "Standard Ebooks", Read: -1},
-		{Title: "Haji agha ocr", Source: "Archive", Read: 4},
+		{Title: "Buried Alive", Author: "Arnold Bennett", Read: 62, Now: true, Narrated: true},
+		{Title: "رود کم‌آب", Author: "مارا الیس", Read: 100, Finished: true, RTL: true},
+		{Title: "The Adventures of Sherlock Holmes", Author: "A. Conan Doyle", Read: -1},
+		{Title: "Haji agha ocr", Read: 4},
+		{Title: "سفر به ماه", Read: 30, RTL: true},
 	}
 	for i := range 12 {
 		books = append(books, Book{Title: fmt.Sprintf("A new book %d", i), Author: "Someone", New: true, Read: -1})
 	}
-	lib := NewLibrary(books, Bar{Start: "magnifying-glass", Time: "20:48", Battery: 82, Menu: true}, fonts, w, h)
-	for page := range min(lib.Pages(), 2) {
-		lib.SetPage(page)
+	bar := Bar{Time: "20:48", Battery: 82, Menu: true}
+	view := LibraryView{Counts: [4]int{4, 12, 1, 17}}
+	for f, name := range FilterNames {
+		v := view
+		v.Filter = f
+		var shown []Book // the books under the filter
+		for _, b := range books {
+			if f == 3 || f == 1 && b.New || f == 2 && b.Finished || f == 0 && !b.New && !b.Finished {
+				shown = append(shown, b)
+			}
+		}
+		lib := NewLibrary(shown, LibraryHead(bar, v, fonts, w), fonts, w, h)
+		for page := range min(lib.Pages(), 2) {
+			lib.SetPage(page)
+			img := image.NewGray(image.Rect(0, 0, w, h))
+			lib.Draw(img)
+			save(fmt.Sprintf("library-%s-page%d", name, page), img)
+		}
+		lib.Close()
+	}
+	// the menu and the sort panel open: the button drawn on, the panel under the bar or under the filters
+	for _, name := range []string{"library-menu-open", "library-sort-open"} {
+		v := view
+		v.MenuOn, v.SortOn = name == "library-menu-open", name != "library-menu-open"
+		lib := NewLibrary(books, LibraryHead(bar, v, fonts, w), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		lib.Draw(img)
-		save(fmt.Sprintf("library-page%d", page), img)
+		p, under := DrawLibraryMenu(lib.BarHeight(), false, fonts, w), lib.BarHeight()
+		if v.SortOn {
+			under = lib.HeadHeight()
+			p = DrawLibrarySort(1, under, fonts, w)
+		}
+		p.Over(img)
+		save(name, img)
+		save(name+"-panel", p.img)
+		if p.y0 != under || under == 0 {
+			t.Errorf("%s: panel at %d, want %d", name, p.y0, under)
+		}
+		lib.Close()
 	}
+	// the menu with a right-to-left bar (the library's is never one today): the list at the left, under the bar's end
+	{
+		v, rbar := view, bar
+		v.MenuOn, rbar.RTL = true, true
+		lib := NewLibrary(books, LibraryHead(rbar, v, fonts, w), fonts, w, h)
+		img := image.NewGray(image.Rect(0, 0, w, h))
+		lib.Draw(img)
+		p := DrawLibraryMenu(lib.BarHeight(), true, fonts, w)
+		p.Over(img)
+		save("library-menu-open-rtl", img)
+		if p.x0 >= w/2 || p.y0 != lib.BarHeight() {
+			t.Errorf("rtl menu at (%d, %d), want the left, at %d", p.x0, p.y0, lib.BarHeight())
+		}
+		lib.Close()
+	}
+	// no books: an empty list
+	lib := NewLibrary(nil, LibraryHead(bar, view, fonts, w), fonts, w, h)
+	img := image.NewGray(image.Rect(0, 0, w, h))
+	lib.Draw(img)
+	save("library-empty", img)
 	lib.Close()
 	save("splash", Splash(t.TempDir(), fonts, w, h))
 	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680))
@@ -123,7 +176,7 @@ func TestPanels(t *testing.T) {
 		}
 		v.Close()
 	}
-	img := image.NewGray(image.Rect(0, 0, w, h))
+	img = image.NewGray(image.Rect(0, 0, w, h))
 	for i := range img.Pix {
 		img.Pix[i] = 255
 	}
@@ -205,9 +258,12 @@ func TestPanelEdges(t *testing.T) {
 	defer v.Close()
 	bar := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
 	for name, m := range map[string]*Panel{"menu": DrawMenu(Menu{FontSize: 50, Lines: 1.16, Margin: 60, Narrated: true}, fonts, w),
-		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head, "bar": bar} {
+		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head, "bar": bar,
+		"library-head": LibraryHead(Bar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
+		"library-menu": DrawLibraryMenu(160, false, fonts, w), "library-menu-rtl": DrawLibraryMenu(160, true, fonts, w),
+		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {
 		for id, r := range m.buttons {
-			if strings.HasPrefix(id, "bar-") {
+			if strings.HasPrefix(id, "bar-") || id == "list-sort" {
 				// an icon button has no border: some ink inside its box instead
 				ink := false
 				for y := r.Min.Y; y < r.Max.Y; y++ {

@@ -63,7 +63,11 @@ func (s *session) compose(r image.Rectangle) *image.Gray {
 	if s.nar != nil {
 		fill(over, clip(s.nar.bars, r))
 	}
-	for _, m := range []*ui.Panel{s.mn, s.nav} {
+	panels := []*ui.Panel{s.mn, s.nav}
+	if s.nav != nil { // the menu with the bar over it, and the bar's list
+		panels = append(panels, s.bar, s.list)
+	}
+	for _, m := range panels {
 		if m != nil && m.Rect().Overlaps(r) {
 			m.Over(over)
 		}

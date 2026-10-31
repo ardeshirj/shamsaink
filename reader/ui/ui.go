@@ -73,6 +73,8 @@ var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(f
 type button struct {
 	ID, Label string
 	On        bool
+	Count     string // shown after the label, smaller (segments)
+	Dir       string // the label's own direction, "" for the page's (segments)
 }
 
 // A row with a minus, a value and a plus: the buttons are name-dec and name-inc.
@@ -105,6 +107,12 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			return button{ID: add(id), Label: label, On: on}
 		},
 		"list": func(bs ...button) []button { return bs },
+		"reg": func(bs []button) []button { // buttons made by the program: their ids registered
+			for _, b := range bs {
+				add(b.ID)
+			}
+			return bs
+		},
 		"step": func(name, id, value string) stepper {
 			return stepper{name, value, button{ID: add(id + "-dec"), Label: "−"}, button{ID: add(id + "-inc"), Label: "+"}}
 		},

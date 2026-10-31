@@ -6,6 +6,7 @@ import (
 	"image"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	blitz "shamsainkengine"
@@ -41,6 +42,7 @@ type session struct {
 	rest   bool // documents still to paginate
 
 	mn, nav                   *ui.Panel    // the menu and the panel at the bottom, while open
+	bar, list                 *ui.Panel    // with them the bar over the menu, and its ≡ list while open
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -380,13 +382,23 @@ func (s *session) showMenu() {
 	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
 		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: s.narrated, HideClock: set.HideClock}, s.rd.fonts, s.scr.W)
 	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
+	s.list = nil
+	s.drawBar()
+	s.mn.SetY(s.bar.Rect().Dy())
 	s.showPage(device.WfREAGL, false)
 	fmt.Printf("  menu drawn in %.0f ms\n", ms(t))
 }
 
-// closeMenu takes the menu and the bottom panel off the page.
+// drawBar draws the bar over the menu (docs/layouts/layout.html, "the bar"): back to the library at its start, the
+// book's title, the time, the battery and ≡, filled while its list is open.
+func (s *session) drawBar() {
+	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("15:04"),
+		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil}, s.rd.fonts, s.scr.W)
+}
+
+// closeMenu takes the menu, the bar and the bottom panel off the page.
 func (s *session) closeMenu() {
-	s.mn, s.nav = nil, nil
+	s.mn, s.nav, s.list = nil, nil, nil
 	s.showPage(device.WfREAGL, false)
 }
 
@@ -492,14 +504,34 @@ func (s *session) showSel() {
 // the panel closes it.
 func (s *session) inMenu(g device.Gesture) {
 	r := s.r
+	if s.nav != nil && s.list != nil { // the bar's ≡ list: Leave, else a tap anywhere closes it
+		if !g.Swipe && s.list.At(g.X, g.Y) == "leave" {
+			s.rd.quit = true
+			s.leave()
+			return
+		}
+		rect := s.list.Rect().Union(s.bar.Rect())
+		s.list = nil
+		s.drawBar()
+		s.refresh(rect, device.WfREAGL)
+		return
+	}
 	id := s.mn.At(g.X, g.Y)
 	if id == "" && s.nav != nil {
 		id = s.nav.At(g.X, g.Y)
 	}
+	if id == "" && s.nav != nil {
+		id = s.bar.At(g.X, g.Y)
+	}
 	switch {
 	case g.Swipe:
-	case id == "leave":
+	case id == "bar-start": // back to the library
 		s.leave()
+	case id == "bar-menu":
+		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W)
+		s.drawBar()
+		s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
+	case strings.HasPrefix(id, "bar-"): // the light, the title: nothing yet
 	case id == "contents":
 		t := time.Now()
 		s.mn, s.nav = nil, nil
@@ -560,7 +592,8 @@ func (s *session) inMenu(g device.Gesture) {
 		rect := s.mn.Rect()
 		s.mn = nil
 		s.refresh(rect, device.WfREAGL)
-	case s.nav != nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()) && !image.Pt(g.X, g.Y).In(s.nav.Rect()):
+	case s.nav != nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()) && !image.Pt(g.X, g.Y).In(s.nav.Rect()) &&
+		!image.Pt(g.X, g.Y).In(s.bar.Rect()):
 		s.closeMenu()
 	}
 }

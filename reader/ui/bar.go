@@ -8,11 +8,12 @@ import (
 
 // The bar: the same at the top of the library and over a book (docs/layouts/layout.html, "the bar").
 type Bar struct {
-	Start             string // the icon at the start, its button "bar-start": "arrow-left" (back to the library) or "magnifying-glass" (search)
+	Start             string // the icon at the start, its button "bar-start": "arrow-left" (back to the library) or "magnifying-glass" (search); "" for none
 	Title             string
 	Time              string // "20:48"; "" hides it
 	Phones            bool   // headphones connected: their button "bar-phones"
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
+	MenuOn            bool   // the same for the menu button
 	Battery           int    // percent; < 0 hides it
 	Menu              bool   // the menu's button "bar-menu" at the end (the library)
 	RTL               bool

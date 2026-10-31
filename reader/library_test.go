@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +11,12 @@ import (
 
 // makeEPUB writes a small EPUB whose package document has the given metadata lines.
 func makeEPUB(t *testing.T, file, metadata string) {
+	t.Helper()
+	makeEPUBWith(t, file, metadata, "")
+}
+
+// makeEPUBWith writes a small EPUB whose package document has the given metadata lines and manifest items.
+func makeEPUBWith(t *testing.T, file, metadata, manifest string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 		t.Fatal(err)
@@ -25,7 +32,7 @@ func makeEPUB(t *testing.T, file, metadata string) {
 	}
 	add("mimetype", "application/epub+zip")
 	add("META-INF/container.xml", `<?xml version="1.0"?><container xmlns="urn:oasis:names:tc:opendocument:xmlns:container" version="1.0"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`)
-	add("OEBPS/content.opf", `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/">`+metadata+`</metadata></package>`)
+	add("OEBPS/content.opf", `<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/">`+metadata+`</metadata><manifest>`+manifest+`</manifest></package>`)
 	z.Close()
 	f.Close()
 }
@@ -117,7 +124,8 @@ func TestLibraryOrder(t *testing.T) {
 	}
 	place("books/broken.epub", "3 4 0.5000\n", time.Hour)
 	place("books/a.epub", "1 2\n", time.Minute) // the old form
-	order := libraryOrder(books, dir)
+	order := shelfOf(books, dir)
+	sortBooks(order, "recent")
 	var got []string
 	for _, b := range order {
 		got = append(got, b.Path)
@@ -128,6 +136,9 @@ func TestLibraryOrder(t *testing.T) {
 	}
 	if got[0] != want[0] || got[1] != want[1] || got[2] != want[2] || got[3] != want[3] {
 		t.Errorf("order %v; want %v", got, want)
+	}
+	if k := lastRead(order); k != m["books/a.epub"].Key {
+		t.Errorf("last read %q", k)
 	}
 	if p := progress(dir, m["books/broken.epub"]); p != 0.5 {
 		t.Errorf("progress %v; want 0.5", p)
@@ -169,5 +180,30 @@ func TestBadHighlights(t *testing.T) {
 	}
 	if _, err := os.Stat(p); err == nil {
 		t.Error("bad file still in place")
+	}
+}
+
+// A book whose manifest has a media overlay is narrated, and an entry of library.json read before narration was looked
+// for is read again once.
+func TestNarrated(t *testing.T) {
+	dir := t.TempDir()
+	makeEPUBWith(t, filepath.Join(dir, "books", "n.epub"), `<dc:title>Told</dc:title>`,
+		`<item id="t" href="t.xhtml" media-type="application/xhtml+xml" media-overlay="s"/><item id="s" href="t.smil" media-type="application/smil+xml"/>`)
+	makeEPUB(t, filepath.Join(dir, "books", "p.epub"), `<dc:title>Plain</dc:title>`)
+	m := byPath(scanLibrary(dir))
+	if !m["books/n.epub"].Narrated || m["books/p.epub"].Narrated {
+		t.Fatalf("narrated: %+v", m)
+	}
+
+	old := m["books/n.epub"]
+	old.V, old.Narrated = 0, false
+	b, _ := json.Marshal([]libBook{old, m["books/p.epub"]})
+	os.WriteFile(filepath.Join(dir, "library.json"), b, 0o644)
+	reads := 0
+	readMeta = func(f string) (meta, error) { reads++; return epubMeta(f) }
+	defer func() { readMeta = epubMeta }()
+	m = byPath(scanLibrary(dir))
+	if reads != 1 || !m["books/n.epub"].Narrated {
+		t.Errorf("%d read, %+v; want the old entry read again", reads, m["books/n.epub"])
 	}
 }

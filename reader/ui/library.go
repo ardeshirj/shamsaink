@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 
 	blitz "shamsainkengine"
 )
@@ -9,26 +10,85 @@ import (
 // A book's row in the library, as the reader knows it.
 type Book struct {
 	Title, Author string
-	Source        string // its source's name ("FarsiEPUB"), "" for none
-	Read          int    // percent read; -1 when not known
-	New           bool   // never opened
-	RTL           bool   // its title reads right to left
-	Now           bool   // the book read last
+	Read          int  // percent read; -1 when not known
+	New           bool // never opened: "new" shown (not in the New filter, where every book is)
+	Narrated      bool // it has narration (media overlays): a headphones mark after its title
+	Finished      bool // read to the end: no bar
+	RTL           bool // its title reads right to left
+	Now           bool // the book read last
 }
 
 // The library's rows, for templates/library.html.
 type libraryRow struct {
-	ID, Title, Author, Source string
-	Read, Width, Dir          string // the share read as shown, its bar's width in per cent ("" for no bar), the row's direction
-	Now                       bool
+	ID, Title, Author string
+	Read, Width, Dir  string // the share read as shown, its bar's width in per cent ("" for no bar), the row's direction
+	Now, New          bool   // New: "new" drawn as a tag
+	Narrated          bool   // a headphones mark after the title
 }
 
-// NewLibrary lays out the library (docs/layouts/layout.html, "Library, text"): the bar at the top, its title the
-// library's, a row a book (each in its title's direction), and a pager at the bottom. A tap on a row is EntryAt.
-func NewLibrary(books []Book, bar Bar, fonts *blitz.Fonts, w, h int) *List {
+// The library's filters and sorts, by the name that is in their buttons' ids and the reader's files, and by the word
+// that is their label.
+var (
+	FilterNames = []string{"reading", "new", "finished", "all"}
+	filterWords = []string{"reading", "new-books", "finished", "all"}
+	SortNames   = []string{"recent", "title", "author", "added"}
+)
+
+// What the library's head shows besides the bar: the filter chosen (an index of FilterNames) and how many books each
+// has, and which of the panels is open: the menu (under the
+// bar) or the sort panel (under the filters).
+type LibraryView struct {
+	Filter         int
+	Counts         [4]int
+	MenuOn, SortOn bool
+}
+
+// LibraryHead draws the library's head (docs/layouts/layout.html, "Library"): the bar, its title the library's, and under it
+// the filters and the sort button, with no line under them. Its buttons are the bar's, filter-reading, filter-new,
+// filter-finished and filter-all, and list-sort.
+func LibraryHead(bar Bar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
+	bar.Title = word("library")
+	bar.Start, bar.MenuOn = "magnifying-glass", v.MenuOn // search: no action until there is a keyboard
+	var fs []button
+	for i, name := range FilterNames {
+		fs = append(fs, button{ID: "filter-" + name, Label: word(filterWords[i]), Count: num(v.Counts[i]), On: i == v.Filter})
+	}
+	html, ids := render("library-head.html", struct {
+		Filters []button
+		SortOn  bool
+	}{fs, v.SortOn})
+	filters := drawPanel(html, ids, fonts, w, 300)
+	nh := filters.img.Rect.Dy()
+	for y := nh - 4; y < nh; y++ { // no line: drawPanel's under it rubbed out
+		for x := 0; x < w; x++ {
+			filters.img.Pix[y*filters.img.Stride+x] = 255
+		}
+	}
+	return stack(DrawBar(bar, fonts, w), filters)
+}
+
+// stack is the panel top with the panel bottom under it, as one; the buttons of both, and under is where the
+// bottom starts.
+func stack(top, bottom *Panel) *Panel {
+	th := top.img.Rect.Dy()
+	m := &Panel{img: image.NewGray(image.Rect(0, 0, top.img.Rect.Dx(), th+bottom.img.Rect.Dy())), buttons: map[string]image.Rectangle{}, under: th}
+	copy(m.img.Pix, top.img.Pix)
+	copy(m.img.Pix[th*m.img.Stride:], bottom.img.Pix)
+	for id, r := range top.buttons {
+		m.buttons[id] = r
+	}
+	for id, r := range bottom.buttons {
+		m.buttons[id] = r.Add(image.Pt(0, th))
+	}
+	return m
+}
+
+// NewLibrary lays out the library (docs/layouts/layout.html, "Library"): the head (LibraryHead), a row a book (each
+// in its title's direction, all as high as each other), and a pager at the bottom. A tap on a row is EntryAt.
+func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []libraryRow
 	for i, b := range books {
-		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, Source: b.Source, Now: b.Now, Dir: "ltr"}
+		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, Now: b.Now, New: b.New, Narrated: b.Narrated, Dir: "ltr"}
 		if b.RTL {
 			r.Dir = "rtl"
 		}
@@ -36,18 +96,45 @@ func NewLibrary(books []Book, bar Bar, fonts *blitz.Fonts, w, h int) *List {
 		case b.New:
 			r.Read = word("new")
 		case b.Read >= 0:
-			r.Read, r.Width = word("percent", num(b.Read)), fmt.Sprint(b.Read)
+			r.Read = word("percent", num(b.Read))
+			if !b.Finished {
+				r.Width = fmt.Sprint(b.Read)
+			}
 		}
 		rows = append(rows, r)
 	}
 	html, _ := render("library.html", struct{ Rows []libraryRow }{rows})
-	bar.Title = word("library")
-	return NewList(DrawBar(bar, fonts, w), html, len(books), -1, true, bar.RTL, fonts, w, h)
+	return NewList(head, html, len(books), -1, true, false, fonts, w, h)
 }
 
-// DrawLibraryMenu draws the library's menu, over the top of the screen: leave the library for Kobo's interface, or
-// not.
-func DrawLibraryMenu(fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("library-menu.html", nil)
-	return drawPanel(html, ids, fonts, w, 300) // at most: cut to its buttons
+// segmentsOf is the buttons of one choice of names (ids prefix+name, labels from the words), the one at index on drawn
+// chosen.
+func segmentsOf(prefix string, names, labels []string, on int) []button {
+	var bs []button
+	for i, n := range names {
+		bs = append(bs, button{ID: prefix + n, Label: word(labels[i]), On: i == on})
+	}
+	return bs
+}
+
+// DrawLibraryMenu draws the library's menu: a narrow list hanging from the bar's menu button, directly under the bar
+// (under px from the top), at the bar's end (the left when rtl): leave to Kobo's interface (leave), a row an entry.
+func DrawLibraryMenu(under int, rtl bool, fonts *blitz.Fonts, w int) *Panel {
+	d := struct{ Dir string }{"ltr"}
+	if rtl {
+		d.Dir = "rtl"
+	}
+	html, ids := render("library-menu.html", d)
+	m := drawPanelIn(html, ids, "menu-list", fonts, w, 600) // at most: cut to the list
+	m.y0 += under
+	return m
+}
+
+// DrawLibrarySort draws the sort panel directly under the head (under px from the top): how the books are sorted
+// (sort, an index of SortNames; buttons sort-recent and the like).
+func DrawLibrarySort(sort, under int, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("library-sort.html", struct{ Sorts []button }{segmentsOf("sort-", SortNames, SortNames, sort)})
+	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its buttons
+	m.y0 = under
+	return m
 }

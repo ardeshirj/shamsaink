@@ -44,6 +44,7 @@ type reader struct {
 	pages drawnPages
 	over  *image.Gray
 	clock *ui.Clock
+	quit  bool // Leave chosen in a book's ≡: out of the library too
 }
 
 func main() {

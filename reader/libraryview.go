@@ -5,17 +5,13 @@ import (
 	"image"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
 	"shamsainkreader/device"
 	"shamsainkreader/ui"
 )
-
-// The sources' names as the library shows them, by their folder under books/; another folder is shown as it is named.
-var sourceNames = map[string]string{
-	"farsiepub": "FarsiEPUB", "rtlbook": "rtlbook", "standard-ebooks": "Standard Ebooks", "gutenberg": "Gutenberg",
-	"archive-org": "Archive", "internet-archive": "Archive",
-}
 
 // browse shows the library (DIR/books) until it is left from its menu: a tap on a book reads it, and leaving the book
 // comes back to the library, scanned again for the book's place.
@@ -29,33 +25,57 @@ func (rd *reader) browse(t time.Time) error {
 		if _, err := rd.read(map[string]string{"book": path}, time.Now()); err != nil {
 			fmt.Fprintln(os.Stderr, "shamsaink:", err)
 		}
+		if rd.quit {
+			fmt.Println("library: left from the book")
+			return nil
+		}
 		t = time.Now()
 	}
 }
 
 // choose shows the library and waits for a book to be chosen: its path, or "" when the library is left. A swipe or
-// the pager turns its pages; the bar's menu leaves it; the power button sleeps (the Kobo) and wakes on the library.
+// the pager turns its pages; the filters under the bar choose which books; the sort button at the end of the filters
+// opens a panel to sort them; the bar's menu leaves. The power button sleeps (the Kobo) and wakes on
+// the library. What is chosen is kept (shelf.go).
 func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	scr := rd.dev.Screen
-	books := libraryOrder(scanLibrary(rd.dir), rd.dir)
-	rows := make([]ui.Book, len(books))
-	for i, b := range books {
-		_, share, opened := placeOf(rd.dir, b.Key)
-		rows[i] = ui.Book{Title: b.Title, Author: b.Author, Source: b.Source, Read: -1, New: !opened,
-			RTL: persian([]string{b.Lang}, false), Now: i == 0 && opened}
-		if name, ok := sourceNames[b.Source]; ok {
-			rows[i].Source = name
+	all := shelfOf(scanLibrary(rd.dir), rd.dir)
+	last := lastRead(all)
+	view, _ := loadView(rd.dir)
+	filter := startFilter(view, countsOf(all))
+	lv := ui.LibraryView{}
+	bar := ui.Bar{Time: time.Now().Format("15:04"), Battery: rd.dev.Battery(), Menu: true}
+	var v *ui.List
+	var items []shelfBook // the rows
+	// build lays out the library again for the view's choices, on its first page
+	build := func() {
+		lv.Filter, lv.Counts = filter, countsOf(all)
+		items = items[:0]
+		for _, b := range all {
+			if b.in(filter) {
+				items = append(items, b)
+			}
 		}
-		if opened && share >= 0 {
-			rows[i].Read = int(share*100 + 0.5)
+		sortBooks(items, view.sortOf(filter))
+		rows := make([]ui.Book, len(items))
+		for i, b := range items {
+			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.opened && ui.FilterNames[filter] != "new",
+				Finished: b.finished(), Narrated: b.Narrated,
+				RTL: persian([]string{bookLang(b.libBook)}, false), Now: b.Key == last}
+			if b.opened && b.share >= 0 {
+				rows[i].Read = int(b.share*100 + 0.5)
+			}
 		}
+		if v != nil {
+			v.Close()
+		}
+		v = ui.NewLibrary(rows, ui.LibraryHead(bar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 	}
-	bar := ui.Bar{Start: "magnifying-glass", Time: time.Now().Format("15:04"), Battery: rd.dev.Battery(), Menu: true}
-	v := ui.NewLibrary(rows, bar, rd.fonts, scr.W, scr.H)
-	defer v.Close()
+	build()
+	defer func() { v.Close() }()
 	v.Draw(rd.over)
 	scr.Show(rd.over, device.WfGC16, true)
-	fmt.Printf("library: %d books, %d pages, shown in %.0f ms\n", len(books), v.Pages(), ms(t))
+	fmt.Printf("library: %d books, %d rows, %d pages, shown in %.0f ms\n", len(all), len(items), v.Pages(), ms(t))
 
 	events, stop, err := rd.dev.Inputs()
 	if err != nil {
@@ -69,8 +89,28 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 			scr.Show(rd.over, device.WfREAGL, false)
 		}
 	}
-	var menu *ui.Panel // the menu, while open
+	keep := func() {
+		view.Filter = ui.FilterNames[filter]
+		if err := view.save(rd.dir); err != nil {
+			fmt.Fprintln(os.Stderr, "shamsaink: library-view.json:", err)
+		}
+	}
+	// the panel under the bar (the menu) or the filters (sort), while open
+	var panel *ui.Panel
+	open := func(menu bool) {
+		lv.MenuOn, lv.SortOn = menu, !menu
+		v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
+		if menu {
+			panel = ui.DrawLibraryMenu(v.BarHeight(), bar.RTL, rd.fonts, scr.W)
+		} else {
+			panel = ui.DrawLibrarySort(slices.Index(ui.SortNames, view.sortOf(filter)), v.HeadHeight(), rd.fonts, scr.W)
+		}
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+	}
 	for e := range events {
+		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:
 			if rd.dev.Doze(rd.dir, splash) {
@@ -79,33 +119,51 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				}
 			}
 		case e.Hold != device.NotHeld:
-		case menu != nil:
-			if menu.At(e.X, e.Y) == "leave" {
+		case panel != nil:
+			id := panel.At(e.X, e.Y)
+			switch {
+			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
+			case strings.HasPrefix(id, "sort-"):
+				view.setSort(filter, strings.TrimPrefix(id, "sort-"))
+				keep()
+				build() // the head drawn with the panel still open
+				open(false)
+				scr.Show(rd.over, device.WfREAGL, false)
+			default:
+				r := image.Rect(0, 0, scr.W, panel.Rect().Max.Y)
+				panel, lv.MenuOn, lv.SortOn = nil, false, false
+				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
+				v.Draw(rd.over)
+				scr.ShowPart(rd.over, r, device.WfREAGL, false)
 			}
-			r := menu.Rect()
-			menu = nil
-			v.Draw(rd.over)
-			scr.ShowPart(rd.over, r, device.WfREAGL, false)
 		case e.Swipe:
 			forward := e.DX < 0
 			if abs(e.DY) > abs(e.DX) {
 				forward = e.DY < 0
 			}
 			turn(map[bool]int{true: 1, false: -1}[forward])
-		case v.HeadAt(e.X, e.Y) == "bar-menu":
-			menu = ui.DrawLibraryMenu(rd.fonts, scr.W)
-			menu.Over(rd.over)
-			scr.ShowPart(rd.over, menu.Rect(), device.WfREAGL, false)
+		case head == "bar-menu":
+			open(true)
+		case head == "list-sort":
+			open(false)
+		case strings.HasPrefix(head, "filter-"):
+			if f := slices.Index(ui.FilterNames, strings.TrimPrefix(head, "filter-")); f >= 0 {
+				filter = f
+				keep()
+				build()
+				v.Draw(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
+			}
 		case v.PagerAt(e.X, e.Y) == "list-prev":
 			turn(-1)
 		case v.PagerAt(e.X, e.Y) == "list-next":
 			turn(1)
 		default:
 			if i := v.EntryAt(e.X, e.Y); i >= 0 {
-				fmt.Printf("library: %s chosen\n", books[i].Path)
-				return filepath.Join(rd.dir, books[i].Path), nil
+				fmt.Printf("library: %s chosen\n", items[i].Path)
+				return filepath.Join(rd.dir, items[i].Path), nil
 			}
 		}
 	}

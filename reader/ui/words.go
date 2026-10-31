@@ -7,7 +7,6 @@ import "fmt"
 // differs between languages. A table for another language is one more entry of words, chosen by lang.
 var words = map[string]map[string]string{
 	"en": {
-		"close-book":        "Close the book",
 		"reset-settings":    "Reset settings",
 		"read-aloud":        "Read aloud",
 		"text-size":         "Text size",
@@ -37,8 +36,16 @@ var words = map[string]map[string]string{
 		"percent":           "%s%%",
 		"new":               "new",
 		"library":           "Library",
-		"leave-to-kobo":     "Leave to Kobo",
-		"cancel":            "Cancel",
+		"leave":             "Leave",
+		"reading":           "Reading",
+		"new-books":         "New",
+		"finished":          "Finished",
+		"all":               "All",
+		"sort-by":           "Sort by",
+		"recent":            "Recent",
+		"title":             "Title",
+		"author":            "Author",
+		"added":             "Added",
 	},
 }
 

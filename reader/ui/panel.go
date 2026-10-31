@@ -8,19 +8,27 @@ import (
 	blitz "shamsainkengine"
 )
 
-// A panel over the page: y0 px from the top, drawn by the engine from HTML (right to left, when the menu is in
+// A panel over the page: y0 px from the top and x0 from the left (0 for one as wide as the screen), drawn by the engine from HTML (right to left, when the menu is in
 // Farsi, for free), its buttons found by their ids (in the panel's own coordinates).
 type Panel struct {
 	img     *image.Gray
 	buttons map[string]image.Rectangle
-	y0      int
+	x0, y0  int
+	under   int // for a stack of panels (the library's head): where the one under the first starts
 }
 
 // Rect is where the panel is on the screen.
-func (m *Panel) Rect() image.Rectangle { return m.img.Rect.Add(image.Pt(0, m.y0)) }
+// SetY puts the panel's top at y on the screen (the book's menu under the bar).
+func (m *Panel) SetY(y int) { m.y0 = y }
+
+func (m *Panel) Rect() image.Rectangle { return m.img.Rect.Add(image.Pt(m.x0, m.y0)) }
 
 // Over draws the panel over the page in img.
-func (m *Panel) Over(img *image.Gray) { copy(img.Pix[m.y0*img.Stride:], m.img.Pix) }
+func (m *Panel) Over(img *image.Gray) {
+	for y := range m.img.Rect.Dy() {
+		copy(img.Pix[(m.y0+y)*img.Stride+m.x0:], m.img.Pix[y*m.img.Stride:(y+1)*m.img.Stride])
+	}
+}
 
 const menuHeight = 900 // px, at most
 
@@ -67,6 +75,13 @@ func DrawRemove(fonts *blitz.Fonts, w int) *Panel {
 // drawPanel draws a panel over the top of the page from html, as high as its buttons need (at most h px; the last
 // thing on a panel is a button), a line under it, its buttons by ids.
 func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *Panel {
+	return drawPanelIn(html, ids, "", fonts, w, h)
+}
+
+// drawPanelIn is drawPanel; with box the id of an element, the panel is that element's box alone (as wide as it is,
+// x0 where it starts, y0 0, with no line of drawPanel's under it: its own border is its edge), its buttons in its own
+// coordinates.
+func drawPanelIn(html string, ids []string, box string, fonts *blitz.Fonts, w, h int) *Panel {
 	const pad = 30 // px under the last button, over the line
 	// a line after everything: a page ends at its last line of text, so a box's bottom edge after its own (the
 	// segments' bar) would be cut off; cropped away below
@@ -85,6 +100,19 @@ func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *Panel {
 	}
 	whole := image.NewGray(image.Rect(0, 0, w, h))
 	b.Draw(0, whole)
+	if box != "" {
+		_, rs := b.Find(0, box)
+		r := union(rs).Intersect(whole.Rect)
+		m.img = image.NewGray(image.Rect(0, 0, r.Dx(), r.Dy()))
+		for y := range r.Dy() {
+			copy(m.img.Pix[y*m.img.Stride:(y+1)*m.img.Stride], whole.Pix[(r.Min.Y+y)*whole.Stride+r.Min.X:])
+		}
+		for id, br := range m.buttons {
+			m.buttons[id] = br.Sub(r.Min)
+		}
+		m.x0 = r.Min.X // its y0 is the caller's: the page's top margin is not part of it
+		return m
+	}
 	h = min(h, bottom+pad+4)
 	m.img = image.NewGray(image.Rect(0, 0, w, h))
 	copy(m.img.Pix, whole.Pix)
@@ -100,7 +128,7 @@ func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *Panel {
 // side by side (a bar's segments share a border); "" if none.
 func (m *Panel) At(x, y int) string {
 	const room = 16
-	p := image.Pt(x, y-m.y0)
+	p := image.Pt(x-m.x0, y-m.y0)
 	id, best := "", room+1
 	for b, r := range m.buttons {
 		// how far p is outside r, along the farther axis (0 inside)

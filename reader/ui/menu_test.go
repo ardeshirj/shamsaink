@@ -59,7 +59,7 @@ func TestMenu(t *testing.T) {
 }
 
 // The buttons the menu and the bottom panel are expected to have.
-var menuIDs = []string{"leave", "reset", "read-aloud", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec",
+var menuIDs = []string{"reset", "read-aloud", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec",
 	"margin-inc", "dir-", "dir-rtl", "dir-ltr", "clock"}
 var navIDs = []string{"contents", "chapter-prev", "chapter-next", "bar", "back"}
 

@@ -28,6 +28,7 @@ div.g span { flex: 1; text-align: center; padding: 0.15em 0.3em; }
 div.g span + span { border-inline-start: var(--line) solid var(--ink); }
 div.g span:first-child { border-start-start-radius: calc(var(--radius) - var(--line)); border-end-start-radius: calc(var(--radius) - var(--line)); }
 div.g span:last-child { border-start-end-radius: calc(var(--radius) - var(--line)); border-end-end-radius: calc(var(--radius) - var(--line)); }
+div.g span.n { flex: none; padding: 0; font-size: 0.8em; }
 div.g span.on { background: var(--ink); color: var(--paper); }
 
 /* Settings, one a row: a name, then a minus, the value and a plus, or the value alone (a switch). */
