@@ -62,6 +62,10 @@ func main() {
 	var err error
 	rd.dev, err = device.Open()
 	check(err)
+	if set := loadSettings(rd.dir); set.Light != nil && set.Warmth != nil { // the reader's own light (light.go)
+		rd.dev.SetLight(*set.Light)
+		rd.dev.SetWarmth(*set.Warmth)
+	}
 	fontsArg := 2
 	if serve {
 		fontsArg = 3

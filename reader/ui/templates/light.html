@@ -1,0 +1,8 @@
+{{/* The Light panel (DrawLight; docs/layouts/layout.html, "Panels from the dock"): hanging under the bar, opened by
+its sun, in the library and in a book. The light's level and its warmth as sliders, and a button that cleans the
+screen (a full refresh, with its flash). Any tap off it closes it. */ -}}
+{{template "head" ""}}</head><body>
+{{template "slider" slide (t "light") "light" .Level .LevelShare}}
+{{template "slider" slide (t "warmth") "warmth" .Warmth .WarmthShare}}
+<div class="row"><span class="b" id="{{id "clean"}}">{{icon "arrows-clockwise"}} {{t "clean-screen"}}</span></div>
+</body></html>

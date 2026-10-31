@@ -234,9 +234,13 @@ func DrawDock(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
 	return atBottom(m, h)
 }
 
-// Share is the share of the bar at x, in the book's direction.
-func (m *Panel) Share(x int, rtl bool) float64 {
-	r := m.buttons["bar"]
+// Share is the share of the dock's bar at x, in the book's direction.
+func (m *Panel) Share(x int, rtl bool) float64 { return m.ShareAt("bar", x, rtl) }
+
+// ShareAt is the share of the button id (a bar, a slider's track) at x on the screen, from its start side (the right
+// when rtl).
+func (m *Panel) ShareAt(id string, x int, rtl bool) float64 {
+	r := m.Box(id)
 	s := float64(x-r.Min.X) / float64(max(r.Dx(), 1))
 	if rtl {
 		s = 1 - s
@@ -260,5 +264,18 @@ func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w
 	html, ids := render("battery.html", d)
 	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 300)
 	m.y0 += under
+	return m
+}
+
+// DrawLight draws the Light panel directly under the bar (under px from the top): the light's level (per cent) and its
+// warmth (0 to warmMax) as sliders, and the button to clean the screen. Its buttons: light-dec, light, light-inc,
+// warmth-dec, warmth, warmth-inc and clean.
+func DrawLight(level, warmth, warmMax, under int, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("light.html", struct {
+		Level, Warmth           string
+		LevelShare, WarmthShare float64
+	}{word("percent", num(level)), word("page-n-of", num(warmth), num(warmMax)), float64(level) / 100, float64(warmth) / float64(max(warmMax, 1))})
+	m := drawPanel(html, ids, fonts, w, 900) // at most (Farsi's lines are taller): cut to its buttons
+	m.y0 = under
 	return m
 }

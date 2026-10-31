@@ -51,6 +51,9 @@ var words = map[string]map[string]string{
 		"page-tab":          "Page",
 		"reset":             "Reset",
 		"px":                "%s px",
+		"light":             "Light",
+		"warmth":            "Warmth",
+		"clean-screen":      "Clean the screen",
 	},
 	"fa": {
 		"text-size":         "اندازهٔ متن",
@@ -94,6 +97,9 @@ var words = map[string]map[string]string{
 		"page-tab":          "صفحه",
 		"reset":             "بازنشانی",
 		"px":                "%s پیکسل",
+		"light":             "نور",
+		"warmth":            "گرمی",
+		"clean-screen":      "پاک کردن صفحه",
 	},
 }
 

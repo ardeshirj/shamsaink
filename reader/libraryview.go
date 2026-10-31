@@ -105,7 +105,8 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 	}
 	// the panel under the bar (the menu) or the filters (sort), while open
 	var panel *ui.Panel
-	langOpen := false // the panel is the language panel, not the menu
+	langOpen := false  // the panel is the language panel, not the menu
+	lightOpen := false // the panel is the Light panel (light.go)
 	open := func(menu bool) {
 		langOpen = false
 		lv.MenuOn, lv.SortOn = menu, !menu
@@ -160,9 +161,22 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				build() // the head drawn with the panel still open
 				open(false)
 				scr.Show(rd.over, device.WfREAGL, false)
+			case lightOpen && id != "": // the light changed, or the screen cleaned; the panel stays open
+				changed, clean := rd.lightTap(set, panel, id, e.X)
+				if clean || changed {
+					old := panel.Rect()
+					panel = rd.drawLight(v.BarHeight())
+					v.Draw(rd.over)
+					panel.Over(rd.over)
+					if clean {
+						scr.Show(rd.over, device.WfGC16, true)
+					} else {
+						scr.ShowPart(rd.over, image.Rect(0, old.Min.Y, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
+					}
+				}
 			default:
 				r := image.Rect(0, 0, scr.W, panel.Rect().Max.Y)
-				panel, langOpen, lv.MenuOn, lv.SortOn = nil, false, false, false
+				panel, langOpen, lightOpen, bar.LightOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false
 				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
@@ -173,6 +187,15 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 				forward = e.DY < 0
 			}
 			turn(map[bool]int{true: 1, false: -1}[forward])
+		case head == "bar-light": // the Light panel under the bar, the sun filled
+			if _, _, ok := rd.dev.Light(); ok {
+				lightOpen, bar.LightOn = true, true
+				v.SetHead(ui.LibraryHead(bar, lv, rd.fonts, scr.W))
+				panel = rd.drawLight(v.BarHeight())
+				v.Draw(rd.over)
+				panel.Over(rd.over)
+				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+			}
 		case head == "bar-battery": // its level in a box under it, closed by the next tap (the panel's default)
 			panel = ui.DrawBattery(bar.Battery, v.BarHeight(), v.HeadBox("bar-battery"), rd.fonts, scr.W)
 			panel.Over(rd.over)

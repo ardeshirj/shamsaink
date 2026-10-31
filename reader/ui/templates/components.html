@@ -32,3 +32,7 @@ in right to left. */}}
 {{/* Tabs over a panel: each a button (from pick, gathered by list), the one shown bold and underlined, a line under them
 all. */}}
 {{define "tabs"}}<div class="tabs">{{range .}}<span class="{{if .On}}on{{end}}" id="{{.ID}}">{{.Label}}</span>{{end}}</div>{{end}}
+
+{{/* A slider (from slide): its name and value on a line, then a minus, a track filled to its share (the track's own
+id: a tap on it sets the value there, Panel.ShareAt), and a plus. The track fills from the start side. */}}
+{{define "slider"}}<div class="slider"><div class="sname"><span>{{.Name}}</span><span>{{.Value}}</span></div><div class="srow">{{template "button" .Dec}}<div class="track" id="{{.Track}}"><i style="width: {{.Share}}%"></i></div>{{template "button" .Inc}}</div></div>{{end}}

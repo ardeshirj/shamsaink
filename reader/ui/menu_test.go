@@ -100,3 +100,27 @@ func TestDock(t *testing.T) {
 		}
 	}
 }
+
+// The Light panel has its buttons, and a tap along a slider's track gives its share, from the start side.
+func TestLight(t *testing.T) {
+	var fonts *blitz.Fonts
+	if d := os.Getenv("FONTS"); d != "" {
+		fonts = blitz.LoadFonts(d)
+	}
+	m := DrawLight(40, 3, 10, 160, fonts, 1236)
+	for _, id := range []string{"light-dec", "light", "light-inc", "warmth-dec", "warmth", "warmth-inc", "clean"} {
+		if b, ok := m.buttons[id]; !ok || b.Empty() {
+			t.Errorf("button %s not on the Light panel", id)
+		}
+	}
+	r := m.Box("light")
+	if s := m.ShareAt("light", r.Min.X+r.Dx()/4, false); s < 0.2 || s > 0.3 {
+		t.Errorf("a quarter along the track: %.2f", s)
+	}
+	if s := m.ShareAt("light", r.Min.X+r.Dx()/4, true); s < 0.7 || s > 0.8 {
+		t.Errorf("a quarter along the track, right to left: %.2f", s)
+	}
+	if r.Min.Y < 160 {
+		t.Errorf("the panel's track at %v, over the bar", r)
+	}
+}

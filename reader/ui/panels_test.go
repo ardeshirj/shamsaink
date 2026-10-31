@@ -47,6 +47,11 @@ func TestPanels(t *testing.T) {
 		}
 	}
 	save("remove", DrawRemove(fonts, w).img)
+	for _, code := range []string{"en", "fa"} { // the Light panel under the bar
+		SetLanguage(code)
+		save("light-"+code, DrawLight(40, 7, 10, 160, fonts, w).img)
+	}
+	SetLanguage("en")
 	// the battery's level under the battery, in both languages: its edge under the battery's
 	for _, code := range []string{"en", "fa"} {
 		SetLanguage(code)
@@ -338,7 +343,8 @@ func TestPanelEdges(t *testing.T) {
 	bar := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
 	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
-		"remove":    DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "bar": bar,
+		"light":     DrawLight(40, 3, 10, 160, fonts, w), "light-fa": func() *Panel { SetLanguage("fa"); defer SetLanguage("en"); return DrawLight(40, 3, 10, 160, fonts, w) }(),
+		"remove": DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "bar": bar,
 		"library-head": LibraryHead(Bar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {

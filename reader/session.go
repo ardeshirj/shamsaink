@@ -43,7 +43,7 @@ type session struct {
 	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
 	tab                       string       // the sheet's tab: "text" or "page"
 	bar, list                 *ui.Panel    // with them the bar at the top, and its ≡ list (or the battery's level) while open
-	level                     bool         // the list is the battery's level, not ≡'s
+	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's) or "light"
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -426,7 +426,7 @@ func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnl
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawBar() {
 	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
-		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && !s.level}, s.rd.fonts, s.scr.W)
+		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light"}, s.rd.fonts, s.scr.W)
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
@@ -547,6 +547,18 @@ func (s *session) inMenu(g device.Gesture) {
 			s.leave()
 			return
 		}
+		if s.kind == "light" && id != "" { // the light changed, or the screen cleaned; the panel stays open
+			changed, clean := s.rd.lightTap(s.set, s.list, id, g.X)
+			switch {
+			case clean:
+				s.showPage(device.WfGC16, true)
+			case changed:
+				old := s.list.Rect()
+				s.list = s.rd.drawLight(s.bar.Rect().Dy())
+				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
+			}
+			return
+		}
 		rect := s.list.Rect().Union(s.bar.Rect())
 		s.list = nil
 		s.drawBar()
@@ -570,14 +582,20 @@ func (s *session) inMenu(g device.Gesture) {
 		s.leave()
 	case id == "bar-battery": // its level in a box under it, closed by the next tap
 		b := s.dev.Battery()
-		s.list, s.level = ui.DrawBattery(b, s.bar.Rect().Dy(), s.bar.Box("bar-battery"), s.rd.fonts, s.scr.W), true
+		s.list, s.kind = ui.DrawBattery(b, s.bar.Rect().Dy(), s.bar.Box("bar-battery"), s.rd.fonts, s.scr.W), "level"
 		s.refresh(s.list.Rect(), device.WfREAGL)
+	case id == "bar-light": // the Light panel under the bar, the sun filled
+		if _, _, ok := s.dev.Light(); ok {
+			s.list, s.kind = s.rd.drawLight(s.bar.Rect().Dy()), "light"
+			s.drawBar()
+			s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
+		}
 	case id == "bar-menu":
-		s.level = false
+		s.kind = "menu"
 		s.list = ui.DrawLibraryMenu(s.bar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
 		s.drawBar()
 		s.refresh(s.list.Rect().Union(s.bar.Rect()), device.WfREAGL)
-	case strings.HasPrefix(id, "bar-"): // the light, the title: nothing yet
+	case strings.HasPrefix(id, "bar-"): // the headphones, the title: nothing yet
 	case id == "contents":
 		t := time.Now()
 		s.nav, s.sheet = nil, nil
