@@ -188,7 +188,10 @@ svg.ic { width: 1.2em; height: 1.2em; vertical-align: -.22em; fill: none; stroke
 /* layer outlines and tap zones, switched on from the bar */
 .show .layer { outline: 2px dashed var(--tag); outline-offset: -2px; }
 .show .layer::after { content: attr(data-layer); position: absolute; inset-inline-end: 3px; top: 3px; font: 500 9px/1 var(--mono); color: #fff; background: var(--tag); padding: 2px 4px; border-radius: 2px; letter-spacing: .03em; direction: ltr; text-indent: 0; z-index: 2; white-space: nowrap; }
-.show .layer.dock::after, .show .layer.panel::after, .show .layer.foot::after { top: auto; bottom: 3px; }
+.show .layer.dock::after, .show .layer.panel:not(.drop)::after, .show .layer.foot::after { top: auto; bottom: calc(100% + 3px); }
+.show .layer.panel.drop::after { top: auto; bottom: 3px; }
+.show .layer.full::after { top: 50%; }
+.show .layer.top::after { top: calc(100% + 3px); inset-inline-end: auto; inset-inline-start: 3px; }
 .show .zone { opacity: 1; outline: 2px dashed var(--tag); outline-offset: -3px; background: var(--tag-soft); }
 
 /* ---- the components ---- */
@@ -238,6 +241,40 @@ nav.tabs-top a:hover, nav.tabs-top a:focus-visible { color: var(--fg); }
 .books li.with-cover .prog { grid-column: 2 / -1; }
 .search { display: flex; align-items: center; gap: .5em; border: .24cqw solid var(--ink); border-radius: .4em; padding: .2em .6em; opacity: .85; }
 .search .ic { flex: none; }
+/* The bar: the same component as the library's header and over a book (or the dock's first row): the context action
+   at the start, a title, the device's items at the end */
+.topbar { display: flex; align-items: center; gap: .5em; }
+.topbar .title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 600 1em/1.2 var(--display); }
+.topbar .end { display: inline-flex; align-items: center; gap: .55em; font-size: .88em; color: var(--soft); font-variant-numeric: tabular-nums; }
+.tb { display: inline-grid; place-items: center; min-width: 2.2em; height: 2.2em; border-radius: .4em; flex: none; color: var(--ink); }
+.topbar .end .tb { font-size: 1.14em; }
+.topbar .tb svg.ic { width: 1.35em; height: 1.35em; }
+.dock .sep { border-top: .12cqw solid var(--hair); }
+.hint { margin: 0; font-size: .85em; color: var(--soft); }
+.tb.on { background: var(--ink); color: var(--paper); }
+.layer.top { inset-inline: 0; top: 0; border-bottom: .24cqw solid var(--ink); padding: .45em 3.6cqw; }
+.full > .topbar { margin-inline: -1.15cqw; padding-bottom: .35em; border-bottom: .24cqw solid var(--ink); }
+.stackt { position: absolute; inset-inline: 0; top: 0; display: flex; flex-direction: column; }
+.stackt > .layer { position: relative; }
+.panel.drop { border-top: 0; border-bottom: .24cqw solid var(--ink); }
+.dock > .topbar { margin-inline: -1.15cqw; }
+/* the progress bar between the chapter arrows, ticks under it where chapters start */
+.navrow { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: .3em; }
+.navrow .prog { position: relative; }
+.prog .tk { position: absolute; top: 100%; width: .24cqw; height: .3em; background: var(--ink); }
+.chip { display: inline-flex; align-items: center; gap: .35em; border: .24cqw solid var(--ink); border-radius: .4em; padding: 0 .5em; }
+/* the map of how the screens connect */
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin-top: 16px; }
+.flow .node { border: 1px solid var(--rule); border-radius: 6px; background: var(--card); padding: 10px 14px; display: grid; gap: 2px; min-width: 0; flex: 1 1 150px; }
+.flow .node.main { border-color: var(--tag); }
+.flow .node.panels { flex-basis: 260px; }
+.flow .node b { font-family: var(--display); }
+.flow .node span { color: var(--muted); font-size: .88rem; }
+.flow .arrow { align-self: center; color: var(--tag); font-weight: 600; }
+/* bookmarks: chapter, first words, page */
+.list.marks li span:first-child { display: grid; gap: .1em; min-width: 0; }
+.list.marks b { font-weight: 600; }
+.list.marks i { font-size: .85em; color: var(--soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 h3.group { margin: 2.2rem 0 .2rem; padding-top: .8rem; border-top: .12cqw solid var(--hair); scroll-margin-top: 1rem; }
 h3.group + .lede { margin: 0; }
 [dir="rtl"] .ic.flip { transform: scaleX(-1); }
