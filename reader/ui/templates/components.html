@@ -5,7 +5,8 @@ row with a minus and a plus): the id it is given is how the reader finds its box
 direction ("rtl", "ltr" or "" for the interface's language's: none in English, right to left in Farsi); the page's lang is the interface's. */}}
 {{define "head"}}<html{{if .}} dir="{{.}}"{{else if rtlui}} dir="rtl"{{end}}{{if uilang}} lang="{{uilang}}"{{end}}><head><style>{{template "ui.css"}}</style>{{end}}
 
-{{define "button"}}<span class="b" id="{{.ID}}">{{.Label}}</span>{{end}}
+{{/* A button; one drawn filled (from fill) is the panel's main one (Done). */}}
+{{define "button"}}<span class="b{{if .Fill}} fill{{end}}" id="{{.ID}}">{{.Label}}</span>{{end}}
 
 {{/* A button that shows whether it is the one chosen, with a tick. */}}
 {{define "choice"}}<span class="b" id="{{.ID}}">{{if .On}}✓ {{end}}{{.Label}}</span>{{end}}
@@ -28,3 +29,7 @@ direction of its own. */}}
 {{/* A button that is an icon alone (from ibtn), no border; drawn filled when on. The arrows that point are mirrored
 in right to left. */}}
 {{define "iconbutton"}}<span class="tb" id="{{.ID}}"><span class="i{{if .On}} on{{end}}{{if .Flip}} flip{{end}}">{{.Glyph}}</span></span>{{end}}
+
+{{/* Tabs over a panel: each a button (from pick, gathered by list), the one shown bold and underlined, a line under them
+all. */}}
+{{define "tabs"}}<div class="tabs">{{range .}}<span class="{{if .On}}on{{end}}" id="{{.ID}}">{{.Label}}</span>{{end}}</div>{{end}}

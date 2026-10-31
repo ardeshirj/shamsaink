@@ -35,11 +35,14 @@ func TestPanels(t *testing.T) {
 		defer f.Close()
 		png.Encode(f, img)
 	}
-	for _, narrated := range []bool{true, false} {
+	for _, tab := range []string{"text", "page"} {
 		for _, dir := range []string{"", "rtl", "ltr"} {
 			for _, lh := range []float32{0, 1.35} {
-				m := DrawMenu(Menu{FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir, BookRTL: true, Narrated: narrated}, fonts, w)
-				save(fmt.Sprintf("menu-narrated%v-dir%s-lh%g", narrated, dir, lh), m.img)
+				if tab == "page" && lh > 0 || tab == "text" && dir != "" {
+					continue
+				}
+				m := DrawText(Text{Tab: tab, FontSize: 50, LineHeight: lh, Lines: 1.16, Margin: 60, Dir: dir, BookRTL: true}, fonts, w, h)
+				save(fmt.Sprintf("text-%s-dir%s-lh%g", tab, dir, lh), m.img)
 			}
 		}
 	}
@@ -150,14 +153,16 @@ func TestPanels(t *testing.T) {
 		for _, n := range []int{5, 100} {
 			save(fmt.Sprintf("lang-%s-bar-library%d", code, n), DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: n, Menu: true}, fonts, w).img)
 		}
-		save("lang-"+code+"-menu", DrawMenu(Menu{FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60, BookRTL: true, Narrated: true}, fonts, w).img)
+		for _, tab := range []string{"text", "page"} {
+			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60, BookRTL: true}, fonts, w, h).img)
+		}
 		save("lang-"+code+"-remove", DrawRemove(fonts, w).img)
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}}, 1, RTL(), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		cv.Draw(img)
 		save("lang-"+code+"-contents", img)
 		cv.Close()
-		save("lang-"+code+"-nav", DrawNav(Progress{Chapter: "Chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, RTL: RTL()}, fonts, w, h).img)
+		save("lang-"+code+"-dock", DrawDock(Progress{Chapter: "Chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, RTL: RTL()}, fonts, w, h).img)
 	}
 	SetLanguage("en")
 	// no books: an empty list
@@ -169,15 +174,21 @@ func TestPanels(t *testing.T) {
 	save("splash", Splash(t.TempDir(), fonts, w, h))
 	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680))
 	save("loading-kobo", Loading(t.TempDir(), fonts, 1264, 1680))
+	ticks := []float64{0, 0.09, 0.18, 0.31, 0.45, 0.58, 0.7, 0.84}
 	for _, rtl := range []bool{true, false} {
 		for _, back := range []int{0, 7} {
 			for _, share := range []float64{0, 0.25, 1} {
-				p := Progress{Chapter: "Tom & Jerry <the first> chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: share, Back: back, RTL: rtl}
-				save(fmt.Sprintf("nav-rtl%v-back%d-share%g", rtl, back, share), DrawNav(p, fonts, w, h).img)
+				p := Progress{Chapter: "Tom & Jerry <the first> chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: share, Back: back,
+					Ticks: ticks, RTL: rtl, Narrated: back == 0}
+				save(fmt.Sprintf("dock-rtl%v-back%d-share%g", rtl, back, share), DrawDock(p, fonts, w, h).img)
 			}
 		}
 	}
 	long := "The Adventures of Sherlock Holmes and a much longer title to cut"
+	for _, at := range []int{11, 12} { // a long chapter title cut; one page left, and the last page
+		p := Progress{Chapter: long + " and longer still, a chapter's title", At: at, Of: 12, Page: 40, Share: 0.4, Ticks: ticks}
+		save(fmt.Sprintf("dock-long-at%d", at), DrawDock(p, fonts, w, h).img)
+	}
 	book := Bar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
 	save("bar-library", DrawBar(Bar{Start: "magnifying-glass", Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
 	save("bar-book-ltr", DrawBar(book, fonts, w).img)
@@ -296,17 +307,18 @@ func TestPanelEdges(t *testing.T) {
 		fonts = blitz.LoadFonts(d)
 	}
 	const w, h = 1236, 1648
-	p := Progress{Chapter: "A chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7}
+	p := Progress{Chapter: "A chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7, Ticks: []float64{0.3}, Narrated: true}
 	v := NewContents([]Entry{{Title: "One"}, {Title: "Two"}}, 0, false, fonts, w, h)
 	defer v.Close()
 	bar := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
-	for name, m := range map[string]*Panel{"menu": DrawMenu(Menu{FontSize: 50, Lines: 1.16, Margin: 60, Narrated: true}, fonts, w),
-		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head, "bar": bar,
+	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
+		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
+		"remove":    DrawRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "bar": bar,
 		"library-head": LibraryHead(Bar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w)} {
 		for id, r := range m.buttons {
-			if strings.HasPrefix(id, "bar-") || id == "list-sort" {
+			if strings.HasPrefix(id, "bar-") || iconButtons[id] {
 				// an icon button has no border: some ink inside its box instead
 				ink := false
 				for y := r.Min.Y; y < r.Max.Y; y++ {
@@ -330,3 +342,7 @@ func TestPanelEdges(t *testing.T) {
 		}
 	}
 }
+
+// The buttons that are an icon alone (no border), besides the bar's.
+var iconButtons = map[string]bool{"list-sort": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,
+	"read-aloud": true}

@@ -1,6 +1,0 @@
-{{template "head" ""}}</head><body>
-<div class="row">{{template "button" btn "reset" (t "reset-settings")}}{{if .Narrated}}{{template "button" btn "read-aloud" (t "read-aloud")}}{{end}}</div>
-<div class="set">{{template "stepper" step (t "text-size") "size" .Size}}{{template "stepper" step .LinesName "lines" .Lines}}{{template "stepper" step (t "margins") "margin" .Margin}}</div>
-<p>{{t "page-turns-book"}}</p>
-{{template "segments" list (pick "dir-" (t "dir-book" .BookDir) (eq .Dir "")) (pick "dir-rtl" (t "dir-rtl") (eq .Dir "rtl")) (pick "dir-ltr" (t "dir-ltr") (eq .Dir "ltr"))}}
-</body></html>

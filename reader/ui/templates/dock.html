@@ -1,0 +1,22 @@
+{{/* The dock (panel.go, DrawDock; docs/layouts/layout.html, "Reading and the dock"): at the bottom of the page under
+the bar, opened by a tap. The place: the chapter and the page in the book; the chapters before and after as arrows at
+the ends of the progress bar (a tap on it goes anywhere), a tick where each chapter starts; the way back after a jump,
+else the pages left in this part, and the share read; then the tools. The row of the bar runs in the book's direction
+(it fills from the book's start, its arrows point to the start and the end); the rest in the interface's. The engine
+does not clip text, so DrawDock cuts a long chapter title itself, as DrawBar does. */ -}}
+{{template "head" ""}}<style>
+.where { display: flex; align-items: center; justify-content: space-between; gap: 1em; margin: 0.25em 0; }
+.where .t { flex: 1 1 0; min-width: 0; width: 0; white-space: nowrap; }
+.where .n { flex: none; white-space: nowrap; }
+.navrow { display: flex; align-items: center; gap: 0.3em; margin: 0.2em 0 0.6em; }
+.prog { flex: 1; position: relative; display: flex; height: 22px; border: var(--line) solid var(--ink); border-radius: 11px; }
+.prog i { display: block; width: {{.Width}}%; background: var(--ink); border-radius: 8px; }
+.prog b { position: absolute; top: 100%; width: var(--line); height: 0.3em; background: var(--ink); }
+.tools { display: flex; justify-content: space-between; margin-top: 0.4em; }
+.tools span.tb { font-size: 1.35em; }
+</style></head><body>
+<div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}">{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>
+<div class="navrow" dir="{{.Dir}}">{{template "iconbutton" ibtn "chapter-prev" "caret-left" false}}<div class="prog" id="{{id "bar"}}"><i></i>{{range .Ticks}}<b style="{{$.Side}}: {{.}}%"></b>{{end}}</div>{{template "iconbutton" ibtn "chapter-next" "caret-right" false}}</div>
+<div class="where">{{if .Back}}<span class="b" id="{{id "back"}}">{{icon "arrow-counter-clockwise"}} {{.Back}}</span>{{else}}<span class="t">{{.Left}}</span>{{end}}<span class="n">{{.Share}}</span></div>
+<div class="tools">{{template "iconbutton" ibtn "contents" "list-bullets" false}}{{template "iconbutton" ibtn "text" "text-aa" false}}{{if .Narrated}}{{template "iconbutton" ibtn "read-aloud" "headphones" false}}{{end}}</div>
+</body></html>

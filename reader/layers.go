@@ -51,8 +51,8 @@ func (s *session) compose(r image.Rectangle) *image.Gray {
 	if s.nar != nil {
 		fill(over, clip(s.nar.bars, r))
 	}
-	panels := []*ui.Panel{s.mn, s.nav}
-	if s.nav != nil { // the menu with the bar over it, and the bar's list
+	panels := []*ui.Panel{s.mn, s.nav, s.sheet}
+	if s.nav != nil || s.sheet != nil { // the bar over the dock or the sheet, and the bar's list
 		panels = append(panels, s.bar, s.list)
 	}
 	for _, m := range panels {

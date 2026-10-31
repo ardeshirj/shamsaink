@@ -18,7 +18,6 @@ type Panel struct {
 }
 
 // Rect is where the panel is on the screen.
-// SetY puts the panel's top at y on the screen (the book's menu under the bar).
 func (m *Panel) SetY(y int) { m.y0 = y }
 
 func (m *Panel) Rect() image.Rectangle { return m.img.Rect.Add(image.Pt(m.x0, m.y0)) }
@@ -30,39 +29,53 @@ func (m *Panel) Over(img *image.Gray) {
 	}
 }
 
-const menuHeight = 900 // px, at most
+const sheetHeight = 900 // px, at most
 
-// What the menu shows: the reader builds it from its settings and the book.
-type Menu struct {
+// What the Text sheet shows: the reader builds it from its settings and the book.
+type Text struct {
+	Tab        string  // the tab shown: "text" (size, spacing, margins) or "page" (the page turns)
 	FontSize   float32 // px
 	LineHeight float32 // the one set; 0: the book's own
 	Lines      float32 // the line spacing as laid out now (shown when LineHeight is 0)
 	Margin     int     // px
 	Dir        string  // the direction set for this book: "", "rtl" or "ltr"
 	BookRTL    bool    // the book itself reads right to left
-	Narrated   bool    // it can be read aloud
 }
 
-// The menu's numbers and choices, for templates/menu.html.
-type menuData struct {
+// The sheet's numbers and choices, for templates/text.html.
+type textData struct {
+	Tab                            string
 	Size, LinesName, Lines, Margin string
 	Dir, BookDir                   string
-	Narrated                       bool
 }
 
-// DrawMenu draws the menu for m.
-func DrawMenu(m Menu, fonts *blitz.Fonts, w int) *Panel {
+// DrawText draws the Text sheet for x at the bottom of a screen h px high, a line on its top edge. Its buttons:
+// tab-text and tab-page, then the tab's (size-, lines- and margin-dec and -inc; or dir-, dir-rtl and dir-ltr), reset
+// and done.
+func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 	// the line spacing as it is, and whether it is the book's own
-	lines, linesName := m.Lines, word("line-spacing-book")
-	if m.LineHeight > 0 {
-		lines, linesName = m.LineHeight, word("line-spacing")
+	lines, linesName := x.Lines, word("line-spacing-book")
+	if x.LineHeight > 0 {
+		lines, linesName = x.LineHeight, word("line-spacing")
 	}
-	html, ids := render("menu.html", menuData{
-		Size: fmt.Sprintf("%g px", m.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
-		Margin: fmt.Sprintf("%d px", m.Margin), Dir: m.Dir, BookDir: map[bool]string{true: word("dir-rtl-short"), false: word("dir-ltr-short")}[m.BookRTL],
-		Narrated: m.Narrated,
+	html, ids := render("text.html", textData{Tab: x.Tab,
+		Size: fmt.Sprintf("%g px", x.FontSize), LinesName: linesName, Lines: fmt.Sprintf("%.2f", lines),
+		Margin: fmt.Sprintf("%d px", x.Margin), Dir: x.Dir, BookDir: map[bool]string{true: word("dir-rtl-short"), false: word("dir-ltr-short")}[x.BookRTL],
 	})
-	return drawPanel(html, ids, fonts, w, menuHeight)
+	return atBottom(drawPanel(html, ids, fonts, w, sheetHeight), h)
+}
+
+// atBottom puts a panel drawn by drawPanel at the bottom of a screen h px high, its line moved to its top edge.
+func atBottom(m *Panel, h int) *Panel {
+	w, nh := m.img.Rect.Dx(), m.img.Rect.Dy()
+	copy(m.img.Pix, m.img.Pix[(nh-4)*m.img.Stride:])
+	for y := nh - 4; y < nh; y++ {
+		for x := 0; x < w; x++ {
+			m.img.Pix[y*m.img.Stride+x] = 255
+		}
+	}
+	m.y0 = h - nh
+	return m
 }
 
 // The panel asking whether to remove a highlight (its words are grey on the page under it).
@@ -115,7 +128,7 @@ func drawPanelIn(html string, ids []string, box string, fonts *blitz.Fonts, w, h
 	h = min(h, bottom+pad+4)
 	m.img = image.NewGray(image.Rect(0, 0, w, h))
 	copy(m.img.Pix, whole.Pix)
-	for y := h - 4; y < h; y++ { // a line under the panel (over it, for DrawNav's at the bottom)
+	for y := h - 4; y < h; y++ { // a line under the panel (over it, for those at the bottom: atBottom)
 		for x := 0; x < w; x++ {
 			m.img.Pix[y*m.img.Stride+x] = 0
 		}
@@ -139,53 +152,83 @@ func (m *Panel) At(x, y int) string {
 	return id
 }
 
-// Where the reader is, for the bottom panel: the chapter's title, the page in its document, the page in the book
-// (Total 0 until every document is paginated) and the share of the book read; Back is the page to go back to after a
-// jump (0: none).
+// Where the reader is, for the dock: the chapter's title, the page in its document, the page in the book (Total 0
+// until every document is paginated) and the share of the book read; Back is the page to go back to after a jump (0:
+// none); Ticks the shares of the book where its chapters start.
 type Progress struct {
 	Chapter     string
 	At, Of      int
 	Page, Total int
 	Share       float64
 	Back        int
+	Ticks       []float64
 	RTL         bool
+	Narrated    bool // it can be read aloud: the dock's Listen
 }
 
-const navHeight = 700 // px, at most
+const dockHeight = 700 // px, at most
 
-// The bottom panel's words and numbers, for templates/nav.html.
-type navData struct {
-	Chapter, Where, Back string // Back: the way back's label, "" for none
-	Dir, Width           string // the book's direction (the bar fills from its start side), its filled share in per cent
+// The dock's words and numbers, for templates/dock.html.
+type dockData struct {
+	Chapter, Page, Back, Left, Share string // Back: the way back's label, "" for none
+	Dir, Side, Width                 string // the book's direction and the side it starts from (left, right), its filled share in per cent
+	Ticks                            []string
+	Narrated                         bool
 }
 
-// DrawNav draws the bottom panel, opened with the menu: where the reader is, a bar to tap to go anywhere in the book,
-// the table of contents, the chapters before and after, and the way back after a jump.
-func DrawNav(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
-	book := word("page", p.Page)
+// DrawDock draws the dock at the bottom of a screen h px high, opened with the bar: where the reader is, a bar to tap
+// to go anywhere in the book between the chapters before and after, the way back after a jump, and the tools. Its
+// buttons: chapter-prev, bar, chapter-next, back (after a jump), contents, text and read-aloud (if narrated).
+func DrawDock(p Progress, fonts *blitz.Fonts, w, h int) *Panel {
+	pct := func(f float64) string { return fmt.Sprintf("%.1f", 100*min(max(f, 0), 1)) }
+	d := dockData{Chapter: p.Chapter, Page: word("dock-page", p.Page), Share: word("percent", num(int(100*min(max(p.Share, 0), 1)+0.5))),
+		Dir: "ltr", Side: "left", Width: pct(p.Share), Narrated: p.Narrated}
 	if p.Total > 0 {
-		book = word("page-of", p.Page, p.Total)
+		d.Page = word("dock-page-of", p.Page, p.Total)
 	}
-	d := navData{Chapter: p.Chapter, Where: word("where", p.At, p.Of, book),
-		Dir: "ltr", Width: fmt.Sprintf("%.1f", 100*min(max(p.Share, 0), 1))}
 	if p.RTL {
-		d.Dir = "rtl"
+		d.Dir, d.Side = "rtl", "right"
 	}
-	if p.Back > 0 {
-		d.Back = word("back-to-page", p.Back)
-	}
-	html, ids := render("nav.html", d)
-	m := drawPanel(html, ids, fonts, w, navHeight)
-	// the line on the panel's top edge, not under it
-	nh := m.img.Rect.Dy()
-	copy(m.img.Pix, m.img.Pix[(nh-4)*m.img.Stride:])
-	for y := nh - 4; y < nh; y++ {
-		for x := 0; x < w; x++ {
-			m.img.Pix[y*m.img.Stride+x] = 255
+	for _, t := range p.Ticks {
+		if t > 0 && t < 1 {
+			d.Ticks = append(d.Ticks, pct(t))
 		}
 	}
-	m.y0 = h - nh
-	return m
+	switch left := p.Of - p.At; {
+	case p.Back > 0:
+		d.Back = word("back-to-page", p.Back)
+	case left <= 0:
+		d.Left = word("last-page")
+	case left == 1:
+		d.Left = word("page-left", left)
+	default:
+		d.Left = word("pages-left", left)
+	}
+	draw := func() *Panel {
+		html, ids := render("dock.html", d)
+		return drawPanel(html, ids, fonts, w, dockHeight)
+	}
+	m := draw()
+	// the engine does not clip text: a chapter title wider than its room is cut to the most letters that fit, then "…"
+	fits := func() bool { return m.buttons["where-title-text"].Dx() <= m.buttons["where-title"].Dx() }
+	if !fits() {
+		title := []rune(p.Chapter)
+		lo, hi := 0, len(title) // the most letters kept: lo fits, hi does not
+		for hi-lo > 1 {
+			mid := (lo + hi) / 2
+			d.Chapter = strings.TrimSpace(string(title[:mid])) + "…"
+			if m = draw(); fits() {
+				lo = mid
+			} else {
+				hi = mid
+			}
+		}
+		d.Chapter = strings.TrimSpace(string(title[:lo])) + "…"
+		m = draw()
+	}
+	delete(m.buttons, "where-title")
+	delete(m.buttons, "where-title-text")
+	return atBottom(m, h)
 }
 
 // Share is the share of the bar at x, in the book's direction.

@@ -78,10 +78,10 @@ func TestContents(t *testing.T) {
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	v.Draw(img)
 	save("contents.png", img)
-	nav := ui.DrawNav(ui.Progress{Chapter: "a chapter's title", At: 3, Of: 12, Page: 40, Total: 160, Share: 0.25, Back: 7,
+	nav := ui.DrawDock(ui.Progress{Chapter: "a chapter's title", At: 3, Of: 12, Page: 40, Total: 160, Share: 0.25, Back: 7,
 		RTL: r.rtl}, fonts, w, h)
 	page := image.NewGray(image.Rect(0, 0, w, h))
 	r.book.Draw(r.page(), page)
 	nav.Over(page)
-	save("nav.png", page)
+	save("dock.png", page)
 }

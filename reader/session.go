@@ -39,8 +39,10 @@ type session struct {
 	ahead bool       // the next page may still need drawing
 	rest  bool       // documents still to paginate
 
-	mn, nav                   *ui.Panel    // the menu and the panel at the bottom, while open
-	bar, list                 *ui.Panel    // with them the bar over the menu, and its ≡ list while open
+	mn                        *ui.Panel    // the panel asking whether to remove a highlight, while open
+	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
+	tab                       string       // the sheet's tab: "text" or "page"
+	bar, list                 *ui.Panel    // with them the bar at the top, and its ≡ list while open
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -56,7 +58,7 @@ type session struct {
 
 	left, asleep bool // the book left (asleep: as the Kindle went to sleep)
 
-	langCode  string // the book's language (lang.go), for the interface's
+	langCode string // the book's language (lang.go), for the interface's
 }
 
 // read opens a book (m: "book", see main) at its place and turns its pages until it is left; the touch screen is let
@@ -238,7 +240,7 @@ func (s *session) input(e device.Event) {
 		s.inContents(e.Gesture)
 	case e.Hold != device.NotHeld:
 		s.held(e.Gesture)
-	case s.mn != nil:
+	case s.mn != nil || s.nav != nil || s.sheet != nil:
 		s.inMenu(e.Gesture)
 	default:
 		s.turn(e.Gesture)
@@ -305,7 +307,7 @@ func (s *session) show() {
 	s.ahead = true
 }
 
-// turn turns a page for a tap or a swipe, or opens the menu. Taps queued while the last page's ink moved are applied
+// turn turns a page for a tap or a swipe, or opens the dock. Taps queued while the last page's ink moved are applied
 // together: one page drawn for all of them.
 func (s *session) turn(g device.Gesture) {
 	turned, open := apply(s.r, g, s.scr.W, s.scr.H)
@@ -339,10 +341,10 @@ func (s *session) turn(g device.Gesture) {
 	}
 }
 
-// where says where the reader is, for the bottom panel.
+// where says where the reader is, for the dock.
 func (s *session) where() ui.Progress {
 	r := s.r
-	p := ui.Progress{RTL: r.rtl, Page: r.page() + 1, Back: s.backPage}
+	p := ui.Progress{RTL: r.rtl, Page: r.page() + 1, Back: s.backPage, Ticks: s.ticks(), Narrated: s.narrated}
 	if c := r.chapter(s.toc); c >= 0 {
 		p.Chapter = s.toc[c].title
 	}
@@ -358,42 +360,77 @@ func (s *session) where() ui.Progress {
 	return p
 }
 
-// showMenu puts the menu and the panel at the bottom over the page shown.
-func (s *session) showMenu() {
-	t := time.Now()
-	s.list = nil
-	s.drawMenu()
-	s.showPage(device.WfREAGL, false)
-	fmt.Printf("  menu drawn in %.0f ms\n", ms(t))
+// ticks are the shares of the book where its chapters (the table of contents' top entries) start, for the dock's
+// bar: by page once every document is paginated, else by document.
+func (s *session) ticks() []float64 {
+	r := s.r
+	var pages []blitz.PageInfo
+	start := map[int]int{} // a document's first page
+	if !s.rest {
+		pages = r.book.PageLines()
+		for i := len(pages) - 1; i >= 0; i-- {
+			start[pages[i].Spine] = i
+		}
+	}
+	var ts []float64
+	seen := map[int]bool{}
+	for _, e := range s.toc {
+		if e.depth > 0 || seen[e.doc] {
+			continue
+		}
+		seen[e.doc] = true
+		if pages == nil {
+			ts = append(ts, float64(e.doc)/float64(len(r.spine)))
+		} else if p, ok := start[e.doc]; ok {
+			ts = append(ts, float64(p)/float64(max(len(pages)-1, 1)))
+		}
+	}
+	return ts
 }
 
-// drawMenu draws the menu, the panel at the bottom and the bar over them, in the interface's language.
+// showMenu puts the bar and the dock over the page shown.
+func (s *session) showMenu() {
+	t := time.Now()
+	s.list, s.sheet = nil, nil
+	s.drawMenu()
+	s.showPage(device.WfREAGL, false)
+	fmt.Printf("  menu drawn in %.0f ms (the dock)\n", ms(t))
+}
+
+// drawMenu draws the dock, or the Text sheet when it is open, and the bar over the page, in the interface's language.
 func (s *session) drawMenu() {
-	set, r := s.set, s.r
-	s.mn = ui.DrawMenu(ui.Menu{FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc), Margin: set.Margin,
-		Dir: set.Direction[r.key], BookRTL: r.bookRTL, Narrated: s.narrated}, s.rd.fonts, s.scr.W)
-	s.nav = ui.DrawNav(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
+	if s.sheet != nil {
+		s.drawSheet()
+	} else {
+		s.nav = ui.DrawDock(s.where(), s.rd.fonts, s.scr.W, s.scr.H)
+	}
 	s.drawBar()
-	s.mn.SetY(s.bar.Rect().Dy())
+}
+
+// drawSheet draws the Text sheet at its tab, from the settings and the book.
+func (s *session) drawSheet() {
+	set, r := s.set, s.r
+	s.sheet = ui.DrawText(ui.Text{Tab: s.tab, FontSize: set.FontSize, LineHeight: set.LineHeight, Lines: r.book.LineSpacing(r.doc),
+		Margin: set.Margin, Dir: set.Direction[r.key], BookRTL: r.bookRTL}, s.rd.fonts, s.scr.W, s.scr.H)
 }
 
 // applyLanguage sets the interface's language for this book and the settings (lang.go).
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
-// drawBar draws the bar over the menu (docs/layouts/layout.html, "the bar"): back to the library at its start, the
+// drawBar draws the bar over the dock (docs/layouts/layout.html, "the bar"): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawBar() {
 	s.bar = ui.DrawBar(ui.Bar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("15:04"),
 		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil}, s.rd.fonts, s.scr.W)
 }
 
-// closeMenu takes the menu, the bar and the bottom panel off the page.
+// closeMenu takes the bar, the dock or the sheet, and any panel off the page.
 func (s *session) closeMenu() {
-	s.mn, s.nav, s.list = nil, nil, nil
+	s.mn, s.nav, s.sheet, s.list = nil, nil, nil, nil
 	s.showPage(device.WfREAGL, false)
 }
 
-// jump goes to page at of document doc from the menu or the table of contents, the place before it kept for "Back to
+// jump goes to page at of document doc from the dock or the table of contents, the place before it kept for "Back to
 // page".
 func (s *session) jump(doc, at int) {
 	d, a, n := s.r.doc, s.r.at, s.r.page()+1
@@ -401,7 +438,7 @@ func (s *session) jump(doc, at int) {
 		return
 	}
 	s.backDoc, s.backAt, s.backPage = d, a, n
-	s.mn, s.nav = nil, nil
+	s.mn, s.nav, s.sheet = nil, nil, nil
 	s.show()
 	fmt.Printf("went to document %d page %d (from document %d page %d)\n", s.r.doc, s.r.at, d, a)
 }
@@ -440,7 +477,7 @@ func (s *session) inContents(g device.Gesture) {
 func (s *session) held(g device.Gesture) {
 	r := s.r
 	switch {
-	case s.mn != nil:
+	case s.mn != nil || s.nav != nil || s.sheet != nil:
 	case g.Hold == device.Held:
 		words := r.book.Words(r.page())
 		i := wordAt(words, g.X, g.Y)
@@ -491,11 +528,11 @@ func (s *session) showSel() {
 	s.refresh(old.Union(union(sel.bars)), device.WfA2)
 }
 
-// inMenu handles a tap with the menu open: a button tapped is applied (the page laid out again if need be), a tap off
-// the panel closes it.
+// inMenu handles a tap with the dock, the sheet or a panel open: a button tapped is applied (the page laid out again
+// if need be), a tap off them all closes them (docs/layouts: panels close to the page).
 func (s *session) inMenu(g device.Gesture) {
 	r := s.r
-	if s.nav != nil && s.list != nil { // the bar's ≡ list: Leave, else a tap anywhere closes it
+	if s.list != nil { // the bar's ≡ list: its entries, else a tap anywhere closes it
 		id := ""
 		if !g.Swipe {
 			id = s.list.At(g.X, g.Y)
@@ -511,12 +548,16 @@ func (s *session) inMenu(g device.Gesture) {
 		s.refresh(rect, device.WfREAGL)
 		return
 	}
-	id := s.mn.At(g.X, g.Y)
-	if id == "" && s.nav != nil {
-		id = s.nav.At(g.X, g.Y)
+	// the button tapped: on the highlight's panel, else the sheet or the dock, else the bar over them
+	id := ""
+	panels := []*ui.Panel{s.mn}
+	if s.mn == nil {
+		panels = []*ui.Panel{s.sheet, s.nav, s.bar}
 	}
-	if id == "" && s.nav != nil {
-		id = s.bar.At(g.X, g.Y)
+	for _, p := range panels {
+		if p != nil && id == "" && !g.Swipe {
+			id = p.At(g.X, g.Y)
+		}
 	}
 	switch {
 	case g.Swipe:
@@ -529,7 +570,7 @@ func (s *session) inMenu(g device.Gesture) {
 	case strings.HasPrefix(id, "bar-"): // the light, the title: nothing yet
 	case id == "contents":
 		t := time.Now()
-		s.mn, s.nav = nil, nil
+		s.nav, s.sheet = nil, nil
 		s.cv = ui.NewContents(uiEntries(s.toc), r.chapter(s.toc), r.rtl, s.rd.fonts, s.scr.W, s.scr.H)
 		s.cv.Draw(s.rd.over)
 		s.scr.Show(s.rd.over, device.WfREAGL, false)
@@ -557,6 +598,19 @@ func (s *session) inMenu(g device.Gesture) {
 	case id == "read-aloud":
 		s.closeMenu()
 		s.readAloud()
+	case id == "text" || id == "tab-text" || id == "tab-page": // the sheet in the dock's place, or another of its tabs
+		rect := image.Rectangle{}
+		for _, p := range []*ui.Panel{s.nav, s.sheet} {
+			if p != nil {
+				rect = rect.Union(p.Rect())
+			}
+		}
+		s.tab = map[bool]string{true: "page", false: "text"}[id == "tab-page"]
+		s.nav = nil
+		s.drawSheet()
+		s.refresh(rect.Union(s.sheet.Rect()), device.WfREAGL)
+	case id == "done":
+		s.closeMenu()
 	case id == "remove-highlight":
 		r.marks.list = append(r.marks.list[:s.unmark], r.marks.list[s.unmark+1:]...)
 		r.marks.save()
@@ -568,29 +622,47 @@ func (s *session) inMenu(g device.Gesture) {
 		rect := s.mn.Rect()
 		s.mn = nil
 		s.refresh(rect, device.WfREAGL)
-	case id != "":
+	case id != "": // a setting on the sheet
 		t := time.Now()
+		old := s.sheet.Rect()
 		relayout := s.set.change(id, r.key, r.book.LineSpacing(r.doc))
 		s.set.save(s.rd.dir)
 		r.direct(s.set.Direction[r.key])
-		if relayout {
-			s.o = s.set.options(s.scr.W, s.scr.H)
-			r.relayout(s.o)
-			s.forget()
-			s.shown = s.rd.pages.get(r, r.doc, r.at, r.page())
-			s.ahead, s.rest = true, !r.restored
-			fmt.Printf("%s: text %g px, lines %g, margin %d: document %d page %d in %.0f ms (cache %v)\n", id,
-				s.o.FontSize, s.o.LineHeight, s.o.Margin, r.doc, r.at, ms(t), r.restored)
+		if !relayout { // the page as it was: the sheet alone drawn again
+			s.drawSheet()
+			s.refresh(old.Union(s.sheet.Rect()), device.WfREAGL)
+			break
 		}
-		s.showMenu()
-	case s.nav == nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()):
-		rect := s.mn.Rect()
-		s.mn = nil
-		s.refresh(rect, device.WfREAGL)
-	case s.nav != nil && !image.Pt(g.X, g.Y).In(s.mn.Rect()) && !image.Pt(g.X, g.Y).In(s.nav.Rect()) &&
-		!image.Pt(g.X, g.Y).In(s.bar.Rect()):
-		s.closeMenu()
+		s.o = s.set.options(s.scr.W, s.scr.H)
+		r.relayout(s.o)
+		s.forget()
+		s.shown = s.rd.pages.get(r, r.doc, r.at, r.page())
+		s.ahead, s.rest = true, !r.restored
+		fmt.Printf("%s: text %g px, lines %g, margin %d: document %d page %d in %.0f ms (cache %v)\n", id,
+			s.o.FontSize, s.o.LineHeight, s.o.Margin, r.doc, r.at, ms(t), r.restored)
+		s.drawMenu()
+		s.showPage(device.WfREAGL, false)
+	case s.mn != nil:
+		if !image.Pt(g.X, g.Y).In(s.mn.Rect()) {
+			rect := s.mn.Rect()
+			s.mn = nil
+			s.refresh(rect, device.WfREAGL)
+		}
+	default: // off the bar, the dock and the sheet: back to the page
+		if !s.over(g.X, g.Y) {
+			s.closeMenu()
+		}
 	}
+}
+
+// over says whether (x, y) is on the bar, the dock or the sheet.
+func (s *session) over(x, y int) bool {
+	for _, p := range []*ui.Panel{s.bar, s.nav, s.sheet} {
+		if p != nil && image.Pt(x, y).In(p.Rect()) {
+			return true
+		}
+	}
+	return false
 }
 
 // readAloud starts the narration from the first narrated word on the page shown.

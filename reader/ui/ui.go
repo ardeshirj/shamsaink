@@ -1,4 +1,4 @@
-// Package ui draws the reader's panels: the menu, the panels at the bottom and for removing a highlight, the table of
+// Package ui draws the reader's panels: the bar, the dock and the Text sheet at the bottom, the panel for removing a highlight, the table of
 // contents and the opening screen. Each is HTML (templates/) drawn by the engine; the reader (package main) hands
 // this package plain data and gets pictures and the places of buttons back.
 package ui
@@ -84,6 +84,7 @@ type button struct {
 	On        bool
 	Count     string // shown after the label, smaller (segments)
 	Dir       string // the label's own direction, "" for the page's (segments)
+	Fill      bool   // drawn filled: the panel's main button
 }
 
 // A row with a minus, a value and a plus: the buttons are name-dec and name-inc.
@@ -121,7 +122,8 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
 				Flip: pointing(name)}
 		},
-		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
+		"btn":  func(id, label string) button { return button{ID: add(id), Label: label} },
+		"fill": func(id, label string) button { return button{ID: add(id), Label: label, Fill: true} },
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}
 		},
