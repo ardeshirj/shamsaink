@@ -1,0 +1,23 @@
+{{/* The bar (bar.go): the same at the top of the library and over a book. A row: the button at the start, the title,
+and at the end the time, the headphones, the light, the battery and the menu. In right to left it mirrors on its own.
+The engine does not clip text, so DrawBar cuts a long title itself, with an ellipsis, comparing the boxes of the title
+and of the words in it (not buttons: DrawBar drops them from the panel). */ -}}
+{{template "head" .Dir}}<style>
+div.bar { display: flex; align-items: center; gap: 0.5em; }
+.bar .title { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-width: 0; width: 0; white-space: nowrap; font-weight: bold; }
+div.bar .end { display: flex; align-items: center; gap: 0.55em; flex: none; font-size: 0.88em; color: #555; }
+/* the battery: a box filled to its share and a nub, always drawn from the left */
+.batt { display: flex; align-items: center; gap: 0.3em; }
+.batt .cell { display: flex; direction: ltr; align-items: center; }
+.batt .box { display: flex; width: 1.7em; height: 0.85em; box-sizing: border-box; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.18em; }
+.batt .box i { display: block; height: 100%; background: var(--ink); border-radius: 0.06em; }
+.batt .nub { width: 0.14em; height: 0.38em; background: var(--ink); border-radius: 0 0.08em 0.08em 0; }
+</style></head><body>
+<div class="bar">{{template "iconbutton" ibtn "bar-start" .Start false}}<div class="title" id="{{id "bar-title"}}"><span id="{{id "bar-title-text"}}">{{.Title}}</span></div><span class="end">
+{{- if .Time}}<span>{{.Time}}</span>{{end -}}
+{{- if .Phones}}{{template "iconbutton" ibtn "bar-phones" "headphones" .PhonesOn}}{{end -}}
+{{template "iconbutton" ibtn "bar-light" "sun" .LightOn -}}
+{{- if ge .Battery 0}}<span class="batt"><span class="cell"><span class="box"><i style="width: {{.Battery}}%"></i></span><span class="nub"></span></span><span>{{t "battery" .Battery}}</span></span>{{end -}}
+{{- if .Menu}}{{template "iconbutton" ibtn "bar-menu" "list" false}}{{end -}}
+</span></div>
+</body></html>

@@ -38,7 +38,7 @@ func NewClock(fonts *blitz.Fonts) *Clock {
 		d.Chars = append(d.Chars, char{ids[c], string(c)})
 	}
 	html, _ := render("clock.html", d)
-	b := blitz.New([]string{"clock.html"}, func(string) ([]byte, error) { return []byte(html), nil },
+	b := blitz.New([]string{"clock.html"}, readFor(html),
 		blitz.Options{Width: 800, Height: 200, FontSize: clockSize}, fonts)
 	defer b.Close()
 	b.Layout(0)

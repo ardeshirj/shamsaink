@@ -33,6 +33,7 @@ var words = map[string]map[string]string{
 		"where":             "%d of %d in this part · %s",
 		"by":                "by",
 		"page-n-of":         "%s of %s",
+		"battery":           "%d%%",
 	},
 }
 

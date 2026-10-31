@@ -34,3 +34,14 @@ div.g span.on { background: var(--ink); color: var(--paper); }
 div.set { display: grid; grid-template-columns: 1fr 2.4em 6em 2.4em; align-items: center; justify-items: center; row-gap: 0.6em; margin: 0.6em 0; }
 div.set > .name { grid-column: 1; justify-self: start; }
 div.set > .v { grid-column: 3; }
+
+/* The icons: two fonts with the same glyphs, the outline one and the filled one (a control that is on). */
+@font-face { font-family: icons; src: url(Phosphor.ttf); }
+@font-face { font-family: icons-fill; src: url(Phosphor-Fill.ttf); }
+.i { font-family: icons; font-size: 1.35em; line-height: 1; }
+.i.on { font-family: icons-fill; }
+/* an arrow that points, mirrored in right to left */
+[dir="rtl"] .flip { display: inline-block; transform: scaleX(-1); }
+
+/* An icon button: a box easy to tap round the icon, no border. */
+span.tb { display: flex; align-items: center; justify-content: center; flex: none; width: 2.2em; height: 2.2em; }

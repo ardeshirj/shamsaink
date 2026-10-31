@@ -38,6 +38,7 @@ func Splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 		return img
 	}
 	t := time.Now()
+	rest := readFor(html)
 	read := func(path string) ([]byte, error) {
 		switch path {
 		case "brand/shamsaink.png":
@@ -45,7 +46,7 @@ func Splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 		case "brand/farsiepub.png":
 			return logo, nil
 		}
-		return []byte(html), nil
+		return rest(path)
 	}
 	b := blitz.New([]string{"splash.html"}, read, blitz.Options{Width: w, Height: h, FontSize: 40}, fonts)
 	defer b.Close()

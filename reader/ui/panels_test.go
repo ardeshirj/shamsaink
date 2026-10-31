@@ -8,6 +8,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -55,6 +56,20 @@ func TestPanels(t *testing.T) {
 				save(fmt.Sprintf("nav-rtl%v-back%d-share%g", rtl, back, share), DrawNav(p, fonts, w, h).img)
 			}
 		}
+	}
+	long := "The Adventures of Sherlock Holmes and a much longer title to cut"
+	book := Bar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
+	save("bar-library", DrawBar(Bar{Start: "magnifying-glass", Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
+	save("bar-book-ltr", DrawBar(book, fonts, w).img)
+	rtl := book
+	rtl.RTL, rtl.Title = true, "رود کم‌آب"
+	save("bar-book-rtl", DrawBar(rtl, fonts, w).img)
+	rtl.Title = long
+	save("bar-book-rtl-long", DrawBar(rtl, fonts, w).img)
+	for _, n := range []int{5, 100} {
+		b := book
+		b.Battery, b.PhonesOn = n, true
+		save(fmt.Sprintf("bar-battery%d", n), DrawBar(b, fonts, w).img)
 	}
 	var es []Entry
 	for i := range 40 {
@@ -170,9 +185,23 @@ func TestPanelEdges(t *testing.T) {
 	p := Progress{Chapter: "A chapter", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7}
 	v := NewContents([]Entry{{Title: "One"}, {Title: "Two"}}, 0, false, fonts, w, h)
 	defer v.Close()
+	bar := DrawBar(Bar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
 	for name, m := range map[string]*Panel{"menu": DrawMenu(Menu{FontSize: 50, Lines: 1.16, Margin: 60, Narrated: true}, fonts, w),
-		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head} {
+		"remove": DrawRemove(fonts, w), "nav": DrawNav(p, fonts, w, h), "contents": v.head, "bar": bar} {
 		for id, r := range m.buttons {
+			if strings.HasPrefix(id, "bar-") {
+				// an icon button has no border: some ink inside its box instead
+				ink := false
+				for y := r.Min.Y; y < r.Max.Y; y++ {
+					for x := r.Min.X; x < r.Max.X; x++ {
+						ink = ink || m.img.GrayAt(x, y).Y < 128
+					}
+				}
+				if !ink {
+					t.Errorf("%s: %s's icon not drawn (%v)", name, id, r)
+				}
+				continue
+			}
 			// dark at the bottom of its box, or just under it (a bar's parts stand on the bar's own border)
 			x, dark := (r.Min.X+r.Max.X)/2, false
 			for _, y := range []int{r.Max.Y - 2, r.Max.Y + 1} {

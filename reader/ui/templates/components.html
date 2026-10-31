@@ -22,3 +22,7 @@ when off. */}}
 
 {{/* A setting's row with a switch for its value. */}}
 {{define "switch"}}<span class="name">{{.Label}}</span><span class="v">{{template "toggle" .}}</span>{{end}}
+
+{{/* A button that is an icon alone (from ibtn), no border; drawn filled when on. The arrows that point are mirrored
+in right to left. */}}
+{{define "iconbutton"}}<span class="tb" id="{{.ID}}"><span class="i{{if .On}} on{{end}}{{if .Flip}} flip{{end}}">{{.Glyph}}</span></span>{{end}}

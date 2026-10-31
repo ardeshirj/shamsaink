@@ -72,7 +72,7 @@ func drawPanel(html string, ids []string, fonts *blitz.Fonts, w, h int) *Panel {
 	// segments' bar) would be cut off; cropped away below
 	html = strings.Replace(html, "</body>", "<p>&nbsp;</p></body>", 1)
 	o := blitz.Options{Width: w, Height: h, Margin: 40, FontSize: 40}
-	b := blitz.New([]string{"menu.html"}, func(string) ([]byte, error) { return []byte(html), nil }, o, fonts)
+	b := blitz.New([]string{"menu.html"}, readFor(html), o, fonts)
 	defer b.Close()
 	b.Layout(0)
 	m := &Panel{buttons: map[string]image.Rectangle{}}

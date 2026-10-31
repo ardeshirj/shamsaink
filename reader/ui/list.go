@@ -41,7 +41,7 @@ func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz
 		lh -= v.pager.img.Rect.Dy()
 	}
 	o := blitz.Options{Width: w, Height: lh, Margin: 40, FontSize: 44}
-	v.list = blitz.New([]string{"list.html"}, func(string) ([]byte, error) { return []byte(html), nil }, o, fonts)
+	v.list = blitz.New([]string{"list.html"}, readFor(html), o, fonts)
 	v.img = image.NewGray(image.Rect(0, 0, w, lh))
 	v.list.Layout(0)
 	v.pages = v.list.Pages()

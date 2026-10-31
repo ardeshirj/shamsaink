@@ -8,15 +8,63 @@ import (
 	"fmt"
 	"html/template"
 	"image"
+	"path"
 	"strings"
 	"time"
 )
 
 // The panels' HTML is in templates/: the shared rules (ui.css), the pieces (components.html) and a template for each
-// panel. brand/ has the logos.
+// panel. brand/ has the logos, icons/ the icon fonts and the names of their glyphs.
 //
-//go:embed templates brand
+//go:embed templates brand icons
 var files embed.FS
+
+// The icon fonts by the file name the style sheet asks for, and where each is in files.
+var iconFonts = map[string]string{"Phosphor.ttf": "icons/Phosphor.ttf", "Phosphor-Fill.ttf": "icons/Phosphor-Fill.ttf"}
+
+// readFor is the engine's read function for a panel: an icon font for a path ending in its name (the style sheet's
+// @font-face), html for every other path.
+func readFor(html string) func(string) ([]byte, error) {
+	return func(p string) ([]byte, error) {
+		if f, ok := iconFonts[path.Base(p)]; ok {
+			return files.ReadFile(f)
+		}
+		return []byte(html), nil
+	}
+}
+
+// glyphs are the icons' code points by name, from icons/codepoints.txt.
+var glyphs = func() map[string]rune {
+	b, err := files.ReadFile("icons/codepoints.txt")
+	if err != nil {
+		panic(err)
+	}
+	m := map[string]rune{}
+	for _, l := range strings.Split(string(b), "\n") {
+		var name string
+		var cp rune
+		if n, _ := fmt.Sscanf(l, "%s %x", &name, &cp); n == 2 {
+			m[name] = cp
+		}
+	}
+	return m
+}()
+
+// glyph is the HTML of the icon name's character; an unknown name panics, so a typo is found by the tests.
+func glyph(name string) template.HTML {
+	cp, ok := glyphs[name]
+	if !ok {
+		panic(fmt.Sprintf("ui: no icon %q", name))
+	}
+	return template.HTML(fmt.Sprintf("&#x%x;", cp))
+}
+
+// An icon button, as the templates draw it; On: drawn filled; Flip: mirrored in right to left (an arrow that points).
+type iconButton struct {
+	ID       string
+	Glyph    template.HTML
+	On, Flip bool
+}
 
 var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(files, "templates/*.html", "templates/*.css"))
 
@@ -44,6 +92,13 @@ func uiFuncs(ids *[]string) template.FuncMap {
 		"id":  add,
 		"t":   word,
 		"num": num,
+		"icon": func(name string) template.HTML {
+			return `<span class="i">` + glyph(name) + `</span>`
+		},
+		"ibtn": func(id, name string, on bool) iconButton {
+			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
+				Flip: name == "arrow-left" || name == "caret-left" || name == "caret-right"}
+		},
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}
