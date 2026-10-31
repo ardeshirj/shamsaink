@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The panel's two buttons are found, apart. FONTS and PANEL_PNG as TestMenu's.

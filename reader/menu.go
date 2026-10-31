@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The settings, in DIR/settings.json: text size, line spacing and margins for every book, the page direction by book.

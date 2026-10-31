@@ -76,7 +76,7 @@ Also, Blitz:
 
 **How it works.** The engine runs on the Kindle: nothing is drawn ahead on the Mac, no picture is sent. The Mac only
 builds `blitz-show` (Blitz with our pagination and glyph layer, one static 13 MB ARM program needing nothing from the
-Kindle) and copies it, with the book's files unpacked (XHTML, CSS, fonts), to `/mnt/us/indium-09`; `show.sh` only
+Kindle) and copies it, with the book's files unpacked (XHTML, CSS, fonts), to `/mnt/us/shamsaink-09`; `show.sh` only
 starts it with its arguments, over SSH. Then, on the Kindle's CPU:
 1. **Lay out:** read the chapter's XHTML and CSS, shape the Farsi, break the lines, cut the pages (~650 ms here).
 2. **Draw:** paint the page into memory, 1236×1648 pixels at a byte of grey each, about 2 MB (~123 ms).
@@ -239,26 +239,26 @@ if it ever matters, the reader can restart itself while the device sleeps (it re
 KOReader open in front, its SSH server on (`ssh kindle`: the maintainer's `~/.ssh/config`, port 2222):
 ```sh
 cd experiments/09-kindle && ./pack.sh          # needs eink-rust, Blitz cloned and patched (04), and the books
-COPYFILE_DISABLE=1 tar -C out -cf - bundle | ssh kindle 'mkdir -p /mnt/us/indium-09 && tar -C /mnt/us/indium-09 --strip-components=1 -xf -'
-ssh kindle 'cd /mnt/us/indium-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'   # about an hour (crengine draws every page)
+COPYFILE_DISABLE=1 tar -C out -cf - bundle | ssh kindle 'mkdir -p /mnt/us/shamsaink-09 && tar -C /mnt/us/shamsaink-09 --strip-components=1 -xf -'
+ssh kindle 'cd /mnt/us/shamsaink-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'   # about an hour (crengine draws every page)
 ssh kindle 'ps | grep -c "[r]un.sh"'           # 0 once it is done
-ssh kindle 'cat /mnt/us/indium-09/results.txt' > out/kindle.txt
+ssh kindle 'cat /mnt/us/shamsaink-09/results.txt' > out/kindle.txt
 ```
 Our page on the screen (step 2; KOReader in front, the bundle already there):
 ```sh
-ssh kindle 'sh /mnt/us/indium-09/show.sh'                    # 12 words with each of DU, A2 and GL16
-ssh kindle 'sh /mnt/us/indium-09/show.sh A2 w00020 1 3000'   # one word with A2, held 3 s
+ssh kindle 'sh /mnt/us/shamsaink-09/show.sh'                    # 12 words with each of DU, A2 and GL16
+ssh kindle 'sh /mnt/us/shamsaink-09/show.sh A2 w00020 1 3000'   # one word with A2, held 3 s
 ```
 A narration followed (step 3), with the voice on the Mac, KOReader's "Keep alive" on:
 ```sh
 ./follow-audio.sh 180                           # LEAD_MS=450 if the underline is ahead of the voice, 150 if behind
-ssh kindle 'sh /mnt/us/indium-09/follow.sh 180'  # the same, silent
+ssh kindle 'sh /mnt/us/shamsaink-09/follow.sh 180'  # the same, silent
 ```
 One EPUB file against the folder (step 4; `blitz-open-par` rebuilt with `Epub` and copied to `bin/`):
 ```sh
-scp run-epub.sh kindle:/mnt/us/indium-09/
-ssh kindle 'cd /mnt/us/indium-09 && nohup sh run-epub.sh >/dev/null 2>&1 </dev/null &'   # about 40 minutes
-scp kindle:/mnt/us/indium-09/results-epub.txt out/kindle-epub.txt
+scp run-epub.sh kindle:/mnt/us/shamsaink-09/
+ssh kindle 'cd /mnt/us/shamsaink-09 && nohup sh run-epub.sh >/dev/null 2>&1 </dev/null &'   # about 40 minutes
+scp kindle:/mnt/us/shamsaink-09/results-epub.txt out/kindle-epub.txt
 ```
 (`run.sh`'s screensaver guard was added after this run. Its cache runs open *Buried Alive* at chapter 9, 08's at
 chapter 1: both 30 pages.)

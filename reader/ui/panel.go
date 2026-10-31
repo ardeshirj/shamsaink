@@ -5,7 +5,7 @@ import (
 	"image"
 	"strings"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // A panel over the page: y0 px from the top, drawn by the engine from HTML (right to left, when the menu is in

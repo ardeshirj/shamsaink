@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	blitz "indiumengine"
-	"indiumreader/ui"
+	blitz "shamsainkengine"
+	"shamsainkreader/ui"
 )
 
 // On a real book (BOOK, an .epub; FONTS a fallback fonts folder; OUT a folder for the pictures): "Next chapter"

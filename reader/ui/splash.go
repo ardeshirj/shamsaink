@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The opening screen (roadmap, "An opening screen"): shown when a book is not open within SplashAfter, so a quick

@@ -7,7 +7,7 @@ import (
 	"image"
 	"testing"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // Two lines of words, the second right to left (its words' boxes from the right), two blocks.

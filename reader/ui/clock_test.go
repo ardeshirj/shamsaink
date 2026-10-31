@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The time drawn in the top margin, its ink centred where asked (in Farsi digits too), inside its box and nothing

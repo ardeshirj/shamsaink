@@ -22,9 +22,9 @@ import (
 	"strings"
 	"time"
 
-	blitz "indiumengine"
-	"indiumreader/device"
-	"indiumreader/ui"
+	blitz "shamsainkengine"
+	"shamsainkreader/device"
+	"shamsainkreader/ui"
 )
 
 var (

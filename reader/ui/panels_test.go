@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // Every panel drawn in several states, to compare before and after a change to how they are built. PANELS: a folder

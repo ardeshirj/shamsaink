@@ -14,7 +14,7 @@ import (
 	"github.com/readium/go-toolkit/pkg/pub"
 	"github.com/readium/go-toolkit/pkg/util/url"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // openPub parses the EPUB with go-toolkit's EPUB parser (as bench/epub does).

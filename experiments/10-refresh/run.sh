@@ -1,5 +1,5 @@
 #!/bin/sh
-# On the Kindle (copied as /mnt/us/indium-09/refresh.sh): Buried Alive's first page on the screen (09's blitz-show,
+# On the Kindle (copied as /mnt/us/shamsaink-09/refresh.sh): Buried Alive's first page on the screen (09's blitz-show,
 # no word marked), then refresh-probe with these arguments. Run with KOReader open in front, as for 09; the Kindle's
 # screensaver is held off while it runs. Appends to results-refresh.txt.
 cd "$(dirname "$0")"

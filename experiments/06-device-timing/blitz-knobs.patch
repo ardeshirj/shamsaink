@@ -6,7 +6,7 @@ index 7746eec..2acf074 100644
      }
  }
  
-+/// Measuring switches (experiment 06 of indium-reader, not for use): BLITZ_NO_HINT draws glyphs unhinted,
++/// Measuring switches (experiment 06 of shamsaink, not for use): BLITZ_NO_HINT draws glyphs unhinted,
 +/// BLITZ_NO_GLYPHS does not draw them.
 +fn knob(i: usize) -> bool {
 +    static K: std::sync::OnceLock<[bool; 2]> = std::sync::OnceLock::new();

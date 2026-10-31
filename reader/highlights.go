@@ -9,7 +9,7 @@ import (
 	"slices"
 	"time"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // A highlight: a span of one spine document's text, from the start of one word to the end of another, each as the

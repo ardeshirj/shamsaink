@@ -68,18 +68,18 @@ to copy):
      interface starts again, as KOReader exits):
      ```sh
      sh experiments/13-kobo/probe/build.sh
-     ssh kobo 'mkdir -p /mnt/onboard/.adds/indium/probe'
-     scp experiments/13-kobo/probe/out/* kobo:/mnt/onboard/.adds/indium/probe/
-     ssh kobo "echo 'menu_item:main:Indium probe:cmd_spawn:quiet:sh /mnt/onboard/.adds/indium/probe/probe.sh nickel' \
-       > /mnt/onboard/.adds/nm/indium"
+     ssh kobo 'mkdir -p /mnt/onboard/.adds/shamsaink/probe'
+     scp experiments/13-kobo/probe/out/* kobo:/mnt/onboard/.adds/shamsaink/probe/
+     ssh kobo "echo 'menu_item:main:ShamsaInk probe:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/probe/probe.sh nickel' \
+       > /mnt/onboard/.adds/nm/shamsaink"
      ```
-   - **With Kobo's interface running** (KOReader closed): tap **Indium probe** in NickelMenu, wait about 3 s, then
+   - **With Kobo's interface running** (KOReader closed): tap **ShamsaInk probe** in NickelMenu, wait about 3 s, then
      tap the screen once (somewhere harmless) and swipe left once, within 10 s. It writes `probe-nickel.txt`.
    - **Inside KOReader:** open KOReader, then run it there and copy both results back:
      ```sh
-     ssh kobo 'sh /mnt/onboard/.adds/indium/probe/probe.sh koreader'
+     ssh kobo 'sh /mnt/onboard/.adds/shamsaink/probe/probe.sh koreader'
      mkdir -p experiments/13-kobo/out
-     scp 'kobo:/mnt/onboard/.adds/indium/probe/probe-*.txt' experiments/13-kobo/out/
+     scp 'kobo:/mnt/onboard/.adds/shamsaink/probe/probe-*.txt' experiments/13-kobo/out/
      ```
    **Done when** these are written down (NOTES.md).
 Steps 2 and 3 follow both ways to host the reader on Kobo (decided 2026-10-29), since with Bluetooth on a second

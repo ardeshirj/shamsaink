@@ -131,13 +131,13 @@ In a terminal of your own (the session's sandbox keeps SSH out), with the device
 Settings → Help → Copyrights and licenses:
 ```sh
 cd experiments/06-device-timing && ./pack.sh
-scp -r out/bundle root@10.11.99.1:/home/root/indium-bench
-ssh root@10.11.99.1 'sh /home/root/indium-bench/run.sh'          # keep the device awake while it runs
-scp root@10.11.99.1:/home/root/indium-bench/results.txt out/remarkable2.txt
-scp -r root@10.11.99.1:/home/root/indium-bench/pages out/rm2-pages # optional: to compare with out/mac/pages
-ssh root@10.11.99.1 'rm -rf /home/root/indium-bench'               # leaves the device as it was
+scp -r out/bundle root@10.11.99.1:/home/root/shamsaink-bench
+ssh root@10.11.99.1 'sh /home/root/shamsaink-bench/run.sh'          # keep the device awake while it runs
+scp root@10.11.99.1:/home/root/shamsaink-bench/results.txt out/remarkable2.txt
+scp -r root@10.11.99.1:/home/root/shamsaink-bench/pages out/rm2-pages # optional: to compare with out/mac/pages
+ssh root@10.11.99.1 'rm -rf /home/root/shamsaink-bench'               # leaves the device as it was
 ```
-Everything stays in `/home/root/indium-bench`: nothing on the system changes. `run-neon.sh`, `run-ko.sh` and
+Everything stays in `/home/root/shamsaink-bench`: nothing on the system changes. `run-neon.sh`, `run-ko.sh` and
 `run-scene.sh` run the same way; their results are in `results-neon.txt`, `results-ko.txt` and `results-scene.txt`
 (`run-ko.sh` needs the system's libraries: under emulation, a bare 32-bit Debian rather than busybox).
 

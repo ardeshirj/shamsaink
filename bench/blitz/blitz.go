@@ -1,13 +1,13 @@
 //go:build blitz
 
-// Package blitz is the Rust engine (engine/go, module indiumengine) as an engine.Document: the bench's adapter,
+// Package blitz is the Rust engine (engine/go, module shamsainkengine) as an engine.Document: the bench's adapter,
 // turning an epub.Book into the spine and read function the binding takes. Registers "blitz".
 package blitz
 
 import (
 	engine "einkengine"
 	"einkengine/epub"
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 func init() { engine.Register("blitz", open) }

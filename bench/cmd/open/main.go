@@ -21,7 +21,7 @@ import (
 	"time"
 
 	"einkengine/epub"
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }

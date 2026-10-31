@@ -99,8 +99,8 @@ old and new differ. It holds book text, so it stays in `out/`.
 In a terminal of your own, the reMarkable on USB (as 06):
 ```sh
 cd experiments/07-blitz-drawing && ./pack.sh       # needs 06's out/bundle (its pack.sh) for the before binary
-scp -r out/bundle root@10.11.99.1:/home/root/indium-07
-ssh root@10.11.99.1 'sh /home/root/indium-07/run.sh'
-scp root@10.11.99.1:/home/root/indium-07/results.txt out/remarkable2.txt
-ssh root@10.11.99.1 'rm -rf /home/root/indium-07'
+scp -r out/bundle root@10.11.99.1:/home/root/shamsaink-07
+ssh root@10.11.99.1 'sh /home/root/shamsaink-07/run.sh'
+scp root@10.11.99.1:/home/root/shamsaink-07/results.txt out/remarkable2.txt
+ssh root@10.11.99.1 'rm -rf /home/root/shamsaink-07'
 ```

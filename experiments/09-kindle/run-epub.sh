@@ -5,7 +5,7 @@
 #   - a reopen from the book's cache file (written once), cold and warm.
 # RUNS (3) runs each. Prints blitz-open's summary and its first page's steps. Appends to results-epub.txt.
 #
-#     ssh kindle 'sh /mnt/us/indium-09/run-epub.sh'
+#     ssh kindle 'sh /mnt/us/shamsaink-09/run-epub.sh'
 cd "$(dirname "$0")"
 was=$(lipc-get-prop com.lab126.powerd preventScreenSaver) # put back as it was at the end (make kindle-awake may have set it)
 lipc-set-prop com.lab126.powerd preventScreenSaver 1

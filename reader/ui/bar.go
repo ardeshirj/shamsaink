@@ -3,7 +3,7 @@ package ui
 import (
 	"strings"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The bar: the same at the top of the library and over a book (docs/layouts/layout.html, "the bar").

@@ -25,10 +25,10 @@ FROM=${2:-$(awk 'BEGIN { srand(); print int(rand() * 550) }')}
           tail -c +$((SKIP + 1)) narration.raw | gst-launch-1.0 -q fdsrc ! \
             rawaudioparse format=pcm pcm-format=s16le sample-rate=44100 num-channels=1 ! \
             audioconvert ! audioresample ! "$OUT" ! mtkbtmwrpcaudiosink > gst.log 2>&1 &
-          echo $! > /tmp/indium-gst.pid ;;
+          echo $! > /tmp/shamsaink-gst.pid ;;
       esac
     done
-  kill "$(cat /tmp/indium-gst.pid 2>/dev/null)" 2>/dev/null
+  kill "$(cat /tmp/shamsaink-gst.pid 2>/dev/null)" 2>/dev/null
   killall gst-launch-1.0 2>/dev/null
-  rm -f /tmp/indium-gst.pid
+  rm -f /tmp/shamsaink-gst.pid
 } 2>&1 | tee -a follow-results.txt

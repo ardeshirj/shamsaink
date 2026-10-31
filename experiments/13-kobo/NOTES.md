@@ -211,7 +211,7 @@ Sources: https://www.mobileread.com/forums/showthread.php?p=4211676, https://git
 
 **How the reader is started on the Kobo for now.** A NickelMenu item ("ShamsaInk", `.adds/nm/shamsaink`) runs
 `launch.sh`, which waits 0.5 s for NickelMenu's menu to close, pauses Nickel (`SIGSTOP`), runs the reader on one
-book (`indium BOOK fonts`, the newest EPUB in `books/`), and resumes Nickel (`SIGCONT`) however the reader ends (a
+book (`shamsaink BOOK fonts`, the newest EPUB in `books/`), and resumes Nickel (`SIGCONT`) however the reader ends (a
 shell trap). Nickel never starts a second time, so it never meets the kernel's crash (above); leaving is as fast as
 closing the book, against a reboot from KOReader. The reader grabs the touch screen (`EVIOCGRAB`), so Nickel sees
 none of our taps.

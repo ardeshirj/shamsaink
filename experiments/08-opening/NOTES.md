@@ -318,31 +318,31 @@ Mac, two threads:
 In a terminal of your own, the reMarkable on USB (as 06 and 07):
 ```sh
 cd experiments/08-opening && ./pack.sh     # needs 07's out/bundle (the before binary) and 06's out/ko (KOReader)
-scp -r out/bundle root@10.11.99.1:/home/root/indium-08
-ssh root@10.11.99.1 'sh /home/root/indium-08/run.sh'
-scp root@10.11.99.1:/home/root/indium-08/results.txt out/remarkable2.txt
-ssh root@10.11.99.1 'rm -rf /home/root/indium-08'
+scp -r out/bundle root@10.11.99.1:/home/root/shamsaink-08
+ssh root@10.11.99.1 'sh /home/root/shamsaink-08/run.sh'
+scp root@10.11.99.1:/home/root/shamsaink-08/results.txt out/remarkable2.txt
+ssh root@10.11.99.1 'rm -rf /home/root/shamsaink-08'
 ```
 Where a first open's time goes (`run-split.sh`, after `./pack.sh`; only the new `blitz-open` and the script need
 copying if the bundle is still on the device):
 ```sh
-scp out/bundle/bin/blitz-open root@10.11.99.1:/home/root/indium-08/bin/
-scp out/bundle/run-split.sh root@10.11.99.1:/home/root/indium-08/
-ssh root@10.11.99.1 'sh /home/root/indium-08/run-split.sh'
-scp root@10.11.99.1:/home/root/indium-08/results-split.txt out/remarkable2-split.txt
+scp out/bundle/bin/blitz-open root@10.11.99.1:/home/root/shamsaink-08/bin/
+scp out/bundle/run-split.sh root@10.11.99.1:/home/root/shamsaink-08/
+ssh root@10.11.99.1 'sh /home/root/shamsaink-08/run-split.sh'
+scp root@10.11.99.1:/home/root/shamsaink-08/results-split.txt out/remarkable2-split.txt
 ```
 A chapter's layout on one core and on both (`run-par.sh`; only the two `blitz-open`s and the script need copying if
 the bundle is still on the device):
 ```sh
-scp out/bundle/bin/blitz-open out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/indium-08/bin/
-scp out/bundle/run-par.sh root@10.11.99.1:/home/root/indium-08/
-ssh root@10.11.99.1 'sh /home/root/indium-08/run-par.sh'
-scp root@10.11.99.1:/home/root/indium-08/results-par.txt out/remarkable2-par.txt
+scp out/bundle/bin/blitz-open out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/shamsaink-08/bin/
+scp out/bundle/run-par.sh root@10.11.99.1:/home/root/shamsaink-08/
+ssh root@10.11.99.1 'sh /home/root/shamsaink-08/run-par.sh'
+scp root@10.11.99.1:/home/root/shamsaink-08/results-par.txt out/remarkable2-par.txt
 ```
 A book opened again from its cache (`run-cache.sh`, after `./pack.sh`):
 ```sh
-scp out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/indium-08/bin/
-scp out/bundle/run-cache.sh root@10.11.99.1:/home/root/indium-08/
-ssh root@10.11.99.1 'sh /home/root/indium-08/run-cache.sh'
-scp root@10.11.99.1:/home/root/indium-08/results-cache.txt out/remarkable2-cache.txt
+scp out/bundle/bin/blitz-open-par root@10.11.99.1:/home/root/shamsaink-08/bin/
+scp out/bundle/run-cache.sh root@10.11.99.1:/home/root/shamsaink-08/
+ssh root@10.11.99.1 'sh /home/root/shamsaink-08/run-cache.sh'
+scp root@10.11.99.1:/home/root/shamsaink-08/results-cache.txt out/remarkable2-cache.txt
 ```

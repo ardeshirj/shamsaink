@@ -6,14 +6,14 @@ cache, a clean way back to KOReader. Built in steps; this file records each as i
 1. Touch on the Kindle, and handing it over between KOReader and our program (done, 2026-10-26, below).
 2. 08's opening and cache through the C API (done, 2026-10-26, below).
 3. The reader loop in Go (done, 2026-10-26, below).
-4. The KOReader plugin proper: "Open with Indium" (done with 3); the reader kept running between books (to do).
+4. The KOReader plugin proper: "Open with ShamsaInk" (done with 3); the reader kept running between books (to do).
 
 ## Step 1: touch, and the hand-over (2026-10-26)
 
 `input/` is `input-probe` (Go, no cgo, `sh build.sh`): `info` prints the touch device's ranges and the screen's set-up;
 `taps SECONDS [grab]` logs every finger (the multi-touch type B protocol) and draws a black square where it thinks it
-is (A2), so the mapping is checked by eye. `indium.koplugin/` (now `reader/indium.koplugin`) is a KOReader plugin with one menu entry (tools → More
-tools → "Indium: touch test") that hands the touch over, runs `input-probe taps 20 grab`, and takes it back.
+is (A2), so the mapping is checked by eye. `shamsaink.koplugin/` (now `reader/shamsaink.koplugin`) is a KOReader plugin with one menu entry (tools → More
+tools → "ShamsaInk: touch test") that hands the touch over, runs `input-probe taps 20 grab`, and takes it back.
 
 **The devices** (`/proc/bus/input/devices`): `event0` the power key (`bd71828-pwrkey`), `event1` the touch screen
 (`pt_mt`: slots 0..31, x 0..1235, y 0..1647, tracking id, pressure, touch major, distance). Open on `event1`:
@@ -54,7 +54,7 @@ The C API (`capi.rs`, `blitz_engine.h`) gained 08's way of opening: `be_fonts` (
 `be_new` (nothing laid out), `be_layout` (one document, its page range), `be_layout_next` (one more document per
 call, so the reader can fit them between touches), `be_save` / `be_restore` (the cache as bytes; Go keeps the
 file). Go still reads the book: go-toolkit, the engine asking for each file through the callback. The binding is
-now its own module, `engine/go` (`indiumengine`); the bench (`bench/`, formerly `experiments/engine`) adapts it.
+now its own module, `engine/go` (`shamsainkengine`); the bench (`bench/`, formerly `experiments/engine`) adapts it.
 `bench/cmd/open` opens a book as the reader will. Its pages are byte-identical to `blitz-open`'s on *Buried Alive*,
 *Holmes* and *Haji Agha*, first open and reopened from the cache.
 
@@ -84,13 +84,13 @@ For the reader: step 2 keeps 08's gains through go-toolkit, as decided (existing
 
 ## Step 3: the reader (2026-10-26)
 
-`reader/` (module `indiumreader`, `make reader-install`): `indium BOOK.epub [FONTS_DIR]` opens the book at its place
+`reader/` (module `shamsainkreader`, `make reader-install`): `shamsaink BOOK.epub [FONTS_DIR]` opens the book at its place
 (go-toolkit, the engine's chapter-first opening, the cache), turns pages by tap or swipe in the book's direction
 (go-toolkit's reading progression; KOReader's zones: back on the quarter by the book's start edge, forward on the
 rest), refreshes with REAGL (a GC16 flash on the first page), lays the rest of the book out one document at a time
-while nothing is touched, keeps its place (document, page in it) and the cache in `/mnt/us/indium`, and leaves on a
+while nothing is touched, keeps its place (document, page in it) and the cache in `/mnt/us/shamsaink`, and leaves on a
 tap on the top tenth. Taps queued while the ink moves are applied together: one page drawn for all of them. The
-KOReader plugin (`reader/indium.koplugin`) puts "Open with Indium" on an EPUB's long-press dialog
+KOReader plugin (`reader/shamsaink.koplugin`) puts "Open with ShamsaInk" on an EPUB's long-press dialog
 (`FileManager:addFileDialogButtons`). One folder of fallback fonts for every book (DejaVu, Parastoo).
 
 **Handing the touch back:** reopening the device with `Device.input:open(path)` worked once, then the next release
@@ -125,7 +125,7 @@ Internet Archive's OCR *Alice* and Project Gutenberg's *Pride and Prejudice* (25
 
 
 ## Step 4: the reader kept running (2026-10-27)
-The plugin starts the reader once (`indium -serve /var/tmp/indium fonts`) and hands it each book through two named
+The plugin starts the reader once (`shamsaink -serve /var/tmp/shamsaink fonts`) and hands it each book through two named
 pipes in RAM: the book's path written to `in`, then a line read from `out` ("left") when the book is left, or the
 pipe's end if the reader died meanwhile, so KOReader is never stuck. The reader writes its pid once its fonts are
 loaded; the plugin starts it unless `/proc/<pid>` exists (busybox's `kill -0 ""` succeeds: it takes the empty pid

@@ -1,10 +1,10 @@
 #!/bin/sh
-# On the Kindle (copied as /mnt/us/indium-09/run-open.sh): step 2's opening through Go (bench's cmd/open: go-toolkit
+# On the Kindle (copied as /mnt/us/shamsaink-09/run-open.sh): step 2's opening through Go (bench's cmd/open: go-toolkit
 # reads the book, the engine asks for files through the callback), at 09's books and documents, as 09's run-epub.sh
 # timed blitz-open-par on the same .epub files: a first open (no cache) and a reopen from the cache, each cold (the
 # kernel's file cache dropped first) and warm, RUNS (3) times. Appends to results-open.txt.
 #
-#     ssh kindle 'sh /mnt/us/indium-09/run-open.sh'
+#     ssh kindle 'sh /mnt/us/shamsaink-09/run-open.sh'
 cd "$(dirname "$0")"
 was=$(lipc-get-prop com.lab126.powerd preventScreenSaver)
 lipc-set-prop com.lab126.powerd preventScreenSaver 1

@@ -6,8 +6,8 @@ reader saw on opening a book; *ink* is the illuminator's and the screen's. Searc
 that name, `shamsaink` free on GitHub and crates.io. Before it: Indium (2026-10-23, after indium tin oxide, E Ink's
 front electrode) and inkreader. The repo and its folder are `shamsaink` (`ardeshirj/shamsaink`, `~/Github/shamsaink`)
 since 2026-10-30. Renamed 2026-10-30: the reader's binary (`shamsaink`), KOReader plugin (`shamsaink.koplugin`) and
-folders on the devices (`/mnt/us/shamsaink`). Staying as they are: Go module and Docker image names (`indiumengine`,
-`indiumreader`, `einkengine`, `eink-*`), and old paths in the experiments' notes.
+folders on the devices (`/mnt/us/shamsaink`). Go modules renamed 2026-10-31 (`shamsainkengine`, `shamsainkreader`); staying:
+Docker image names (`einkengine`, `eink-*`), and old paths in the experiments' notes.
 
 Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, now `ardeshirj/shamsaink` (public or not decided
 once it does something). A side project
@@ -45,7 +45,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   judged.
 - **Engines sit behind one Go interface,** `bench/` (`Document`: pages, draw into a Go-owned buffer, an
   id's page and boxes): "gotext" (03), "cre" (02, `-tags cre`), "blitz" (04, `-tags blitz`; its Go binding is the
-  module `indiumengine` in `engine/go`, which the bench adapts). Why stateful and not
+  module `shamsainkengine` in `engine/go`, which the bench adapts). Why stateful and not
   one call per page, and every part from the EPUB down to the ink: `docs/design.md`.
 - **Rust (experiment 04, `experiments/04-rust-engine/PLAN.md`):** a third engine behind the interface, judged by the
   same harness. Stage 0 (04's NOTES.md): Parley and Blitz build static for 32-bit ARM and draw Farsi right (Parley:

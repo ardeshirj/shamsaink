@@ -6,7 +6,7 @@ require (
 	einkcre v0.0.0
 	einklayout v0.0.0
 	github.com/readium/go-toolkit v0.16.1
-	indiumengine v0.0.0
+	shamsainkengine v0.0.0
 )
 
 require (
@@ -27,11 +27,11 @@ require (
 	golang.org/x/text v0.43.0 // indirect
 )
 
-// the gotext and cre engines are experiments' own packages, indiumengine is the Blitz engine's binding (engine/go);
+// the gotext and cre engines are experiments' own packages, shamsainkengine is the Blitz engine's binding (engine/go);
 // go-toolkit is experiment 02's trimmed copy (trim-gotoolkit.sh)
 replace (
 	einkcre => ../experiments/02-crengine-go
 	einklayout => ../experiments/03-own-layout
-	indiumengine => ../engine/go
+	shamsainkengine => ../engine/go
 	github.com/readium/go-toolkit => ../experiments/02-crengine-go/patched/go-toolkit
 )

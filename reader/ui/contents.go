@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // An entry of the table of contents as shown: its title and how deep it is.

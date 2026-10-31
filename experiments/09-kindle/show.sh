@@ -5,9 +5,9 @@
 # (also the pause after the page and how long each word stays marked), MARK "invert" (the default) or "underline". KOReader stays in front and redraws its own screen on the next touch.
 # Appends to results-show.txt. From the Mac:
 #
-#     ssh kindle 'sh /mnt/us/indium-09/show.sh'                       (all three, 12 words, 500 ms apart)
-#     ssh kindle 'sh /mnt/us/indium-09/show.sh A2 w00020 1 3000'      (one word with A2, held 3 s)
-#     ssh kindle 'sh /mnt/us/indium-09/show.sh A2 w00001 12 500 underline'   (12 words underlined with A2)
+#     ssh kindle 'sh /mnt/us/shamsaink-09/show.sh'                       (all three, 12 words, 500 ms apart)
+#     ssh kindle 'sh /mnt/us/shamsaink-09/show.sh A2 w00020 1 3000'      (one word with A2, held 3 s)
+#     ssh kindle 'sh /mnt/us/shamsaink-09/show.sh A2 w00001 12 500 underline'   (12 words underlined with A2)
 cd "$(dirname "$0")"
 {
   echo "== $(date -u '+%Y-%m-%d %H:%M UTC')"

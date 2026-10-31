@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // The clock in the page's top margin (hidden in the menu): the time of day, 24 hours, from the Kindle's clock and

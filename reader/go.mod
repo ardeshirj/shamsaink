@@ -1,11 +1,11 @@
-module indiumreader
+module shamsainkreader
 
 go 1.27
 
 require (
 	github.com/readium/go-toolkit v0.0.0-00010101000000-000000000000
 	golang.org/x/image v0.46.0
-	indiumengine v0.0.0
+	shamsainkengine v0.0.0
 )
 
 require (
@@ -26,5 +26,5 @@ require (
 // the engine's Go binding; go-toolkit is experiment 02's trimmed copy (trim-gotoolkit.sh)
 replace (
 	github.com/readium/go-toolkit => ../experiments/02-crengine-go/patched/go-toolkit
-	indiumengine => ../engine/go
+	shamsainkengine => ../engine/go
 )

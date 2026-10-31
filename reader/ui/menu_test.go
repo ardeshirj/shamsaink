@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // Every button of the menu is found, on the panel, apart from the others. FONTS: a fallback fonts folder (as on the

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"indiumreader/device"
-	"indiumreader/ui"
+	"shamsainkreader/device"
+	"shamsainkreader/ui"
 )
 
 // The sources' names as the library shows them, by their folder under books/; another folder is shown as it is named.

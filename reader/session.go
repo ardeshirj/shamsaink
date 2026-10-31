@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
-	blitz "indiumengine"
-	"indiumreader/device"
-	"indiumreader/ui"
+	blitz "shamsainkengine"
+	"shamsainkreader/device"
+	"shamsainkreader/ui"
 )
 
 // A session: one book open, from its first page shown until it is left. One loop runs it (run): the device's events

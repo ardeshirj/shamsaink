@@ -19,7 +19,7 @@ stop=$(mktemp -u)
 # the player runs in the background, where Ctrl-C does not reach it: it stops at the mark, its file killed
 quit() { touch "$stop"; pkill -f "afplay $A" 2>/dev/null; sleep 1; pkill -f "afplay $A" 2>/dev/null; rm -f "$stop"; }
 trap 'quit; exit 130' INT TERM
-ssh kindle "FONT_SIZE=${FONT_SIZE:-50} LEAD_MS=${LEAD_MS:-200} sh /mnt/us/indium-09/follow.sh ${1:-180}" |
+ssh kindle "FONT_SIZE=${FONT_SIZE:-50} LEAD_MS=${LEAD_MS:-200} sh /mnt/us/shamsaink-09/follow.sh ${1:-180}" |
   while IFS= read -r line; do
     echo "$line"
     case $line in

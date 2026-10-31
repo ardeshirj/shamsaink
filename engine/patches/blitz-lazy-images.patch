@@ -7,7 +7,7 @@ index 786b5bd..5e7cc7d 100644
  impl ImageHandler {
      fn parse(&self, bytes: Bytes) -> Result<Resource, String> {
 +        // Only the size, from the header; the data is the file as it is, decoded by the scene the page is painted
-+        // into, at the size it is drawn (indium-reader: experiment 08)
++        // into, at the size it is drawn (shamsaink: experiment 08)
          let image_err = match image::ImageReader::new(Cursor::new(&bytes))
              .with_guessed_format()
              .expect("IO errors impossible with Cursor")

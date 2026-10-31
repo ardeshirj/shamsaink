@@ -4,8 +4,8 @@ import (
 	"image"
 	"time"
 
-	blitz "indiumengine"
-	"indiumreader/ui"
+	blitz "shamsainkengine"
+	"shamsainkreader/ui"
 )
 
 // The screen as layers: the page buffers hold the engine's pixels only, and what goes over the page shown (its

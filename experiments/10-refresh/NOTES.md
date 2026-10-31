@@ -61,10 +61,10 @@ What it says:
 Times say nothing about ghosting. To watch on the Kindle, KOReader in front (`turns WAVEFORM flash|-|both N MS`,
 `mark WAVEFORM N MS`):
 
-    ssh kindle 'sh /mnt/us/indium-09/refresh.sh turns REAGL - 6 1500'     (six turns, no flash)
-    ssh kindle 'sh /mnt/us/indium-09/refresh.sh turns GL16 - 6 1500'
-    ssh kindle 'sh /mnt/us/indium-09/refresh.sh turns GC16 both 6 1500'   (flash, no flash, ...)
-    ssh kindle 'sh /mnt/us/indium-09/refresh.sh mark A2 10 400'           (the underline on and off)
+    ssh kindle 'sh /mnt/us/shamsaink-09/refresh.sh turns REAGL - 6 1500'     (six turns, no flash)
+    ssh kindle 'sh /mnt/us/shamsaink-09/refresh.sh turns GL16 - 6 1500'
+    ssh kindle 'sh /mnt/us/shamsaink-09/refresh.sh turns GC16 both 6 1500'   (flash, no flash, ...)
+    ssh kindle 'sh /mnt/us/shamsaink-09/refresh.sh mark A2 10 400'           (the underline on and off)
 
 The maintainer, having watched them: "The flash is more obvious in dark mode, otherwise they were mostly the same to
 me." So REAGL, GL16 and GC16 page turns look alike in day mode, and the flash is what shows in night mode (KOReader's,

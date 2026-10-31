@@ -17,7 +17,7 @@ import (
 	"github.com/readium/go-toolkit/pkg/manifest"
 	"github.com/readium/go-toolkit/pkg/pub"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // Read-along (roadmap, stage 4): the book's narration played to the Bluetooth headphones paired in the Kindle's own

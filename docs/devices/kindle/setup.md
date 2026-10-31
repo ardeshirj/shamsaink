@@ -78,12 +78,12 @@ the switch back as it was at the end (before 2026-10-26 they set it to 0, so the
 script, even after `make kindle-awake`). For a long run, start it detached so a dropped connection cannot stop it,
 and read its results file afterwards:
 ```sh
-ssh kindle 'cd /mnt/us/indium-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'
+ssh kindle 'cd /mnt/us/shamsaink-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'
 ```
 
 ## 7. Where things are on the Kindle
 - **`/mnt/us`:** the 6 GB a computer sees over USB, where books and KOReader live, and where the experiments' bundle
-  goes (`/mnt/us/indium-09`, 09's `pack.sh` and its NOTES.md). It is FUSE and slow (09, step 4).
+  goes (`/mnt/us/shamsaink-09`, 09's `pack.sh` and its NOTES.md). It is FUSE and slow (09, step 4).
 - **`/var/tmp`:** a 64 MB RAM disk, fast; what is put there uses RAM, so clean it up after.
 - **`/` is read-only.** We are root (`echo 3 > /proc/sys/vm/drop_caches` works, for cold timings).
 - **KOReader in front** while an experiment draws on the screen: it pauses the Kindle's own interface, and takes the

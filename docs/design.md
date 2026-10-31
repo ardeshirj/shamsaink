@@ -26,7 +26,7 @@ id at a point                             taps, selection (not built yet)
 ```
 
 In Go: `bench/` (`engine.Document`: `Pages`, `Draw`, `Find`, `Close`; engines by name: "gotext", "cre"
-with `-tags cre`, "blitz" with `-tags blitz`, an adapter over the binding in `engine/go`, module `indiumengine`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
+with `-tags cre`, "blitz" with `-tags blitz`, an adapter over the binding in `engine/go`, module `shamsainkengine`). Across cgo (`engine/src/capi.rs`, `engine/blitz_engine.h`) Go passes
 its buffers in, strings as pointer and length, and answers the engine's file requests through a callback, so
 go-toolkit stays in charge of the EPUB. 08's chapter-first opening and the cache go through it too (`Save`, `Restore`
 in `engine/go`, used by `reader/book.go`).

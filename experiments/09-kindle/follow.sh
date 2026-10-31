@@ -4,7 +4,7 @@
 # files' lengths (bin/blitz-follow). SECONDS of it (180) from word FROM (0), refreshed with WAVEFORM (A2); FONT_SIZE
 # (50 px) changes the text's size, LEAD_MS (0) delays the clock after "clock started" (for the Mac's player). Appends to results-follow.txt. With the voice, from the Mac: ./follow-audio.sh.
 #
-#     ssh kindle 'sh /mnt/us/indium-09/follow.sh [SECONDS [FROM [WAVEFORM]]]'
+#     ssh kindle 'sh /mnt/us/shamsaink-09/follow.sh [SECONDS [FROM [WAVEFORM]]]'
 cd "$(dirname "$0")"
 B=books/buried-alive-narrated
 {

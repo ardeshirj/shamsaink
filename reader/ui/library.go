@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 
-	blitz "indiumengine"
+	blitz "shamsainkengine"
 )
 
 // A book's row in the library, as the reader knows it.
