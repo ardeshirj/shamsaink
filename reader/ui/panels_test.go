@@ -81,6 +81,7 @@ func TestPanels(t *testing.T) {
 	for i := range 12 {
 		books = append(books, Book{Title: fmt.Sprintf("A new book %d", i), Author: "Someone", New: true, Read: -1})
 	}
+	books = append(books, Book{Title: "بوف کور", Author: "صادق هدایت", New: true, Read: -1, RTL: true}) // a date in a Farsi row
 	topBar := TopBar{Time: "20:48", Battery: 82, Menu: true}
 	view := LibraryView{Counts: [4]int{4, 12, 1, 17}}
 	for f, name := range FilterNames {

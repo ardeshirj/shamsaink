@@ -24,4 +24,4 @@ li .pct.tag { height: auto; top: 0.55em; font-size: 0.75em; line-height: 1.3; pa
 </style></head><body><ul>
 {{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}"{{textlang .Title}}>
 <h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
-{{if .When}}<span class="pct when">{{.When}}</span>{{else if or .Width .New}}<span class="pct{{if .New}} tag{{end}}">{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul></body></html>
+{{if .When}}<span class="pct when"><bdi dir="ltr">{{.When}}</bdi></span>{{else if or .Width .New}}<span class="pct{{if .New}} tag{{end}}">{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul></body></html>
