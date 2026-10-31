@@ -1,5 +1,7 @@
-{{/* The bar under a paged list: the previous button, the page's number of the pages, the next button. In a
-right-to-left list the row runs from the right, so the previous button is on the right, its caret mirrored. */}}
+{{/* The bar under a paged list: the previous button, the page's number of the pages, the next button, each button
+framed, no line over the bar. In a right-to-left list the row runs from the right, so the previous button is on the
+right, its caret mirrored. */}}
 {{template "head" .Dir}}<style>
 .pager { justify-content: space-between; }
+.pager span.tb { width: 3em; height: 1.9em; border: var(--line) solid var(--ink); border-radius: var(--radius); }
 </style></head><body><div class="row pager">{{template "iconbutton" ibtn "list-prev" "caret-left" false}}<span dir="{{.CountDir}}">{{.Count}}</span>{{template "iconbutton" ibtn "list-next" "caret-right" false}}</div></body></html>

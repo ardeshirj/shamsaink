@@ -60,7 +60,7 @@ func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz
 	return v
 }
 
-// drawPager draws the bar for page (from 0) of pages, at the bottom of the screen with a line on its top edge.
+// drawPager draws the bar for page (from 0) of pages, at the bottom of the screen, without a line.
 func (v *List) drawPager(page, pages int) *Panel {
 	d := pagerData{Dir: "ltr", Count: word("page-n-of", num(page+1), num(max(pages, 1)))}
 	d.CountDir = "ltr"
@@ -72,9 +72,8 @@ func (v *List) drawPager(page, pages int) *Panel {
 	}
 	html, ids := render("pager.html", d)
 	m := drawPanel(html, ids, v.fonts, v.w, 300)
-	// the line on the panel's top edge, not under it
+	// no line: drawPanel's under it rubbed out
 	nh := m.img.Rect.Dy()
-	copy(m.img.Pix, m.img.Pix[(nh-4)*m.img.Stride:])
 	for y := nh - 4; y < nh; y++ {
 		for x := 0; x < v.w; x++ {
 			m.img.Pix[y*m.img.Stride+x] = 255

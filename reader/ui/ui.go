@@ -20,7 +20,8 @@ import (
 var files embed.FS
 
 // The icon fonts by the file name the style sheet asks for, and where each is in files.
-var iconFonts = map[string]string{"Phosphor.ttf": "icons/Phosphor.ttf", "Phosphor-Fill.ttf": "icons/Phosphor-Fill.ttf"}
+var iconFonts = map[string]string{"Phosphor.ttf": "icons/Phosphor.ttf", "Phosphor-Bold.ttf": "icons/Phosphor-Bold.ttf",
+	"Phosphor-Fill.ttf": "icons/Phosphor-Fill.ttf"}
 
 // readFor is the engine's read function for a panel: an icon font for a path ending in its name (the style sheet's
 // @font-face), html for every other path.

@@ -35,8 +35,9 @@ div.set { display: grid; grid-template-columns: 1fr 2.4em 6em 2.4em; align-items
 div.set > .name { grid-column: 1; justify-self: start; }
 div.set > .v { grid-column: 3; }
 
-/* The icons: two fonts with the same glyphs, the outline one and the filled one (a control that is on). */
-@font-face { font-family: icons; src: url(Phosphor.ttf); }
+/* The icons: two fonts with the same glyphs, the outline one and the filled one (a control that is on). Outline in
+   Phosphor's bold, chosen over its regular (Phosphor.ttf) on the Kobo: less thin on e-ink. */
+@font-face { font-family: icons; src: url(Phosphor-Bold.ttf); }
 @font-face { font-family: icons-fill; src: url(Phosphor-Fill.ttf); }
 .i { font-family: icons; font-size: 1.35em; line-height: 1; }
 .i.on { font-family: icons-fill; }

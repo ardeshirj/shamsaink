@@ -1,5 +1,5 @@
-"""Phosphor's regular and fill fonts cut to ICONS: Phosphor.ttf and Phosphor-Fill.ttf here, a few KB each, and
-codepoints.txt (each icon's name and its character, for the templates). Run by subset.sh."""
+"""Phosphor's regular, bold and fill fonts cut to ICONS: Phosphor.ttf, Phosphor-Bold.ttf and Phosphor-Fill.ttf here, a
+few KB each, and codepoints.txt (each icon's name and its character, for the templates). Run by subset.sh."""
 import re
 import subprocess
 import urllib.request
@@ -21,7 +21,7 @@ for name in ICONS:
 with open("codepoints.txt", "w") as f:
     f.writelines(f"{n} {c}\n" for n, c in codes)
 unicodes = ",".join("U+" + c for _, c in codes)
-for weight, font in (("regular", "Phosphor"), ("fill", "Phosphor-Fill")):
+for weight, font in (("regular", "Phosphor"), ("bold", "Phosphor-Bold"), ("fill", "Phosphor-Fill")):
     with open(f"/tmp/{font}.ttf", "wb") as f:
         f.write(fetch(f"{weight}/{font}.ttf"))
     subprocess.run(["pyftsubset", f"/tmp/{font}.ttf", f"--unicodes={unicodes}", f"--output-file={font}.ttf",
