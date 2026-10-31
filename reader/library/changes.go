@@ -1,4 +1,4 @@
-package main
+package library
 
 import (
 	"errors"
@@ -9,16 +9,18 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"shamsainkreader/files"
 )
 
 // What a book's menu in the library changes (libraryview.go): whether it is finished, its place, the book itself.
 //
-// A book marked finished or not finished by hand has DIR/places/KEY.mark: "finished" or "reading", and the share read
+// A book marked finished or not finished by hand has DIR/places/KEY.Mark: "finished" or "reading", and the share read
 // when it was marked ("none" if it had no place). The mark holds while the place says the same; once the book is read
 // on (or opened for the first time), its place decides again, as a book never marked.
 
 // markOf is a book's mark: 1 marked finished, -1 marked not finished, 0 none (or no longer holding), and when it was
-// marked. opened and share are its place's (placeOf).
+// marked. opened and share are its place's (Place).
 func markOf(dir, key string, opened bool, share float64) (int, time.Time) {
 	p := filepath.Join(dir, "places", key+".mark")
 	b, err := os.ReadFile(p)
@@ -51,31 +53,27 @@ func mark(b []byte, opened bool, share float64) int {
 	return -1
 }
 
-// setMark marks a book finished, or not finished, as its place is now.
-func setMark(dir, key string, finished bool) error {
+// SetMark marks a book finished, or not finished, as its place is now.
+func SetMark(dir, key string, finished bool) error {
 	state := map[bool]string{true: "finished", false: "reading"}[finished]
 	at := "none"
-	if _, share, ok := placeOf(dir, key); ok {
+	if _, share, ok := Place(dir, key); ok {
 		at = strconv.FormatFloat(share, 'g', -1, 64)
 	}
-	return writeFile(filepath.Join(dir, "places", key+".mark"), []byte(state+" "+at+"\n"))
+	return files.Write(filepath.Join(dir, "places", key+".mark"), []byte(state+" "+at+"\n"))
 }
 
-// startAgain forgets where a book was and its mark: it opens at its start, a new book in the library. Its highlights
+// StartAgain forgets where a book was and its mark: it opens at its start, a new book in the library. Its highlights
 // stay.
-func startAgain(dir, key string) error {
+func StartAgain(dir, key string) error {
 	return removeAll(filepath.Join(dir, "places", key+".place"), filepath.Join(dir, "places", key+".mark"))
 }
 
-// removeBook deletes a book's file and everything kept for it: its place, mark, highlights (and a copy of them that
-// did not parse), cache and the direction set for it. library.json drops it at the next scan.
-func removeBook(dir string, b libBook, set *settings) error {
+// Remove deletes a book's file and everything kept for it: its place, mark, highlights (and a copy of them that
+// did not parse) and cache; the reader's settings for it are the caller's. library.json drops it at the next scan.
+func Remove(dir string, b Book) error {
 	if err := removeAll(filepath.Join(dir, b.Path)); err != nil {
 		return err
-	}
-	if _, ok := set.Direction[b.Key]; ok {
-		delete(set.Direction, b.Key)
-		set.save(dir)
 	}
 	return removeAll(
 		filepath.Join(dir, "places", b.Key+".place"),

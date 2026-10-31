@@ -153,7 +153,8 @@ and tried on a device and stays in its group; new work goes where it belongs as 
 - **Structural improvements welcome** (the maintainer, 2026-10-30, after the open book became a `session` with one
   event loop): point them out when they would pay off for the work coming next, the gain and the risk, and build them
   on a yes, behaviour and pages checked unchanged on a device. Code goes into packages once there is enough of it
-  (highlights and narration stay in `main` for now).
+  (the library's data is `reader/library` since 2026-10-31, the screen still in `main`; highlights and narration stay
+  in `main` for now).
 - **The reader's panels are HTML components, in modern CSS** (the maintainer, 2026-10-29): Blitz is a modern
   engine, so flex, grid, gap, custom properties and logical properties are welcome. Each panel is a template in
   `reader/ui/templates/` (drawn by the Go package `reader/ui`) built from the pieces in `components.html` (button,

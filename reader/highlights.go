@@ -9,6 +9,8 @@ import (
 	"slices"
 	"time"
 
+	"shamsainkreader/files"
+
 	blitz "shamsainkengine"
 )
 
@@ -44,7 +46,7 @@ func loadHighlights(dir, key string) *highlights {
 
 func (h *highlights) save() {
 	b, _ := json.MarshalIndent(h.list, "", "  ")
-	writeFile(h.path, append(b, '\n'))
+	files.Write(h.path, append(b, '\n'))
 }
 
 // add keeps hl, taking in the highlights it overlaps (one span over them all), so no text is under two; its text is

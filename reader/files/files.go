@@ -1,13 +1,13 @@
-package main
+package files
 
 import (
 	"os"
 	"path/filepath"
 )
 
-// writeFile writes data to path whole or not at all: to path+".new", synced, then renamed over path, so a write cut
+// Write writes data to path whole or not at all: to path+".new", synced, then renamed over path, so a write cut
 // off (a sleep, a flat battery) leaves the old file, not a broken one. The folder is made if needed.
-func writeFile(path string, data []byte) error {
+func Write(path string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		return err
 	}

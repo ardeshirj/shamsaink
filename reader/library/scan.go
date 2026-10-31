@@ -1,4 +1,4 @@
-package main
+package library
 
 import (
 	"archive/zip"
@@ -14,10 +14,12 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+
+	"shamsainkreader/files"
 )
 
 // A book in the library: its file, what its metadata says, and how far it has been read.
-type libBook struct {
+type Book struct {
 	Path     string `json:"path"` // relative to DIR
 	Key      string `json:"key"`  // as openBook's: base name, size, modification time
 	Title    string `json:"title"`
@@ -32,38 +34,38 @@ type libBook struct {
 // metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too.
 const metaVersion = 1
 
-// bookKey is a book's key from its file's name, size and modification time, as openBook makes it.
-func bookKey(name string, size int64, mod time.Time) string {
+// Key is a book's key from its file's name, size and modification time, as openBook makes it.
+func Key(name string, size int64, mod time.Time) string {
 	return fmt.Sprintf("%s-%d-%d", name, size, mod.Unix())
 }
 
 // readMeta reads an EPUB's metadata; a variable so a test can count the books read.
 var readMeta = epubMeta
 
-// scanLibrary lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub with their metadata: from DIR/library.json
+// Scan lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub with their metadata: from DIR/library.json
 // when the book's key is there, else read from the EPUB. Books whose file is gone are dropped, and library.json is
 // written again only if anything changed.
-func scanLibrary(dir string) []libBook {
+func Scan(dir string) []Book {
 	t := time.Now()
-	var old []libBook
+	var old []Book
 	if b, err := os.ReadFile(filepath.Join(dir, "library.json")); err == nil {
 		if err := json.Unmarshal(b, &old); err != nil {
 			fmt.Printf("library: library.json does not parse (%v); read again\n", err)
 			old = nil
 		}
 	}
-	known := map[string]libBook{}
+	known := map[string]Book{}
 	for _, b := range old {
 		known[b.Path+"\x00"+b.Key] = b
 	}
-	files, _ := filepath.Glob(filepath.Join(dir, "books", "*.epub"))
+	epubs, _ := filepath.Glob(filepath.Join(dir, "books", "*.epub"))
 	more, _ := filepath.Glob(filepath.Join(dir, "books", "*", "*.epub"))
-	files = append(files, more...)
-	slices.Sort(files)
+	epubs = append(epubs, more...)
+	slices.Sort(epubs)
 
-	var books []libBook
+	var books []Book
 	read := 0
-	for _, f := range files {
+	for _, f := range epubs {
 		st, err := os.Stat(f)
 		if err != nil || st.IsDir() {
 			continue
@@ -73,12 +75,12 @@ func scanLibrary(dir string) []libBook {
 			continue
 		}
 		rel = filepath.ToSlash(rel)
-		key := bookKey(filepath.Base(f), st.Size(), st.ModTime())
+		key := Key(filepath.Base(f), st.Size(), st.ModTime())
 		if b, ok := known[rel+"\x00"+key]; ok && b.V == metaVersion {
 			books = append(books, b)
 			continue
 		}
-		b := libBook{Path: rel, Key: key, Added: st.ModTime().Unix(), V: metaVersion}
+		b := Book{Path: rel, Key: key, Added: st.ModTime().Unix(), V: metaVersion}
 		if parts := strings.Split(rel, "/"); len(parts) == 3 {
 			b.Source = parts[1]
 		}
@@ -96,7 +98,7 @@ func scanLibrary(dir string) []libBook {
 	}
 	if read > 0 || len(books) != len(old) {
 		if b, err := json.MarshalIndent(books, "", "  "); err == nil {
-			if err := writeFile(filepath.Join(dir, "library.json"), append(b, '\n')); err != nil {
+			if err := files.Write(filepath.Join(dir, "library.json"), append(b, '\n')); err != nil {
 				fmt.Printf("library: library.json not written: %v\n", err)
 			}
 		}
@@ -214,9 +216,9 @@ func epubMeta(file string) (m meta, err error) {
 	}
 }
 
-// placeOf reads a book's place file: when it was last kept, and the share of the book read (0 to 1, -1 if the old
+// Place reads a book's place file: when it was last kept, and the share of the book read (0 to 1, -1 if the old
 // form without one); ok false when the book was never opened.
-func placeOf(dir, key string) (when time.Time, share float64, ok bool) {
+func Place(dir, key string) (when time.Time, share float64, ok bool) {
 	p := filepath.Join(dir, "places", key+".place")
 	st, err := os.Stat(p)
 	if err != nil {
@@ -235,8 +237,8 @@ func placeOf(dir, key string) (when time.Time, share float64, ok bool) {
 
 // progress is how much of the book is read, 0 to 1: 0 if never opened, -1 if opened but not known (a place kept
 // before the share was).
-func progress(dir string, b libBook) float64 {
-	if _, share, ok := placeOf(dir, b.Key); ok {
+func progress(dir string, b Book) float64 {
+	if _, share, ok := Place(dir, b.Key); ok {
 		return share
 	}
 	return 0

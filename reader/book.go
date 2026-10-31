@@ -7,6 +7,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"shamsainkreader/files"
+	"shamsainkreader/library"
+
 	"github.com/readium/go-toolkit/pkg/archive"
 	"github.com/readium/go-toolkit/pkg/asset"
 	"github.com/readium/go-toolkit/pkg/manifest"
@@ -83,7 +86,7 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		}
 		return data, nil
 	}
-	key := bookKey(filepath.Base(abs), st.Size(), st.ModTime())
+	key := library.Key(filepath.Base(abs), st.Size(), st.ModTime())
 	r := &reading{
 		pub:     p,
 		spine:   spine,
@@ -218,10 +221,10 @@ func (r *reading) share(rest bool) float64 {
 // keep writes the place with the share read, and the cache once every document is paginated (once). The caller says
 // whether the rest of the book is still being paginated: the session owns that, and the share depends on it.
 func (r *reading) keep(rest bool) {
-	writeFile(r.place, []byte(fmt.Sprintf("%d %d %.4f\n", r.doc, r.at, r.share(rest))))
+	files.Write(r.place, []byte(fmt.Sprintf("%d %d %.4f\n", r.doc, r.at, r.share(rest))))
 	if !r.saved {
 		if data := r.book.Save(); data != nil {
-			writeFile(r.cache, data)
+			files.Write(r.cache, data)
 			r.saved = true
 		}
 	}

@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"shamsainkreader/files"
+
 	blitz "shamsainkengine"
 )
 
@@ -44,7 +46,7 @@ func loadSettings(dir string) *settings {
 
 func (s *settings) save(dir string) {
 	b, _ := json.MarshalIndent(s, "", "  ")
-	writeFile(filepath.Join(dir, "settings.json"), append(b, '\n'))
+	files.Write(filepath.Join(dir, "settings.json"), append(b, '\n'))
 }
 
 func (s *settings) options(w, h int) blitz.Options {

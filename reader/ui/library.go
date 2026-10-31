@@ -6,6 +6,8 @@ import (
 	"time"
 
 	blitz "shamsainkengine"
+
+	"shamsainkreader/library"
 )
 
 // A book's row in the library, as the reader knows it.
@@ -28,15 +30,11 @@ type libraryRow struct {
 	Narrated          bool   // a headphones mark after the title
 }
 
-// The library's filters and sorts, by the name that is in their buttons' ids and the reader's files, and by the word
-// that is their label.
-var (
-	FilterNames = []string{"reading", "new", "finished", "all"}
-	filterWords = []string{"reading", "new-books", "finished", "all"}
-	SortNames   = []string{"recent", "title", "author", "added"}
-)
+// The words that are the library's filters' labels, in the order of library.Filters (their names, in the buttons' ids);
+// the sorts' are their names.
+var filterWords = []string{"reading", "new-books", "finished", "all"}
 
-// What the library's head shows besides the bar: the filter chosen (an index of FilterNames) and how many books each
+// What the library's head shows besides the bar: the filter chosen (an index of library.Filters) and how many books each
 // has, and which of the panels is open: the menu (under the
 // bar) or the sort panel (under the filters).
 type LibraryView struct {
@@ -52,7 +50,7 @@ func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel
 	topBar.Title = word("library")
 	topBar.Start, topBar.MenuOn = "magnifying-glass", v.MenuOn // search: no action until there is a keyboard
 	var fs []button
-	for i, name := range FilterNames {
+	for i, name := range library.Filters {
 		fs = append(fs, button{ID: "filter-" + name, Label: word(filterWords[i]), Count: num(v.Counts[i]), On: i == v.Filter})
 	}
 	html, ids := render("library-head.html", struct {
@@ -166,9 +164,9 @@ func DrawLibraryLanguage(follow bool, under int, fonts *blitz.Fonts, w int) *Pan
 }
 
 // DrawLibrarySort draws the sort panel directly under the head (under px from the top): how the books are sorted
-// (sort, an index of SortNames; buttons sort-recent and the like).
+// (sort, an index of library.Sorts; buttons sort-recent and the like).
 func DrawLibrarySort(sort, under int, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("library-sort.html", struct{ Sorts []button }{segmentsOf("sort-", SortNames, SortNames, sort)})
+	html, ids := render("library-sort.html", struct{ Sorts []button }{segmentsOf("sort-", library.Sorts, library.Sorts, sort)})
 	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its buttons
 	m.y0 = under
 	return m

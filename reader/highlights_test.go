@@ -5,6 +5,8 @@ package main
 import (
 	"fmt"
 	"image"
+	"os"
+	"path/filepath"
 	"testing"
 
 	blitz "shamsainkengine"
@@ -86,5 +88,22 @@ func TestAddHighlight(t *testing.T) {
 	read = 0
 	if !h.tidy(text) || len(h.list) != 2 || h.list[1].From != [2]int{0, 0} || h.list[1].To != [2]int{0, 9} || read != 1 {
 		t.Errorf("tidied %+v, text read %d times", h.list, read)
+	}
+}
+
+func TestBadHighlights(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "highlights", "k.json")
+	os.MkdirAll(filepath.Dir(p), 0o755)
+	os.WriteFile(p, []byte("[{broken"), 0o644)
+	h := loadHighlights(dir, "k")
+	if len(h.list) != 0 {
+		t.Errorf("list %v", h.list)
+	}
+	if b, err := os.ReadFile(p + ".bad"); err != nil || string(b) != "[{broken" {
+		t.Errorf(".bad: %q, %v", b, err)
+	}
+	if _, err := os.Stat(p); err == nil {
+		t.Error("bad file still in place")
 	}
 }

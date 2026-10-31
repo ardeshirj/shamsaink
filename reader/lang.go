@@ -3,6 +3,7 @@ package main
 import (
 	"slices"
 
+	"shamsainkreader/library"
 	"shamsainkreader/ui"
 )
 
@@ -29,5 +30,5 @@ func bookLanguage(langs []string, title string) string {
 	if len(langs) > 0 {
 		first = langs[0]
 	}
-	return bookLang(libBook{Lang: first, Title: title})
+	return library.Lang(library.Book{Lang: first, Title: title})
 }

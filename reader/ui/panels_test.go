@@ -13,6 +13,8 @@ import (
 	"time"
 
 	blitz "shamsainkengine"
+
+	"shamsainkreader/library"
 )
 
 // Every panel drawn in several states, to compare before and after a change to how they are built. PANELS: a folder
@@ -84,7 +86,7 @@ func TestPanels(t *testing.T) {
 	books = append(books, Book{Title: "بوف کور", Author: "صادق هدایت", New: true, Read: -1, RTL: true}) // a date in a Farsi row
 	topBar := TopBar{Time: "20:48", Battery: 82, Menu: true}
 	view := LibraryView{Counts: [4]int{4, 12, 1, 17}}
-	for f, name := range FilterNames {
+	for f, name := range library.Filters {
 		v := view
 		v.Filter = f
 		var shown []Book // the books under the filter

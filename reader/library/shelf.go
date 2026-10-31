@@ -1,4 +1,4 @@
-package main
+package library
 
 import (
 	"cmp"
@@ -9,28 +9,33 @@ import (
 	"strings"
 	"time"
 
-	"shamsainkreader/ui"
+	"shamsainkreader/files"
 )
 
-// The library's views of the books: a filter (which books), a sort (in what order), by the names in ui.FilterNames and ui.SortNames. The choices are kept in DIR/library-view.json.
+// The library's views of the books: a filter (which books), a sort (in what order), by the names in Filters and Sorts
+// (in the ui's buttons' ids too). The choices are kept in DIR/library-view.json.
+var (
+	Filters = []string{"reading", "new", "finished", "all"}
+	Sorts   = []string{"recent", "title", "author", "added"}
+)
 
 // A book with what its place file says: whether it was opened, when it was last read and how much of it.
-type shelfBook struct {
-	libBook
-	opened bool
-	when   time.Time
-	share  float64   // 0 to 1; -1 when opened but not known
-	mark   int       // marked by hand (librarybook.go): 1 finished, -1 not finished, 0 neither
-	marked time.Time // when it was marked
+type Item struct {
+	Book
+	Opened bool
+	When   time.Time // when its place was last kept
+	Share  float64   // 0 to 1; -1 when opened but not known
+	Mark   int       // marked by hand (changes.go): 1 finished, -1 not finished, 0 neither
+	Marked time.Time // when it was marked
 }
 
-// shelfOf reads every book's place file.
-func shelfOf(books []libBook, dir string) []shelfBook {
-	out := make([]shelfBook, len(books))
+// Shelf reads every book's place file.
+func Shelf(books []Book, dir string) []Item {
+	out := make([]Item, len(books))
 	for i, b := range books {
-		w, s, ok := placeOf(dir, b.Key)
+		w, s, ok := Place(dir, b.Key)
 		m, at := markOf(dir, b.Key, ok, s)
-		out[i] = shelfBook{b, ok, w, s, m, at}
+		out[i] = Item{b, ok, w, s, m, at}
 	}
 	return out
 }
@@ -39,38 +44,38 @@ func shelfOf(books []libBook, dir string) []shelfBook {
 const finishedShare = 0.98
 
 // finished: as marked, else read to the end.
-func (b shelfBook) finished() bool {
-	if b.mark != 0 {
-		return b.mark > 0
+func (b Item) Finished() bool {
+	if b.Mark != 0 {
+		return b.Mark > 0
 	}
-	return b.opened && b.share >= finishedShare
+	return b.Opened && b.Share >= finishedShare
 }
 
 // finishedAt is when a finished book was finished: when it was marked so, else when it was last read.
-func (b shelfBook) finishedAt() time.Time {
-	if b.mark > 0 {
-		return b.marked
+func (b Item) FinishedAt() time.Time {
+	if b.Mark > 0 {
+		return b.Marked
 	}
-	return b.when
+	return b.When
 }
 
-// in says whether the book is under filter f (an index of ui.FilterNames): Reading is opened and not finished (a
+// in says whether the book is under filter f (an index of Filters): Reading is opened and not finished (a
 // share not known is reading), New is never opened nor marked finished, Finished is read to the end or marked so, All
 // is every book.
-func (b shelfBook) in(f int) bool {
+func (b Item) In(f int) bool {
 	switch f {
 	case 0:
-		return b.opened && !b.finished()
+		return b.Opened && !b.Finished()
 	case 1:
-		return !b.opened && !b.finished()
+		return !b.Opened && !b.Finished()
 	case 2:
-		return b.finished()
+		return b.Finished()
 	}
 	return true
 }
 
-// langCode is the primary subtag of a book's language, lower case ("fa-IR" is "fa"); "" if it has none.
-func langCode(lang string) string {
+// LangCode is the primary subtag of a book's language, lower case ("fa-IR" is "fa"); "" if it has none.
+func LangCode(lang string) string {
 	c := strings.ToLower(strings.TrimSpace(strings.SplitN(lang, "-", 2)[0]))
 	switch c {
 	case "per", "fas":
@@ -89,10 +94,10 @@ func arabicScript(s string) bool {
 	return false
 }
 
-// bookLang is the language of a book: its primary subtag, else Farsi when its title has Arabic-script letters, else
+// Lang is the language of a book: its primary subtag, else Farsi when its title has Arabic-script letters, else
 // "" (no group).
-func bookLang(b libBook) string {
-	if c := langCode(b.Lang); c != "" {
+func Lang(b Book) string {
+	if c := LangCode(b.Lang); c != "" {
 		return c
 	}
 	if arabicScript(b.Title) {
@@ -101,11 +106,11 @@ func bookLang(b libBook) string {
 	return ""
 }
 
-// countsOf is how many books each filter has.
-func countsOf(books []shelfBook) (n [4]int) {
+// Counts is how many books each filter has.
+func Counts(books []Item) (n [4]int) {
 	for _, b := range books {
 		for f := range n {
-			if b.in(f) {
+			if b.In(f) {
 				n[f]++
 			}
 		}
@@ -116,24 +121,24 @@ func countsOf(books []shelfBook) (n [4]int) {
 // The sort each filter starts with.
 var defaultSorts = [4]string{"recent", "added", "recent", "title"}
 
-// sortBooks puts the books in the order sort (a name of ui.SortNames). Recent is by when the place file was kept,
+// Sort puts the books in the order sort (a name of Sorts). Recent is by when the place file was kept,
 // newest first, then the books never opened, newest added first; Title and Author ignore case, a book with no author
 // last in Author; Added is newest first.
-func sortBooks(books []shelfBook, sort string) {
-	title := func(a, b shelfBook) int {
+func Sort(books []Item, sort string) {
+	title := func(a, b Item) int {
 		return cmp.Or(strings.Compare(strings.ToLower(a.Title), strings.ToLower(b.Title)), strings.Compare(a.Path, b.Path))
 	}
-	slices.SortStableFunc(books, func(a, b shelfBook) int {
+	slices.SortStableFunc(books, func(a, b Item) int {
 		switch sort {
 		case "recent":
-			if a.opened != b.opened {
-				if a.opened {
+			if a.Opened != b.Opened {
+				if a.Opened {
 					return -1
 				}
 				return 1
 			}
-			if a.opened {
-				return cmp.Or(b.when.Compare(a.when), title(a, b))
+			if a.Opened {
+				return cmp.Or(b.When.Compare(a.When), title(a, b))
 			}
 			return cmp.Or(cmp.Compare(b.Added, a.Added), title(a, b))
 		case "author":
@@ -152,48 +157,48 @@ func sortBooks(books []shelfBook, sort string) {
 }
 
 // The choices as kept: the filter, the sort of each filter.
-type libraryView struct {
+type View struct {
 	Filter string            `json:"filter,omitempty"`
 	Sorts  map[string]string `json:"sorts,omitempty"`
 }
 
-// loadView reads DIR/library-view.json; ok is false when there is none (or it does not parse).
-func loadView(dir string) (v libraryView, ok bool) {
+// LoadView reads DIR/library-view.json; ok is false when there is none (or it does not parse).
+func LoadView(dir string) (v View, ok bool) {
 	b, err := os.ReadFile(filepath.Join(dir, "library-view.json"))
 	if err != nil || json.Unmarshal(b, &v) != nil {
-		return libraryView{}, false
+		return View{}, false
 	}
 	return v, true
 }
 
-func (v libraryView) save(dir string) error {
+func (v View) Save(dir string) error {
 	b, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return err
 	}
-	return writeFile(filepath.Join(dir, "library-view.json"), append(b, '\n'))
+	return files.Write(filepath.Join(dir, "library-view.json"), append(b, '\n'))
 }
 
-// sortOf is the sort kept for filter f (an index of ui.FilterNames), its default if none.
-func (v libraryView) sortOf(f int) string {
-	if s := v.Sorts[ui.FilterNames[f]]; slices.Contains(ui.SortNames, s) {
+// SortOf is the sort kept for filter f (an index of Filters), its default if none.
+func (v View) SortOf(f int) string {
+	if s := v.Sorts[Filters[f]]; slices.Contains(Sorts, s) {
 		return s
 	}
 	return defaultSorts[f]
 }
 
-// setSort keeps sort for filter f.
-func (v *libraryView) setSort(f int, sort string) {
+// SetSort keeps sort for filter f.
+func (v *View) SetSort(f int, sort string) {
 	if v.Sorts == nil {
 		v.Sorts = map[string]string{}
 	}
-	v.Sorts[ui.FilterNames[f]] = sort
+	v.Sorts[Filters[f]] = sort
 }
 
-// startFilter is the filter to open the library with: the one kept, but New when that is Reading and no book is being
+// StartFilter is the filter to open the library with: the one kept, but New when that is Reading and no book is being
 // read; with none kept Reading if any book is being read, else New. counts are the books'.
-func startFilter(v libraryView, counts [4]int) int {
-	f := slices.Index(ui.FilterNames, v.Filter)
+func StartFilter(v View, counts [4]int) int {
+	f := slices.Index(Filters, v.Filter)
 	if f < 0 {
 		f = 0
 	}
