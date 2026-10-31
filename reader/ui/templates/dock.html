@@ -13,7 +13,6 @@ does not clip text, so DrawDock cuts a long chapter title itself, as DrawBar doe
 .prog i { display: block; width: {{.Width}}%; background: var(--ink); border-radius: 8px; }
 .prog b { position: absolute; top: 100%; width: var(--line); height: 0.3em; background: var(--ink); }
 .tools { display: flex; justify-content: space-between; margin-top: 0.4em; }
-.tools span.tb { font-size: 1.35em; }
 </style></head><body>
 <div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}">{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>
 <div class="navrow" dir="{{.Dir}}">{{template "iconbutton" ibtn "chapter-prev" "caret-left" false}}<div class="prog" id="{{id "bar"}}"><i></i>{{range .Ticks}}<b style="{{$.Side}}: {{.}}%"></b>{{end}}</div>{{template "iconbutton" ibtn "chapter-next" "caret-right" false}}</div>

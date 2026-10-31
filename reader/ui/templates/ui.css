@@ -40,8 +40,9 @@ div.set > .name { grid-column: 1; justify-self: start; }
 div.set > .v { grid-column: 3; }
 
 /* The icons: two fonts with the same glyphs, the outline one and the filled one (a control that is on). Outline in
-   Phosphor's bold, chosen over its regular (Phosphor.ttf) on the Kobo: less thin on e-ink. */
-@font-face { font-family: icons; src: url(Phosphor-Bold.ttf); }
+   Phosphor's regular (2026-10-31, the maintainer, on the Kobo: the bold looked too heavy beside the text; the bold
+   is kept in icons/ as Phosphor-Bold.ttf). */
+@font-face { font-family: icons; src: url(Phosphor.ttf); }
 @font-face { font-family: icons-fill; src: url(Phosphor-Fill.ttf); }
 .i { font-family: icons; font-size: 1.35em; line-height: 1; }
 .i.on { font-family: icons-fill; }
