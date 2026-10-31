@@ -16,7 +16,7 @@ import (
 // The panels' HTML is in templates/: the shared rules (ui.css), the pieces (components.html) and a template for each
 // panel. brand/ has the logos, icons/ the icon fonts and the names of their glyphs.
 //
-//go:embed templates brand icons
+//go:embed templates icons
 var files embed.FS
 
 // The icon fonts by the file name the style sheet asks for, and where each is in files.

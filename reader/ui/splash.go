@@ -12,10 +12,10 @@ import (
 )
 
 // The opening screen (roadmap, "An opening screen"): shown when a book is not open within SplashAfter, so a quick
-// open goes straight to its page (the opening screen's flash would hold the page back ~0.4 s). Drawn once from
+// open goes straight to its page (the screen's flash would hold the page back ~0.4 s, and an opening up to 3 s is not worth a screen). Drawn once from
 // templates/splash.html and kept as a picture in DIR/cache (a new one whenever the template or the screen's size changes),
 // so showing it is a copy and a refresh, the ink moving while the book opens.
-const SplashAfter = 300 * time.Millisecond
+const SplashAfter = 3 * time.Second
 
 type splashData struct{ Top int }
 
@@ -34,8 +34,8 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 	// the logos, in brand/, made from FarsiEPUB's brand folder (our Blitz draws no SVG), read by the engine as files
 	// beside the page: ShamsaInk's mark, from brand/shamsaink/mark-1bit.svg (rsvg-convert -w 240 -h 240 -b white),
 	// and FarsiEPUB's logo, from brand/farsiepub/logo.svg (rsvg-convert -h 60 -b white)
-	mark, _ := files.ReadFile("brand/shamsaink.png")
-	logo, _ := files.ReadFile("brand/farsiepub.png")
+	mark, _ := files.ReadFile("templates/brand/shamsaink.png")
+	logo, _ := files.ReadFile("templates/brand/farsiepub.png")
 	html, _ := render(name+".html", splashData{Top: h * 3 / 10})
 	sum := fnv.New32a()
 	sum.Write([]byte(html))
