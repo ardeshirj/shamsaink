@@ -303,3 +303,13 @@ h3.group + .lede { margin: 0; }
 .view label.sw { font-size: .85rem; font-weight: 600; gap: 8px; }
 .view label.sw input { width: 16px; height: 16px; }
 .menu > .row.apart { grid-column: 1 / -1; gap: 1.6em; flex-wrap: nowrap; }
+
+/* each screen with its right to left twin beside it (twins.js) */
+.sheet figure.paired { grid-column: span 2; }
+.sheet figure.paired.wide { grid-column: 1 / -1; }
+.pair { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-start; }
+.pair .side { flex: 1 1 300px; min-width: 0; max-width: 380px; display: flex; flex-direction: column; gap: 8px; }
+.wide .pair .side { max-width: 520px; }
+.pair .side > small { font: 500 .7rem/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.pair .device { max-width: none; }
+.device.twin .layer, .device.twin .page { font-family: var(--farsi); }
