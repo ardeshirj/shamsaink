@@ -49,7 +49,16 @@ func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os
 	if err != nil {
 		return nil, err
 	}
-	if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, f.Fd(), eviocgrab, 1); e != 0 {
+	// the grab through the file's raw fd, not Fd(): Fd() would make reads blocking, and Close could not end the read
+	// in progress, so the fd and its grab would stay until the next touch (and the next grab fail as busy)
+	c, err := f.SyscallConn()
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	var e syscall.Errno
+	c.Control(func(fd uintptr) { _, _, e = syscall.Syscall(syscall.SYS_IOCTL, fd, eviocgrab, 1) })
+	if e != 0 {
 		f.Close()
 		return nil, e
 	}
