@@ -5,7 +5,9 @@ and of the words in it (not buttons: DrawBar drops them from the panel). */ -}}
 {{template "head" .Dir}}<style>
 div.bar { display: flex; align-items: center; gap: 0.5em; }
 .bar .title { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-width: 0; width: 0; white-space: nowrap; font-family: Parastoo, serif; font-weight: bold; }
-div.bar .end { display: flex; align-items: center; gap: 0.55em; flex: none; font-size: 0.88em; color: #555; }
+div.bar .end { display: flex; align-items: center; gap: 0.55em; flex: none; }
+/* the status (the time, the battery) smaller and grey; the buttons (headphones, light, menu) full size and black */
+div.bar .end > span:not(.tb) { font-size: 0.88em; color: #555; }
 /* the battery: a box filled to its share and a nub, always drawn from the left */
 .batt { display: flex; align-items: center; gap: 0.3em; }
 .batt .cell { display: flex; direction: ltr; align-items: center; }
