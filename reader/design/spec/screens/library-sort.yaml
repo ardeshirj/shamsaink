@@ -6,6 +6,6 @@ status: built
 purpose: "How the books are sorted, under the filters (recent, title, author, added)."
 enter: [{gesture: tap, control: list-sort, from: library}]
 controls:
-  - {id: sort-, component: segments, action: act, does: "sorts the books by the name chosen", dynamic: true}
+  - {id: sort-, component: segments, action: act, does: "sorts the books by the name chosen", values: [recent, title, author, added], dynamic: true}
 dismiss: tap-outside
 words: [sort-by]

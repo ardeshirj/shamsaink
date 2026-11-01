@@ -1,7 +1,7 @@
 # The design system (2026-10-31)
 
 The reader's look, components, screens and the flow between them are **data**, in `reader/design/spec/` (YAML), held
-against the code by checks that need no device. Started with the dock and Light; Text and Contents followed, then the library with its menus and the book's menus; the other screens move in one at a time.
+against the code by checks that need no device. Started with the dock and Light; Text and Contents followed, then the library with its menus and the book's menus, and the highlight menu; the other screens move in one at a time.
 
 | Layer | Files | Says |
 |---|---|---|
@@ -16,7 +16,7 @@ tokens vs `ui.css :root`; a component's `{{define}}` and its size rule; every ta
 (box + slack, from ppi); a refresh waveform the device has; a screen's template makes exactly the controls the spec
 declares (ids from `id`, `ibtn`, `btn`, `pick`, `slide`); icons in the icon font; words in both tables; every `goto` leads to a
 screen; every screen can be entered, left, and reached from `reading`. `TestValidateCatches` checks that each check bites.
-Unknown YAML keys are errors. `status: planned` screens are in the flow but their templates are not yet held to it.
+The filters and sorts the spec lists are checked against `library.Filters` and `library.Sorts`. Unknown YAML keys are errors. `status: planned` screens are in the flow but their templates are not yet held to it.
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 

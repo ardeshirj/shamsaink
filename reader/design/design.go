@@ -75,13 +75,14 @@ type Component struct {
 
 // Control is one thing on a screen that answers a tap.
 type Control struct {
-	ID        string `yaml:"id"`
-	Component string `yaml:"component"`
-	Action    string `yaml:"action"` // goto (to another screen) or act (does something, stays)
-	To        string `yaml:"to"`
-	Does      string `yaml:"does"`
-	When      string `yaml:"when"`    // present only sometimes
-	Dynamic   bool   `yaml:"dynamic"` // made per item (a list's rows): its id is a pattern the template does not spell out
+	ID        string   `yaml:"id"`
+	Component string   `yaml:"component"`
+	Action    string   `yaml:"action"` // goto (to another screen) or act (does something, stays)
+	To        string   `yaml:"to"`
+	Does      string   `yaml:"does"`
+	When      string   `yaml:"when"`    // present only sometimes
+	Dynamic   bool     `yaml:"dynamic"` // made per item (a list's rows): its id is a pattern the template does not spell out
+	Values    []string `yaml:"values"`  // for a dynamic control, the names after its id (filter-reading, ...)
 }
 
 // Enter is how a screen is reached: a gesture on another screen, or a tap on one of its controls.

@@ -2,6 +2,8 @@ package design
 
 import (
 	"os"
+	"shamsainkreader/library"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -79,5 +81,27 @@ func TestUnknownKey(t *testing.T) {
 	_, err := LoadFS(fstest.MapFS{"tokens.yaml": {Data: []byte("css: {}\ncsss: {}\n")}})
 	if err == nil {
 		t.Error("a misspelt key was accepted")
+	}
+}
+
+// The filters and sorts the spec lists are the library's.
+func TestValuesAreTheLibrarys(t *testing.T) {
+	s := load(t)
+	for _, c := range []struct {
+		screen, id string
+		want       []string
+	}{{"library", "filter-", library.Filters}, {"library-sort", "sort-", library.Sorts}} {
+		found := false
+		for _, ctl := range s.Screens[c.screen].Controls {
+			if ctl.ID == c.id {
+				found = true
+				if !slices.Equal(ctl.Values, c.want) {
+					t.Errorf("%s %s: spec %v, library %v", c.screen, c.id, ctl.Values, c.want)
+				}
+			}
+		}
+		if !found {
+			t.Errorf("%s has no %s", c.screen, c.id)
+		}
 	}
 }
