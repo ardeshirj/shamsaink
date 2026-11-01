@@ -1,0 +1,14 @@
+name: topbar
+layer: topbar
+template: topbar.html
+status: built
+purpose: Over the page's top, the same in the library and a book.
+enter: [{gesture: tap-page, from: reading}]
+controls:
+  - {id: topbar-light, component: icon-button, action: goto, to: light}
+  - {id: topbar-start, component: icon-button, action: act, does: back to the library}
+  - {id: topbar-phones, component: icon-button, action: act, does: Bluetooth sound}
+  - {id: topbar-menu, component: icon-button, action: act, does: the library's menu}
+  - {id: topbar-battery, component: button, action: act, does: its level in a box under it}
+internal: [topbar-title, topbar-title-text]
+dismiss: tap-outside

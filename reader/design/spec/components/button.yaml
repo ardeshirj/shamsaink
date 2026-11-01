@@ -1,0 +1,7 @@
+name: button
+purpose: Words, and an icon before them, in a border. Does one thing when tapped.
+template: button
+helper: btn
+states: [off]
+rtl: mirrors on its own (logical properties)
+refresh: {waveform: DU, region: own-box}

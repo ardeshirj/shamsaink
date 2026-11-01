@@ -1,0 +1,6 @@
+name: contents
+layer: dock
+status: planned      # drawn by an older panel for now; its spec comes with its move
+enter: [{gesture: tap, control: contents, from: dock}]
+controls: []
+dismiss: tap-outside

@@ -1,0 +1,10 @@
+name: slider
+purpose: A quantity set along a track, with a button for less and one for more; a tap on the track sets the value there.
+template: slider
+helper: slide
+# the ids a slider registers from its base id: the track itself and its two buttons
+ids: ["", -dec, -inc]
+states: [value]
+rtl: the track fills from the start side
+css: {selector: ".slider .srow span.b", width: 2.6em, height: 1.7em}
+refresh: {waveform: DU, region: own-box}

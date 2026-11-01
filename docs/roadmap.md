@@ -65,6 +65,7 @@ the Kobo it earned it sooner than planned.)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
 - [ ] Interface language: one switch, "Follow book language" (on: the book's, English or Farsi; off: English), in the
   bar's menu › Settings (built 2026-10-31, not yet tried on the Kobo)
+- [ ] The design system as YAML (`docs/design-system.md`, `reader/design/`): tokens, a device profile, 3 components and the topbar, dock and Light screens held by `go test ./design` (2026-10-31); the other screens, generated CSS, renders and `design-sync` to come
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [ ] The other screens of `layout.html`: the page buttons, Light, Text, Contents, the glance, the word panel,

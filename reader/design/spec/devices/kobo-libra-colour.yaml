@@ -1,0 +1,10 @@
+# A device profile: what the design is judged against. Facts from docs/devices/kobo/README.md and reader/device.
+name: kobo-libra-colour
+screen: {width: 1264, height: 1680, ppi: 300}
+# Waveforms the driver takes (reader/device/screen.go); a component's refresh names one of these.
+waveforms: [A2, DU, GL16, REAGL, GC16]
+# A finger's room: the smallest target, in mm (about the width of a fingertip pad), and the slack the reader adds round a
+# button when finding a tap (reader/ui/panel.go, At: `room`), in px.
+tap: {min_mm: 7, slack_px: 16}
+# Fonts and the icon font the panels need on the device (checked on it by design-sync, to come).
+fonts: {text: DejaVu Sans, farsi: Parastoo, icons: Phosphor, icons_filled: Phosphor-Fill}

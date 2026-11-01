@@ -1,0 +1,16 @@
+name: dock
+layer: dock
+template: dock.html
+status: built
+purpose: Where the reader is, a bar to go anywhere in the book, the way back after a jump, and the tools.
+enter: [{gesture: tap-page, from: reading}]
+controls:
+  - {id: chapter-prev, component: icon-button, action: act, does: the previous chapter}
+  - {id: progress, component: bar, action: act, does: go to the share tapped}
+  - {id: chapter-next, component: icon-button, action: act, does: the next chapter}
+  - {id: back, component: button, action: act, does: "back to where the jump started", when: "after a jump"}
+  - {id: contents, component: icon-button, action: goto, to: contents}
+  - {id: text, component: icon-button, action: goto, to: text}
+  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated"}
+internal: [where-title, where-title-text]
+dismiss: tap-outside

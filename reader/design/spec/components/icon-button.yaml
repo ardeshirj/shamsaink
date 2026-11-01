@@ -1,0 +1,8 @@
+name: icon-button
+purpose: An icon alone in a box easy to tap, no border. Drawn filled when on.
+template: iconbutton     # {{define}} in ui/templates/components.html
+helper: ibtn             # how a template makes one: ibtn "id" "icon" on
+states: [off, on]
+rtl: pointing icons are mirrored (.flip)
+css: {selector: "span.tb", width: 2.2em, height: 2.2em}
+refresh: {waveform: DU, region: own-box}   # a state change redraws its box alone

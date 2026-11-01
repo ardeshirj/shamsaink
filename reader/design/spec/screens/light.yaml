@@ -1,0 +1,12 @@
+name: light
+layer: panel
+template: light.html
+status: built
+purpose: The light's level and warmth, and a full refresh to clean the screen.
+enter: [{gesture: tap, control: topbar-light, from: topbar}]
+controls:
+  - {id: light, component: slider, action: act, does: set the level}
+  - {id: warmth, component: slider, action: act, does: set the warmth}
+  - {id: clean, component: button, action: act, does: a full refresh}
+dismiss: tap-outside
+words: [light, warmth, clean-screen]
