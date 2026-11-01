@@ -1,6 +1,8 @@
 // Command devtest holds a device against the design spec's profile of it, over SSH (docs/design-system.md).
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
+//	devtest flow DEVICE      launches the reader and walks the spec's flow from the library: each control that opens a panel is
+//	                         tapped by name, the panel held against its kept render, dismissed, the library as it was
 //	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
 //	                         the device's reader to be the latest build, and no book open)
 //
@@ -44,11 +46,11 @@ type Access struct {
 }
 
 func main() {
-	if len(os.Args) != 3 || (os.Args[1] != "check" && os.Args[1] != "smoke") {
-		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke DEVICE")
+	if len(os.Args) != 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow") {
+		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke|flow DEVICE")
 		os.Exit(2)
 	}
-	run := map[string]func(string) bool{"check": check, "smoke": smoke}[os.Args[1]]
+	run := map[string]func(string) bool{"check": check, "smoke": smoke, "flow": flow}[os.Args[1]]
 	if !run(os.Args[2]) {
 		os.Exit(1)
 	}

@@ -208,8 +208,48 @@ func (d *dev) tap(r *boxes, id string) error {
 	return d.tapAt((b[0]+b[2])/2, (b[1]+b[3])/2)
 }
 
-// smoke launches the reader on the device (as NickelMenu does), holds its library's screen against the kept render, taps
-// the menu and Leave by name, and waits for the device's own interface to come back.
+// start launches the reader on the device (as NickelMenu launches it: Nickel stopped, the reader started, detached) and
+// waits for its library; stop puts right a reader left running by a failed step (launch.sh then starts Nickel again).
+func (d *dev) start() (stop func(), line string, err error) {
+	if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
+		return nil, "", fmt.Errorf("the reader is already running on the device: leave it first")
+	}
+	d.mark = d.logLines()
+	if _, err := d.sh("cd "+d.a.Dir+" && nohup sh launch.sh >/dev/null 2>&1 </dev/null &", nil); err != nil {
+		return nil, "", err
+	}
+	stop = func() {
+		if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
+			fmt.Println("note the reader is still running: stopping it (launch.sh starts the device's interface again)")
+			d.sh("kill $(pidof shamsaink)", nil)
+		}
+	}
+	line, err = d.expect(`library: \d+ books.*shown in`, 40*time.Second)
+	if err != nil {
+		return stop, "", err
+	}
+	time.Sleep(2 * time.Second) // the screen's refresh
+	return stop, line, nil
+}
+
+// leave taps the library's menu and Leave by name, and waits for the device's own interface.
+func (d *dev) leave(lib, menu *boxes) error {
+	if err := d.tap(lib, "topbar-menu"); err != nil {
+		return err
+	}
+	time.Sleep(2500 * time.Millisecond)
+	if err := d.tap(menu, "leave"); err != nil {
+		return err
+	}
+	if _, err := d.expect(`library: left`, 10*time.Second); err != nil {
+		return err
+	}
+	_, err := d.expect(`Nickel started again`, 20*time.Second)
+	return err
+}
+
+// smoke launches the reader on the device, holds its library's screen against the kept render, taps the menu and Leave by
+// name, and waits for the device's own interface to come back.
 func smoke(name string) bool {
 	d, err := load(name)
 	if err != nil {
@@ -230,10 +270,6 @@ func smoke(name string) bool {
 	}
 	fail := func(what string, err error) bool { step(false, what, err); return false }
 
-	if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
-		fmt.Println("FAIL the reader is already running on the device: leave it first")
-		return false
-	}
 	lib, err := d.boxes("library-reading-en")
 	if err != nil {
 		return fail("the kept boxes of the library", err)
@@ -242,25 +278,14 @@ func smoke(name string) bool {
 	if err != nil {
 		return fail("the kept boxes of the menu", err)
 	}
-	d.mark = d.logLines()
-
-	// launched as NickelMenu launches it: Nickel stopped, the reader started, detached
-	if _, err := d.sh("cd "+d.a.Dir+" && nohup sh launch.sh >/dev/null 2>&1 </dev/null &", nil); err != nil {
-		return fail("launch", err)
+	stop, line, err := d.start()
+	if stop != nil {
+		defer stop()
 	}
-	// whatever happens next, a reader left running is stopped, and launch.sh starts Nickel again
-	defer func() {
-		if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
-			fmt.Println("note the reader is still running: stopping it (launch.sh starts the device's interface again)")
-			d.sh("kill $(pidof shamsaink)", nil)
-		}
-	}()
-	line, err := d.expect(`library: \d+ books.*shown in`, 40*time.Second)
 	if err != nil {
 		return fail("the library drawn", err)
 	}
 	step(true, "the library drawn", line)
-	time.Sleep(2 * time.Second) // the screen's refresh
 
 	scr, err := d.screen()
 	if err != nil {
@@ -283,7 +308,7 @@ func smoke(name string) bool {
 		}
 	}
 
-	// the menu, by name; then its entries have ink where the render keeps them
+	// the menu, by name; then its entries have ink where the render keeps them; Leave, by name
 	if err := d.tap(lib, "topbar-menu"); err != nil {
 		return fail("tap topbar-menu", err)
 	}
