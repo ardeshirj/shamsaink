@@ -23,6 +23,9 @@ rules:
   - name: Out is the page
     text: "A tap on the page, Done, a close button or a jump: each closes everything at once and leaves the page alone, one refresh."
     check: "a screen's dismiss is a tap off it or a control going to the page or back to where it came from"
+  - name: A panel closes to where it came from
+    text: "A tap outside a panel closes the panel and leaves the bar and dock it was opened from; a second tap on the page closes those. (Decided 2026-11-01 after use: kept, it saves a tap when moving between Light and Text.)"
+    check: "by eye (the device walk closes Light, then uses the bar)"
   - name: Two levels at most
     text: "The page, the bar and dock, one panel. No panel opens another; one may take another's place."
     check: "no goto from a panel or overlay to a panel or overlay; replace stays in one layer"

@@ -37,7 +37,7 @@ func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 		lines, linesName = x.LineHeight, word("line-spacing")
 	}
 	html, ids := render("text.html", textData{Tab: x.Tab,
-		Size: word("px", decimal(fmt.Sprintf("%g", x.FontSize))), LinesName: linesName, Lines: decimal(fmt.Sprintf("%.2f", lines)),
+		Size: word("px", decimal(fmt.Sprintf("%g", x.FontSize))), LinesName: linesName, Lines: word("times", decimal(fmt.Sprintf("%.2f", lines))),
 		Margin: word("px", num(x.Margin)), Dir: x.Dir,
 	})
 	return atBottom(drawPanel(html, ids, fonts, w, sheetHeight), h)
