@@ -76,7 +76,7 @@ func (d *Device) Colour() bool {
 type Event struct {
 	Gesture
 	Sleep  bool
-	Button int // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
+	Button int  // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
 	Held   bool // with Button: the button was held (about 0.4 s), not pressed; sent once, while it is still down, and no press follows
 }
 
