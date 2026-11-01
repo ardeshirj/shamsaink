@@ -1,6 +1,6 @@
 name: light
 layer: panel
-template: light.html
+templates: [light.html]
 status: built
 purpose: The light's level and warmth, and a full refresh to clean the screen.
 enter: [{gesture: tap, control: topbar-light, from: topbar}]

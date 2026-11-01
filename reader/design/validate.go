@@ -20,6 +20,7 @@ var (
 	reVar     = regexp.MustCompile(`(--[\w-]+)\s*:\s*([^;/]+?)\s*;`)
 	reID      = regexp.MustCompile(`\b(?:id|btn|pick)\s+"([^"]+)"|\bibtn\s+"([^"]+)"`)
 	reSlide   = regexp.MustCompile(`\bslide\s+\([^)]*\)\s+"([^"]+)"\s+"[^"]*"\s+\.\w+\s+"([^"]+)"\s+"([^"]+)"`)
+	reStep    = regexp.MustCompile(`\bstep\s+(?:\([^)]*\)|[\w.]+)\s+"([^"]+)"`)
 	reIcon    = regexp.MustCompile(`\bicon\s+"([^"]+)"|\bibtn\s+"[^"]+"\s+"([^"]+)"`)
 	reWord    = regexp.MustCompile(`\bt\s+"([^"]+)"`)
 	reRoom    = regexp.MustCompile(`const room = (\d+)`)
@@ -151,7 +152,7 @@ func Validate(s *Spec, src Sources) []string {
 		if !sc.Entry && len(sc.Enter) == 0 {
 			f("screen %s: nothing enters it", n)
 		}
-		declared := map[string]bool{}
+		declared, dynamic := map[string]bool{}, map[string]bool{}
 		for _, id := range sc.Internal {
 			declared[id] = true
 		}
@@ -160,6 +161,9 @@ func Validate(s *Spec, src Sources) []string {
 			if comp == nil {
 				f("screen %s, control %s: no component %q", n, c.ID, c.Component)
 				continue
+			}
+			if c.Dynamic {
+				dynamic[c.ID] = true
 			}
 			for _, suf := range comp.IDs {
 				declared[c.ID+suf] = true
@@ -194,12 +198,15 @@ func Validate(s *Spec, src Sources) []string {
 				f("screen %s: entered by %s on %s, which does not go to it", n, e.Control, e.From)
 			}
 		}
-		if sc.Status != "built" || sc.Template == "" {
+		if sc.Status != "built" || len(sc.Templates) == 0 {
 			continue
 		}
 
-		// the screen's template against its controls, icons and words
-		tpl := reComment.ReplaceAllString(read("templates/"+sc.Template), "")
+		// the screen's templates against its controls, icons and words
+		var tpl string
+		for _, t := range sc.Templates {
+			tpl += reComment.ReplaceAllString(read("templates/"+t), "")
+		}
 		seen := map[string]bool{}
 		for _, m := range reID.FindAllStringSubmatch(tpl, -1) {
 			seen[m[1]+m[2]] = true
@@ -214,13 +221,18 @@ func Validate(s *Spec, src Sources) []string {
 				}
 			}
 		}
+		for _, m := range reStep.FindAllStringSubmatch(tpl, -1) {
+			for _, suf := range s.Components["stepper"].IDs {
+				seen[m[1]+suf] = true
+			}
+		}
 		for id := range seen {
 			if !declared[id] {
 				f("screen %s: the template makes %q, which the spec does not declare", n, id)
 			}
 		}
 		for id := range declared {
-			if !seen[id] {
+			if !seen[id] && !dynamic[id] {
 				f("screen %s: the spec declares %q, which the template does not make", n, id)
 			}
 		}

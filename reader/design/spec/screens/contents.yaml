@@ -1,6 +1,10 @@
 name: contents
-layer: dock
-status: planned      # drawn by an older panel for now; its spec comes with its move
+layer: screen
+templates: [contents-head.html, contents.html]
+status: built
+purpose: The book's table of contents as a list, the current entry marked; a tap on an entry goes there.
 enter: [{gesture: tap, control: contents, from: dock}]
-controls: []
-dismiss: tap-outside
+controls:
+  - {id: contents-close, component: icon-button, action: goto, to: reading}
+  - {id: e, component: list-row, action: goto, to: reading, dynamic: true}   # e0, e1, ...; leaves "back to page N" in the dock
+dismiss: contents-close

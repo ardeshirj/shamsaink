@@ -1,0 +1,8 @@
+name: stepper
+purpose: "A setting's row: its name, a minus, the value, a plus."
+template: stepper
+helper: step
+ids: [-dec, -inc]    # from the base id
+states: [value]
+rtl: mirrors on its own
+refresh: {waveform: DU, region: own-box}

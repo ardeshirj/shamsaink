@@ -1,6 +1,6 @@
 name: dock
 layer: dock
-template: dock.html
+templates: [dock.html]
 status: built
 purpose: Where the reader is, a bar to go anywhere in the book, the way back after a jump, and the tools.
 enter: [{gesture: tap-page, from: reading}]

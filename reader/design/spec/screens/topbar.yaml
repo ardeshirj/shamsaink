@@ -1,6 +1,6 @@
 name: topbar
 layer: topbar
-template: topbar.html
+templates: [topbar.html]
 status: built
 purpose: Over the page's top, the same in the library and a book.
 enter: [{gesture: tap-page, from: reading}]

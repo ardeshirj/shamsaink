@@ -1,0 +1,7 @@
+name: tabs
+purpose: A few parts of one panel, one shown; the shown one bold and underlined, a line under all.
+template: tabs
+helper: pick         # one pick per tab, gathered by list
+states: [off, on]
+rtl: mirrors on its own
+refresh: {waveform: DU, region: own-box}

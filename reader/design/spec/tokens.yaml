@@ -14,6 +14,7 @@ panel:
 # Layers, from the bottom of the stack up: what the screen is made of. A screen names the layer it lives in.
 layers:
   - page         # the engine's pixels: the book, nothing else
+  - screen       # a whole screen in the page's place (the library, Contents)
   - topbar       # the bar over the page's top
   - dock         # the sheet at the bottom, opened by a tap
   - panel        # hangs under the bar or over the dock (Light, Text, a menu)

@@ -41,7 +41,13 @@ func TestValidateCatches(t *testing.T) {
 		}, `declares "ghost"`},
 		{"dangling goto", func(s *Spec) { s.Screens["dock"].Controls[4].To = "nowhere" }, "no screen"},
 		{"no way out", func(s *Spec) { s.Screens["light"].Dismiss = "" }, "no way out"},
-		{"unreachable", func(s *Spec) { s.Screens["light"].Enter = []Enter{{Gesture: "tap", From: "text"}}; s.Screens["text"].Enter = []Enter{{Gesture: "tap", From: "light"}} }, "cannot be reached"},
+		{"unreachable", func(s *Spec) {
+			s.Screens["light"].Enter = []Enter{{Gesture: "tap", From: "text"}}
+			s.Screens["text"].Enter = []Enter{{Gesture: "tap", From: "light"}}
+		}, "cannot be reached"},
+		{"stepper ids", func(s *Spec) { s.Screens["text"].Controls = s.Screens["text"].Controls[:2] }, `makes "size-dec"`},
+		{"contents close", func(s *Spec) { s.Screens["contents"].Controls = s.Screens["contents"].Controls[1:] }, `makes "contents-close"`},
+		{"enter by a control that goes elsewhere", func(s *Spec) { s.Screens["text"].Enter[0].Control = "contents" }, "does not go to it"},
 		{"word", func(s *Spec) { s.Screens["light"].Words = append(s.Screens["light"].Words, "no-such-word") }, "no-such-word"},
 	}
 	for _, c := range cases {

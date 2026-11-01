@@ -71,7 +71,8 @@ type Control struct {
 	Action    string `yaml:"action"` // goto (to another screen) or act (does something, stays)
 	To        string `yaml:"to"`
 	Does      string `yaml:"does"`
-	When      string `yaml:"when"` // present only sometimes
+	When      string `yaml:"when"`    // present only sometimes
+	Dynamic   bool   `yaml:"dynamic"` // made per item (a list's rows): its id is a pattern the template does not spell out
 }
 
 // Enter is how a screen is reached: a gesture on another screen, or a tap on one of its controls.
@@ -83,17 +84,17 @@ type Enter struct {
 
 // Screen is one thing drawn over the page, and the flow out of and into it (spec/screens/*.yaml).
 type Screen struct {
-	Name     string    `yaml:"name"`
-	Layer    string    `yaml:"layer"`
-	Template string    `yaml:"template"`
-	Status   string    `yaml:"status"` // built or planned
-	Purpose  string    `yaml:"purpose"`
-	Entry    bool      `yaml:"entry"`
-	Enter    []Enter   `yaml:"enter"`
-	Controls []Control `yaml:"controls"`
-	Internal []string  `yaml:"internal"` // ids the template registers that are not controls
-	Dismiss  string    `yaml:"dismiss"`  // how it is left for what is under it
-	Words    []string  `yaml:"words"`    // the strings it uses, in both language tables
+	Name      string    `yaml:"name"`
+	Layer     string    `yaml:"layer"`
+	Templates []string  `yaml:"templates"` // its files in ui/templates
+	Status    string    `yaml:"status"`    // built or planned
+	Purpose   string    `yaml:"purpose"`
+	Entry     bool      `yaml:"entry"`
+	Enter     []Enter   `yaml:"enter"`
+	Controls  []Control `yaml:"controls"`
+	Internal  []string  `yaml:"internal"` // ids the template registers that are not controls
+	Dismiss   string    `yaml:"dismiss"`  // how it is left for what is under it
+	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
 }
 
 // Spec is the whole design.

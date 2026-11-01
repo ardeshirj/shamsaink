@@ -1,7 +1,7 @@
 # The design system (2026-10-31)
 
 The reader's look, components, screens and the flow between them are **data**, in `reader/design/spec/` (YAML), held
-against the code by checks that need no device. Started with the dock and Light; the other screens move in one at a time.
+against the code by checks that need no device. Started with the dock and Light; Text and Contents followed; the other screens move in one at a time.
 
 | Layer | Files | Says |
 |---|---|---|
@@ -18,6 +18,23 @@ screen; every screen can be entered, left, and reached from `reading`. `TestVali
 Unknown YAML keys are errors. `status: planned` screens are in the flow but their templates are not yet held to it.
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
+
+## Retiring `docs/layouts/`
+
+The browser sketch is dropped once the spec holds everything it does. What it has that the spec does not yet, and where
+each goes:
+
+| In `layout.html` | Goes to |
+|---|---|
+| Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | this file, "Principles"; the device-only rule as `requires:` on a control (Listen needs sound, Light needs a light) checked against the profile |
+| The rules (out is the page, two levels at most, a way back after a jump) | checks: no `goto` from a panel to a panel; every screen's `dismiss` lands on `reading` |
+| The page buttons' map (forward, back, holds, per screen) | a `buttons:` block per screen, checked for every screen having one |
+| Gestures on the page (hold a word, the glance, a note) | `enter` gestures of the screens they open |
+| Screens not built (library variants, glance, word panel, footnotes, listening, landscape, Farsi) | `status: planned` screens, then built; the sketches stay in git history |
+| `components.html` (states as drawn) | the renders of each component state, per profile |
+
+Until then `docs/layouts/` is a reference only (as the roadmap says). When the last row is moved, the folder is deleted
+and the spec plus the renders are the reference.
 
 **Still to do** (roadmap group 6): move the other screens in (Text, Contents, the library's menus, the glance, the word
 panel, footnotes); generate `ui.css`'s `:root` and `docs/layouts/` from the spec; render check per profile (goldens, LTR and

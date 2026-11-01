@@ -1,0 +1,7 @@
+name: segments
+purpose: One choice of a few, as one bar; the chosen one filled.
+template: segments
+helper: pick         # one pick per segment, gathered by list
+states: [off, on]
+rtl: mirrors on its own
+refresh: {waveform: DU, region: own-box}
