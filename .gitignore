@@ -17,3 +17,5 @@ experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*
 # ...but Rust keeps sources for its programs in src/bin
 !**/src/bin/
 .claude/settings.local.json
+
+__pycache__/

@@ -18,6 +18,13 @@ declares (ids from `id`, `ibtn`, `btn`, `pick`, `slide`); icons in the icon font
 screen; every screen can be entered, left, and reached from `reading`. `TestValidateCatches` checks that each check bites.
 The filters and sorts the spec lists are checked against `library.Filters` and `library.Sorts`. Unknown YAML keys are errors. `status: planned` screens are in the flow but their templates are not yet held to it.
 
+**Renders** (`reader/ui/design_render_test.go`, `make design`): every built screen of the spec is drawn for each device
+profile and language (the spec's screens each have cases in `designRenders`; a built screen without one fails
+`TestEveryScreen...`) and compared pixel by pixel with the render kept in `reader/design/golden/DEVICE/`. They are drawn
+with the fonts of `reader/out/fonts` (other fonts draw other letters), from invented books, never a real book's text.
+A change to a template or the CSS shows as the screens it changed; `make design GOLDEN=update` keeps the new ones, and the
+diff of the PNGs is the review.
+
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
 ## Retiring `docs/layouts/`
@@ -39,7 +46,7 @@ Actions are `goto` (another screen, a new level), `replace` (a panel swapped in 
 Until then `docs/layouts/` is a reference only (as the roadmap says). When the last row is moved, the folder is deleted
 and the spec plus the renders are the reference.
 
-**Still to do** (roadmap group 6): move the other screens in (Text, Contents, the library's menus, the glance, the word
-panel, footnotes); generate `ui.css`'s `:root` and `docs/layouts/` from the spec; render check per profile (goldens, LTR and
-RTL); `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as an e2e scenario against the
-renders); a profile for the Kindle.
+**Still to do** (roadmap group 6): the screens not built yet as `planned` (the glance, the word panel, footnotes, listening,
+landscape, the keyboard); the principles written here; `ui.css`'s `:root` generated from the spec; a view of the renders
+as a page, to replace `docs/layouts/`; `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
+an e2e scenario against the renders); a profile for the Kindle.

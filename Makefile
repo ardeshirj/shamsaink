@@ -10,8 +10,11 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #   make engine          the engine and its tools, native (engine/target/release), for checks on the Mac
 #   make bench-armv7     the bench's commands for ARMv7 (bench/bin/armv7)
 #   make fetch-blitz     Blitz at its pinned commit with our patches (engine/blitz)
+#   make design          the design system checked (docs/design-system.md): the spec against reader/ui, and every screen
+#                        drawn and compared with its kept render (needs `make engine`); `make design GOLDEN=update` keeps
+#                        the drawings as the new renders
 
-.PHONY: reader engine bench-armv7 fetch-blitz
+.PHONY: reader engine bench-armv7 fetch-blitz design
 
 reader:
 	@sh reader/build.sh
@@ -24,6 +27,9 @@ bench-armv7:
 
 fetch-blitz:
 	@engine/fetch-blitz.sh
+
+design:
+	@$(DOCKER) sh -c 'cd /r/reader && go test -count=1 ./design && FONTS=/r/reader/out/fonts GOLDEN=$(GOLDEN) go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders"'
 
 # --- The Kobo ---
 #
