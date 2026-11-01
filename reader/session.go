@@ -435,7 +435,8 @@ func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnl
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawTopBar() {
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
-		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light"}, s.rd.fonts, s.scr.W)
+		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light",
+		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
@@ -623,8 +624,10 @@ func (s *session) inMenu(g device.Gesture) {
 		s.leave()
 	case id == "topbar-battery": // its level in a box under it, closed by the next tap
 		b := s.dev.Battery()
-		s.list, s.kind = ui.DrawBattery(b, s.topBar.Rect().Dy(), s.topBar.Box("topbar-battery"), s.rd.fonts, s.scr.W), "level"
-		s.refresh(s.list.Rect(), device.WfREAGL)
+		box := s.topBar.Box("topbar-battery")
+		s.list, s.kind = ui.DrawBattery(b, s.topBar.Rect().Dy(), box, s.rd.fonts, s.scr.W), "level"
+		s.drawTopBar() // the battery inverted while its level is open
+		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 	case id == "topbar-light": // the Light panel under the bar, the sun filled
 		if _, _, ok := s.dev.Light(); ok {
 			s.list, s.kind = s.rd.drawLight(s.topBar.Rect().Dy()), "light"

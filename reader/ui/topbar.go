@@ -17,6 +17,7 @@ type TopBar struct {
 	Phones            bool   // headphones connected: their button "topbar-phones"
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
 	MenuOn            bool   // the same for the menu button
+	BatteryOn         bool   // the same for the battery: its level box is open, the battery drawn inverted
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
 	RTL               bool

@@ -273,7 +273,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					r = panel.Rect()
 				}
 				held, bookPanel = -1, ""
-				panel, langOpen, lightOpen, topBar.LightOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false
+				panel, langOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false
 				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
@@ -294,9 +294,13 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 			}
 		case head == "topbar-battery": // its level in a box under it, closed by the next tap (the panel's default)
-			panel = ui.DrawBattery(topBar.Battery, v.TopBarHeight(), v.HeadBox("topbar-battery"), rd.fonts, scr.W)
+			box := v.HeadBox("topbar-battery")
+			topBar.BatteryOn = true
+			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W)) // the battery inverted while its level is open
+			panel = ui.DrawBattery(topBar.Battery, v.TopBarHeight(), box, rd.fonts, scr.W)
+			v.Draw(rd.over)
 			panel.Over(rd.over)
-			scr.ShowPart(rd.over, panel.Rect(), device.WfREAGL, false)
+			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 		case head == "topbar-menu":
 			open(true)
 		case head == "list-sort":

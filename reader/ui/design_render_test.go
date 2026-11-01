@@ -110,6 +110,8 @@ var designRenders = map[string][]renderCase{
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
+	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, BatteryOn: true, RTL: RTL()}, f, w))
 	}}},
 	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
