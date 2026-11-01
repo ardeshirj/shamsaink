@@ -78,6 +78,7 @@ type Device struct {
 	} `yaml:"screen"`
 	PageButtons bool     `yaml:"page_buttons"` // the device has page-turn buttons
 	Waveforms   []string `yaml:"waveforms"`
+	CleanAfter  int      `yaml:"clean_after_min"` // minutes on one image before the next update is a clean flash (reader/device.CleanAfter)
 	Tap         struct {
 		MinMM   float64 `yaml:"min_mm"`
 		SlackPx int     `yaml:"slack_px"`

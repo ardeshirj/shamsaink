@@ -17,8 +17,8 @@ principles:
     text: "The library's header and the book's bar are one component in one place: the way back or search at the start, the device's time, light and battery at the end."
     check: "both screens are made from topbar.html (template check)"
   - name: Refresh what changed
-    text: "Each layer its own box and waveform; black and white controls, no shadows, greys or motion."
-    check: "every component names a waveform the device has and a region"
+    text: "Each layer its own box and waveform; black and white controls, no shadows, greys or motion. Smooth by default: no flash on a page turn or a panel; one clean flash when the screen has sat on one image for minutes (a splash or a page left overnight)."
+    check: "every component names a waveform the device has and a region; the profile's clean_after_min is the screen's (TestCleanAfter)"
 rules:
   - name: Out is the page
     text: "A tap on the page, Done, a close button or a jump: each closes everything at once and leaves the page alone, one refresh."
