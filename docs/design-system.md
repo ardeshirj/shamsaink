@@ -37,7 +37,7 @@ diff of the PNGs is the review.
 **The page** (`docs/design/system.html`, written by `make design` from the spec and the kept renders; `TestSiteUpToDate`
 fails when it is stale): principles and rules (`spec/principles.yaml`, each with what keeps it), tokens, devices,
 components, the flow, every screen with its controls and renders (at a third of their size), and the page buttons. It
-replaces `docs/layouts/` as the thing to look at; open it in a browser.
+is the thing to look at (it replaced the browser sketches, now `docs/design/sketches/`); open it in a browser.
 
 **CI** (`.github/workflows/design.yml`, on every push): gofmt, vet and `go test ./design/...`: the spec against the templates,
 CSS, words and icons, the flow, and the generated files fresh. The renders need the engine's library (built with Rust)
@@ -63,25 +63,21 @@ book (English or Farsi renders) is read from the reader's own log line, not gues
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
-## Retiring `docs/layouts/`
+## The sketches (`docs/design/sketches/`)
 
-The browser sketch is dropped once the spec holds everything it does. What it has that the spec does not yet, and where
-each goes:
+`docs/layouts/` was the browser sketch the design started from (2026-10-30). It moved here (2026-11-01) once the spec held
+what it was for, and it is kept as sketches, not as the reference: open `layout.html` in a browser; its text is made up.
 
-| In `layout.html` | Goes to |
+| What the sketch had | Where it is now |
 |---|---|
-| Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | **done:** `spec/principles.yaml`, each with what keeps it, shown on the page; the device-only rule as `requires:` on a control (Listen needs sound, Light needs a light) checked against the profile: to come |
-| The rules (out is the page, two levels at most, a way back after a jump) | **checks, done:** no panel opens a panel; every `dismiss` is a tap off or a control going to the page. A way back after a jump: to come |
-| The page buttons' map (forward, back, holds, per screen) | **done:** `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
-| Gestures on the page (hold a word, the glance, a note) | `enter` gestures of the screens they open |
-| Screens not built (library with covers, the keyboard, glance, word panel, footnotes, listening, landscape, Farsi) | `status: planned` screens, then built; the sketches stay in git history |
-| `components.html` (states as drawn) | the renders of each component state, per profile |
+| Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | `spec/principles.yaml`, each with what keeps it, shown on the page. The device-only rule as `requires:` on a control, checked against the profile: to come |
+| The rules (out is the page, two levels at most, a way back after a jump) | checks: no panel opens a panel; every `dismiss` is a tap off or a control going to the page. A way back after a jump: to come |
+| The page buttons' map | `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
+| Screens that are built (library, reading and the dock, Contents, Text, Light, the bar, menus) | the spec and their renders, on the page |
+| `components.html` (states as drawn) | the components and the renders of each state, on the page |
+| **Screens not built:** the glance, the word panel, footnotes, listening and its player, Sound, landscape, the keyboard, the library with covers | **stay as sketches until they are built.** A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design` says what is out of step |
 
 Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 
-Until then `docs/layouts/` is a reference only (as the roadmap says). When the last row is moved, the folder is deleted
-and the spec plus the renders are the reference.
-
-**Still to do** (roadmap group 6): the screens not built yet as `planned` (the glance, the word panel, footnotes, listening,
-landscape, the keyboard); `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
-an e2e scenario against the renders); a profile for the Kindle.
+**Still to do** (roadmap group 6): `kobo-basics.txt` ported to named controls so `e2e/run.py` can retire; the device-only rule
+as `requires:` on a control; a profile for the Kindle. The unbuilt screens are specified when they are built (above).

@@ -142,8 +142,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 ## Next steps: `docs/roadmap.md`
 Its **Progress** list (near the top) is one checklist, kept current: groups 0 to 4 done, in the order they were done
 (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
-rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/layouts/`: layers,
-interface language, components, the dock); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
+rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/design-system.md`, `docs/design/system.html`: layers,
+interface language, components, the dock; early sketches in `docs/design/sketches/`); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
 and upstream (the maintainer posts from their GitHub account); (9) the Kindle, later. An item is checked once done
 and tried on a device and stays in its group; new work goes where it belongs as it is decided.
 
@@ -163,7 +163,9 @@ and tried on a device and stays in its group; new work goes where it belongs as 
   box's edge below its text is cut off (`drawPanel` adds an empty line at the end; `TestPanelEdges`). Still e-ink:
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
-  components, one set used everywhere): `docs/layouts/` (`layout.html`, `components.html`). More: roadmap, "The reader's panels".
+  components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
+  renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); sketches of what is not built yet in
+  `docs/design/sketches/`. More: roadmap, "The reader's panels".
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.

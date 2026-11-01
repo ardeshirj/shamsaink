@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Writes words.js from reader/ui/words/en.json and fa.json: the interface's English and Farsi words as a list of pairs, which twins.js
 uses on layout.html to draw each screen's right to left twin. Run it again after the words change:
-    python3 docs/layouts/gen-words.py"""
+    python3 docs/design/sketches/gen-words.py"""
 import json, pathlib
 here = pathlib.Path(__file__).parent
-words = here / '../../reader/ui/words'
+words = here / '../../../reader/ui/words'
 tables = {code: json.loads((words / f'{code}.json').read_text()) for code in ('en', 'fa')}
 pairs = [[tables['en'][k], tables['fa'][k]] for k in tables['en'] if k in tables['fa']]
 # words the layouts show that the reader does not (yet), or no longer, has
