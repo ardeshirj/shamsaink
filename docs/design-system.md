@@ -39,6 +39,13 @@ replaces `docs/layouts/` as the thing to look at; open it in a browser.
 CSS, words and icons, the flow, and the generated files fresh. The renders need the engine's library (built with Rust)
 and the fonts folder, so `make design` runs on the Mac; a CI job for them needs the engine built and cached first.
 
+**On a device** (`make kobo-check`, `reader/cmd/devtest`, read-only over `ssh`): the device held against its profile: screen size,
+the framebuffer's stride and depth, the touch screen's node and name, every font by hash against the folder the renders
+are drawn with, the reader installed (and whether it is the latest local build). How to reach each device
+(`ssh` host, folders, touch node, stride) is in `e2e/devices.yaml`, keyed by the profile's name: the spec says what a device
+must be, the tool how to reach it. First run on the Kobo Libra Colour (2026-10-31): all agree, and the fonts on it are the
+renders' files.
+
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
 ## Retiring `docs/layouts/`
