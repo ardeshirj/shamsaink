@@ -162,27 +162,30 @@ func (v *List) RowsBottom() int {
 
 func (v *List) Close() { v.list.Close() }
 
-// Controls are the ids of every button the list drew: its header's, its pager's, and its rows (e0, e1, ...).
-func (v *List) Controls() []string {
-	var ids []string
+// Boxes are where every button of the list is on the screen as it is drawn now: the header's, the pager's, and the rows
+// (e0, e1, ...) of the page shown.
+func (v *List) Boxes() map[string]image.Rectangle {
+	boxes := map[string]image.Rectangle{}
 	for _, p := range []*Panel{v.head, v.pager} {
 		if p != nil {
 			for id := range p.buttons {
-				ids = append(ids, id)
+				boxes[id] = p.Box(id)
 			}
 		}
 	}
 	for i := range v.at {
-		ids = append(ids, fmt.Sprint("e", i))
+		if v.on[i] == v.page {
+			boxes[fmt.Sprint("e", i)] = v.EntryBox(i)
+		}
 	}
-	return ids
+	return boxes
 }
 
-// Controls are the ids of the buttons the panel drew.
-func (m *Panel) Controls() []string {
-	var ids []string
+// Boxes are where the panel's buttons are on the screen, by id.
+func (m *Panel) Boxes() map[string]image.Rectangle {
+	boxes := map[string]image.Rectangle{}
 	for id := range m.buttons {
-		ids = append(ids, id)
+		boxes[id] = m.Box(id)
 	}
-	return ids
+	return boxes
 }

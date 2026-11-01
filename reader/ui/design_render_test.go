@@ -45,11 +45,45 @@ func designBooks() []Book {
 
 // rendered is what a render drew: the picture, and the ids of the buttons on it.
 type rendered struct {
-	img *image.Gray
-	ids []string
+	img       *image.Gray
+	boxes     map[string]image.Rectangle // where each button is
+	placement string                     // "screen": the boxes are on the screen; "relative": on the panel, which is hung by something (a row, words)
 }
 
-func pr(p *Panel) rendered { return rendered{p.img, p.Controls()} }
+// ids are the buttons the render drew.
+func (r rendered) ids() []string {
+	var ids []string
+	for id := range r.boxes {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+// pr is a panel as the reader places it on the screen; rel one that is hung by a row or by words, its boxes on itself.
+func pr(p *Panel) rendered { return rendered{p.img, p.Boxes(), "screen"} }
+
+func rel(p *Panel) rendered {
+	r := rendered{p.img, map[string]image.Rectangle{}, "relative"}
+	for id, b := range p.Boxes() {
+		r.boxes[id] = b.Sub(p.Rect().Min)
+	}
+	return r
+}
+
+// libraryTopBar is the bar of the library's renders.
+var libraryTopBar = TopBar{Start: "magnifying-glass", Time: "20:48", Phones: true, Battery: 82, Menu: true}
+
+func libraryHead(f *blitz.Fonts, w int) *Panel {
+	return LibraryHead(libraryTopBar, LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
+}
+
+// barHeight is the library's bar: where the panels that hang from it start.
+func barHeight(f *blitz.Fonts, w int) int { return DrawTopBar(libraryTopBar, f, w).Rect().Dy() }
+
+// batteryBox is the battery's place on that bar.
+func batteryBox(f *blitz.Fonts, w int) image.Rectangle {
+	return DrawTopBar(libraryTopBar, f, w).Box("topbar-battery")
+}
 
 func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 	img := image.NewGray(image.Rect(0, 0, w, h))
@@ -69,7 +103,7 @@ var designRenders = map[string][]renderCase{
 	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
 	}}},
-	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, 160, f, w)) }}},
+	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, barHeight(f, w), f, w)) }}},
 	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) rendered {
@@ -78,34 +112,33 @@ var designRenders = map[string][]renderCase{
 	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}, {Title: "Chapter four"}}, 1, RTL(), f, w, h)
 		defer cv.Close()
-		return rendered{screenOf(w, h, cv.Draw), cv.Controls()}
+		return rendered{screenOf(w, h, cv.Draw), cv.Boxes(), "screen"}
 	}}},
 	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawBattery(82, 160, image.Rect(w-300, 20, w-200, 120), f, w))
+		return pr(DrawBattery(82, barHeight(f, w), batteryBox(f, w), f, w))
 	}}},
-	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(160, false, f, w)) }},
-		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(160, true, f, w)) }}},
+	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), false, f, w)) }},
+		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), true, f, w)) }}},
 	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
-		topBar := TopBar{Start: "magnifying-glass", Time: "20:48", Phones: true, Battery: 82, Menu: true}
-		lib := NewLibrary(designBooks(), LibraryHead(topBar, LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w), f, w, h)
+		lib := NewLibrary(designBooks(), libraryHead(f, w), f, w, h)
 		defer lib.Close()
-		return rendered{screenOf(w, h, lib.Draw), lib.Controls()}
+		return rendered{screenOf(w, h, lib.Draw), lib.Boxes(), "screen"}
 	}}},
-	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(true, 160, f, w)) }},
-		{"english", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(false, 160, f, w)) }}},
+	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(true, barHeight(f, w), f, w)) }},
+		{"english", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(false, barHeight(f, w), f, w)) }}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), 300, f, w))
+		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
 	}}},
-	"library-book-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(false, false, f, w)) }},
-		{"opened", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(false, true, f, w)) }},
-		{"finished", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(true, true, f, w)) }}},
+	"library-book-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, false, f, w)) }},
+		{"opened", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, true, f, w)) }},
+		{"finished", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(true, true, f, w)) }}},
 	"library-book-details": {{"opened", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
+		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
-	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookRemove("A Long Voyage", false, f, w)) }}},
-	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawHighlightMenu(false, true, f, w)) }},
-		{"made", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawHighlightMenu(true, false, f, w)) }}},
+	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, f, w)) }}},
+	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
+		{"made", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
 }
 
 func slicesIndex(a []string, s string) int {
@@ -166,9 +199,10 @@ func TestScreenRenders(t *testing.T) {
 				for _, lang := range c.langs {
 					SetLanguage(lang)
 					name := fmt.Sprintf("%s-%s-%s", screen, c.name, lang)
-					img := c.draw(fonts, d.Screen.Width, d.Screen.Height).img
-					path := filepath.Join("..", "design", "golden", d.Name, name+".png")
-					compareGolden(t, path, name, img, update)
+					r := c.draw(fonts, d.Screen.Width, d.Screen.Height)
+					path := filepath.Join("..", "design", "golden", d.Name, name)
+					compareGolden(t, path+".png", name, r.img, update)
+					compareBoxes(t, path+".json", name, r, update)
 				}
 			}
 		}
@@ -239,11 +273,50 @@ func TestControlsAreWhatIsDrawn(t *testing.T) {
 		for _, c := range cases {
 			for _, lang := range c.langs {
 				SetLanguage(lang)
-				found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids...)
+				found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids()...)
 			}
 		}
 		for _, p := range design.CheckControls(s, screen, found) {
 			t.Error(p)
 		}
+	}
+}
+
+// boxesJSON is a render's buttons as the file kept beside its picture: the boxes in px, by id, and where they are
+// measured from.
+func boxesJSON(r rendered) []byte {
+	var ids []string
+	for id := range r.boxes {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	var b bytes.Buffer
+	fmt.Fprintf(&b, "{\n \"placement\": %q,\n \"boxes\": {", r.placement)
+	for i, id := range ids {
+		bx := r.boxes[id]
+		if i > 0 {
+			b.WriteString(",")
+		}
+		fmt.Fprintf(&b, "\n  %q: [%d, %d, %d, %d]", id, bx.Min.X, bx.Min.Y, bx.Max.X, bx.Max.Y)
+	}
+	b.WriteString("\n }\n}\n")
+	return b.Bytes()
+}
+
+func compareBoxes(t *testing.T, path, name string, r rendered, update bool) {
+	got := boxesJSON(r)
+	if update {
+		if err := os.WriteFile(path, got, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	want, err := os.ReadFile(path)
+	if err != nil {
+		t.Errorf("%s: no kept boxes (GOLDEN=update keeps them): %v", name, err)
+		return
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("%s: the buttons' boxes differ from the kept ones", name)
 	}
 }

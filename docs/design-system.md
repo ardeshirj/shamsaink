@@ -27,6 +27,10 @@ component has a `role` (button, slider, tab, menuitem, switch, ...): what a cont
 profile and language (the spec's screens each have cases in `designRenders`; a built screen without one fails
 `TestEveryScreen...`) and compared pixel by pixel with the render kept in `reader/design/golden/DEVICE/`. They are drawn
 with the fonts of `reader/out/fonts` (other fonts draw other letters), from invented books, never a real book's text.
+Beside each picture is a `.json` with where every button is (`placement: screen`: on the screen, panels placed as the reader places
+them, under the real bar; `relative`: on a panel hung by a row or by words), compared exactly like the picture. The device tool reads them to
+tap a control by name.
+
 A change to a token, a template or the CSS shows as the screens it changed (`make design` writes the tokens first, so a new value in `tokens.yaml` reaches the drawings); `make design GOLDEN=update` keeps the new ones, and the
 diff of the PNGs is the review.
 
