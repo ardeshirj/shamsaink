@@ -7,7 +7,7 @@ purpose: The light's level and warmth, and a full refresh to clean the screen.
 enter: [{gesture: tap, control: topbar-light, from: topbar}]
 controls:
   - {id: light, component: slider, action: act, does: set the level}
-  - {id: warmth, component: slider, action: act, does: set the warmth}
+  - {id: warmth, component: slider, action: act, does: set the warmth, requires: [warmth]}
   - {id: dark, component: button, action: act, does: "dark mode on or off (filled when on): the whole screen inverted, with a full refresh"}
   - {id: clean, component: button, action: act, does: a full refresh}
 dismiss: tap-outside

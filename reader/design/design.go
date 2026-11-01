@@ -70,6 +70,10 @@ type ButtonMap struct {
 	HoldBack    string `yaml:"hold_back"`
 }
 
+// Capabilities are what a device may have and a control may require: a front light, one whose colour can be set (warmth), a
+// colour screen, and a way to play sound (the Kobo has none of its own: its headphones, over Bluetooth).
+var Capabilities = []string{"light", "warmth", "colour", "sound"}
+
 // Device is what the design is judged against (spec/devices/*.yaml).
 type Device struct {
 	Name   string `yaml:"name"`
@@ -78,6 +82,7 @@ type Device struct {
 	} `yaml:"screen"`
 	PageButtons bool     `yaml:"page_buttons"` // the device has page-turn buttons
 	Waveforms   []string `yaml:"waveforms"`
+	Has         []string `yaml:"has"`             // what the device has, of Capabilities: a control that requires something else is not on it
 	SleepAfter  int      `yaml:"sleep_after_min"` // minutes untouched before the reader puts the device to sleep (reader/device.SleepAfter); 0: the device does it
 	Tap         struct {
 		MinMM   float64 `yaml:"min_mm"`
@@ -117,9 +122,10 @@ type Control struct {
 	Action    string   `yaml:"action"` // goto (to another screen) or act (does something, stays)
 	To        string   `yaml:"to"`
 	Does      string   `yaml:"does"`
-	When      string   `yaml:"when"`    // present only sometimes
-	Dynamic   bool     `yaml:"dynamic"` // made per item (a list's rows): its id is a pattern the template does not spell out
-	Values    []string `yaml:"values"`  // for a dynamic control, the names after its id (filter-reading, ...)
+	When      string   `yaml:"when"`     // present only sometimes
+	Requires  []string `yaml:"requires"` // what the device must have (Capabilities), or the control is not on it
+	Dynamic   bool     `yaml:"dynamic"`  // made per item (a list's rows): its id is a pattern the template does not spell out
+	Values    []string `yaml:"values"`   // for a dynamic control, the names after its id (filter-reading, ...)
 }
 
 // Enter is how a screen is reached: a gesture on another screen, or a tap on one of its controls.

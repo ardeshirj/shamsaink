@@ -3,6 +3,8 @@ name: kobo-libra-colour
 screen: {width: 1264, height: 1680, ppi: 300}
 # Waveforms the driver takes (reader/device/screen.go); a component's refresh names one of these.
 page_buttons: true     # the two page-turn buttons
+# What it has, of design.Capabilities: a front light with a warmth, a colour screen, and sound (no speaker: the headphones over Bluetooth).
+has: [light, warmth, colour, sound]
 waveforms: [A2, DU, GL16, REAGL, GC16]
 # Untouched this many minutes, the reader sleeps the device as the power button does (the sleep screen, light and Wi-Fi off, suspend).
 sleep_after_min: 10

@@ -12,6 +12,6 @@ controls:
   - {id: back, component: button, action: act, does: "back to where the jump started", when: "after a jump"}
   - {id: contents, component: icon-button, action: goto, to: contents}
   - {id: text, component: icon-button, action: goto, to: text}
-  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated"}
+  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated", requires: [sound]}
 internal: [where-title, where-title-text]
 dismiss: tap-outside

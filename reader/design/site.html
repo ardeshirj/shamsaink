@@ -83,7 +83,7 @@ nav a { white-space: nowrap; }
 {{range .Screens}}<details class="screen" id="screen-{{.Name}}" data-find="{{.Name}} {{.Layer}} {{.Status}}{{range .Controls}} {{.ID}}{{end}}">
 <summary>{{.Name}} <span class="tag">{{.Layer}}</span><span class="tag{{if eq .Status "planned"}} planned{{end}}">{{.Status}}</span>{{if .Entry}}<span class="tag">app starts here</span>{{end}}{{if .Page}}<span class="tag">the page</span>{{end}}{{if .Buttons}}<span class="tag">buttons: {{.Buttons}}</span>{{end}}{{if .Dismiss}}<span class="tag">leave: {{.Dismiss}}</span>{{end}}{{if .Purpose}}<span class="sub">{{.Purpose}}</span>{{end}}</summary><div class="body">
 {{if .Controls}}<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
-{{range .Controls}}<tr><td><code>{{.ID}}</code></td><td>{{.Component}}</td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}</td></tr>{{end}}</table>{{end}}
+{{range .Controls}}<tr><td><code>{{.ID}}</code></td><td>{{.Component}}</td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}{{range .Requires}} <span class="tag">needs {{.}}</span>{{end}}</td></tr>{{end}}</table>{{end}}
 {{$sc := .}}{{range .Cases}}{{$c := .}}<div class="shots">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}
 </div></details>
 {{end}}{{end}}</div></details>

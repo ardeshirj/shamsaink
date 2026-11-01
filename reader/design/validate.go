@@ -47,6 +47,24 @@ func Validate(s *Spec, src Sources) []string {
 		return string(b)
 	}
 
+	// what a device has and what a control requires are of the known capabilities
+	for _, d := range s.Devices {
+		for _, h := range d.Has {
+			if !contains(Capabilities, h) {
+				f("device %s has %q, which is not a capability (%v)", d.Name, h, Capabilities)
+			}
+		}
+	}
+	for _, sc := range s.Screens {
+		for _, c := range sc.Controls {
+			for _, r := range c.Requires {
+				if !contains(Capabilities, r) {
+					f("screen %s, control %s requires %q, which is not a capability (%v)", sc.Name, c.ID, r, Capabilities)
+				}
+			}
+		}
+	}
+
 	// tokens against ui.css
 	css := read("templates/ui.css")
 	have := map[string]string{}
@@ -338,11 +356,17 @@ func contains(a []string, s string) bool {
 	return false
 }
 
-// CheckControls holds what a screen's renders drew (found: the ids of every button, over all its states) against the
+// CheckControls holds what a screen's renders drew for a device (found: the ids of every button, over all its states) against the
 // controls the spec declares for it: each declared control was drawn, and each button drawn is declared. A dynamic
 // control is a prefix (a list's rows e0, e1, ...). It says every way they disagree.
-func CheckControls(s *Spec, screen string, found []string) []string {
+func CheckControls(s *Spec, device, screen string, found []string) []string {
 	var bad []string
+	var has []string
+	for _, d := range s.Devices {
+		if d.Name == device {
+			has = d.Has
+		}
+	}
 	sc := s.Screens[screen]
 	if sc == nil {
 		return []string{fmt.Sprintf("no screen %q", screen)}
@@ -354,6 +378,9 @@ func CheckControls(s *Spec, screen string, found []string) []string {
 	for _, c := range sc.Controls {
 		comp := s.Components[c.Component]
 		if comp == nil {
+			continue
+		}
+		if !hasAll(has, c.Requires) { // the device lacks what it needs: not on this device, and so not drawn for it
 			continue
 		}
 		if c.Dynamic {
@@ -391,4 +418,14 @@ func CheckControls(s *Spec, screen string, found []string) []string {
 	}
 	sort.Strings(bad)
 	return bad
+}
+
+// hasAll says whether have holds every one of need.
+func hasAll(have, need []string) bool {
+	for _, n := range need {
+		if !contains(have, n) {
+			return false
+		}
+	}
+	return true
 }

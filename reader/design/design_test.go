@@ -58,6 +58,8 @@ func TestValidateCatches(t *testing.T) {
 		{"replace across layers", func(s *Spec) { s.Screens["library-book-menu"].Controls[3].To = "library-sort" }, "another layer"},
 		{"replace into nothing", func(s *Spec) { s.Screens["menu"].Controls[0].To = "nowhere" }, "no screen"},
 		{"nothing enters", func(s *Spec) { s.Screens["library-book-menu"].Enter = nil }, "nothing enters it"},
+		{"unknown capability on a control", func(s *Spec) { s.Screens["dock"].Controls[6].Requires = []string{"teleport"} }, "not a capability"},
+		{"unknown capability on a device", func(s *Spec) { s.Devices[0].Has = append(s.Devices[0].Has, "teleport") }, "not a capability"},
 		{"word", func(s *Spec) { s.Screens["light"].Words = append(s.Screens["light"].Words, "no-such-word") }, "no-such-word"},
 	}
 	for _, c := range cases {
@@ -139,7 +141,7 @@ func TestCheckControls(t *testing.T) {
 	s := load(t)
 	text := []string{"tab-text", "tab-page", "size-dec", "size-inc", "lines-dec", "lines-inc", "margin-dec", "margin-inc",
 		"dir-", "dir-rtl", "dir-ltr", "reset"}
-	if bad := CheckControls(s, "text", text); len(bad) != 0 {
+	if bad := CheckControls(s, s.Devices[0].Name, "text", text); len(bad) != 0 {
 		t.Errorf("the text sheet's buttons: %v", bad)
 	}
 	for _, c := range []struct {
@@ -154,12 +156,12 @@ func TestCheckControls(t *testing.T) {
 		{"a list's rows", []string{"contents-close"}, "contents", "e..."},
 		{"unknown screen", nil, "nowhere", "no screen"},
 	} {
-		bad := strings.Join(CheckControls(s, c.screen, c.found), "\n")
+		bad := strings.Join(CheckControls(s, s.Devices[0].Name, c.screen, c.found), "\n")
 		if !strings.Contains(bad, c.want) {
 			t.Errorf("%s: got %q, want %q", c.name, bad, c.want)
 		}
 	}
-	if bad := CheckControls(s, "contents", []string{"contents-close", "e0", "e1"}); len(bad) != 0 {
+	if bad := CheckControls(s, s.Devices[0].Name, "contents", []string{"contents-close", "e0", "e1"}); len(bad) != 0 {
 		t.Errorf("contents with rows: %v", bad)
 	}
 }
@@ -203,4 +205,35 @@ func TestSleepChoices(t *testing.T) {
 		}
 	}
 	t.Error("library-language has no sleep")
+}
+
+// A control that requires what the device lacks is not expected of it: a device with no light is not asked to draw the sun
+// (and one that draws it anyway is told so).
+func TestRequires(t *testing.T) {
+	s := load(t)
+	d := s.Devices[0]
+	lightless := Device{Name: "no-light", Has: []string{"sound"}}
+	s.Devices = append(s.Devices, lightless)
+	var all []string
+	for _, c := range s.Screens["topbar"].Controls {
+		for _, suf := range s.Components[c.Component].IDs {
+			all = append(all, c.ID+suf)
+		}
+	}
+	all = append(all, s.Screens["topbar"].Internal...)
+	if bad := CheckControls(s, d.Name, "topbar", all); len(bad) != 0 {
+		t.Errorf("%s: %v", d.Name, bad)
+	}
+	var without []string
+	for _, id := range all {
+		if id != "topbar-light" {
+			without = append(without, id)
+		}
+	}
+	if bad := CheckControls(s, "no-light", "topbar", without); len(bad) != 0 {
+		t.Errorf("a device with no light, with no sun: %v", bad)
+	}
+	if bad := CheckControls(s, "no-light", "topbar", all); len(bad) != 1 || !strings.Contains(bad[0], "topbar-light") {
+		t.Errorf("a device with no light, drawing the sun: %v", bad)
+	}
 }

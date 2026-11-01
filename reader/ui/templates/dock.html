@@ -14,7 +14,8 @@ does not clip text, so DrawDock cuts a long chapter title itself, as DrawTopBar 
 .prog i { display: block; width: {{.Width}}%; background: var(--ink); border-radius: 8px; }
 .prog b { position: absolute; top: 100%; width: var(--line); height: 0.3em; background: var(--ink); }
 .tools { display: flex; justify-content: space-between; margin-top: 0.4em; }
-/* Listen in a book with no narration: there, so the tools never move, but light and not a button */
+/* Listen in a book with no narration: there, so the tools never move, but light and not a button (the book lacks narration;
+   the device has sound: a control the device lacks is not drawn at all, see `requires` in the spec) */
 .tools .off { color: #aaa; }
 </style></head><body>
 <div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}"{{textlang .Chapter}}>{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>

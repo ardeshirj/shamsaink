@@ -317,7 +317,7 @@ func TestControlsAreWhatIsDrawn(t *testing.T) {
 				found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids()...)
 			}
 		}
-		for _, p := range design.CheckControls(s, screen, found) {
+		for _, p := range design.CheckControls(s, d.Name, screen, found) {
 			t.Error(p)
 		}
 	}
