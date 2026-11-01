@@ -147,6 +147,17 @@ func (s *Screen) Save() Saved {
 	return append(Saved(nil), s.mem[s.y0*s.line:(s.y0+s.H)*s.line]...)
 }
 
+// Clean flashes the whole screen white (GC16) and waits: the first of two passes that take a picture left on the screen
+// for hours (the sleep screen) out of the panel, so it does not show behind the text drawn next.
+func (s *Screen) Clean() {
+	s.Wait()
+	for i := s.y0 * s.line; i < (s.y0+s.H)*s.line; i++ {
+		s.mem[i] = 0xff
+	}
+	s.send(image.Rect(0, 0, s.W, s.H), WfGC16, true)
+	s.Wait()
+}
+
 // Restore puts a saved screen back and refreshes it whole, with a flash: for a program paused meanwhile, which does
 // not redraw once resumed (Kobo's interface, 13's step 3).
 func (s *Screen) Restore(b Saved) {

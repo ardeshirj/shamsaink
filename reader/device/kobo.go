@@ -257,8 +257,9 @@ func (d *Device) doze(pic *image.Gray) {
 		break
 	}
 	t = time.Now()
-	sysfs(lightFile, strconv.Itoa(lit))
+	d.Screen.Clean() // white first: the sleep screen, left for hours, does not stay behind the page
 	d.Screen.Restore(back)
+	sysfs(lightFile, strconv.Itoa(lit))
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 }
 
