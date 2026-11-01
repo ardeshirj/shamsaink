@@ -531,7 +531,8 @@ func (s *session) openMark(box image.Rectangle, made bool) {
 	s.mn = ui.DrawHighlightMenu(made, s.narrated, s.rd.fonts, s.scr.W)
 	s.mn.Hang(box, 0, s.scr.H)
 	s.refresh(s.mn.Rect(), device.WfREAGL)
-	fmt.Printf("highlight menu: %s\n", map[bool]string{true: "a highlight", false: "words chosen"}[made])
+	r := s.mn.Rect() // where it is, for a test that taps its entries by name (devtest scenario)
+	fmt.Printf("highlight menu: %s at %d,%d\n", map[bool]string{true: "a highlight", false: "words chosen"}[made], r.Min.X, r.Min.Y)
 }
 
 // closeMark closes the highlight's menu, and the words chosen if any (their bars rubbed out).

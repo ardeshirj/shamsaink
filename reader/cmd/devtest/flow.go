@@ -16,8 +16,11 @@ type step struct{ from, control, to string }
 
 // bestRender is the kept render of a screen (in English) that has the most buttons, with its boxes: the variant with
 // every entry (the menu of the library, not of a book).
-func (d *dev) bestRender(screen string) (string, *boxes) {
-	files, _ := filepath.Glob(filepath.Join("reader", "design", "golden", d.name, screen+"-*-en.json"))
+func (d *dev) bestRender(screen string) (string, *boxes) { return d.bestRenderIn(screen, "en") }
+
+// bestRenderIn is bestRender in a language ("en", or "fa" for a book that reads right to left).
+func (d *dev) bestRenderIn(screen, lang string) (string, *boxes) {
+	files, _ := filepath.Glob(filepath.Join("reader", "design", "golden", d.name, screen+"-*-"+lang+".json"))
 	best, name := (*boxes)(nil), ""
 	for _, f := range files {
 		base := strings.TrimSuffix(filepath.Base(f), ".json")

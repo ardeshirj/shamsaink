@@ -1,6 +1,6 @@
 # How to reach and drive each device: facts of the hardware, firmware and network, not of the design. The design's facts
 # about the same device (screen, ppi, waveforms, tap sizes, fonts) are in reader/design/spec/devices/; the key here is that
-# profile's name. Read by reader/cmd/devtest (and by e2e/run.py until it is ported).
+# profile's name. Read by reader/cmd/devtest.
 kobo-libra-colour:
   ssh: kobo                                   # a host of ~/.ssh/config (docs/devices/kobo/setup.md)
   dir: /mnt/onboard/.adds/shamsaink           # where the reader is installed

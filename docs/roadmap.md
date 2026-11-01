@@ -88,8 +88,9 @@ the Kobo it earned it sooner than planned.)
 **Alongside** (with each group, not a phase of its own)
 - [ ] End-to-end tests on the devices (2026-10-30, the maintainer): a script from the Mac starts a book, writes a
   scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
-  with references, the clock's strip aside. Drafted for the Kobo (`e2e/run.py`, `make e2e`; `e2e/kobo-basics.txt`:
-  a jump, pages, a highlight, the book left; pages identical run to run). Left: a test EPUB of our own text, so its
+  with references, the clock's strip aside. Built for the Kobo in Go (`reader/cmd/devtest`, `make e2e`; 2026-11-01; the controls by
+  name from the design system's renders, the highlight's menu found where the reader logs it; `e2e/kobo-basics.txt`:
+  a jump, pages, a highlight made and removed, Back, the book left; pages identical run to run, the place and the highlights as they were). Left: a test EPUB of our own text, so its
   scenarios and pictures can be committed; a scenario with each new feature; read aloud and sleep; the Kindle
 - Upstream (any time; the maintainer posts):
   - [ ] go-toolkit's trim, to Readium

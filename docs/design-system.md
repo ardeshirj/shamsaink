@@ -79,5 +79,11 @@ for; it is in git, at `e4ba57e` and before, as `docs/design/sketches/`.
 
 Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 
-**Still to do** (roadmap group 6): `kobo-basics.txt` ported to named controls so `e2e/run.py` can retire; the device-only rule
+**Scenarios** (`make e2e`, `reader/cmd/devtest`, `scenario.go`; the Python `run.py` is gone): a file of steps by control name (`tap dock
+contents`, `tap contents e7`, `turn forward`, `tap-menu hl-make`, `hold`, `expect`, `snap`, `close`), for the paths that are a book's, not the
+spec's. `e2e/kobo-basics.txt`: a jump, pages, a highlight made and removed through its menu, Back, the book left. The highlight menu's entries
+are found by the position the reader logs (`highlight menu: ... at X,Y`) plus the kept relative boxes. Snapshots are compared byte for byte
+(the clock's strip aside) with references a run with `SAVE=1` keeps in `e2e/out/` (drawn from a book: not committed).
+
+**Still to do** (roadmap group 6): the device-only rule
 as `requires:` on a control; a profile for the Kindle. The unbuilt screens are specified when they are built (above).

@@ -5,6 +5,7 @@
 //	                         panel is tapped by name, the panel held against its kept render, dismissed, the library as it was;
 //	                         with book, then inside the first book (bar, dock, Contents, Text, panels, the highlight's menu),
 //	                         with no page turned
+//	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go)
 //	devtest page DEVICE back|forward   opens the first book, turns one page by the book's own direction and leaves it: puts
 //	                         right a place a run moved
 //	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
@@ -50,9 +51,24 @@ type Access struct {
 }
 
 func main() {
-	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow" && os.Args[1] != "page") {
+	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow" && os.Args[1] != "page" && os.Args[1] != "scenario") {
 		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke|flow DEVICE")
 		os.Exit(2)
+	}
+	if os.Args[1] == "scenario" { // devtest scenario DEVICE FILE [--save]
+		args := os.Args[2:]
+		save := false
+		if n := len(args); n > 0 && args[n-1] == "--save" {
+			save, args = true, args[:n-1]
+		}
+		if len(args) != 2 {
+			fmt.Fprintln(os.Stderr, "usage: devtest scenario DEVICE FILE [--save]")
+			os.Exit(2)
+		}
+		if !scenario(args[0], args[1], save) {
+			os.Exit(1)
+		}
+		return
 	}
 	if os.Args[1] == "page" { // devtest page DEVICE back|forward
 		if len(os.Args) != 4 || os.Args[3] != "back" && os.Args[3] != "forward" {

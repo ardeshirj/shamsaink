@@ -52,8 +52,8 @@ design:
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
-#   make e2e             an end-to-end test on the Kobo (e2e/run.py): SCENARIO (e2e/kobo-basics.txt by default), its
-#                        pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not committed)
+#   make e2e             an end-to-end test on the Kobo (reader/cmd/devtest scenario): SCENARIO (e2e/kobo-basics.txt by default), by control
+#                        name, its pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not committed)
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
@@ -94,8 +94,8 @@ kobo-reader-install: reader
 	@echo "reader and launcher copied to $(KOBO)"
 
 SCENARIO ?= e2e/kobo-basics.txt
-e2e:
-	@e2e/run.py $(if $(SAVE),--save) kobo $(SCENARIO)
+e2e: devtest
+	@reader/out/devtest scenario kobo-libra-colour $(SCENARIO) $(if $(SAVE),--save)
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \
