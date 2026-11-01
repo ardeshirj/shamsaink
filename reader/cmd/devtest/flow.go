@@ -207,6 +207,9 @@ func flow(name string) bool {
 		share := differs(base, after)
 		report(share < 0.005, "  and back to the library", fmt.Sprintf("%.2f%% of the screen differs from before", 100*share))
 	}
+	if len(os.Args) > 3 && os.Args[3] == "book" || len(os.Args) > 3 && os.Args[3] == "all" {
+		d.bookFlow(lib, report)
+	}
 	if err := d.leave(lib, menu); err != nil {
 		report(false, "leave", err.Error())
 	} else {

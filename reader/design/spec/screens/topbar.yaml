@@ -4,7 +4,7 @@ templates: [topbar.html]
 buttons: ring
 status: built
 purpose: Over the page's top, the same in the library and a book.
-enter: [{gesture: tap-page, from: reading}]
+enter: [{gesture: tap-top-tenth, from: reading}]
 controls:
   - {id: topbar-light, component: icon-button, action: goto, to: light}
   - {id: topbar-start, component: icon-button, action: goto, to: library}

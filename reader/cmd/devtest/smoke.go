@@ -196,6 +196,28 @@ func (d *dev) tapAt(x, y int) error {
 	return err
 }
 
+// holdAt writes a finger down at the screen's (x, y), held still past the reader's hold time, moved to (x2, y2) in three
+// steps, and lifted.
+func (d *dev) holdAt(x, y, x2, y2 int) error {
+	at := func(px, py int) []byte {
+		b := append(event(evAbs, posX, int32(d.turn(d.a.Touch.Turn.X, px, py))), event(evAbs, posY, int32(d.turn(d.a.Touch.Turn.Y, px, py)))...)
+		return append(b, event(evSyn, 0, 0)...)
+	}
+	write := func(b []byte) error { _, err := d.sh("cat > "+d.a.Touch.Node, b); return err }
+	down := append(event(evAbs, slot, 0), event(evAbs, trackingID, 7)...)
+	if err := write(append(down, at(x, y)...)); err != nil {
+		return err
+	}
+	time.Sleep(1200 * time.Millisecond) // past the reader's 800 ms (device/touch.go, holdTime)
+	for i := 1; i <= 3; i++ {
+		if err := write(at(x+(x2-x)*i/3, y+(y2-y)*i/3)); err != nil {
+			return err
+		}
+		time.Sleep(300 * time.Millisecond)
+	}
+	return write(append(event(evAbs, trackingID, -1), event(evSyn, 0, 0)...))
+}
+
 // tap taps the centre of the control id of the kept render.
 func (d *dev) tap(r *boxes, id string) error {
 	b, ok := box(r, id)

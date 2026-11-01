@@ -37,6 +37,8 @@ design:
 #                        menu and Leave tapped by name, Nickel back (needs the latest reader installed, no book open)
 #   make kobo-flow      the spec's flow walked on the Kobo from the library: each control that opens a panel tapped by name, the panel
 #                        held against its kept render, dismissed, the library as it was (changes nothing the reader keeps)
+#   make kobo-flow-book  the same, then inside the library's first book: the bar and dock, Contents, Text, the bar's panels and the
+#                        highlight's menu opened by name or a hold and closed, then back to the library; no page is turned
 #   make kobo-check      the Kobo held against the design spec's profile of it (reader/cmd/devtest, read-only: screen,
 #                        touch, fonts by hash, the reader installed); the tool is built for the Mac with Docker
 # Experiment 13, docs/devices/kobo/setup.md; KOBO is its SSH host (KOReader's SSH server, which stays up after KOReader is
@@ -65,7 +67,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
+.PHONY: kobo-flow-book kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -76,6 +78,9 @@ kobo-check: devtest
 
 kobo-flow: devtest
 	@reader/out/devtest flow kobo-libra-colour
+
+kobo-flow-book: devtest
+	@reader/out/devtest flow kobo-libra-colour book
 
 kobo-smoke: devtest
 	@reader/out/devtest smoke kobo-libra-colour

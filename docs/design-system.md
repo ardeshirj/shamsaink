@@ -56,6 +56,11 @@ library's screen read from the framebuffer, every button the kept render has che
 written into the touch screen turned as `devices.yaml` says), and Nickel waited for. A reader left running by a failed step
 is stopped. First run (2026-11-01, Kobo Libra Colour): all 14 checks pass; the design's coordinates are the device's.
 
+**In a book** (`make kobo-flow-book`): from the library's first row the bar and the dock are opened by a tap in the page's top tenth
+(the spec's gesture `tap-top-tenth`), Contents (and a jump to an entry, the dock's Back after it, and the place the same as before), the Text sheet, Light, the battery and the menu by name, the highlight's menu by
+a hold on a word, each held against its kept render and closed, then the bar's back arrow to the library. The direction of the
+book (English or Farsi renders) is read from the reader's own log line, not guessed from the screen (both layouts have ink in many of the same boxes: a first run guessed wrong, tapped the mirrored read-aloud button and a later tap turned a page; `devtest page DEVICE back` puts a place right, and the walk now stops at the first screen that is not as expected and taps the page only with the bar and dock verified open). No tap turns a page, so the place the reader keeps does not move.
+
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
 ## Retiring `docs/layouts/`

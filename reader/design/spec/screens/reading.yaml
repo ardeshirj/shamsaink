@@ -5,4 +5,4 @@ buttons: reading
 status: built
 page: true           # every way out of a panel lands here
 controls: []
-enter: [{gesture: tap, control: e, from: library}]
+enter: [{gesture: tap, control: e, from: library}, {gesture: tap, control: e, from: contents}]

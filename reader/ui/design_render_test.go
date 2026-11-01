@@ -101,6 +101,14 @@ func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 	return img
 }
 
+// chapter is a chapter's title in the interface's language: a Farsi interface is for a Farsi book, whose titles are Farsi.
+func chapter() string {
+	if RTL() {
+		return "فصل یکم"
+	}
+	return "Chapter one"
+}
+
 // designRenders has, for each screen of the spec that is drawn, the states to draw it in. The page (reading) is the
 // engine's and is not here.
 var designRenders = map[string][]renderCase{
@@ -109,15 +117,15 @@ var designRenders = map[string][]renderCase{
 	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, BatteryOn: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, Menu: true, BatteryOn: true, RTL: RTL()}, f, w))
 	}}},
 	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
+		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
 			Ticks: []float64{0.2, 0.5}, Narrated: true, RTL: RTL()}, f, w, h))
 	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
+		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
 	}}},
 	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, barHeight(f, w), f, w)) }}},
 	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
@@ -126,7 +134,15 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}},
 	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}, {Title: "Chapter four"}}, 1, RTL(), f, w, h)
+		entries := []Entry{{Title: "Chapter one"}, {Title: "Chapter two", Depth: 1}, {Title: "Chapter three"}, {Title: "Chapter four"}}
+		if RTL() { // a Farsi book's
+			entries = []Entry{{Title: "دیباچه"}, {Title: "بخش یکم: مرده‌خورها"}, {Title: "باران از صبح", Depth: 1}, {Title: "کوچهٔ خالی", Depth: 1}}
+		}
+		cv := NewContents(entries, 1, RTL(), f, w, h)
+		defer cv.Close()
+		return rendered{img: screenOf(w, h, cv.Draw), boxes: cv.Boxes(), placement: "screen"}
+	}}, {"mixed", en, func(f *blitz.Fonts, w, h int) rendered { // English and Farsi entries in one list: each in its own direction
+		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}, {Title: "Chapter four"}}, 1, false, f, w, h)
 		defer cv.Close()
 		return rendered{img: screenOf(w, h, cv.Draw), boxes: cv.Boxes(), placement: "screen"}
 	}}},
