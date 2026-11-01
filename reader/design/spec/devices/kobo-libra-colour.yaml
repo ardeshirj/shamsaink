@@ -2,6 +2,7 @@
 name: kobo-libra-colour
 screen: {width: 1264, height: 1680, ppi: 300}
 # Waveforms the driver takes (reader/device/screen.go); a component's refresh names one of these.
+page_buttons: true     # the two page-turn buttons
 waveforms: [A2, DU, GL16, REAGL, GC16]
 # A finger's room: the smallest target, in mm (about the width of a fingertip pad), and the slack the reader adds round a
 # button when finding a tap (reader/ui/panel.go, At: `room`), in px.

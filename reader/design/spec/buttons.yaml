@@ -1,0 +1,29 @@
+# The page buttons (docs/layouts/layout.html, "The page buttons"): forward is the lower button whichever way the device is
+# held (the accelerometer says which). A press acts at once; a hold is 800 ms (device/touch.go). Each screen names one map
+# of these (`buttons:`); a device whose profile has page buttons must have a map on every screen.
+maps:
+  reading:
+    forward: Next page
+    back: Previous page
+    hold_forward: Open the dock
+    hold_back: The glance, while held
+  ring:        # the dock and the panels: the controls on a ring
+    forward: Ring to the next control
+    back: Ring to the previous control
+    hold_forward: Choose it (on a slider or stepper, one step up)
+    hold_back: Back out a level (on a slider, one step down)
+  list:        # Contents
+    forward: Ring down the list (past the end, the next page of it)
+    back: Ring up the list
+    hold_forward: Go there
+    hold_back: Back to the page
+  listening:   # while the narration plays
+    forward: Next page (the voice follows)
+    back: Previous page
+    hold_forward: Pause or play
+    hold_back: A sentence back
+  word-held:   # a word held on the page
+    forward: Selection one word longer
+    back: One word shorter
+    hold_forward: Highlight
+    hold_back: Cancel

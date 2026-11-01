@@ -48,6 +48,13 @@ func TestValidateCatches(t *testing.T) {
 		{"stepper ids", func(s *Spec) { s.Screens["text"].Controls = s.Screens["text"].Controls[:2] }, `makes "size-dec"`},
 		{"contents close", func(s *Spec) { s.Screens["contents"].Controls = s.Screens["contents"].Controls[1:] }, `makes "contents-close"`},
 		{"enter by a control that goes elsewhere", func(s *Spec) { s.Screens["text"].Enter[0].Control = "contents" }, "does not go to it"},
+		{"no button map", func(s *Spec) { s.Screens["dock"].Buttons = "" }, "no page-button map"},
+		{"missing map", func(s *Spec) { s.Screens["dock"].Buttons = "nope" }, "does not exist"},
+		{"idle gesture", func(s *Spec) { s.Buttons["ring"] = ButtonMap{Forward: "x"} }, "does nothing"},
+		{"bad dismiss", func(s *Spec) { s.Screens["contents"].Dismiss = "no-such-control" }, "neither tap-outside"},
+		{"panel from panel", func(s *Spec) {
+			s.Screens["light"].Controls = append(s.Screens["light"].Controls, Control{ID: "x", Component: "button", Action: "goto", To: "light"})
+		}, "a panel from a panel"},
 		{"word", func(s *Spec) { s.Screens["light"].Words = append(s.Screens["light"].Words, "no-such-word") }, "no-such-word"},
 	}
 	for _, c := range cases {

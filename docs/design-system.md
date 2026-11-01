@@ -8,6 +8,7 @@ against the code by checks that need no device. Started with the dock and Light;
 | Tokens | `tokens.yaml` | the CSS variables (`--ink`, `--line`, ...), the panel font size, the layers (page, topbar, dock, panel, overlay) |
 | Device | `devices/*.yaml` | resolution, ppi, waveforms, the smallest tap target (mm) and the reader's slack round a button, the fonts |
 | Component | `components/*.yaml` | purpose, its template in `components.html`, the ids it registers, states, right-to-left, size in the CSS, refresh (waveform, region) |
+| Page buttons | `buttons.yaml` | named maps of the four gestures (press and hold, forward and back); a device with `page_buttons: true` needs a map on every screen |
 | Screen | `screens/*.yaml` | layer, template, each control (component, `goto` another screen or `act`), how it is entered (gesture, from which screen) and left (`dismiss`), its words |
 
 `go test ./design` (`TestSpecInStepWithUI`) fails when any of these disagree with `reader/ui`:
@@ -27,8 +28,8 @@ each goes:
 | In `layout.html` | Goes to |
 |---|---|
 | Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | this file, "Principles"; the device-only rule as `requires:` on a control (Listen needs sound, Light needs a light) checked against the profile |
-| The rules (out is the page, two levels at most, a way back after a jump) | checks: no `goto` from a panel to a panel; every screen's `dismiss` lands on `reading` |
-| The page buttons' map (forward, back, holds, per screen) | a `buttons:` block per screen, checked for every screen having one |
+| The rules (out is the page, two levels at most, a way back after a jump) | **checks, done:** no panel opens a panel; every `dismiss` is a tap off or a control going to the page. A way back after a jump: to come |
+| The page buttons' map (forward, back, holds, per screen) | **done:** `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Gestures on the page (hold a word, the glance, a note) | `enter` gestures of the screens they open |
 | Screens not built (library variants, glance, word panel, footnotes, listening, landscape, Farsi) | `status: planned` screens, then built; the sketches stay in git history |
 | `components.html` (states as drawn) | the renders of each component state, per profile |

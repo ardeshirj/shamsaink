@@ -1,6 +1,7 @@
 name: contents
 layer: screen
 templates: [contents-head.html, contents.html]
+buttons: list
 status: built
 purpose: The book's table of contents as a list, the current entry marked; a tap on an entry goes there.
 enter: [{gesture: tap, control: contents, from: dock}]

@@ -1,6 +1,7 @@
 name: reading
 layer: page
 purpose: The book and nothing else. Every control is a layer over it, never written into it.
+buttons: reading
 status: built
 entry: true          # where the flow starts
 controls: []

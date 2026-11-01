@@ -149,6 +149,39 @@ func Validate(s *Spec, src Sources) []string {
 		} else if sc.Dismiss == "" {
 			f("screen %s: no way out (dismiss)", n)
 		}
+		// the page buttons: a map of their own on each screen when any device has them
+		for _, d := range s.Devices {
+			if d.PageButtons && sc.Buttons == "" {
+				f("screen %s: no page-button map, and %s has page buttons", n, d.Name)
+			}
+		}
+		if sc.Buttons != "" {
+			m, ok := s.Buttons[sc.Buttons]
+			if !ok {
+				f("screen %s: page-button map %q does not exist", n, sc.Buttons)
+			}
+			if ok && (m.Forward == "" || m.Back == "" || m.HoldForward == "" || m.HoldBack == "") {
+				f("page-button map %s: a gesture does nothing; every one needs a line", sc.Buttons)
+			}
+		}
+		// every way out lands on the page: a screen is left by a tap off it, or by a control that goes to reading
+		if sc.Dismiss != "" && sc.Dismiss != "tap-outside" {
+			ok := false
+			for _, c := range sc.Controls {
+				ok = ok || c.ID == sc.Dismiss && c.Action == "goto" && c.To == entry0(s)
+			}
+			if !ok {
+				f("screen %s: dismiss %q is neither tap-outside nor a control that goes to the page", n, sc.Dismiss)
+			}
+		}
+		// two levels at most: a panel does not open another
+		if sc.Layer == "panel" || sc.Layer == "overlay" {
+			for _, c := range sc.Controls {
+				if t := s.Screens[c.To]; c.Action == "goto" && t != nil && (t.Layer == "panel" || t.Layer == "overlay") {
+					f("screen %s: control %s opens %s, a panel from a panel", n, c.ID, c.To)
+				}
+			}
+		}
 		if !sc.Entry && len(sc.Enter) == 0 {
 			f("screen %s: nothing enters it", n)
 		}
@@ -279,6 +312,16 @@ func Validate(s *Spec, src Sources) []string {
 		}
 	}
 	return bad
+}
+
+// entry0 is the name of the entry screen (the page), "" if there is none.
+func entry0(s *Spec) string {
+	for n, sc := range s.Screens {
+		if sc.Entry {
+			return n
+		}
+	}
+	return ""
 }
 
 func sortedKeys[V any](m map[string]V) []string {

@@ -1,6 +1,7 @@
 name: light
 layer: panel
 templates: [light.html]
+buttons: ring
 status: built
 purpose: The light's level and warmth, and a full refresh to clean the screen.
 enter: [{gesture: tap, control: topbar-light, from: topbar}]

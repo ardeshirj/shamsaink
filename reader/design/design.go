@@ -27,14 +27,23 @@ type Tokens struct {
 	Layers []string `yaml:"layers"`
 }
 
+// ButtonMap is what the four page-button gestures do on a screen.
+type ButtonMap struct {
+	Forward     string `yaml:"forward"`
+	Back        string `yaml:"back"`
+	HoldForward string `yaml:"hold_forward"`
+	HoldBack    string `yaml:"hold_back"`
+}
+
 // Device is what the design is judged against (spec/devices/*.yaml).
 type Device struct {
 	Name   string `yaml:"name"`
 	Screen struct {
 		Width, Height, PPI int
 	} `yaml:"screen"`
-	Waveforms []string `yaml:"waveforms"`
-	Tap       struct {
+	PageButtons bool     `yaml:"page_buttons"` // the device has page-turn buttons
+	Waveforms   []string `yaml:"waveforms"`
+	Tap         struct {
 		MinMM   float64 `yaml:"min_mm"`
 		SlackPx int     `yaml:"slack_px"`
 	} `yaml:"tap"`
@@ -94,12 +103,14 @@ type Screen struct {
 	Controls  []Control `yaml:"controls"`
 	Internal  []string  `yaml:"internal"` // ids the template registers that are not controls
 	Dismiss   string    `yaml:"dismiss"`  // how it is left for what is under it
+	Buttons   string    `yaml:"buttons"`  // its map of the page buttons (spec/buttons.yaml)
 	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
 }
 
 // Spec is the whole design.
 type Spec struct {
 	Tokens     Tokens
+	Buttons    map[string]ButtonMap
 	Devices    []Device
 	Components map[string]*Component
 	Screens    map[string]*Screen
@@ -151,6 +162,16 @@ func LoadFS(fsys fs.FS) (*Spec, error) {
 	if err := decode(b, &s.Tokens); err != nil {
 		return nil, fmt.Errorf("tokens.yaml: %w", err)
 	}
+	if b, err = fs.ReadFile(fsys, "buttons.yaml"); err != nil {
+		return nil, err
+	}
+	var bm struct {
+		Maps map[string]ButtonMap `yaml:"maps"`
+	}
+	if err := decode(b, &bm); err != nil {
+		return nil, fmt.Errorf("buttons.yaml: %w", err)
+	}
+	s.Buttons = bm.Maps
 	if s.Devices, err = readAll[Device](fsys, "devices"); err != nil {
 		return nil, err
 	}
