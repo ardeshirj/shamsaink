@@ -176,16 +176,6 @@ func TestRoles(t *testing.T) {
 	}
 }
 
-// The profile's clean_after_min is the screen's.
-func TestCleanAfter(t *testing.T) {
-	s := load(t)
-	for _, d := range s.Devices {
-		name := d.Name
-		if time.Duration(d.CleanAfter)*time.Minute != device.CleanAfter {
-			t.Errorf("%s: clean_after_min %d, device.CleanAfter %v", name, d.CleanAfter, device.CleanAfter)
-		}
-	}
-}
 
 // The profile's sleep_after_min is the device's.
 func TestSleepAfter(t *testing.T) {

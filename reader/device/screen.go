@@ -4,7 +4,6 @@ import (
 	"image"
 	"os"
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -55,13 +54,7 @@ type Screen struct {
 	W, H, line, y0 int
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
-	last           time.Time // when the screen was last updated
 }
-
-// CleanAfter is how long the screen may sit on one image before the next update is a clean GC16 flash: a splash or a
-// page left up for hours (overnight) leaves ghosts that a partial refresh does not clear. In normal use pages and
-// panels stay smooth, with no flash. The design's device profile says the same (clean_after_min; a test holds them).
-const CleanAfter = 5 * time.Minute
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
 	if _, _, e := syscall.Syscall(syscall.SYS_IOCTL, fd, req, uintptr(arg)); e != 0 {
@@ -98,9 +91,6 @@ func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
 
 // ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
 func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
-	if !flash && !s.last.IsZero() && time.Since(s.last) >= CleanAfter {
-		waveform, flash = WfGC16, true
-	}
 	s.Wait()
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		src := p.Pix[y*p.Stride+r.Min.X : y*p.Stride+r.Max.X]
@@ -169,7 +159,6 @@ func (s *Screen) Restore(b Saved) {
 
 // send refreshes r of the screen with waveform (flashing if flash), returning while the ink moves.
 func (s *Screen) send(r image.Rectangle, waveform uint32, flash bool) {
-	s.last = time.Now()
 	s.marker++
 	region := rect{uint32(r.Min.Y), uint32(r.Min.X), uint32(r.Dx()), uint32(r.Dy())}
 	mode := uint32(0)
