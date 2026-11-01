@@ -1,0 +1,9 @@
+#!/bin/sh
+# Stops a push that CI would fail (make check: gofmt, vet and the design and device tests, in Docker). Enabled once per
+# clone with: git config core.hooksPath .githooks. Skipped, with a note, where Docker is not running; a push can still
+# skip it with `git push --no-verify`.
+if ! docker info >/dev/null 2>&1; then
+  echo "pre-push: Docker is not running, make check skipped"
+  exit 0
+fi
+make check || { echo "pre-push: make check failed, nothing pushed"; exit 1; }
