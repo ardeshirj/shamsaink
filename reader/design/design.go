@@ -109,10 +109,19 @@ type Screen struct {
 	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
 }
 
+// Principle is something the design stands on, and what keeps it so.
+type Principle struct {
+	Name  string `yaml:"name"`
+	Text  string `yaml:"text"`
+	Check string `yaml:"check"`
+}
+
 // Spec is the whole design.
 type Spec struct {
 	Tokens     Tokens
 	Buttons    map[string]ButtonMap
+	Principles []Principle
+	Rules      []Principle
 	Devices    []Device
 	Components map[string]*Component
 	Screens    map[string]*Screen
@@ -174,6 +183,17 @@ func LoadFS(fsys fs.FS) (*Spec, error) {
 		return nil, fmt.Errorf("buttons.yaml: %w", err)
 	}
 	s.Buttons = bm.Maps
+	if b, err = fs.ReadFile(fsys, "principles.yaml"); err != nil {
+		return nil, err
+	}
+	var pr struct {
+		Principles []Principle `yaml:"principles"`
+		Rules      []Principle `yaml:"rules"`
+	}
+	if err := decode(b, &pr); err != nil {
+		return nil, fmt.Errorf("principles.yaml: %w", err)
+	}
+	s.Principles, s.Rules = pr.Principles, pr.Rules
 	if s.Devices, err = readAll[Device](fsys, "devices"); err != nil {
 		return nil, err
 	}

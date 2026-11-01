@@ -1,0 +1,73 @@
+<!doctype html>
+<!-- Generated from reader/design/spec and the renders in reader/design/golden by `make design` (design/site.go). Do not edit. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShamsaInk design system</title>
+<style>
+:root { --bg: #fafaf7; --fg: #1a1a18; --mute: #62625c; --line: #d6d6cf; --card: #fff; --accent: #7a4a12; --ok: #1f6b3a; }
+@media (prefers-color-scheme: dark) { :root { --bg: #161614; --fg: #ececE6; --mute: #a2a29a; --line: #3a3a36; --card: #1e1e1c; --accent: #e0b070; --ok: #6fcf97; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 80px; }
+nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; z-index: 1; }
+a { color: var(--accent); }
+h1 { margin: 32px 0 4px; font-size: 28px; } h2 { margin: 48px 0 8px; font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { margin: 32px 0 4px; font-size: 18px; } .lede { color: var(--mute); margin: 0 0 16px; }
+code { font: 13px ui-monospace, monospace; background: color-mix(in srgb, var(--fg) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0; } th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--mute); font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; } .card b { display: block; } .card p { margin: 4px 0; } .card small { color: var(--mute); }
+.tag { display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 0 8px; color: var(--mute); margin-right: 4px; }
+.tag.planned { color: var(--accent); }
+.shots { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin: 12px 0 4px; }
+figure { margin: 0; } figure img { display: block; max-width: 100%; border: 1px solid var(--line); background: #fff; } figcaption { font-size: 12px; color: var(--mute); margin-top: 4px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: -2px; margin-right: 6px; }
+ul.flow { columns: 2 380px; padding-left: 18px; font-size: 14px; }
+</style>
+</head>
+<body><div class="wrap">
+<nav><a href="#principles">Principles</a><a href="#tokens">Tokens</a><a href="#devices">Devices</a><a href="#components">Components</a><a href="#flow">Flow</a><a href="#screens">Screens</a><a href="#buttons">Page buttons</a></nav>
+<h1>ShamsaInk design system</h1>
+<p class="lede">Generated from <code>reader/design/spec</code> and the renders kept in <code>reader/design/golden</code>. The renders are what the reader draws, at a third of their size. Change the spec, then the template; <code>make design</code> says what is out of step.</p>
+
+<h2 id="principles">Principles and rules</h2>
+<div class="cards">
+{{range .Principles}}<div class="card"><b>{{.Name}}</b><p>{{.Text}}</p><small>Kept by: {{.Check}}</small></div>
+{{end}}{{range .Rules}}<div class="card"><b>Rule: {{.Name}}</b><p>{{.Text}}</p><small>Kept by: {{.Check}}</small></div>
+{{end}}</div>
+
+<h2 id="tokens">Tokens</h2>
+<table><tr><th>Variable</th><th>Value</th></tr>
+{{range $k, $v := .Tokens.CSS}}<tr><td><code>{{$k}}</code></td><td>{{$v}}</td></tr>{{end}}
+<tr><td>panel font</td><td>{{.Tokens.Panel.FontPx}} px (1em); margin {{.Tokens.Panel.MarginPx}} px</td></tr></table>
+<p>Layers, bottom up: {{range $i, $l := .Layers}}{{if $i}} → {{end}}<code>{{$l}}</code>{{end}}</p>
+
+<h2 id="devices">Devices</h2>
+<table><tr><th>Profile</th><th>Screen</th><th>Waveforms</th><th>Smallest tap</th><th>Page buttons</th><th>Fonts</th></tr>
+{{range .Devices}}<tr><td><code>{{.Name}}</code></td><td>{{.Screen.Width}} × {{.Screen.Height}} at {{.Screen.PPI}} ppi</td><td>{{join .Waveforms ", "}}</td><td>{{.Tap.MinMM}} mm (+ {{.Tap.SlackPx}} px slack)</td><td>{{if .PageButtons}}yes{{else}}no{{end}}</td><td>{{range $k, $v := .Fonts}}{{$k}}: {{$v}}; {{end}}</td></tr>{{end}}</table>
+
+<h2 id="components">Components</h2>
+<table><tr><th>Component</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
+{{range .Components}}<tr><td><code>{{.Name}}</code>{{if .Helper}}<br><small>helper <code>{{.Helper}}</code></small>{{end}}</td><td>{{.Purpose}}</td><td>{{join .States ", "}}</td><td>{{if .CSS}}{{.CSS.Width}} × {{.CSS.Height}}{{end}}</td><td>{{.Refresh.Waveform}}, {{.Refresh.Region}}</td><td>{{.RTL}}</td></tr>{{end}}</table>
+
+<h2 id="flow">Flow</h2>
+<p class="lede">Every way into a screen: <em>from → to: gesture control</em>. The app starts at the library; every way out of a panel lands on the page.</p>
+<ul class="flow">{{range .Flow}}<li>{{.}}</li>{{end}}</ul>
+
+<h2 id="screens">Screens</h2>
+{{range .Devices}}<p class="lede">Renders for <code>{{.Name}}</code>, {{.Screen.Width}} × {{.Screen.Height}}, shown at a third.</p>
+{{range .Screens}}<h3 id="screen-{{.Name}}">{{.Name}}</h3>
+<p><span class="tag">{{.Layer}}</span><span class="tag{{if eq .Status "planned"}} planned{{end}}">{{.Status}}</span>{{if .Entry}}<span class="tag">app starts here</span>{{end}}{{if .Page}}<span class="tag">the page</span>{{end}}{{if .Buttons}}<span class="tag">buttons: {{.Buttons}}</span>{{end}}{{if .Dismiss}}<span class="tag">leave: {{.Dismiss}}</span>{{end}}</p>
+{{if .Purpose}}<p>{{.Purpose}}</p>{{end}}
+{{if .Controls}}<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+{{range .Controls}}<tr><td><code>{{.ID}}</code></td><td>{{.Component}}</td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}</td></tr>{{end}}</table>{{end}}
+{{$sc := .}}{{range .Cases}}{{$c := .}}<div class="shots">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}
+{{end}}{{end}}
+
+<h2 id="buttons">Page buttons</h2>
+<table><tr><th>Map</th><th>Forward</th><th>Back</th><th>Hold forward</th><th>Hold back</th></tr>
+{{range $n, $m := .Buttons}}<tr><td><code>{{$n}}</code></td><td>{{$m.Forward}}</td><td>{{$m.Back}}</td><td>{{$m.HoldForward}}</td><td>{{$m.HoldBack}}</td></tr>{{end}}</table>
+</div></body></html>

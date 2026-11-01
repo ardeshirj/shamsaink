@@ -1,6 +1,7 @@
 package design
 
 import (
+	"bytes"
 	"os"
 	"shamsainkreader/library"
 	"slices"
@@ -103,5 +104,17 @@ func TestValuesAreTheLibrarys(t *testing.T) {
 		if !found {
 			t.Errorf("%s has no %s", c.screen, c.id)
 		}
+	}
+}
+
+// docs/design/system.html is the page the spec and the kept renders make now (`make design` writes it).
+func TestSiteUpToDate(t *testing.T) {
+	want, err := Site(load(t), os.DirFS("golden"), "../../reader/design/golden")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile("../../docs/design/system.html")
+	if err != nil || !bytes.Equal(got, want) {
+		t.Errorf("docs/design/system.html is not what the spec makes: run `make design` (%v)", err)
 	}
 }

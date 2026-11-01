@@ -1,0 +1,162 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShamsaInk design system</title>
+<style>
+:root { --bg: #fafaf7; --fg: #1a1a18; --mute: #62625c; --line: #d6d6cf; --card: #fff; --accent: #7a4a12; --ok: #1f6b3a; }
+@media (prefers-color-scheme: dark) { :root { --bg: #161614; --fg: #ececE6; --mute: #a2a29a; --line: #3a3a36; --card: #1e1e1c; --accent: #e0b070; --ok: #6fcf97; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 80px; }
+nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; z-index: 1; }
+a { color: var(--accent); }
+h1 { margin: 32px 0 4px; font-size: 28px; } h2 { margin: 48px 0 8px; font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+h3 { margin: 32px 0 4px; font-size: 18px; } .lede { color: var(--mute); margin: 0 0 16px; }
+code { font: 13px ui-monospace, monospace; background: color-mix(in srgb, var(--fg) 8%, transparent); padding: 1px 5px; border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; margin: 8px 0; } th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--mute); font-weight: 600; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; } .card b { display: block; } .card p { margin: 4px 0; } .card small { color: var(--mute); }
+.tag { display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 0 8px; color: var(--mute); margin-right: 4px; }
+.tag.planned { color: var(--accent); }
+.shots { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin: 12px 0 4px; }
+figure { margin: 0; } figure img { display: block; max-width: 100%; border: 1px solid var(--line); background: #fff; } figcaption { font-size: 12px; color: var(--mute); margin-top: 4px; }
+.swatch { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: -2px; margin-right: 6px; }
+ul.flow { columns: 2 380px; padding-left: 18px; font-size: 14px; }
+</style>
+</head>
+<body><div class="wrap">
+<nav><a href="#principles">Principles</a><a href="#tokens">Tokens</a><a href="#devices">Devices</a><a href="#components">Components</a><a href="#flow">Flow</a><a href="#screens">Screens</a><a href="#buttons">Page buttons</a></nav>
+<h1>ShamsaInk design system</h1>
+<p class="lede">Generated from <code>reader/design/spec</code> and the renders kept in <code>reader/design/golden</code>. The renders are what the reader draws, at a third of their size. Change the spec, then the template; <code>make design</code> says what is out of step.</p>
+
+<h2 id="principles">Principles and rules</h2>
+<div class="cards">
+<div class="card"><b>The page alone</b><p>No clock, no bar, no ticking while reading: the reader sleeps until a touch or a button.</p><small>Kept by: by eye (the reading screen has no controls: checked)</small></div>
+<div class="card"><b>Controls come to the hand</b><p>The dock at the bottom; the glance beside the finger; in landscape, at the grip.</p><small>Kept by: by eye</small></div>
+<div class="card"><b>What the device has, only</b><p>Light where there is a light, Listen where there is sound, colour on colour screens. Nothing greyed out.</p><small>Kept by: by eye (to come: a control&#39;s `requires` against the device profile)</small></div>
+<div class="card"><b>Everything by buttons too</b><p>The page buttons reach every control, for devices and people that need them.</p><small>Kept by: every screen has a page-button map when the device has page buttons</small></div>
+<div class="card"><b>The same bar everywhere</b><p>The library&#39;s header and the book&#39;s bar are one component in one place: the way back or search at the start, the device&#39;s time, light and battery at the end.</p><small>Kept by: both screens are made from topbar.html (template check)</small></div>
+<div class="card"><b>Refresh what changed</b><p>Each layer its own box and waveform; black and white controls, no shadows, greys or motion.</p><small>Kept by: every component names a waveform the device has and a region</small></div>
+<div class="card"><b>Rule: Out is the page</b><p>A tap on the page, Done, a close button or a jump: each closes everything at once and leaves the page alone, one refresh.</p><small>Kept by: a screen&#39;s dismiss is a tap off it or a control going to the page or back to where it came from</small></div>
+<div class="card"><b>Rule: Two levels at most</b><p>The page, the bar and dock, one panel. No panel opens another; one may take another&#39;s place.</p><small>Kept by: no goto from a panel or overlay to a panel or overlay; replace stays in one layer</small></div>
+<div class="card"><b>Rule: The device&#39;s, the book&#39;s</b><p>The bar holds what belongs to the device (time, headphones, light, battery); the dock what belongs to the book (where you are, its tools).</p><small>Kept by: by eye</small></div>
+<div class="card"><b>Rule: A way back after a jump</b><p>Chapter arrows, a tap on the bar or Contents leave &#34;Back to page N&#34; in the place line until two pages are read.</p><small>Kept by: by eye (dock&#39;s back control exists)</small></div>
+</div>
+
+<h2 id="tokens">Tokens</h2>
+<table><tr><th>Variable</th><th>Value</th></tr>
+<tr><td><code>--gap</code></td><td>0.5em</td></tr><tr><td><code>--ink</code></td><td>black</td></tr><tr><td><code>--line</code></td><td>3px</td></tr><tr><td><code>--pad</code></td><td>0.05em 0.6em</td></tr><tr><td><code>--paper</code></td><td>white</td></tr><tr><td><code>--radius</code></td><td>0.4em</td></tr>
+<tr><td>panel font</td><td>40 px (1em); margin 40 px</td></tr></table>
+<p>Layers, bottom up: <code>page</code> → <code>screen</code> → <code>topbar</code> → <code>dock</code> → <code>panel</code> → <code>overlay</code></p>
+
+<h2 id="devices">Devices</h2>
+<table><tr><th>Profile</th><th>Screen</th><th>Waveforms</th><th>Smallest tap</th><th>Page buttons</th><th>Fonts</th></tr>
+<tr><td><code>kobo-libra-colour</code></td><td>1264 × 1680 at 300 ppi</td><td>A2, DU, GL16, REAGL, GC16</td><td>7 mm (+ 16 px slack)</td><td>yes</td><td>farsi: Parastoo; icons: Phosphor; icons_filled: Phosphor-Fill; text: DejaVu Sans; </td></tr></table>
+
+<h2 id="components">Components</h2>
+<table><tr><th>Component</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
+<tr><td><code>bar</code></td><td>A progress bar with ticks; a tap on it goes anywhere.</td><td>share</td><td></td><td>DU, own-box</td><td>fills from the book&#39;s start side</td></tr><tr><td><code>button</code><br><small>helper <code>btn</code></small></td><td>Words, and an icon before them, in a border. Does one thing when tapped.</td><td>off</td><td></td><td>DU, own-box</td><td>mirrors on its own (logical properties)</td></tr><tr><td><code>icon-button</code><br><small>helper <code>ibtn</code></small></td><td>An icon alone in a box easy to tap, no border. Drawn filled when on.</td><td>off, on</td><td>2.2em × 2.2em</td><td>DU, own-box</td><td>pointing icons are mirrored (.flip)</td></tr><tr><td><code>list-row</code></td><td>One row of a long list (Contents&#39; entries); the current one bold on grey. A list is laid out and paginated by the engine.</td><td>off, current</td><td></td><td>GL16, page</td><td>the list runs in the book&#39;s direction; each row&#39;s indent is on its start side</td></tr><tr><td><code>menu-item</code></td><td>One entry of a narrow menu: an icon and its words, the whole row the button; the last entry set apart by a line.</td><td>off</td><td></td><td>GL16, own-box</td><td>the menu hangs from the end side of the bar</td></tr><tr><td><code>segments</code><br><small>helper <code>pick</code></small></td><td>One choice of a few, as one bar; the chosen one filled.</td><td>off, on</td><td></td><td>DU, own-box</td><td>mirrors on its own</td></tr><tr><td><code>slider</code><br><small>helper <code>slide</code></small></td><td>A quantity set along a track, with a button for less and one for more; a tap on the track sets the value there.</td><td>value</td><td>2.6em × 1.7em</td><td>DU, own-box</td><td>the track fills from the start side</td></tr><tr><td><code>stepper</code><br><small>helper <code>step</code></small></td><td>A setting&#39;s row: its name, a minus, the value, a plus.</td><td>value</td><td></td><td>DU, own-box</td><td>mirrors on its own</td></tr><tr><td><code>tabs</code><br><small>helper <code>pick</code></small></td><td>A few parts of one panel, one shown; the shown one bold and underlined, a line under all.</td><td>off, on</td><td></td><td>DU, own-box</td><td>mirrors on its own</td></tr><tr><td><code>toggle</code><br><small>helper <code>pick</code></small></td><td>A switch: a track with a knob, dark with the knob at its end when on.</td><td>off, on</td><td></td><td>DU, own-box</td><td>the knob moves toward the end side</td></tr></table>
+
+<h2 id="flow">Flow</h2>
+<p class="lede">Every way into a screen: <em>from → to: gesture control</em>. The app starts at the library; every way out of a panel lands on the page.</p>
+<ul class="flow"><li>library → reading: tap row</li><li>dock → contents: tap contents</li><li>topbar → library: tap topbar-start</li><li>reading → topbar: tap-page</li><li>reading → dock: tap-page</li><li>dock → text: tap text</li><li>menu → library-language: tap language</li><li>library → library-sort: tap list-sort</li><li>topbar → light: tap topbar-light</li><li>topbar → menu: tap topbar-menu</li><li>library → menu: tap topbar-menu</li><li>topbar → battery: tap topbar-battery</li><li>library → battery: tap topbar-battery</li><li>reading → highlight-menu: hold-word</li><li>library-book-menu → library-book-details: tap book-details</li><li>library → library-book-menu: hold-row</li><li>library-book-menu → library-book-remove: tap book-remove</li></ul>
+
+<h2 id="screens">Screens</h2>
+<p class="lede">Renders for <code>kobo-libra-colour</code>, 1264 × 1680, shown at a third.</p>
+<h3 id="screen-reading">reading</h3>
+<p><span class="tag">page</span><span class="tag">built</span><span class="tag">the page</span><span class="tag">buttons: {Next page Previous page Open the dock The glance, while held}</span></p>
+<p>The book and nothing else. Every control is a layer over it, never written into it.</p>
+
+
+<h3 id="screen-contents">contents</h3>
+<p><span class="tag">screen</span><span class="tag">built</span><span class="tag">buttons: {Ring down the list (past the end, the next page of it) Ring up the list Go there Back to the page}</span><span class="tag">leave: contents-close</span></p>
+<p>The book&#39;s table of contents as a list, the current entry marked; a tap on an entry goes there.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>contents-close</code></td><td>icon-button</td><td>goto → <a href="#screen-reading">reading</a></td><td></td></tr><tr><td><code>e</code></td><td>list-row</td><td>goto → <a href="#screen-reading">reading</a></td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/contents-list-en.png" width="421" alt="contents, list, en" loading="lazy"><figcaption>list · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/contents-list-fa.png" width="421" alt="contents, list, fa" loading="lazy"><figcaption>list · fa</figcaption></figure></div>
+<h3 id="screen-library">library</h3>
+<p><span class="tag">screen</span><span class="tag">built</span><span class="tag">app starts here</span><span class="tag">buttons: {Ring down the list (past the end, the next page of it) Ring up the list Go there Back to the page}</span></p>
+<p>The books, a row each, under the bar and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row in its title&#39;s direction.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>topbar-start</code></td><td>icon-button</td><td>search (no action until there is a keyboard)</td><td></td></tr><tr><td><code>topbar-phones</code></td><td>icon-button</td><td>Bluetooth sound</td><td></td></tr><tr><td><code>topbar-light</code></td><td>icon-button</td><td>goto → <a href="#screen-light">light</a></td><td></td></tr><tr><td><code>topbar-battery</code></td><td>button</td><td>goto → <a href="#screen-battery">battery</a></td><td></td></tr><tr><td><code>topbar-menu</code></td><td>icon-button</td><td>goto → <a href="#screen-menu">menu</a></td><td></td></tr><tr><td><code>filter-</code></td><td>segments</td><td>shows the books of a filter (reading, new, finished, all)</td><td></td></tr><tr><td><code>list-sort</code></td><td>icon-button</td><td>goto → <a href="#screen-library-sort">library-sort</a></td><td></td></tr><tr><td><code>list-prev</code></td><td>icon-button</td><td>the previous page of rows</td><td></td></tr><tr><td><code>list-next</code></td><td>icon-button</td><td>the next page of rows</td><td></td></tr><tr><td><code>row</code></td><td>list-row</td><td>goto → <a href="#screen-reading">reading</a></td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-reading-en.png" width="421" alt="library, reading, en" loading="lazy"><figcaption>reading · en</figcaption></figure></div>
+<h3 id="screen-topbar">topbar</h3>
+<p><span class="tag">topbar</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>Over the page&#39;s top, the same in the library and a book.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>topbar-light</code></td><td>icon-button</td><td>goto → <a href="#screen-light">light</a></td><td></td></tr><tr><td><code>topbar-start</code></td><td>icon-button</td><td>goto → <a href="#screen-library">library</a></td><td></td></tr><tr><td><code>topbar-phones</code></td><td>icon-button</td><td>Bluetooth sound</td><td></td></tr><tr><td><code>topbar-menu</code></td><td>icon-button</td><td>goto → <a href="#screen-menu">menu</a></td><td></td></tr><tr><td><code>topbar-battery</code></td><td>button</td><td>goto → <a href="#screen-battery">battery</a></td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/topbar-book-en.png" width="421" alt="topbar, book, en" loading="lazy"><figcaption>book · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/topbar-book-fa.png" width="421" alt="topbar, book, fa" loading="lazy"><figcaption>book · fa</figcaption></figure></div>
+<h3 id="screen-dock">dock</h3>
+<p><span class="tag">dock</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>Where the reader is, a bar to go anywhere in the book, the way back after a jump, and the tools.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>chapter-prev</code></td><td>icon-button</td><td>the previous chapter</td><td></td></tr><tr><td><code>progress</code></td><td>bar</td><td>go to the share tapped</td><td></td></tr><tr><td><code>chapter-next</code></td><td>icon-button</td><td>the next chapter</td><td></td></tr><tr><td><code>back</code></td><td>button</td><td>back to where the jump started</td><td>after a jump</td></tr><tr><td><code>contents</code></td><td>icon-button</td><td>goto → <a href="#screen-contents">contents</a></td><td></td></tr><tr><td><code>text</code></td><td>icon-button</td><td>goto → <a href="#screen-text">text</a></td><td></td></tr><tr><td><code>read-aloud</code></td><td>icon-button</td><td>start the narration</td><td>the book is narrated</td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/dock-narrated-en.png" width="421" alt="dock, narrated, en" loading="lazy"><figcaption>narrated · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/dock-narrated-fa.png" width="421" alt="dock, narrated, fa" loading="lazy"><figcaption>narrated · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/dock-plain-en.png" width="421" alt="dock, plain, en" loading="lazy"><figcaption>plain · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/dock-plain-fa.png" width="421" alt="dock, plain, fa" loading="lazy"><figcaption>plain · fa</figcaption></figure></div>
+<h3 id="screen-text">text</h3>
+<p><span class="tag">dock</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>The text&#39;s size, line spacing and margins, and the page turns&#39; direction, with the page showing between the bar and the sheet.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>tab-text</code></td><td>tabs</td><td>shows the Text tab</td><td></td></tr><tr><td><code>tab-page</code></td><td>tabs</td><td>shows the Page tab</td><td></td></tr><tr><td><code>size</code></td><td>stepper</td><td>text size, smaller or larger</td><td>Text tab</td></tr><tr><td><code>lines</code></td><td>stepper</td><td>line spacing</td><td>Text tab</td></tr><tr><td><code>margin</code></td><td>stepper</td><td>margins</td><td>Text tab</td></tr><tr><td><code>dir-</code></td><td>segments</td><td>page turns follow the book&#39;s direction</td><td>Page tab</td></tr><tr><td><code>dir-rtl</code></td><td>segments</td><td>page turns right to left</td><td>Page tab</td></tr><tr><td><code>dir-ltr</code></td><td>segments</td><td>page turns left to right</td><td>Page tab</td></tr><tr><td><code>reset</code></td><td>button</td><td>the book&#39;s text settings back to the defaults</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/text-page-en.png" width="421" alt="text, page, en" loading="lazy"><figcaption>page · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/text-page-fa.png" width="421" alt="text, page, fa" loading="lazy"><figcaption>page · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/text-text-en.png" width="421" alt="text, text, en" loading="lazy"><figcaption>text · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/text-text-fa.png" width="421" alt="text, text, fa" loading="lazy"><figcaption>text · fa</figcaption></figure></div>
+<h3 id="screen-library-language">library-language</h3>
+<p><span class="tag">panel</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>One row, no title: Follow book language and its switch. A tap applies it at once.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>lang-follow</code></td><td>toggle</td><td>interface language follows the book&#39;s, or English only</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-language-english-en.png" width="421" alt="library-language, english, en" loading="lazy"><figcaption>english · en</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-language-follow-en.png" width="421" alt="library-language, follow, en" loading="lazy"><figcaption>follow · en</figcaption></figure></div>
+<h3 id="screen-library-sort">library-sort</h3>
+<p><span class="tag">panel</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>How the books are sorted, under the filters (recent, title, author, added).</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>sort-</code></td><td>segments</td><td>sorts the books by the name chosen</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-sort-title-en.png" width="421" alt="library-sort, title, en" loading="lazy"><figcaption>title · en</figcaption></figure></div>
+<h3 id="screen-light">light</h3>
+<p><span class="tag">panel</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>The light&#39;s level and warmth, and a full refresh to clean the screen.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>light</code></td><td>slider</td><td>set the level</td><td></td></tr><tr><td><code>warmth</code></td><td>slider</td><td>set the warmth</td><td></td></tr><tr><td><code>clean</code></td><td>button</td><td>a full refresh</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/light-panel-en.png" width="421" alt="light, panel, en" loading="lazy"><figcaption>panel · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/light-panel-fa.png" width="421" alt="light, panel, fa" loading="lazy"><figcaption>panel · fa</figcaption></figure></div>
+<h3 id="screen-menu">menu</h3>
+<p><span class="tag">panel</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>A narrow list hanging from the bar&#39;s menu button. In a book only Leave; in the library Settings above it.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>language</code></td><td>menu-item</td><td>replace → <a href="#screen-library-language">library-language</a></td><td>in the library</td></tr><tr><td><code>leave</code></td><td>menu-item</td><td>leaves to Kobo&#39;s interface</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/menu-book-en.png" width="89" alt="menu, book, en" loading="lazy"><figcaption>book · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/menu-book-fa.png" width="78" alt="menu, book, fa" loading="lazy"><figcaption>book · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/menu-library-en.png" width="104" alt="menu, library, en" loading="lazy"><figcaption>library · en</figcaption></figure></div>
+<h3 id="screen-battery">battery</h3>
+<p><span class="tag">overlay</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>The battery&#39;s level in a small box hanging from the bar under its battery; any tap closes it.</p>
+
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/battery-level-en.png" width="53" alt="battery, level, en" loading="lazy"><figcaption>level · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/battery-level-fa.png" width="44" alt="battery, level, fa" loading="lazy"><figcaption>level · fa</figcaption></figure></div>
+<h3 id="screen-highlight-menu">highlight-menu</h3>
+<p><span class="tag">overlay</span><span class="tag">built</span><span class="tag">buttons: {Selection one word longer One word shorter Highlight Cancel}</span><span class="tag">leave: tap-outside</span></p>
+<p>By the words chosen (a finger held on a word, dragged and lifted) or a highlight held: Highlight or Remove highlight, and Listen from here in a narrated book. Hangs under the words, over them when there is no room.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>hl-make</code></td><td>menu-item</td><td>highlights the words chosen</td><td>words are chosen</td></tr><tr><td><code>hl-remove</code></td><td>menu-item</td><td>removes the highlight held</td><td>a highlight is held</td></tr><tr><td><code>hl-listen</code></td><td>menu-item</td><td>starts the narration from the word</td><td>the book is narrated</td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/highlight-menu-made-en.png" width="166" alt="highlight-menu, made, en" loading="lazy"><figcaption>made · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/highlight-menu-made-fa.png" width="111" alt="highlight-menu, made, fa" loading="lazy"><figcaption>made · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/highlight-menu-new-en.png" width="159" alt="highlight-menu, new, en" loading="lazy"><figcaption>new · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/highlight-menu-new-fa.png" width="128" alt="highlight-menu, new, fa" loading="lazy"><figcaption>new · fa</figcaption></figure></div>
+<h3 id="screen-library-book-details">library-book-details</h3>
+<p><span class="tag">overlay</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>A book&#39;s facts, read only, in the menu&#39;s place; any tap closes it.</p>
+
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-details-opened-en.png" width="394" alt="library-book-details, opened, en" loading="lazy"><figcaption>opened · en</figcaption></figure></div>
+<h3 id="screen-library-book-menu">library-book-menu</h3>
+<p><span class="tag">overlay</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>A book&#39;s menu, opened by a finger held on its row: mark finished, start again, details, remove.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>book-finish</code></td><td>menu-item</td><td>marks the book finished</td><td>the book is not finished</td></tr><tr><td><code>book-unfinish</code></td><td>menu-item</td><td>marks the book not finished</td><td>the book is finished</td></tr><tr><td><code>book-again</code></td><td>menu-item</td><td>forgets the place, keeps the highlights</td><td>the book was opened</td></tr><tr><td><code>book-details</code></td><td>menu-item</td><td>replace → <a href="#screen-library-book-details">library-book-details</a></td><td></td></tr><tr><td><code>book-remove</code></td><td>menu-item</td><td>replace → <a href="#screen-library-book-remove">library-book-remove</a></td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-finished-en.png" width="184" alt="library-book-menu, finished, en" loading="lazy"><figcaption>finished · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-finished-fa.png" width="183" alt="library-book-menu, finished, fa" loading="lazy"><figcaption>finished · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-new-en.png" width="158" alt="library-book-menu, new, en" loading="lazy"><figcaption>new · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-new-fa.png" width="178" alt="library-book-menu, new, fa" loading="lazy"><figcaption>new · fa</figcaption></figure></div><div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-opened-en.png" width="158" alt="library-book-menu, opened, en" loading="lazy"><figcaption>opened · en</figcaption></figure><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-menu-opened-fa.png" width="178" alt="library-book-menu, opened, fa" loading="lazy"><figcaption>opened · fa</figcaption></figure></div>
+<h3 id="screen-library-book-remove">library-book-remove</h3>
+<p><span class="tag">overlay</span><span class="tag">built</span><span class="tag">buttons: {Ring to the next control Ring to the previous control Choose it (on a slider or stepper, one step up) Back out a level (on a slider, one step down)}</span><span class="tag">leave: tap-outside</span></p>
+<p>Asks before a book is removed: what is removed, then Remove and Keep. Removing deletes the file and all the reader keeps for it.</p>
+<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
+<tr><td><code>book-remove-yes</code></td><td>button</td><td>deletes the book&#39;s file and what the reader keeps for it</td><td></td></tr><tr><td><code>book-remove-no</code></td><td>button</td><td>keeps the book</td><td></td></tr></table>
+<div class="shots"><figure><img src="../../reader/design/golden/kobo-libra-colour/library-book-remove-ask-en.png" width="394" alt="library-book-remove, ask, en" loading="lazy"><figcaption>ask · en</figcaption></figure></div>
+
+
+<h2 id="buttons">Page buttons</h2>
+<table><tr><th>Map</th><th>Forward</th><th>Back</th><th>Hold forward</th><th>Hold back</th></tr>
+<tr><td><code>list</code></td><td>Ring down the list (past the end, the next page of it)</td><td>Ring up the list</td><td>Go there</td><td>Back to the page</td></tr><tr><td><code>listening</code></td><td>Next page (the voice follows)</td><td>Previous page</td><td>Pause or play</td><td>A sentence back</td></tr><tr><td><code>reading</code></td><td>Next page</td><td>Previous page</td><td>Open the dock</td><td>The glance, while held</td></tr><tr><td><code>ring</code></td><td>Ring to the next control</td><td>Ring to the previous control</td><td>Choose it (on a slider or stepper, one step up)</td><td>Back out a level (on a slider, one step down)</td></tr><tr><td><code>word-held</code></td><td>Selection one word longer</td><td>One word shorter</td><td>Highlight</td><td>Cancel</td></tr></table>
+</div></body></html>

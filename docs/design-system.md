@@ -25,6 +25,11 @@ with the fonts of `reader/out/fonts` (other fonts draw other letters), from inve
 A change to a template or the CSS shows as the screens it changed; `make design GOLDEN=update` keeps the new ones, and the
 diff of the PNGs is the review.
 
+**The page** (`docs/design/system.html`, written by `make design` from the spec and the kept renders; `TestSiteUpToDate`
+fails when it is stale): principles and rules (`spec/principles.yaml`, each with what keeps it), tokens, devices,
+components, the flow, every screen with its controls and renders (at a third of their size), and the page buttons. It
+replaces `docs/layouts/` as the thing to look at; open it in a browser.
+
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
 ## Retiring `docs/layouts/`
@@ -34,7 +39,7 @@ each goes:
 
 | In `layout.html` | Goes to |
 |---|---|
-| Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | this file, "Principles"; the device-only rule as `requires:` on a control (Listen needs sound, Light needs a light) checked against the profile |
+| Principles (page alone, controls to the hand, only what the device has, buttons too, one bar, refresh what changed) | **done:** `spec/principles.yaml`, each with what keeps it, shown on the page; the device-only rule as `requires:` on a control (Listen needs sound, Light needs a light) checked against the profile: to come |
 | The rules (out is the page, two levels at most, a way back after a jump) | **checks, done:** no panel opens a panel; every `dismiss` is a tap off or a control going to the page. A way back after a jump: to come |
 | The page buttons' map (forward, back, holds, per screen) | **done:** `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Gestures on the page (hold a word, the glance, a note) | `enter` gestures of the screens they open |
@@ -47,6 +52,5 @@ Until then `docs/layouts/` is a reference only (as the roadmap says). When the l
 and the spec plus the renders are the reference.
 
 **Still to do** (roadmap group 6): the screens not built yet as `planned` (the glance, the word panel, footnotes, listening,
-landscape, the keyboard); the principles written here; `ui.css`'s `:root` generated from the spec; a view of the renders
-as a page, to replace `docs/layouts/`; `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
+landscape, the keyboard); `ui.css`'s `:root` generated from the spec; `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
 an e2e scenario against the renders); a profile for the Kindle.

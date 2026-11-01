@@ -1,0 +1,34 @@
+# What the design stands on, from docs/layouts/layout.html (2026-10-30). `check` says what enforces it: a check of
+# `go test ./design` or `make design`, or "by eye" when only a person can judge it.
+principles:
+  - name: The page alone
+    text: "No clock, no bar, no ticking while reading: the reader sleeps until a touch or a button."
+    check: "by eye (the reading screen has no controls: checked)"
+  - name: Controls come to the hand
+    text: "The dock at the bottom; the glance beside the finger; in landscape, at the grip."
+    check: by eye
+  - name: What the device has, only
+    text: "Light where there is a light, Listen where there is sound, colour on colour screens. Nothing greyed out."
+    check: "by eye (to come: a control's `requires` against the device profile)"
+  - name: Everything by buttons too
+    text: "The page buttons reach every control, for devices and people that need them."
+    check: "every screen has a page-button map when the device has page buttons"
+  - name: The same bar everywhere
+    text: "The library's header and the book's bar are one component in one place: the way back or search at the start, the device's time, light and battery at the end."
+    check: "both screens are made from topbar.html (template check)"
+  - name: Refresh what changed
+    text: "Each layer its own box and waveform; black and white controls, no shadows, greys or motion."
+    check: "every component names a waveform the device has and a region"
+rules:
+  - name: Out is the page
+    text: "A tap on the page, Done, a close button or a jump: each closes everything at once and leaves the page alone, one refresh."
+    check: "a screen's dismiss is a tap off it or a control going to the page or back to where it came from"
+  - name: Two levels at most
+    text: "The page, the bar and dock, one panel. No panel opens another; one may take another's place."
+    check: "no goto from a panel or overlay to a panel or overlay; replace stays in one layer"
+  - name: The device's, the book's
+    text: "The bar holds what belongs to the device (time, headphones, light, battery); the dock what belongs to the book (where you are, its tools)."
+    check: by eye
+  - name: A way back after a jump
+    text: "Chapter arrows, a tap on the bar or Contents leave \"Back to page N\" in the place line until two pages are read."
+    check: "by eye (dock's back control exists)"
