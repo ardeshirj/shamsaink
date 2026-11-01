@@ -11,4 +11,4 @@ controls:
   - {id: dark, component: button, action: act, does: "dark mode on or off (filled when on): the whole screen inverted, with a full refresh"}
   - {id: clean, component: button, action: act, does: a full refresh}
 dismiss: tap-outside
-words: [light, warmth, dark-mode, clean-screen]
+words: [light, warmth, screen, dark-mode, clean-screen]
