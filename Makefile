@@ -41,11 +41,12 @@ design:
 #                        highlight's menu opened by name or a hold and closed, then back to the library; no page is turned
 #   make kobo-check      the Kobo held against the design spec's profile of it (reader/cmd/devtest, read-only: screen,
 #                        touch, fonts by hash, the reader installed); the tool is built for the Mac with Docker
-# Experiment 13, docs/devices/kobo/setup.md; KOBO is its SSH host (KOReader's SSH server, which stays up after KOReader is
-# closed).
-#   make kobo-reader-install  build the reader, copy it and its launcher to .adds/shamsaink (refused while a book is
-#                        open: the launcher is read by its shell as it runs)
+#   make kobo-reader-install  build the reader, copy it and its launcher to .adds/shamsaink (files moved in
+#                        whole, so an open reader is not hurt); if the reader was open it is restarted on the new build, unless
+#                        Bluetooth is on (leaving would reboot the Kobo: then nothing is copied and it says so)
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
+#   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
+#                        and the battery's use per hour
 #   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
@@ -67,7 +68,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-flow-book kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
+.PHONY: kobo-flow-book kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -86,14 +87,12 @@ kobo-smoke: devtest
 	@reader/out/devtest smoke kobo-libra-colour
 
 kobo-reader-install: reader
-	@$(KOBO_SSH) 'pidof shamsaink >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \
-	  mkdir -p $(KOBO_DIR)/fonts $(KOBO_DIR)/books $(KOBO_DIR)/sleep'
-	@scp -q reader/out/shamsaink $(KOBO):$(KOBO_DIR)/shamsaink.new
-	@scp -q reader/kobo/launch.sh reader/out/fonts/* $(KOBO):$(KOBO_DIR)/
-	@$(KOBO_SSH) 'cd $(KOBO_DIR) && mv shamsaink.new shamsaink && mv *.ttf fonts/ && rm -f cache/splash-*.gray'
-	@echo "reader and launcher copied to $(KOBO)"
+	@sh reader/kobo/install.sh $(KOBO) $(KOBO_DIR)
 
 SCENARIO ?= e2e/kobo-basics.txt
+kobo-usage: devtest
+	@reader/out/devtest usage kobo-libra-colour
+
 e2e: devtest
 	@reader/out/devtest scenario kobo-libra-colour $(SCENARIO) $(if $(SAVE),--save)
 

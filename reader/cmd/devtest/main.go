@@ -8,6 +8,8 @@
 //	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go)
 //	devtest page DEVICE back|forward   opens the first book, turns one page by the book's own direction and leaves it: puts
 //	                         right a place a run moved
+//	devtest usage DEVICE     the reader's usage lines from its log: each stretch awake and asleep, the battery it used, the rate
+//	                         per hour (read-only)
 //	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
 //	                         the device's reader to be the latest build, and no book open)
 //
@@ -51,7 +53,7 @@ type Access struct {
 }
 
 func main() {
-	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow" && os.Args[1] != "page" && os.Args[1] != "scenario") {
+	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow" && os.Args[1] != "page" && os.Args[1] != "scenario" && os.Args[1] != "usage") {
 		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke|flow DEVICE")
 		os.Exit(2)
 	}
@@ -80,7 +82,7 @@ func main() {
 		}
 		return
 	}
-	run := map[string]func(string) bool{"check": check, "smoke": smoke, "flow": flow}[os.Args[1]]
+	run := map[string]func(string) bool{"check": check, "smoke": smoke, "flow": flow, "usage": usage}[os.Args[1]]
 	if !run(os.Args[2]) {
 		os.Exit(1)
 	}

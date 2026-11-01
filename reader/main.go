@@ -91,11 +91,13 @@ func main() {
 			found = rd.dev.Screen.Save()
 		}
 		var err error
+		rd.dev.Usage("start", "")
 		if os.Args[1] == "-library" {
 			err = rd.browse(t)
 		} else {
 			_, err = rd.read(map[string]string{"book": os.Args[1]}, t)
 		}
+		rd.dev.Usage("stop", "")
 		if found != nil {
 			rd.dev.Screen.Restore(found)
 		}

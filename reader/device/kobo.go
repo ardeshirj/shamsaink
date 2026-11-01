@@ -173,6 +173,8 @@ func (d *Device) doze(pic *image.Gray) {
 	d.dozing.Store(true)
 	defer d.dozing.Store(false)
 	t := time.Now()
+	slept := t.Round(0) // the wall clock: Go's own stops while the Kobo is suspended
+	d.Usage("sleep", "")
 	back := d.Screen.Save()
 	light, _ := os.ReadFile(lightLevel)
 	lit, _ := strconv.Atoi(strings.TrimSpace(string(light)))
@@ -261,6 +263,7 @@ func (d *Device) doze(pic *image.Gray) {
 	d.Screen.Restore(back)
 	sysfs(lightFile, strconv.Itoa(lit))
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
+	d.Usage("wake", fmt.Sprintf(" asleep=%d", int(time.Now().Round(0).Sub(slept).Seconds())))
 }
 
 func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }

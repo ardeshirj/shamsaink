@@ -4,6 +4,7 @@
 package device
 
 import (
+	"fmt"
 	"image"
 	"os"
 	"path/filepath"
@@ -125,6 +126,12 @@ func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 	d.doze(sleepScreen(dir, fallback))
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
 	return true
+}
+
+// Usage writes one line to the log for the usage table (`make kobo-usage`): the event (start, stop, sleep, wake), the time
+// in UTC, the battery's charge (per cent), whether it is on a charger, and extra (" asleep=SECONDS" on a wake).
+func (d *Device) Usage(event, extra string) {
+	fmt.Printf("usage: %s at=%s battery=%d plugged=%t%s\n", event, time.Now().UTC().Format(time.RFC3339), d.Battery(), plugged(), extra)
 }
 
 // Battery is the battery's charge in per cent, from the kernel's power supplies (the first that has one); -1 if none
