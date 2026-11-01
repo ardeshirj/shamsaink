@@ -1,0 +1,10 @@
+name: library-language
+layer: panel
+templates: [library-language.html]
+buttons: ring
+status: built
+purpose: "One row, no title: Follow book language and its switch. A tap applies it at once."
+enter: [{gesture: tap, control: language, from: menu}]
+controls:
+  - {id: lang-follow, component: toggle, action: act, does: "interface language follows the book's, or English only"}
+dismiss: tap-outside

@@ -1,0 +1,11 @@
+name: menu
+layer: panel
+templates: [library-menu.html]
+buttons: ring
+status: built
+purpose: "A narrow list hanging from the bar's menu button. In a book only Leave; in the library Settings above it."
+enter: [{gesture: tap, control: topbar-menu, from: topbar}, {gesture: tap, control: topbar-menu, from: library}]
+controls:
+  - {id: language, component: menu-item, action: replace, to: library-language, when: "in the library"}
+  - {id: leave, component: menu-item, action: act, does: "leaves to Kobo's interface"}
+dismiss: tap-outside

@@ -1,0 +1,14 @@
+name: library-book-menu
+layer: overlay
+templates: [library-book-menu.html]
+buttons: ring
+status: built
+purpose: "A book's menu, opened by a finger held on its row: mark finished, start again, details, remove."
+enter: [{gesture: hold-row, from: library}]
+controls:
+  - {id: book-finish, component: menu-item, action: act, does: marks the book finished, when: "the book is not finished"}
+  - {id: book-unfinish, component: menu-item, action: act, does: marks the book not finished, when: "the book is finished"}
+  - {id: book-again, component: menu-item, action: act, does: "forgets the place, keeps the highlights", when: "the book was opened"}
+  - {id: book-details, component: menu-item, action: replace, to: library-book-details}
+  - {id: book-remove, component: menu-item, action: replace, to: library-book-remove}
+dismiss: tap-outside

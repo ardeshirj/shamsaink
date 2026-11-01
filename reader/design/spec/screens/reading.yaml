@@ -3,6 +3,6 @@ layer: page
 purpose: The book and nothing else. Every control is a layer over it, never written into it.
 buttons: reading
 status: built
-entry: true          # where the flow starts
+page: true           # every way out of a panel lands here
 controls: []
-enter: []
+enter: [{gesture: tap, control: row, from: library}]

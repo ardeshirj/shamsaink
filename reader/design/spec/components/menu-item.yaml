@@ -1,0 +1,6 @@
+name: menu-item
+purpose: "One entry of a narrow menu: an icon and its words, the whole row the button; the last entry set apart by a line."
+template: ""         # drawn in each menu's own template (ul.menu)
+states: [off]
+rtl: the menu hangs from the end side of the bar
+refresh: {waveform: GL16, region: own-box}

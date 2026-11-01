@@ -1,0 +1,11 @@
+name: library-sort
+layer: panel
+templates: [library-sort.html]
+buttons: ring
+status: built
+purpose: "How the books are sorted, under the filters (recent, title, author, added)."
+enter: [{gesture: tap, control: list-sort, from: library}]
+controls:
+  - {id: sort-, component: segments, action: act, does: "sorts the books by the name chosen", dynamic: true}
+dismiss: tap-outside
+words: [sort-by]

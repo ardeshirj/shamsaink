@@ -146,7 +146,7 @@ func Validate(s *Spec, src Sources) []string {
 				f("two entry screens: %s and %s", entry, n)
 			}
 			entry = n
-		} else if sc.Dismiss == "" {
+		} else if sc.Dismiss == "" && !sc.Page {
 			f("screen %s: no way out (dismiss)", n)
 		}
 		// the page buttons: a map of their own on each screen when any device has them
@@ -168,10 +168,10 @@ func Validate(s *Spec, src Sources) []string {
 		if sc.Dismiss != "" && sc.Dismiss != "tap-outside" {
 			ok := false
 			for _, c := range sc.Controls {
-				ok = ok || c.ID == sc.Dismiss && c.Action == "goto" && c.To == entry0(s)
+				ok = ok || c.ID == sc.Dismiss && c.Action == "goto" && (c.To == pageScreen(s) || enteredFrom(sc, c.To))
 			}
 			if !ok {
-				f("screen %s: dismiss %q is neither tap-outside nor a control that goes to the page", n, sc.Dismiss)
+				f("screen %s: dismiss %q is neither tap-outside nor a control that goes to the page or back to where it came from", n, sc.Dismiss)
 			}
 		}
 		// two levels at most: a panel does not open another
@@ -206,12 +206,18 @@ func Validate(s *Spec, src Sources) []string {
 				if s.Screens[c.To] == nil {
 					f("screen %s, control %s: goes to %q, which is no screen", n, c.ID, c.To)
 				}
+			case "replace": // a panel swapped for another at the same level, in its place
+				if t := s.Screens[c.To]; t == nil {
+					f("screen %s, control %s: replaces itself with %q, which is no screen", n, c.ID, c.To)
+				} else if t.Layer != sc.Layer {
+					f("screen %s, control %s: replaces with %s, which is in another layer", n, c.ID, c.To)
+				}
 			case "act":
 				if c.Does == "" {
 					f("screen %s, control %s: acts, but does not say what", n, c.ID)
 				}
 			default:
-				f("screen %s, control %s: action %q (goto or act)", n, c.ID, c.Action)
+				f("screen %s, control %s: action %q (goto, replace or act)", n, c.ID, c.Action)
 			}
 		}
 		for _, e := range sc.Enter {
@@ -225,7 +231,7 @@ func Validate(s *Spec, src Sources) []string {
 			}
 			ok := false
 			for _, c := range from.Controls {
-				ok = ok || c.ID == e.Control && c.Action == "goto" && c.To == n
+				ok = ok || c.ID == e.Control && (c.Action == "goto" || c.Action == "replace") && c.To == n
 			}
 			if !ok {
 				f("screen %s: entered by %s on %s, which does not go to it", n, e.Control, e.From)
@@ -293,6 +299,9 @@ func Validate(s *Spec, src Sources) []string {
 		f("no entry screen")
 		return bad
 	}
+	if pageScreen(s) == "" {
+		f("no page screen")
+	}
 
 	// every screen reachable from the entry, by a gesture on the screen before it
 	reach := map[string]bool{entry: true}
@@ -314,10 +323,20 @@ func Validate(s *Spec, src Sources) []string {
 	return bad
 }
 
-// entry0 is the name of the entry screen (the page), "" if there is none.
-func entry0(s *Spec) string {
+// enteredFrom says whether sc can be entered from the screen named from.
+func enteredFrom(sc *Screen, from string) bool {
+	for _, e := range sc.Enter {
+		if e.From == from {
+			return true
+		}
+	}
+	return false
+}
+
+// pageScreen is the name of the page screen, "" if there is none.
+func pageScreen(s *Spec) string {
 	for n, sc := range s.Screens {
-		if sc.Entry {
+		if sc.Page {
 			return n
 		}
 	}

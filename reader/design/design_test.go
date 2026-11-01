@@ -55,6 +55,10 @@ func TestValidateCatches(t *testing.T) {
 		{"panel from panel", func(s *Spec) {
 			s.Screens["light"].Controls = append(s.Screens["light"].Controls, Control{ID: "x", Component: "button", Action: "goto", To: "light"})
 		}, "a panel from a panel"},
+		{"replace across layers", func(s *Spec) { s.Screens["library-book-menu"].Controls[3].To = "library-sort" }, "another layer"},
+		{"replace into nothing", func(s *Spec) { s.Screens["menu"].Controls[0].To = "nowhere" }, "no screen"},
+		{"nothing enters", func(s *Spec) { s.Screens["library-book-menu"].Enter = nil }, "nothing enters it"},
+		{"library template lost its row", func(s *Spec) { s.Screens["library"].Controls = s.Screens["library"].Controls[:4] }, `makes "list-sort"`},
 		{"word", func(s *Spec) { s.Screens["light"].Words = append(s.Screens["light"].Words, "no-such-word") }, "no-such-word"},
 	}
 	for _, c := range cases {

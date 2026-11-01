@@ -1,0 +1,20 @@
+name: library
+layer: screen
+templates: [topbar.html, library.html, library-head.html, pager.html]
+buttons: list
+status: built
+entry: true          # where the app starts
+purpose: "The books, a row each, under the bar and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row in its title's direction."
+enter: [{gesture: tap, control: topbar-start, from: topbar}]
+internal: [topbar-title, topbar-title-text]
+controls:
+  - {id: topbar-start, component: icon-button, action: act, does: "search (no action until there is a keyboard)"}
+  - {id: topbar-phones, component: icon-button, action: act, does: Bluetooth sound}
+  - {id: topbar-light, component: icon-button, action: goto, to: light}
+  - {id: topbar-battery, component: button, action: goto, to: battery}
+  - {id: topbar-menu, component: icon-button, action: goto, to: menu}
+  - {id: filter-, component: segments, action: act, does: "shows the books of a filter (reading, new, finished, all)", dynamic: true}
+  - {id: list-sort, component: icon-button, action: goto, to: library-sort}
+  - {id: list-prev, component: icon-button, action: act, does: the previous page of rows}
+  - {id: list-next, component: icon-button, action: act, does: the next page of rows}
+  - {id: row, component: list-row, action: goto, to: reading, dynamic: true}   # a tap opens the book; a hold opens its menu

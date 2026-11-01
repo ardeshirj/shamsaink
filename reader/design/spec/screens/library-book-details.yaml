@@ -1,0 +1,9 @@
+name: library-book-details
+layer: overlay
+templates: [library-book-details.html]
+buttons: ring
+status: built
+purpose: "A book's facts, read only, in the menu's place; any tap closes it."
+enter: [{gesture: tap, control: book-details, from: library-book-menu}]
+controls: []
+dismiss: tap-outside

@@ -98,6 +98,7 @@ type Screen struct {
 	Templates []string  `yaml:"templates"` // its files in ui/templates
 	Status    string    `yaml:"status"`    // built or planned
 	Purpose   string    `yaml:"purpose"`
+	Page      bool      `yaml:"page"` // the screen every way out lands on (the book's page)
 	Entry     bool      `yaml:"entry"`
 	Enter     []Enter   `yaml:"enter"`
 	Controls  []Control `yaml:"controls"`

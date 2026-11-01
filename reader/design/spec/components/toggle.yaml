@@ -1,0 +1,7 @@
+name: toggle
+purpose: "A switch: a track with a knob, dark with the knob at its end when on."
+template: toggle
+helper: pick
+states: [off, on]
+rtl: the knob moves toward the end side
+refresh: {waveform: DU, region: own-box}

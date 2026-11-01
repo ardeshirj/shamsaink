@@ -1,7 +1,7 @@
 # The design system (2026-10-31)
 
 The reader's look, components, screens and the flow between them are **data**, in `reader/design/spec/` (YAML), held
-against the code by checks that need no device. Started with the dock and Light; Text and Contents followed; the other screens move in one at a time.
+against the code by checks that need no device. Started with the dock and Light; Text and Contents followed, then the library with its menus and the book's menus; the other screens move in one at a time.
 
 | Layer | Files | Says |
 |---|---|---|
@@ -31,8 +31,10 @@ each goes:
 | The rules (out is the page, two levels at most, a way back after a jump) | **checks, done:** no panel opens a panel; every `dismiss` is a tap off or a control going to the page. A way back after a jump: to come |
 | The page buttons' map (forward, back, holds, per screen) | **done:** `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Gestures on the page (hold a word, the glance, a note) | `enter` gestures of the screens they open |
-| Screens not built (library variants, glance, word panel, footnotes, listening, landscape, Farsi) | `status: planned` screens, then built; the sketches stay in git history |
+| Screens not built (library with covers, the keyboard, glance, word panel, footnotes, listening, landscape, Farsi) | `status: planned` screens, then built; the sketches stay in git history |
 | `components.html` (states as drawn) | the renders of each component state, per profile |
+
+Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 
 Until then `docs/layouts/` is a reference only (as the roadmap says). When the last row is moved, the folder is deleted
 and the spec plus the renders are the reference.
