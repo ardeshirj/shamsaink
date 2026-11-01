@@ -22,12 +22,12 @@ const (
 )
 
 type Device struct {
-	Screen *Screen
-	Kind   Kind
-	dozing atomic.Bool   // the Kobo dozing: its power key's presses go to wake
-	wake   chan struct{} // the press that wakes it
-	sleepAfter atomic.Int64 // how long untouched before the reader sleeps the device (ns; 0: never)
-	active atomic.Int64  // when a touch or a press last came (Unix nanoseconds): the idle sleep counts from it
+	Screen     *Screen
+	Kind       Kind
+	dozing     atomic.Bool   // the Kobo dozing: its power key's presses go to wake
+	wake       chan struct{} // the press that wakes it
+	sleepAfter atomic.Int64  // how long untouched before the reader sleeps the device (ns; 0: never)
+	active     atomic.Int64  // when a touch or a press last came (Unix nanoseconds): the idle sleep counts from it
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power

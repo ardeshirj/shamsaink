@@ -177,7 +177,6 @@ func TestRoles(t *testing.T) {
 	}
 }
 
-
 // The profile's sleep_after_min is the device's.
 func TestSleepAfter(t *testing.T) {
 	s := load(t)

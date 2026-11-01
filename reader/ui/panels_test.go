@@ -386,7 +386,11 @@ func TestPanelEdges(t *testing.T) {
 	topBar := DrawTopBar(TopBar{Start: "arrow-left", Title: "Title", Time: "20:48", Phones: true, Battery: 50, Menu: true}, fonts, w)
 	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
-		"light":     DrawLight(40, 3, 10, false, 160, fonts, w), "light-fa": func() *Panel { SetLanguage("fa"); defer SetLanguage("en"); return DrawLight(40, 3, 10, false, 160, fonts, w) }(),
+		"light":     DrawLight(40, 3, 10, false, 160, fonts, w), "light-fa": func() *Panel {
+			SetLanguage("fa")
+			defer SetLanguage("en")
+			return DrawLight(40, 3, 10, false, 160, fonts, w)
+		}(),
 		"highlight-menu": DrawHighlightMenu(false, true, fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
