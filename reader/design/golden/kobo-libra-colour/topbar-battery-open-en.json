@@ -1,10 +1,10 @@
 {
  "placement": "screen",
  "boxes": {
-  "topbar-battery": [1029, 58, 1130, 110],
-  "topbar-light": [934, 40, 1023, 128],
+  "topbar-battery": [1014, 58, 1114, 110],
+  "topbar-light": [904, 40, 993, 128],
   "topbar-menu": [1136, 40, 1224, 128],
-  "topbar-phones": [824, 40, 913, 128],
+  "topbar-phones": [794, 40, 883, 128],
   "topbar-start": [40, 40, 128, 128]
  }
 }

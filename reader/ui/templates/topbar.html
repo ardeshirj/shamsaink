@@ -14,7 +14,8 @@ div.topbar .end { display: flex; align-items: center; justify-content: flex-end;
 div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
 [lang="fa"] div.topbar .time { font-size: 1.08em; }
 /* the battery: a box filled to its share and a nub, always drawn from the left */
-.batt { display: flex; align-items: center; gap: 0.3em; padding: 0.25em 0.4em; margin: -0.25em -0.4em; }
+/* its side padding is room, as an icon's box has round its glyph (0.4em of the 2.2em box), so the gaps between what is seen are even */
+.batt { display: flex; align-items: center; gap: 0.3em; padding: 0.25em 0.4em; margin: -0.25em 0; }
 /* open: inverted, as the sort button's (a filled battery would read as a full one); the padding is always there, so nothing moves */
 .batt.on { background: var(--ink); border-radius: var(--radius); }
 .batt.on .box { border-color: var(--paper); }
