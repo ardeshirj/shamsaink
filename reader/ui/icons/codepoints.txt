@@ -27,3 +27,4 @@ check-circle e184
 circle e18a
 info e2ce
 trash e4a6
+circle-half e18c

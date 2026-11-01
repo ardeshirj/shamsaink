@@ -120,6 +120,9 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			}
 			return `<span class="i">` + glyph(name) + `</span>`
 		},
+		"iconfill": func(name string) template.HTML { // the icon in the fill weight: a solid shape, as when an icon is on
+			return `<span class="i on">` + glyph(name) + `</span>`
+		},
 		"uilang": func() string { // the interface's language for a page's lang, "" for English (the default)
 			if lang == "en" {
 				return ""

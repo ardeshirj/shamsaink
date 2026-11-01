@@ -6,5 +6,5 @@ screen (a full refresh, with its flash). Any tap off it closes it. */ -}}
 {{template "slider" slide (t "light") "light" "" .LevelShare "sun" "sun" true}}
 {{template "slider" slide (t "warmth") "warmth" "" .WarmthShare "sun" "moon" false}}
 <div class="slider"><div class="sname"><span>{{t "screen"}}</span></div></div>
-<div class="row"><span class="b{{if .Dark}} on{{end}}" id="{{id "dark"}}">{{icon "moon"}} {{t "dark-mode"}}</span><span class="b" id="{{id "clean"}}">{{icon "arrows-clockwise"}} {{t "clean-screen"}}</span></div>
+<div class="row"><span class="b{{if .Dark}} on{{end}}" id="{{id "dark"}}">{{iconfill "circle-half"}} {{t "dark-mode"}}</span><span class="b" id="{{id "clean"}}">{{icon "arrows-clockwise"}} {{t "clean-screen"}}</span></div>
 </body></html>
