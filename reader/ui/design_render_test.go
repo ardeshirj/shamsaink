@@ -23,7 +23,7 @@ import (
 type renderCase struct {
 	name  string
 	langs []string // the interface's languages to draw it in
-	draw  func(f *blitz.Fonts, w, h int) *image.Gray
+	draw  func(f *blitz.Fonts, w, h int) rendered
 }
 
 var en = []string{"en"}
@@ -43,6 +43,14 @@ func designBooks() []Book {
 	return books
 }
 
+// rendered is what a render drew: the picture, and the ids of the buttons on it.
+type rendered struct {
+	img *image.Gray
+	ids []string
+}
+
+func pr(p *Panel) rendered { return rendered{p.img, p.Controls()} }
+
 func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	draw(img)
@@ -52,52 +60,52 @@ func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 // designRenders has, for each screen of the spec that is drawn, the states to draw it in. The page (reading) is the
 // engine's and is not here.
 var designRenders = map[string][]renderCase{
-	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, RTL: RTL()}, f, w).img
+	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},
-	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
-			Ticks: []float64{0.2, 0.5}, Narrated: true, RTL: RTL()}, f, w, h).img
-	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h).img
+	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
+			Ticks: []float64{0.2, 0.5}, Narrated: true, RTL: RTL()}, f, w, h))
+	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawDock(Progress{Chapter: "Chapter one", At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
 	}}},
-	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawLight(40, 7, 10, 160, f, w).img }}},
-	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h).img
-	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h).img
+	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, 160, f, w)) }}},
+	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
+	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}},
-	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
+	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}, {Title: "Chapter four"}}, 1, RTL(), f, w, h)
 		defer cv.Close()
-		return screenOf(w, h, cv.Draw)
+		return rendered{screenOf(w, h, cv.Draw), cv.Controls()}
 	}}},
-	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawBattery(82, 160, image.Rect(w-300, 20, w-200, 120), f, w).img
+	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawBattery(82, 160, image.Rect(w-300, 20, w-200, 120), f, w))
 	}}},
-	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawLibraryMenu(160, false, f, w).img }},
-		{"library", en, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawLibraryMenu(160, true, f, w).img }}},
-	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) *image.Gray {
-		topBar := TopBar{Start: "magnifying-glass", Time: "20:48", Battery: 82, Menu: true}
+	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(160, false, f, w)) }},
+		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(160, true, f, w)) }}},
+	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
+		topBar := TopBar{Start: "magnifying-glass", Time: "20:48", Phones: true, Battery: 82, Menu: true}
 		lib := NewLibrary(designBooks(), LibraryHead(topBar, LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w), f, w, h)
 		defer lib.Close()
-		return screenOf(w, h, lib.Draw)
+		return rendered{screenOf(w, h, lib.Draw), lib.Controls()}
 	}}},
-	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawLibraryLanguage(true, 160, f, w).img }},
-		{"english", en, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawLibraryLanguage(false, 160, f, w).img }}},
-	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawLibrarySort(slicesIndex(library.Sorts, "title"), 300, f, w).img
+	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(true, 160, f, w)) }},
+		{"english", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(false, 160, f, w)) }}},
+	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), 300, f, w))
 	}}},
-	"library-book-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawBookMenu(false, false, f, w).img }},
-		{"opened", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawBookMenu(false, true, f, w).img }},
-		{"finished", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawBookMenu(true, true, f, w).img }}},
-	"library-book-details": {{"opened", en, func(f *blitz.Fonts, w, h int) *image.Gray {
-		return DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
-			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w).img
+	"library-book-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(false, false, f, w)) }},
+		{"opened", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(false, true, f, w)) }},
+		{"finished", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookMenu(true, true, f, w)) }}},
+	"library-book-details": {{"opened", en, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
+			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
-	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawBookRemove("A Long Voyage", false, f, w).img }}},
-	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawHighlightMenu(false, true, f, w).img }},
-		{"made", enFa, func(f *blitz.Fonts, w, h int) *image.Gray { return DrawHighlightMenu(true, false, f, w).img }}},
+	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawBookRemove("A Long Voyage", false, f, w)) }}},
+	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawHighlightMenu(false, true, f, w)) }},
+		{"made", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawHighlightMenu(true, false, f, w)) }}},
 }
 
 func slicesIndex(a []string, s string) int {
@@ -158,7 +166,7 @@ func TestScreenRenders(t *testing.T) {
 				for _, lang := range c.langs {
 					SetLanguage(lang)
 					name := fmt.Sprintf("%s-%s-%s", screen, c.name, lang)
-					img := c.draw(fonts, d.Screen.Width, d.Screen.Height)
+					img := c.draw(fonts, d.Screen.Width, d.Screen.Height).img
 					path := filepath.Join("..", "design", "golden", d.Name, name+".png")
 					compareGolden(t, path, name, img, update)
 				}
@@ -212,3 +220,30 @@ func compareGolden(t *testing.T, path, name string, img *image.Gray, update bool
 }
 
 func designDay(d int) time.Time { return time.Date(2026, 10, d, 0, 0, 0, 0, time.UTC) }
+
+// The buttons every screen's renders drew are the controls the spec declares for it, no more and no fewer: the check of
+// the spec's controls is against what the renderer found, not against the templates' text.
+func TestControlsAreWhatIsDrawn(t *testing.T) {
+	var fonts *blitz.Fonts
+	if d := os.Getenv("FONTS"); d != "" {
+		fonts = blitz.LoadFonts(d)
+	}
+	s, err := design.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer SetLanguage("en")
+	d := s.Devices[0]
+	for screen, cases := range designRenders {
+		var found []string
+		for _, c := range cases {
+			for _, lang := range c.langs {
+				SetLanguage(lang)
+				found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids...)
+			}
+		}
+		for _, p := range design.CheckControls(s, screen, found) {
+			t.Error(p)
+		}
+	}
+}

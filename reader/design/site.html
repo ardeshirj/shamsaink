@@ -50,7 +50,7 @@ ul.flow { columns: 2 380px; padding-left: 18px; font-size: 14px; }
 {{range .Devices}}<tr><td><code>{{.Name}}</code></td><td>{{.Screen.Width}} × {{.Screen.Height}} at {{.Screen.PPI}} ppi</td><td>{{join .Waveforms ", "}}</td><td>{{.Tap.MinMM}} mm (+ {{.Tap.SlackPx}} px slack)</td><td>{{if .PageButtons}}yes{{else}}no{{end}}</td><td>{{range $k, $v := .Fonts}}{{$k}}: {{$v}}; {{end}}</td></tr>{{end}}</table>
 
 <h2 id="components">Components</h2>
-<table><tr><th>Component</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
+<table><tr><th>Component</th><th>Role</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
 {{range .Components}}<tr><td><code>{{.Name}}</code>{{if .Helper}}<br><small>helper <code>{{.Helper}}</code></small>{{end}}</td><td>{{.Purpose}}</td><td>{{join .States ", "}}</td><td>{{if .CSS}}{{.CSS.Width}} × {{.CSS.Height}}{{end}}</td><td>{{.Refresh.Waveform}}, {{.Refresh.Region}}</td><td>{{.RTL}}</td></tr>{{end}}</table>
 
 <h2 id="flow">Flow</h2>

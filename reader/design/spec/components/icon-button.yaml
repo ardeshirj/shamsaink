@@ -1,5 +1,6 @@
 name: icon-button
 purpose: An icon alone in a box easy to tap, no border. Drawn filled when on.
+role: button
 template: iconbutton     # {{define}} in ui/templates/components.html
 helper: ibtn             # how a template makes one: ibtn "id" "icon" on
 states: [off, on]

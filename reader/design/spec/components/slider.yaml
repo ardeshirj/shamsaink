@@ -1,5 +1,6 @@
 name: slider
 purpose: A quantity set along a track, with a button for less and one for more; a tap on the track sets the value there.
+role: slider
 template: slider
 helper: slide
 # the ids a slider registers from its base id: the track itself and its two buttons

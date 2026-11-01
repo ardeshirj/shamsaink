@@ -5,7 +5,7 @@ against the code by checks that need no device. Started with the dock and Light;
 
 | Layer | Files | Says |
 |---|---|---|
-| Tokens | `tokens.yaml` | the CSS variables (`--ink`, `--line`, ...), the panel font size, the layers (page, topbar, dock, panel, overlay) |
+| Tokens | `tokens.yaml` | the CSS variables (`--ink`, `--line`, ...) and the panel font size and margin, **the one place they are set**; `make design` writes them into `ui.css` (between its `generated` markers) and `ui/tokens_gen.go`. Also the layers (page, screen, topbar, dock, panel, overlay) |
 | Device | `devices/*.yaml` | resolution, ppi, waveforms, the smallest tap target (mm) and the reader's slack round a button, the fonts |
 | Component | `components/*.yaml` | purpose, its template in `components.html`, the ids it registers, states, right-to-left, size in the CSS, refresh (waveform, region) |
 | Page buttons | `buttons.yaml` | named maps of the four gestures (press and hold, forward and back); a device with `page_buttons: true` needs a map on every screen |
@@ -13,16 +13,21 @@ against the code by checks that need no device. Started with the dock and Light;
 
 `go test ./design` (`TestSpecInStepWithUI`) fails when any of these disagree with `reader/ui`:
 tokens vs `ui.css :root`; a component's `{{define}}` and its size rule; every target at least the device's minimum in mm
-(box + slack, from ppi); a refresh waveform the device has; a screen's template makes exactly the controls the spec
-declares (ids from `id`, `ibtn`, `btn`, `pick`, `slide`); icons in the icon font; words in both tables; every `goto` leads to a
+(box + slack, from ppi); a refresh waveform the device has;  icons in the icon font; words in both tables; every `goto` leads to a
 screen; every screen can be entered, left, and reached from `reading`. `TestValidateCatches` checks that each check bites.
 The filters and sorts the spec lists are checked against `library.Filters` and `library.Sorts`. Unknown YAML keys are errors. `status: planned` screens are in the flow but their templates are not yet held to it.
+
+**Controls are checked against what the renderer drew** (`TestControlsAreWhatIsDrawn`, `design.CheckControls`): the buttons found on a
+screen's renders (every state and language) must be exactly the controls the spec declares for it, a dynamic one (a list's
+rows `e0`, `e1`, ...) by its prefix, a box the engine uses (`internal`) apart. Not by reading the templates' text. Each
+component has a `role` (button, slider, tab, menuitem, switch, ...): what a control is to a user or a test, so a test can say
+"the menuitem Contents" and not a position.
 
 **Renders** (`reader/ui/design_render_test.go`, `make design`): every built screen of the spec is drawn for each device
 profile and language (the spec's screens each have cases in `designRenders`; a built screen without one fails
 `TestEveryScreen...`) and compared pixel by pixel with the render kept in `reader/design/golden/DEVICE/`. They are drawn
 with the fonts of `reader/out/fonts` (other fonts draw other letters), from invented books, never a real book's text.
-A change to a template or the CSS shows as the screens it changed; `make design GOLDEN=update` keeps the new ones, and the
+A change to a token, a template or the CSS shows as the screens it changed (`make design` writes the tokens first, so a new value in `tokens.yaml` reaches the drawings); `make design GOLDEN=update` keeps the new ones, and the
 diff of the PNGs is the review.
 
 **The page** (`docs/design/system.html`, written by `make design` from the spec and the kept renders; `TestSiteUpToDate`
@@ -52,5 +57,5 @@ Until then `docs/layouts/` is a reference only (as the roadmap says). When the l
 and the spec plus the renders are the reference.
 
 **Still to do** (roadmap group 6): the screens not built yet as `planned` (the glance, the word panel, footnotes, listening,
-landscape, the keyboard); `ui.css`'s `:root` generated from the spec; `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
+landscape, the keyboard); `make design-sync DEVICE=kobo` (fonts by hash, resolution, touch turn, the flow played as
 an e2e scenario against the renders); a profile for the Kindle.

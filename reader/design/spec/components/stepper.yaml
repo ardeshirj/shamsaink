@@ -1,5 +1,6 @@
 name: stepper
 purpose: "A setting's row: its name, a minus, the value, a plus."
+role: spinbutton
 template: stepper
 helper: step
 ids: [-dec, -inc]    # from the base id

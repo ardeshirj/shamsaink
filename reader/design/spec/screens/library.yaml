@@ -17,4 +17,4 @@ controls:
   - {id: list-sort, component: icon-button, action: goto, to: library-sort}
   - {id: list-prev, component: icon-button, action: act, does: the previous page of rows}
   - {id: list-next, component: icon-button, action: act, does: the next page of rows}
-  - {id: row, component: list-row, action: goto, to: reading, dynamic: true}   # a tap opens the book; a hold opens its menu
+  - {id: e, component: list-row, action: goto, to: reading, dynamic: true}   # a tap opens the book; a hold opens its menu

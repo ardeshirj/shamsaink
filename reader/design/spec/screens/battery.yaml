@@ -5,5 +5,6 @@ buttons: ring
 status: built
 purpose: The battery's level in a small box hanging from the bar under its battery; any tap closes it.
 enter: [{gesture: tap, control: topbar-battery, from: topbar}, {gesture: tap, control: topbar-battery, from: library}]
+internal: [level]   # the box itself, found to cut the panel to it
 controls: []
 dismiss: tap-outside

@@ -17,14 +17,49 @@ import (
 //go:embed spec
 var specFS embed.FS
 
-// Tokens are the look as values (spec/tokens.yaml).
+// Token is one CSS variable of the look: its name, value and the note that goes with it.
+type Token struct{ Name, Value, Note string }
+
+// Tokens are the look as values (spec/tokens.yaml); CSS keeps the order the file has them in.
 type Tokens struct {
-	CSS   map[string]string `yaml:"css"`
+	CSS   map[string]string
+	Order []Token
 	Panel struct {
 		FontPx   int `yaml:"font_px"`
 		MarginPx int `yaml:"margin_px"`
-	} `yaml:"panel"`
-	Layers []string `yaml:"layers"`
+	}
+	Layers []string
+}
+
+// UnmarshalYAML reads the tokens, keeping the order of the css variables and the comment after each.
+func (t *Tokens) UnmarshalYAML(n *yaml.Node) error {
+	var aux struct {
+		Panel struct {
+			FontPx   int `yaml:"font_px"`
+			MarginPx int `yaml:"margin_px"`
+		} `yaml:"panel"`
+		Layers []string `yaml:"layers"`
+	}
+	t.CSS = map[string]string{}
+	for i := 0; i+1 < len(n.Content); i += 2 {
+		k, v := n.Content[i], n.Content[i+1]
+		switch k.Value {
+		case "css":
+			for j := 0; j+1 < len(v.Content); j += 2 {
+				name, val := v.Content[j], v.Content[j+1]
+				t.CSS[name.Value] = val.Value
+				t.Order = append(t.Order, Token{name.Value, val.Value, strings.TrimSpace(strings.TrimPrefix(val.LineComment, "#"))})
+			}
+		case "panel", "layers":
+		default:
+			return fmt.Errorf("tokens.yaml: unknown key %q", k.Value)
+		}
+	}
+	if err := n.Decode(&aux); err != nil {
+		return err
+	}
+	t.Panel, t.Layers = aux.Panel, aux.Layers
+	return nil
 }
 
 // ButtonMap is what the four page-button gestures do on a screen.
@@ -62,7 +97,8 @@ type Component struct {
 	Purpose  string   `yaml:"purpose"`
 	Template string   `yaml:"template"` // its {{define}} in components.html, "" for one drawn in a screen's own template
 	Helper   string   `yaml:"helper"`
-	IDs      []string `yaml:"ids"` // what it registers from a base id; none: the id alone
+	Role     string   `yaml:"role"` // what a control of it is to a user or a test: button, slider, tab, ...
+	IDs      []string `yaml:"ids"`  // what it registers from a base id; none: the id alone
 	States   []string `yaml:"states"`
 	RTL      string   `yaml:"rtl"`
 	CSS      *struct {

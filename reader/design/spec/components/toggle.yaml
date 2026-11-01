@@ -1,5 +1,6 @@
 name: toggle
 purpose: "A switch: a track with a knob, dark with the knob at its end when on."
+role: switch
 template: toggle
 helper: pick
 states: [off, on]

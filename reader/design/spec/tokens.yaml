@@ -1,16 +1,16 @@
-# The look, as values. `css` tokens are the variables of reader/ui/templates/ui.css (:root); the check in design_test.go
-# fails when the two differ, so a change is made here and in ui.css together (ui.css is generated from this later).
-# `px` values are read by the panels' drawing (reader/ui/panel.go).
+# The look, as values: the one place they are set. `make design` writes the :root of reader/ui/templates/ui.css (each
+# comment here comes with its variable) and reader/ui/tokens_gen.go (the panels' sizes) from this file; a test fails when
+# either is not what this makes.
 css:
   --ink: black
   --paper: white
-  --line: 3px
-  --radius: 0.4em
-  --pad: 0.05em 0.6em
-  --gap: 0.5em
+  --line: 3px          # every border
+  --radius: 0.4em      # a button's corners
+  --pad: 0.05em 0.6em  # inside a button
+  --gap: 0.5em         # between buttons side by side, and between rows of them
 panel:
-  font_px: 40     # the panels' base font size (drawPanelIn: Options.FontSize), 1em
-  margin_px: 40   # around a panel's content (Options.Margin)
+  font_px: 40     # the panels' base font size (the engine's FontSize), 1em
+  margin_px: 40   # around a panel's content (the engine's Margin)
 # Layers, from the bottom of the stack up: what the screen is made of. A screen names the layer it lives in.
 layers:
   - page         # the engine's pixels: the book, nothing else

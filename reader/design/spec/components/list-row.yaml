@@ -1,5 +1,6 @@
 name: list-row
 purpose: "One row of a long list (Contents' entries); the current one bold on grey. A list is laid out and paginated by the engine."
+role: listitem
 template: ""         # drawn in contents.html itself, not yet a shared component
 states: [off, current]
 rtl: the list runs in the book's direction; each row's indent is on its start side

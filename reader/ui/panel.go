@@ -66,7 +66,7 @@ func drawPanelIn(html string, ids []string, box string, fonts *blitz.Fonts, w, h
 	// a line after everything: a page ends at its last line of text, so a box's bottom edge after its own (the
 	// segments' bar) would be cut off; cropped away below
 	html = strings.Replace(html, "</body>", "<p>&nbsp;</p></body>", 1)
-	o := blitz.Options{Width: w, Height: h, Margin: 40, FontSize: 40}
+	o := blitz.Options{Width: w, Height: h, Margin: panelMarginPx, FontSize: panelFontPx}
 	b := blitz.New([]string{"menu.html"}, readFor(html), o, fonts)
 	defer b.Close()
 	b.Layout(0)

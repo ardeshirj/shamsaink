@@ -1,4 +1,5 @@
-/* The look, in one place. */
+/* generated:tokens */
+/* GENERATED from reader/design/spec/tokens.yaml by `make design`: change the values there. */
 :root {
   --ink: black;
   --paper: white;
@@ -7,6 +8,7 @@
   --pad: 0.05em 0.6em;  /* inside a button */
   --gap: 0.5em;         /* between buttons side by side, and between rows of them */
 }
+/* end generated */
 /* The panels in DejaVu Sans, Farsi in Parastoo: the whole page when the interface is in Farsi (its html's lang), and in
    English each piece of Farsi text marked lang="fa" (a book's title, a chapter's, a library row: textlang). By the
    attribute, since the engine does not apply :lang(); fonts named, not generic families, whose first font depends on

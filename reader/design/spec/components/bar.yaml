@@ -1,5 +1,6 @@
 name: bar
 purpose: A progress bar with ticks; a tap on it goes anywhere.
+role: progressbar
 template: ""         # drawn in dock.html itself, not yet a shared component
 states: [share]
 rtl: fills from the book's start side

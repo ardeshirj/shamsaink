@@ -1,5 +1,6 @@
 name: segments
 purpose: One choice of a few, as one bar; the chosen one filled.
+role: radio
 template: segments
 helper: pick         # one pick per segment, gathered by list
 states: [off, on]

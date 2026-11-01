@@ -161,3 +161,28 @@ func (v *List) RowsBottom() int {
 }
 
 func (v *List) Close() { v.list.Close() }
+
+// Controls are the ids of every button the list drew: its header's, its pager's, and its rows (e0, e1, ...).
+func (v *List) Controls() []string {
+	var ids []string
+	for _, p := range []*Panel{v.head, v.pager} {
+		if p != nil {
+			for id := range p.buttons {
+				ids = append(ids, id)
+			}
+		}
+	}
+	for i := range v.at {
+		ids = append(ids, fmt.Sprint("e", i))
+	}
+	return ids
+}
+
+// Controls are the ids of the buttons the panel drew.
+func (m *Panel) Controls() []string {
+	var ids []string
+	for id := range m.buttons {
+		ids = append(ids, id)
+	}
+	return ids
+}

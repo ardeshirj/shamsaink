@@ -18,13 +18,16 @@ var (
 	reComment = regexp.MustCompile(`(?s)\{\{/\*.*?\*/\s*-?\}\}`)
 	reRoot    = regexp.MustCompile(`(?s):root\s*\{(.*?)\}`)
 	reVar     = regexp.MustCompile(`(--[\w-]+)\s*:\s*([^;/]+?)\s*;`)
-	reID      = regexp.MustCompile(`\b(?:id|btn|pick)\s+"([^"]+)"|\bibtn\s+"([^"]+)"`)
 	reSlide   = regexp.MustCompile(`\bslide\s+\([^)]*\)\s+"([^"]+)"\s+"[^"]*"\s+\.\w+\s+"([^"]+)"\s+"([^"]+)"`)
-	reStep    = regexp.MustCompile(`\bstep\s+(?:\([^)]*\)|[\w.]+)\s+"([^"]+)"`)
 	reIcon    = regexp.MustCompile(`\bicon\s+"([^"]+)"|\bibtn\s+"[^"]+"\s+"([^"]+)"`)
 	reWord    = regexp.MustCompile(`\bt\s+"([^"]+)"`)
 	reRoom    = regexp.MustCompile(`const room = (\d+)`)
 )
+
+// roles are what a control is to someone using it, as accessibility and test tools name them: a test says
+// "the menuitem Contents", not a position.
+var roles = map[string]bool{"button": true, "slider": true, "tab": true, "menuitem": true, "switch": true, "listitem": true,
+	"progressbar": true, "radio": true, "spinbutton": true}
 
 func em(s string) (float64, bool) {
 	v, err := strconv.ParseFloat(strings.TrimSuffix(s, "em"), 64)
@@ -82,6 +85,9 @@ func Validate(s *Spec, src Sources) []string {
 		c := s.Components[n]
 		if c.Template != "" && !strings.Contains(comps, `{{define "`+c.Template+`"}}`) {
 			f("component %s: no {{define %q}} in components.html", n, c.Template)
+		}
+		if !roles[c.Role] {
+			f("component %s: role %q is not one of %s", n, c.Role, strings.Join(sortedKeys(roles), ", "))
 		}
 		if c.Refresh.Waveform == "" {
 			f("component %s: no refresh waveform", n)
@@ -185,21 +191,11 @@ func Validate(s *Spec, src Sources) []string {
 		if !sc.Entry && len(sc.Enter) == 0 {
 			f("screen %s: nothing enters it", n)
 		}
-		declared, dynamic := map[string]bool{}, map[string]bool{}
-		for _, id := range sc.Internal {
-			declared[id] = true
-		}
 		for _, c := range sc.Controls {
 			comp := s.Components[c.Component]
 			if comp == nil {
 				f("screen %s, control %s: no component %q", n, c.ID, c.Component)
 				continue
-			}
-			if c.Dynamic {
-				dynamic[c.ID] = true
-			}
-			for _, suf := range comp.IDs {
-				declared[c.ID+suf] = true
 			}
 			switch c.Action {
 			case "goto":
@@ -246,33 +242,11 @@ func Validate(s *Spec, src Sources) []string {
 		for _, t := range sc.Templates {
 			tpl += reComment.ReplaceAllString(read("templates/"+t), "")
 		}
-		seen := map[string]bool{}
-		for _, m := range reID.FindAllStringSubmatch(tpl, -1) {
-			seen[m[1]+m[2]] = true
-		}
 		for _, m := range reSlide.FindAllStringSubmatch(tpl, -1) {
-			for _, suf := range s.Components["slider"].IDs {
-				seen[m[1]+suf] = true
-			}
 			for _, ic := range m[2:] {
 				if !icons[ic] {
 					f("screen %s: icon %q is not in the icon font", n, ic)
 				}
-			}
-		}
-		for _, m := range reStep.FindAllStringSubmatch(tpl, -1) {
-			for _, suf := range s.Components["stepper"].IDs {
-				seen[m[1]+suf] = true
-			}
-		}
-		for id := range seen {
-			if !declared[id] {
-				f("screen %s: the template makes %q, which the spec does not declare", n, id)
-			}
-		}
-		for id := range declared {
-			if !seen[id] && !dynamic[id] {
-				f("screen %s: the spec declares %q, which the template does not make", n, id)
 			}
 		}
 		for _, m := range reIcon.FindAllStringSubmatch(tpl, -1) {
@@ -359,4 +333,59 @@ func contains(a []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// CheckControls holds what a screen's renders drew (found: the ids of every button, over all its states) against the
+// controls the spec declares for it: each declared control was drawn, and each button drawn is declared. A dynamic
+// control is a prefix (a list's rows e0, e1, ...). It says every way they disagree.
+func CheckControls(s *Spec, screen string, found []string) []string {
+	var bad []string
+	sc := s.Screens[screen]
+	if sc == nil {
+		return []string{fmt.Sprintf("no screen %q", screen)}
+	}
+	exact, prefixes := map[string]bool{}, []string{}
+	for _, id := range sc.Internal {
+		exact[id] = true
+	}
+	for _, c := range sc.Controls {
+		comp := s.Components[c.Component]
+		if comp == nil {
+			continue
+		}
+		if c.Dynamic {
+			prefixes = append(prefixes, c.ID)
+			continue
+		}
+		for _, suf := range comp.IDs {
+			exact[c.ID+suf] = true
+		}
+	}
+	got := map[string]bool{}
+	for _, id := range found {
+		got[id] = true
+		ok := exact[id]
+		for _, p := range prefixes {
+			ok = ok || strings.HasPrefix(id, p)
+		}
+		if !ok {
+			bad = append(bad, fmt.Sprintf("screen %s: drew %q, which the spec does not declare", screen, id))
+		}
+	}
+	for id := range exact {
+		if !got[id] && !contains(sc.Internal, id) {
+			bad = append(bad, fmt.Sprintf("screen %s: the spec declares %q, which was not drawn", screen, id))
+		}
+	}
+	for _, p := range prefixes {
+		hit := false
+		for id := range got {
+			hit = hit || strings.HasPrefix(id, p)
+		}
+		if !hit {
+			bad = append(bad, fmt.Sprintf("screen %s: the spec declares %s..., none of which was drawn", screen, p))
+		}
+	}
+	sort.Strings(bad)
+	return bad
 }
