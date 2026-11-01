@@ -13,6 +13,7 @@ import (
 
 	"shamsainkreader/device"
 	"shamsainkreader/files"
+	"shamsainkreader/ui"
 
 	blitz "shamsainkengine"
 )
@@ -31,6 +32,8 @@ type settings struct {
 	SleepMin int `json:"sleep_min"`
 	// Dark mode: the screen inverted (device.Screen.SetInvert), set from the Light panel.
 	Dark bool `json:"dark,omitempty"`
+	// The page buttons swapped (the lower goes back): off by default, the lower button forward.
+	ReverseButtons bool `json:"reverse_buttons,omitempty"`
 	// The front light (light.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
@@ -108,4 +111,9 @@ func nextSleep(cur int, longer bool) int {
 		i--
 	}
 	return device.SleepMinutes[max(0, min(i, len(device.SleepMinutes)-1))]
+}
+
+// settingsView is what the settings panel shows for set on dev.
+func settingsView(set *settings, dev *device.Device) ui.LibrarySettings {
+	return ui.LibrarySettings{Follow: !set.EnglishOnly, SleepMin: set.SleepMin, HasButtons: dev.HasButtons(), ReverseButtons: set.ReverseButtons}
 }

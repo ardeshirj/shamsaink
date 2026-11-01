@@ -5,4 +5,5 @@ direction is the interface's). */ -}}
 .lang { justify-content: space-between; }
 </style></head><body>
 <div class="row lang"><span>{{t "follow-book"}}</span>{{template "toggle" pick "lang-follow" "" .Follow}}</div>
+{{if .HasButtons}}<div class="row lang"><span>{{t "reverse-buttons"}}</span>{{template "toggle" pick "buttons-reverse" "" .ReverseButtons}}</div>{{end}}
 <div class="set">{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div></body></html>

@@ -1,8 +1,9 @@
 {
  "placement": "screen",
  "boxes": {
+  "buttons-reverse": [1114, 288, 1224, 350],
   "lang-follow": [1114, 214, 1224, 276],
-  "sleep-dec": [796, 300, 884, 356],
-  "sleep-inc": [1132, 300, 1220, 356]
+  "sleep-dec": [796, 374, 884, 430],
+  "sleep-inc": [1132, 374, 1220, 430]
  }
 }

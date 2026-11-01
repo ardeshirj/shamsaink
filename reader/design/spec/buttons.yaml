@@ -1,12 +1,12 @@
 # The page buttons (from the first browser sketch, git `e4ba57e`, docs/design/sketches): forward is the lower button whichever way the device is
-# held (the accelerometer says which). A press acts at once; a hold is 800 ms (device/touch.go). Each screen names one map
+# held (the accelerometer says which). A press acts at once; a hold is 1000 ms (device/touch.go). Each screen names one map
 # of these (`buttons:`); a device whose profile has page buttons must have a map on every screen.
 maps:
   reading:
-    forward: Next page
+    forward: Next page            # acts when the button is let go, so that a hold is not a press first
     back: Previous page
-    hold_forward: Open the dock
-    hold_back: The glance, while held
+    hold_forward: The next chapter (the way back is the dock's Back); the dock is by touch only for now
+    hold_back: The previous chapter (the glance, while held, when it is built)
   ring:        # the dock and the panels: the controls on a ring
     forward: Ring to the next control
     back: Ring to the previous control

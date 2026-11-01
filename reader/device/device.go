@@ -28,6 +28,7 @@ type Device struct {
 	dozing     atomic.Bool   // the Kobo dozing: its power key's presses go to wake
 	wake       chan struct{} // the press that wakes it
 	sleepAfter atomic.Int64  // how long untouched before the reader sleeps the device (ns; 0: never)
+	reverse    atomic.Bool   // the page buttons swapped (SetReverseButtons)
 	active     atomic.Int64  // when a touch or a press last came (Unix nanoseconds): the idle sleep counts from it
 }
 
@@ -74,7 +75,9 @@ func (d *Device) Colour() bool {
 // screensaver; on the Kobo, a press of the power button.
 type Event struct {
 	Gesture
-	Sleep bool
+	Sleep  bool
+	Button int // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
+	Held   bool // with Button: the button was held (about 0.4 s), not pressed; sent once, while it is still down, and no press follows
 }
 
 // Inputs grabs the touch screen (TOUCH, /dev/input/event1 by default) and listens for sleep, sending both as events
@@ -110,11 +113,18 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	} else {
 		power := d.presses(out)
 		idle := d.idles(out, done)
-		stopSleeps = func() { power.Close(); idle() }
+		keys := d.buttons(out)
+		stopSleeps = func() { power.Close(); idle(); keys.Close() }
 	}
 	var once sync.Once
 	return out, func() { once.Do(func() { f.Close(); stopSleeps(); close(done) }) }, nil
 }
+
+// SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
+func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
+
+// HasButtons says whether the device has page-turn buttons (the Kobo Libra's, two keys on its side).
+func (d *Device) HasButtons() bool { return d.Kind == Kobo && buttonsDev() != "" }
 
 // Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture from dir/sleep, else
 // fallback), suspends until the power button is pressed again, and returns true once the Kobo is awake and the

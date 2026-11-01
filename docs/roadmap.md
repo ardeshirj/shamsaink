@@ -57,6 +57,7 @@ the Kobo it earned it sooner than planned.)
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
 - [x] Sleep after idle minutes: the reader sleeps the Kobo as the power button does after 5 to 60 minutes untouched, or never (a stepper in Settings, 10 by default; `device.SleepMinutes`; 2026-11-01). Seen to sleep and wake on the Kobo
 - [x] Dark mode: a button in the Light panel inverts the whole screen (the driver writes each grey inverted, colour pictures as they are), kept in the settings; the first try, to judge in daily use (2026-11-01)
+- [x] The Kobo's page buttons (2026-11-01): the lower goes forward, the upper back (Kobo's own default), a press acting when it is let go; a hold (about 0.4 s) is the next or previous chapter; "Reverse page buttons" in Settings swaps them. A highlight's hold is 1 s (800 ms started some turning pages)
 - [x] The screen without blinks (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) refreshes with GL16, which is partial; REAGL is a full update on the Kobo's driver and blinked. A flash only where the whole screen changes (wake: white, then the page; Clean screen; Dark mode). Page turns keep REAGL
 - [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)

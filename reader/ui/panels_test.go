@@ -177,7 +177,7 @@ func TestPanels(t *testing.T) {
 			for _, follow := range []bool{true, false} {
 				img := image.NewGray(image.Rect(0, 0, w, h))
 				lib.Draw(img)
-				p := DrawLibraryLanguage(follow, 10, lib.TopBarHeight(), fonts, w)
+				p := DrawLibraryLanguage(LibrarySettings{Follow: follow, SleepMin: 10, HasButtons: true}, lib.TopBarHeight(), fonts, w)
 				p.Over(img)
 				save(fmt.Sprintf("library-language-%s-follow%v", code, follow), img)
 				save(fmt.Sprintf("library-language-%s-follow%v-panel", code, follow), p.img)

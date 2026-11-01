@@ -153,19 +153,29 @@ func DrawLibraryMenu(under int, settings bool, fonts *blitz.Fonts, w int) *Panel
 	return m
 }
 
-// DrawLibraryLanguage draws the settings panel (the language, the sleep timeout; sleepMin 0: never), directly under the bar (under px from the top), in place of the menu it
-// was opened from: no title, one row, "Follow book language" and its switch at the row's far end (the button
-// lang-follow; follow says whether it is on) and a row for the sleep timeout (sleep-dec and sleep-inc).
-func DrawLibraryLanguage(follow bool, sleepMin, under int, fonts *blitz.Fonts, w int) *Panel {
+// LibrarySettings is what the settings panel shows: the interface follows the book's language, the sleep timeout in
+// minutes (0: never), whether the device has page buttons, and whether they are reversed.
+type LibrarySettings struct {
+	Follow         bool
+	SleepMin       int
+	HasButtons     bool
+	ReverseButtons bool
+}
+
+// DrawLibraryLanguage draws the settings panel, directly under the bar (under px from the top), in place of the menu it
+// was opened from: no title, rows with the setting's name at the start and its switch or stepper at the far end:
+// "Follow book language" (the button lang-follow), "Sleep after" (sleep-dec and sleep-inc), and on a device with page
+// buttons "Reverse page buttons" (buttons-reverse).
+func DrawLibraryLanguage(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
 	sleep := word("never")
-	if sleepMin > 0 {
-		sleep = word("min", num(sleepMin))
+	if st.SleepMin > 0 {
+		sleep = word("min", num(st.SleepMin))
 	}
 	html, ids := render("library-language.html", struct {
-		Follow bool
-		Sleep  string
-	}{follow, sleep})
-	m := drawPanel(html, ids, fonts, w, 400) // at most: cut to its switch
+		LibrarySettings
+		Sleep string
+	}{st, sleep})
+	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
 	m.y0 = under
 	return m
 }

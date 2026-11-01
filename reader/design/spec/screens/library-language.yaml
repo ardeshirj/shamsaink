@@ -3,10 +3,11 @@ layer: panel
 templates: [library-language.html]
 buttons: ring
 status: built
-purpose: "The settings, two rows with no title: Follow book language and its switch, and Sleep after with a stepper. A tap applies it at once."
+purpose: "The settings, rows with no title: the switches (Follow book language, and on a device with page buttons Reverse page buttons) and then Sleep after with a stepper. A tap applies it at once."
 enter: [{gesture: tap, control: language, from: menu}]
 controls:
   - {id: lang-follow, component: toggle, action: act, does: "interface language follows the book's, or English only"}
+  - {id: buttons-reverse, component: toggle, action: act, does: "the page buttons swapped: the lower goes back, the upper forward", requires: [buttons]}
   - {id: sleep, component: stepper, action: act, does: "minutes untouched before the reader sleeps the device, or never", values: ["5", "10", "15", "30", "60", "0"]}
 dismiss: tap-outside
-words: [follow-book, sleep-after, min, never]
+words: [follow-book, sleep-after, min, never, reverse-buttons]

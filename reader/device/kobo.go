@@ -81,6 +81,93 @@ func (d *Device) presses(out chan<- Event) io.Closer {
 	return f
 }
 
+// The page buttons are keys of the "gpio-keys" input: 193 the upper, 194 the lower (the Kobo Libra's side buttons), a press
+// 1 and its release 0, and 2 repeated while it is held (a hold is not used yet). Found by name, not by number.
+const (
+	keyUpper = 193
+	keyLower = 194
+)
+
+// buttonsDev is the input node of the page buttons, "" if there is none.
+func buttonsDev() string {
+	b, err := os.ReadFile("/proc/bus/input/devices")
+	if err != nil {
+		return ""
+	}
+	return buttonsNodeIn(string(b))
+}
+
+// buttonsNodeIn is buttonsDev for the text of /proc/bus/input/devices.
+func buttonsNodeIn(list string) string {
+	for _, block := range strings.Split(list, "\n\n") {
+		if !strings.Contains(block, `Name="gpio-keys"`) {
+			continue
+		}
+		for _, f := range strings.Fields(block) { // "H: Handlers=event0 perfmgr"
+			if _, node, ok := strings.Cut(f, "Handlers="); ok && strings.HasPrefix(node, "event") {
+				return "/dev/input/" + node
+			}
+			if strings.HasPrefix(f, "event") {
+				return "/dev/input/" + f
+			}
+		}
+	}
+	return ""
+}
+
+// buttons sends a Button event for each press of a page button (the lower forward, the upper back; swapped when the
+// setting reverses them) until the file is closed; none sent if the Kobo has no such keys. A press counts as the
+// reader being used (the idle sleep), and does nothing while the Kobo dozes.
+func (d *Device) buttons(out chan<- Event) io.Closer {
+	path := buttonsDev()
+	if path == "" {
+		return io.NopCloser(nil)
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		return io.NopCloser(nil)
+	}
+	go func() {
+		var ev [16]byte
+		held := false // the held button's hold already sent: its release is not a press
+		for {
+			if _, err := io.ReadFull(f, ev[:]); err != nil {
+				return
+			}
+			typ, code, val := binary.LittleEndian.Uint16(ev[8:]), binary.LittleEndian.Uint16(ev[10:]), binary.LittleEndian.Uint32(ev[12:])
+			if typ != evKey || (code != keyUpper && code != keyLower) || d.dozing.Load() {
+				continue
+			}
+			d.active.Store(time.Now().UnixNano())
+			b := 1
+			if (code == keyLower) == d.reverse.Load() {
+				b = -1
+			}
+			send := func(e Event) {
+				select {
+				case out <- e:
+				default:
+				}
+			}
+			switch val {
+			case 1: // down: nothing yet, a press is what is let go
+				held = false
+			case 2: // the device repeats a held key from about 0.4 s: that is a hold, once
+				if !held {
+					held = true
+					send(Event{Button: b, Held: true})
+				}
+			case 0: // up: a press, unless it was a hold
+				if !held {
+					send(Event{Button: b})
+				}
+				held = false
+			}
+		}
+	}()
+	return f
+}
+
 // idles sends a Sleep event to out once SleepAfter has passed since the last touch or press (not while it dozes), until done is closed or the returned function is called. It looks every few seconds.
 func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
 	quit := make(chan struct{})

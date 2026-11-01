@@ -244,6 +244,8 @@ func (s *session) input(e device.Event) {
 		// reading aloud: a touch stops it
 		s.silence()
 		s.drain()
+	case e.Button != 0:
+		s.button(e.Button, e.Held)
 	case s.cv != nil:
 		s.inContents(e.Gesture)
 	case e.Hold != device.NotHeld && s.list != nil && s.kind == "light": // a slider's knob held and moved
@@ -258,6 +260,42 @@ func (s *session) input(e device.Event) {
 		s.inMenu(e.Gesture)
 	default:
 		s.turn(e.Gesture)
+	}
+}
+
+// button answers a page button: forward (1) or back (-1) turns the page by the same code a tap does (the book's direction
+// kept: a tap on the start edge goes back, anywhere else forward), the contents' pages when they are shown; with a panel
+// open it does nothing.
+func (s *session) button(b int, held bool) {
+	if held { // a hold on the page: the next or the previous chapter, with the way back the dock offers
+		if s.cv == nil && s.mn == nil && s.nav == nil && s.sheet == nil && s.list == nil && s.nar == nil {
+			c := s.r.prevChapter(s.toc)
+			if b > 0 {
+				c = s.r.nextChapter(s.toc)
+			}
+			if c >= 0 {
+				s.jump(s.toc[c].doc, s.r.entryAt(s.toc[c]))
+			}
+		}
+		return
+	}
+	switch {
+	case s.cv != nil: // the contents' pages, as a swipe turns them
+		dx := -100
+		if s.r.rtl == (b > 0) {
+			dx = 100
+		}
+		s.inContents(device.Gesture{Swipe: true, DX: dx})
+	case s.mn != nil || s.nav != nil || s.sheet != nil || s.list != nil:
+	default:
+		g := device.Gesture{X: s.scr.W / 2, Y: s.scr.H / 2}
+		if b < 0 { // the quarter by the book's start edge
+			g.X = s.scr.W / 8
+			if s.r.rtl {
+				g.X = s.scr.W - s.scr.W/8
+			}
+		}
+		s.turn(g)
 	}
 }
 

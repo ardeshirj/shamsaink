@@ -154,7 +154,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the language panel in the menu's place
 	openLang := func() {
 		old := panel.Rect()
-		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
+		panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
@@ -167,6 +167,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				for len(events) > 0 { // the touches made while asleep
 					<-events
 				}
+			}
+		case e.Button != 0: // a page button turns the list's pages, unless a panel is open (a hold does nothing)
+			if panel == nil && !e.Held {
+				turn(e.Button)
 			}
 		case e.Hold != device.NotHeld && lightOpen && panel != nil: // a slider's knob held and moved
 			if refresh, wf := rd.slideLight(set, panel, &slide, e.Gesture); refresh {
@@ -242,15 +246,23 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				set.save(rd.dir)
 				build() // the head drawn with the menu button still on
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
+			case id == "buttons-reverse" && langOpen:
+				set.ReverseButtons = !set.ReverseButtons
+				set.save(rd.dir)
+				rd.dev.SetReverseButtons(set.ReverseButtons)
+				v.Draw(rd.over)
+				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+				panel.Over(rd.over)
+				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's rows only
 			case (id == "sleep-dec" || id == "sleep-inc") && langOpen:
 				set.SleepMin = nextSleep(set.SleepMin, id == "sleep-inc")
 				set.save(rd.dir)
 				rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's row only
 			case strings.HasPrefix(id, "sort-"):
