@@ -5,7 +5,9 @@ kobo-libra-colour:
   ssh: kobo                                   # a host of ~/.ssh/config (docs/devices/kobo/setup.md)
   dir: /mnt/onboard/.adds/shamsaink           # where the reader is installed
   log: /mnt/onboard/.adds/shamsaink/logs/reader.log
-  touch: {node: /dev/input/event1, name: Elan Touchscreen}
+  # the touch screen is turned: a screen point (x, y) is written as the touch point given by x and y here (w, h: the screen's
+  # size), as in reader/device/screen.go, touchTurn
+  touch: {node: /dev/input/event1, name: Elan Touchscreen, turn: {x: h-y, y: x}}
   framebuffer: {stride: 5056, bits: 32}       # /sys/class/graphics/fb0
   fonts_local: reader/out/fonts               # the folder the renders are drawn with; the device's must be the same files
   reader_local: reader/out/shamsaink          # the latest local build (make reader); the device's may be an older one

@@ -33,6 +33,8 @@ design:
 
 # --- The Kobo ---
 #
+#   make kobo-smoke     the reader launched on the Kobo from the Mac: its library's screen held against the kept render, the
+#                        menu and Leave tapped by name, Nickel back (needs the latest reader installed, no book open)
 #   make kobo-check      the Kobo held against the design spec's profile of it (reader/cmd/devtest, read-only: screen,
 #                        touch, fonts by hash, the reader installed); the tool is built for the Mac with Docker
 # Experiment 13, docs/devices/kobo/setup.md; KOBO is its SSH host (KOReader's SSH server, which stays up after KOReader is
@@ -61,7 +63,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
+.PHONY: kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -69,6 +71,9 @@ devtest:
 
 kobo-check: devtest
 	@reader/out/devtest check kobo-libra-colour
+
+kobo-smoke: devtest
+	@reader/out/devtest smoke kobo-libra-colour
 
 kobo-reader-install: reader
 	@$(KOBO_SSH) 'pidof shamsaink >/dev/null && { echo "a book is open on the Kobo: close it first"; exit 1; }; \

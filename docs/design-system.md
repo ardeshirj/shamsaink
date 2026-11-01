@@ -46,9 +46,15 @@ and the fonts folder, so `make design` runs on the Mac; a CI job for them needs 
 **On a device** (`make kobo-check`, `reader/cmd/devtest`, read-only over `ssh`): the device held against its profile: screen size,
 the framebuffer's stride and depth, the touch screen's node and name, every font by hash against the folder the renders
 are drawn with, the reader installed (and whether it is the latest local build). How to reach each device
-(`ssh` host, folders, touch node, stride) is in `e2e/devices.yaml`, keyed by the profile's name: the spec says what a device
+(`ssh` host, folders, touch node and its turn, stride) is in `e2e/devices.yaml`, keyed by the profile's name: the spec says what a device
 must be, the tool how to reach it. First run on the Kobo Libra Colour (2026-10-31): all agree, and the fonts on it are the
 renders' files.
+
+**`make kobo-smoke`** is the first run of the design against the device: the reader launched from the Mac as NickelMenu launches it, the
+library's screen read from the framebuffer, every button the kept render has checked to have ink where the render says it is
+(the headphones and the pager may be absent), then the menu and Leave **tapped by name** (the centre of the control's kept box,
+written into the touch screen turned as `devices.yaml` says), and Nickel waited for. A reader left running by a failed step
+is stopped. First run (2026-11-01, Kobo Libra Colour): all 14 checks pass; the design's coordinates are the device's.
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 

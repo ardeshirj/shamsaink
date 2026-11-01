@@ -1,6 +1,8 @@
 // Command devtest holds a device against the design spec's profile of it, over SSH (docs/design-system.md).
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
+//	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
+//	                         the device's reader to be the latest build, and no book open)
 //
 // DEVICE is a profile of reader/design/spec/devices and a key of e2e/devices.yaml. Run from the repository's root. It uses
 // the system's ssh (the host named in devices.yaml), changes nothing on the device, and reads no key.
@@ -28,6 +30,10 @@ type Access struct {
 	Touch struct {
 		Node string `yaml:"node"`
 		Name string `yaml:"name"`
+		Turn struct {
+			X string `yaml:"x"`
+			Y string `yaml:"y"`
+		} `yaml:"turn"`
 	} `yaml:"touch"`
 	Framebuffer struct {
 		Stride int `yaml:"stride"`
@@ -38,11 +44,12 @@ type Access struct {
 }
 
 func main() {
-	if len(os.Args) != 3 || os.Args[1] != "check" {
-		fmt.Fprintln(os.Stderr, "usage: devtest check DEVICE")
+	if len(os.Args) != 3 || (os.Args[1] != "check" && os.Args[1] != "smoke") {
+		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke DEVICE")
 		os.Exit(2)
 	}
-	if !check(os.Args[2]) {
+	run := map[string]func(string) bool{"check": check, "smoke": smoke}[os.Args[1]]
+	if !run(os.Args[2]) {
 		os.Exit(1)
 	}
 }
