@@ -8,6 +8,7 @@ enter: [{gesture: tap, control: topbar-light, from: topbar}]
 controls:
   - {id: light, component: slider, action: act, does: set the level}
   - {id: warmth, component: slider, action: act, does: set the warmth}
+  - {id: dark, component: toggle, action: act, does: "dark mode: the whole screen inverted, with a full refresh"}
   - {id: clean, component: button, action: act, does: a full refresh}
 dismiss: tap-outside
-words: [light, warmth, clean-screen]
+words: [light, warmth, dark-mode, clean-screen]

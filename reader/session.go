@@ -594,6 +594,9 @@ func (s *session) inMenu(g device.Gesture) {
 			changed, clean := s.rd.lightTap(s.set, s.list, id, g.X+g.DX)
 			switch {
 			case clean:
+				if id == "dark" { // the switch drawn as it is now
+					s.list = s.rd.drawLight(s.topBar.Rect().Dy())
+				}
 				s.showPage(device.WfGC16, true)
 			case changed:
 				old := s.list.Rect()

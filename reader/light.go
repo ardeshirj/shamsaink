@@ -14,13 +14,19 @@ import (
 // drawLight draws the Light panel under the bar (under px from the top), with the light as it is.
 func (rd *reader) drawLight(under int) *ui.Panel {
 	level, warmth, _ := rd.dev.Light()
-	return ui.DrawLight(level, warmth, device.WarmthMax, under, rd.fonts, rd.dev.Screen.W)
+	return ui.DrawLight(level, warmth, device.WarmthMax, rd.dev.Screen.Inverted(), under, rd.fonts, rd.dev.Screen.W)
 }
 
 // lightTap applies a tap on the Light panel p, on its button id at x: changed says the light changed (the panel to
 // draw again), clean that the screen is to be cleaned (a full refresh with its flash).
 func (rd *reader) lightTap(set *settings, p *ui.Panel, id string, x int) (changed, clean bool) {
 	if id == "clean" {
+		return false, true
+	}
+	if id == "dark" { // dark mode: every grey inverted from now on; the whole screen is drawn again with a flash
+		set.Dark = !set.Dark
+		rd.dev.Screen.SetInvert(set.Dark)
+		set.save(rd.dir)
 		return false, true
 	}
 	level, warmth, ok := rd.dev.Light()

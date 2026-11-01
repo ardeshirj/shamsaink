@@ -127,7 +127,8 @@ var designRenders = map[string][]renderCase{
 	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
 	}}},
-	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, barHeight(f, w), f, w)) }}},
+	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, false, barHeight(f, w), f, w)) }},
+		{"dark", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w)) }}},
 	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) rendered {

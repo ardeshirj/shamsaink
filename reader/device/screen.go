@@ -54,6 +54,7 @@ type Screen struct {
 	W, H, line, y0 int
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
+	invert         bool // dark mode: every grey drawn is inverted on its way into the framebuffer (SetInvert)
 }
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
@@ -89,6 +90,14 @@ func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
 	s.ShowPart(p, image.Rect(0, 0, s.W, s.H), waveform, flash)
 }
 
+// SetInvert turns dark mode on or off: from the next Show on, each grey is written inverted (white on black), the
+// page, the bar and the panels alike; pictures in colour (ShowRGBA) are left as they are. The caller redraws the whole
+// screen with a flash.
+func (s *Screen) SetInvert(on bool) { s.invert = on }
+
+// Inverted says whether dark mode is on.
+func (s *Screen) Inverted() bool { return s.invert }
+
 // ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
 func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
 	s.Wait()
@@ -97,10 +106,18 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 		at := (s.y0+y)*s.line + r.Min.X*s.bytes
 		if s.bytes == 1 {
 			copy(s.mem[at:], src)
+			if s.invert {
+				for i := range src {
+					s.mem[at+i] = ^s.mem[at+i]
+				}
+			}
 			continue
 		}
 		row := unsafe.Slice((*uint32)(unsafe.Pointer(&s.mem[at])), len(src))
 		for i, g := range src {
+			if s.invert {
+				g = ^g
+			}
 			row[i] = 0xff000000 | uint32(g)*0x010101
 		}
 	}

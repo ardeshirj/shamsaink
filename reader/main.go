@@ -63,6 +63,7 @@ func main() {
 	rd.dev, err = device.Open()
 	check(err)
 	set := loadSettings(rd.dir)
+	rd.dev.Screen.SetInvert(set.Dark)
 	rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
 	if set.Light != nil && set.Warmth != nil { // the reader's own light (light.go)
 		rd.dev.SetLight(*set.Light)

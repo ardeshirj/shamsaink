@@ -107,7 +107,7 @@ func TestLight(t *testing.T) {
 	if d := os.Getenv("FONTS"); d != "" {
 		fonts = blitz.LoadFonts(d)
 	}
-	m := DrawLight(40, 3, 10, 160, fonts, 1236)
+	m := DrawLight(40, 3, 10, false, 160, fonts, 1236)
 	for _, id := range []string{"light-dec", "light", "light-inc", "warmth-dec", "warmth", "warmth-inc", "clean"} {
 		if b, ok := m.buttons[id]; !ok || b.Empty() {
 			t.Errorf("button %s not on the Light panel", id)

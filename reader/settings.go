@@ -29,6 +29,8 @@ type settings struct {
 	EnglishOnly bool `json:"english_only,omitempty"`
 	// Minutes untouched before the device is put to sleep (device.SleepMinutes; 0: never).
 	SleepMin int `json:"sleep_min"`
+	// Dark mode: the screen inverted (device.Screen.SetInvert), set from the Light panel.
+	Dark bool `json:"dark,omitempty"`
 	// The front light (light.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
