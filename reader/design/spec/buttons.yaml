@@ -1,4 +1,4 @@
-# The page buttons (docs/design/sketches/layout.html, "The page buttons"): forward is the lower button whichever way the device is
+# The page buttons (from the first browser sketch, git `e4ba57e`, docs/design/sketches): forward is the lower button whichever way the device is
 # held (the accelerometer says which). A press acts at once; a hold is 800 ms (device/touch.go). Each screen names one map
 # of these (`buttons:`); a device whose profile has page buttons must have a map on every screen.
 maps:

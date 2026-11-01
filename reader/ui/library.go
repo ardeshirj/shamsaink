@@ -43,7 +43,7 @@ type LibraryView struct {
 	MenuOn, SortOn bool
 }
 
-// LibraryHead draws the library's head (docs/design/sketches/layout.html, "Library"): the bar, its title the library's, and under it
+// LibraryHead draws the library's head (docs/design/system.html): the bar, its title the library's, and under it
 // the filters and the sort button, with no line under them. Its buttons are the bar's, filter-reading, filter-new,
 // filter-finished and filter-all, and list-sort.
 func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
@@ -83,7 +83,7 @@ func stack(top, bottom *Panel) *Panel {
 	return m
 }
 
-// NewLibrary lays out the library (docs/design/sketches/layout.html, "Library"): the head (LibraryHead), a row a book (each
+// NewLibrary lays out the library (docs/design/system.html): the head (LibraryHead), a row a book (each
 // in its title's direction, all as high as each other), and a pager at the bottom. A tap on a row is EntryAt.
 func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []libraryRow

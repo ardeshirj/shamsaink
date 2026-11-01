@@ -9,7 +9,7 @@ import (
 	blitz "shamsainkengine"
 )
 
-// The bar: the same at the top of the library and over a book (docs/design/sketches/layout.html, "the bar").
+// The bar: the same at the top of the library and over a book (docs/design/system.html).
 type TopBar struct {
 	Start             string // the icon at the start, its button "topbar-start": "arrow-left" (back to the library) or "magnifying-glass" (search); "" for none
 	Title             string

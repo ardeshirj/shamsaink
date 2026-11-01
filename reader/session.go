@@ -431,7 +431,7 @@ func (s *session) drawSheet() {
 // applyLanguage sets the interface's language for this book and the settings (lang.go).
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
-// drawTopBar draws the bar over the dock (docs/design/sketches/layout.html, "the bar"): back to the library at its start, the
+// drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawTopBar() {
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
@@ -572,7 +572,7 @@ func (s *session) showSel() {
 }
 
 // inMenu handles a tap with the dock, the sheet or a panel open: a button tapped is applied (the page laid out again
-// if need be), a tap off them all closes them (docs/design/sketches: panels close to the page).
+// if need be), a tap off them all closes them (docs/design/system.html: panels close to the page).
 func (s *session) inMenu(g device.Gesture) {
 	r := s.r
 	if s.list != nil { // the bar's ≡ list: its entries, else a tap anywhere closes it

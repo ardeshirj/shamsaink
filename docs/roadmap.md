@@ -61,7 +61,7 @@ the Kobo it earned it sooner than planned.)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
   more per book, cause not found)
 
-**6. The layout** (`docs/design/system.html`, the design system's page; the early sketches `docs/design/sketches/`; "The reader's panels", below)
+**6. The layout** (`docs/design/system.html`, the design system's page; "The reader's panels", below)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
 - [ ] Interface language: one switch, "Follow book language" (on: the book's, English or Farsi; off: English), in the
   bar's menu › Settings (built 2026-10-31, not yet tried on the Kobo)
@@ -69,13 +69,13 @@ the Kobo it earned it sooner than planned.)
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [x] The page buttons' map, Light, Text, Contents, the dock, the bar's panels, the highlight's menu (built, in the spec)
-- [ ] Not built, sketched in `docs/design/sketches/layout.html` and specified when built: the glance (a held margin), the word panel (a held
+- [ ] Not built, described in `docs/design/unbuilt-screens.md` and specified when built: the glance (a held margin), the word panel (a held
   word: meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and its
   paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
 
 **7. A library** (today the launcher opens the newest or the last book)
-- [x] The layout: two options in `docs/design/sketches/layout.html`, text rows and rows with covers (2026-10-30)
+- [x] The layout: two options, text rows and rows with covers (2026-10-30; the covers' in `docs/design/unbuilt-screens.md`)
 - [ ] A keyboard layer (English and Farsi) for the library's search; not designed yet
 - [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
   from group 6's list component; covers after, with a cache of them
@@ -126,7 +126,7 @@ Only the host knows the host: the engine, the book and its cache (`book.go`), th
 Templates in `reader/ui/templates/` (a file a panel, `components.html`, `ui.css`) drawn by Blitz; `TestPanels` draws each in
 its states, `TestPanelEdges` checks the buttons' edges; the rules (our components, modern CSS) in `CLAUDE.md`. The CSS
 uses variables, flex with `gap`, grid and logical properties, so a Farsi interface is `dir="rtl"` and nothing else.
-**The layouts, `docs/design/sketches/`** (2026-10-30, for the Libra Colour's 1264 × 1680; the design system's page, `docs/design/system.html`, is the reference now for what is built): nothing on the
+**The layouts** (2026-10-30, for the Libra Colour's 1264 × 1680, first sketched in a browser page, now the design system: `docs/design/system.html` for what is built, `docs/design/unbuilt-screens.md` for the rest): nothing on the
 page while reading; every control a layer over the page, never written into it. A tap brings the dock (status, place,
 Close, Contents, Mark, Light, Text, Listen); a held margin the glance; a held word the word panel; a tapped note the
 footnote in place; landscape shows two pages. Components are ours, one set used everywhere. The sketches are
@@ -152,7 +152,7 @@ icons mirrored (`.flip` in right to left). To check on the Kobo: the menu font (
 Farsi wording (the maintainer to review), that the library is always English, so no mirrored library exists (a Farsi title among English ones keeps its own
 direction); the launch opening screen (drawn before the shelf is scanned).
 
-**Ideas for the reading** (moved here 2026-10-31 from `docs/design/sketches/layout.html`, now a sketch alone): *smarter
+**Ideas for the reading** (moved here 2026-10-31 from the browser sketch of the layouts): *smarter
 flashes* (hold the old page and the new one, count how much ink changed, flash only when ghosting would show, after a
 picture or a heavy page, not every N pages); *you were here* (places kept by word, not page: on reopening, and after a
 text size change reflows the pages, the word you were at underlined for a moment); *time left at your pace* ("12 min

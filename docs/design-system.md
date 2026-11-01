@@ -37,7 +37,7 @@ diff of the PNGs is the review.
 **The page** (`docs/design/system.html`, written by `make design` from the spec and the kept renders; `TestSiteUpToDate`
 fails when it is stale): principles and rules (`spec/principles.yaml`, each with what keeps it), tokens, devices,
 components, the flow, every screen with its controls and renders (at a third of their size), and the page buttons. It
-is the thing to look at (it replaced the browser sketches, now `docs/design/sketches/`); open it in a browser.
+is the thing to look at (it replaced the first browser sketch of the layouts, which is gone); open it in a browser.
 
 **CI** (`.github/workflows/design.yml`, on every push): gofmt, vet and `go test ./design/...`: the spec against the templates,
 CSS, words and icons, the flow, and the generated files fresh. The renders need the engine's library (built with Rust)
@@ -63,10 +63,10 @@ book (English or Farsi renders) is read from the reader's own log line, not gues
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
-## The sketches (`docs/design/sketches/`)
+## What came from the first sketch
 
-`docs/layouts/` was the browser sketch the design started from (2026-10-30). It moved here (2026-11-01) once the spec held
-what it was for, and it is kept as sketches, not as the reference: open `layout.html` in a browser; its text is made up.
+The design started as a browser sketch, `docs/layouts/` (2026-10-30). It was dropped (2026-11-01) once the spec held what it was
+for; it is in git, at `e4ba57e` and before, as `docs/design/sketches/`.
 
 | What the sketch had | Where it is now |
 |---|---|
@@ -75,7 +75,7 @@ what it was for, and it is kept as sketches, not as the reference: open `layout.
 | The page buttons' map | `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Screens that are built (library, reading and the dock, Contents, Text, Light, the bar, menus) | the spec and their renders, on the page |
 | `components.html` (states as drawn) | the components and the renders of each state, on the page |
-| **Screens not built:** the glance, the word panel, footnotes, listening and its player, Sound, landscape, the keyboard, the library with covers | **stay as sketches until they are built.** A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design` says what is out of step |
+| Screens not built (the glance, word panel, footnotes, listening and its player, Sound, landscape, the keyboard, covers) | written down in `docs/design/unbuilt-screens.md`. A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design` says what is out of step |
 
 Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 

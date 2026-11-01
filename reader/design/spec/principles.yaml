@@ -1,4 +1,4 @@
-# What the design stands on, from docs/design/sketches/layout.html (2026-10-30). `check` says what enforces it: a check of
+# What the design stands on, from the first browser sketch (2026-10-30; git `e4ba57e`, docs/design/sketches). `check` says what enforces it: a check of
 # `go test ./design` or `make design`, or "by eye" when only a person can judge it.
 principles:
   - name: The page alone
