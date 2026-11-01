@@ -186,3 +186,13 @@ func TestCleanAfter(t *testing.T) {
 		}
 	}
 }
+
+// The profile's sleep_after_min is the device's.
+func TestSleepAfter(t *testing.T) {
+	s := load(t)
+	for _, d := range s.Devices {
+		if time.Duration(d.SleepAfter)*time.Minute != device.SleepAfter {
+			t.Errorf("%s: sleep_after_min %d, device.SleepAfter %v", d.Name, d.SleepAfter, device.SleepAfter)
+		}
+	}
+}

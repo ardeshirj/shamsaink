@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
 type Kind int
@@ -25,7 +26,13 @@ type Device struct {
 	Kind   Kind
 	dozing atomic.Bool   // the Kobo dozing: its power key's presses go to wake
 	wake   chan struct{} // the press that wakes it
+	active atomic.Int64  // when a touch or a press last came (Unix nanoseconds): the idle sleep counts from it
 }
+
+// SleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power button
+// would (the sleep screen, light and Wi-Fi off, suspend); Kobo's own interface, stopped while we run, did the same at 10
+// minutes. The design's device profile says the same (sleep_after_min; a test holds them). The Kindle's is powerd's.
+const SleepAfter = 10 * time.Minute
 
 // Open opens the screen. The device is known by it: a pixel is a byte on the Kindle, four on the Kobo.
 func Open() (*Device, error) {
@@ -63,8 +70,27 @@ type Event struct {
 // in one channel (gestures in the screen's coordinates) until stop is called, which lets go of the touch screen.
 func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	out := make(chan Event, 8)
-	f, err := touches(env("TOUCH", "/dev/input/event1"), d.Screen.touchTurn(), out)
+	done := make(chan struct{})
+	raw := make(chan Event, 8) // the touches, noted on their way
+	d.active.Store(time.Now().UnixNano())
+	go func() {
+		for {
+			select {
+			case e := <-raw:
+				d.active.Store(time.Now().UnixNano())
+				select {
+				case out <- e:
+				case <-done:
+					return
+				}
+			case <-done:
+				return
+			}
+		}
+	}()
+	f, err := touches(env("TOUCH", "/dev/input/event1"), d.Screen.touchTurn(), raw)
 	if err != nil {
+		close(done)
 		return nil, nil, err
 	}
 	var stopSleeps func()
@@ -72,10 +98,11 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 		stopSleeps = kindleSleeps(out)
 	} else {
 		power := d.presses(out)
-		stopSleeps = func() { power.Close() }
+		idle := d.idles(out, done)
+		stopSleeps = func() { power.Close(); idle() }
 	}
 	var once sync.Once
-	return out, func() { once.Do(func() { f.Close(); stopSleeps() }) }, nil
+	return out, func() { once.Do(func() { f.Close(); stopSleeps(); close(done) }) }, nil
 }
 
 // Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture from dir/sleep, else
@@ -86,6 +113,7 @@ func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 		return false
 	}
 	d.doze(sleepScreen(dir, fallback))
+	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
 	return true
 }
 

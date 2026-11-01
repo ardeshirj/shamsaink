@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"sync"
 	"time"
 
 	"golang.org/x/image/draw"
@@ -78,6 +79,34 @@ func (d *Device) presses(out chan<- Event) io.Closer {
 		}
 	}()
 	return f
+}
+
+// idles sends a Sleep event to out once SleepAfter has passed since the last touch or press (not while it dozes), until done is closed or the returned function is called. It looks every few seconds.
+func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
+	quit := make(chan struct{})
+	go func() {
+		t := time.NewTicker(10 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-t.C:
+				idle := time.Since(time.Unix(0, d.active.Load()))
+				if idle >= SleepAfter && !d.dozing.Load() {
+					select {
+					case out <- Event{Sleep: true}:
+						d.active.Store(time.Now().UnixNano()) // asked: counts again if it is not taken at once
+					default:
+					}
+				}
+			case <-quit:
+				return
+			case <-done:
+				return
+			}
+		}
+	}()
+	var once sync.Once
+	return func() { once.Do(func() { close(quit) }) }
 }
 
 // sleepScreen is a picture from DIR/sleep (PNG or JPEG, one at random) fitted to the screen on white, else fallback.

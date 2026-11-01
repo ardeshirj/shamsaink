@@ -7,6 +7,8 @@ waveforms: [A2, DU, GL16, REAGL, GC16]
 # Page turns and panels are partial (REAGL, no flash: smooth). After the screen has sat on one image this many minutes
 # (a splash or a page left overnight) the next full-screen update is a clean GC16 flash that takes the ghosts away.
 clean_after_min: 5
+# Untouched this many minutes, the reader sleeps the device as the power button does (the sleep screen, light and Wi-Fi off, suspend).
+sleep_after_min: 10
 # A finger's room: the smallest target, in mm (about the width of a fingertip pad), and the slack the reader adds round a
 # button when finding a tap (reader/ui/panel.go, At: `room`), in px.
 tap: {min_mm: 7, slack_px: 16}
