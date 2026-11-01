@@ -6,6 +6,7 @@ import (
 	"image"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -39,7 +40,7 @@ type session struct {
 	ahead bool       // the next page may still need drawing
 	rest  bool       // documents still to paginate
 
-	mn                        *ui.Panel    // the panel asking whether to remove a highlight, while open
+	mn                        *ui.Panel    // the highlight's menu by the words, while open
 	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
 	tab                       string       // the sheet's tab: "text" or "page"
 	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
@@ -55,8 +56,9 @@ type session struct {
 	uncue     func()     // stops their reading
 	nar       *narrator  // the narration, while it plays
 
-	sel    *selection // a selection being made, while a finger is held
-	unmark int        // the highlight the panel asks about
+	sel    *selection // words chosen: while a finger is held, then while the highlight's menu is open
+	unmark int        // the highlight held, the menu's (-1: words chosen)
+	from   blitz.Word // the first word chosen, or the word held on a highlight: where Listen from here starts
 
 	left, asleep bool // the book left (asleep: as the Kindle went to sleep)
 
@@ -484,8 +486,8 @@ func (s *session) inContents(g device.Gesture) {
 	}
 }
 
-// held handles a finger held on a word: on a highlight, a panel to remove it; else a selection from that word to the
-// one under the finger, a highlight once it is lifted.
+// held handles a finger held on a word: on a highlight, its menu (Remove highlight); else the words from that one to
+// the one under the finger are chosen, underlined, and once the finger is lifted the menu by them (Highlight).
 func (s *session) held(g device.Gesture) {
 	r := s.r
 	switch {
@@ -497,8 +499,9 @@ func (s *session) held(g device.Gesture) {
 			break
 		}
 		if s.unmark = r.marks.at(r.doc, words[i]); s.unmark >= 0 {
-			s.mn = ui.DrawHighlightRemove(s.rd.fonts, s.scr.W)
-			s.refresh(s.mn.Rect(), device.WfREAGL)
+			hl := r.marks.list[s.unmark]
+			s.from = words[i]
+			s.openMark(union(bands(words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })), true)
 			break
 		}
 		s.sel = &selection{words: words, from: i, to: i}
@@ -513,20 +516,47 @@ func (s *session) held(g device.Gesture) {
 			}
 			break
 		}
-		if j >= 0 {
+		if j >= 0 && j != sel.to {
 			sel.to = j
+			s.showSel()
 		}
-		t := time.Now()
-		a, b := sel.span()
-		hl := r.marks.add(highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}, r.text)
-		r.marks.save()
-		// its bands (and any it took in) over the page, the bars gone
-		s.sel = nil
-		s.relayer()
-		bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
-		s.refresh(union(bs).Union(union(sel.bars)), device.WfREAGL)
-		fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(t))
+		s.from, _ = sel.span()
+		s.openMark(union(bands(sel.words, sel.in)), false)
 	}
+}
+
+// openMark opens the highlight's menu by the words in box (made: a highlight's, else words chosen).
+func (s *session) openMark(box image.Rectangle, made bool) {
+	s.mn = ui.DrawHighlightMenu(made, s.narrated, s.rd.fonts, s.scr.W)
+	s.mn.Hang(box, 0, s.scr.H)
+	s.refresh(s.mn.Rect(), device.WfREAGL)
+	fmt.Printf("highlight menu: %s\n", map[bool]string{true: "a highlight", false: "words chosen"}[made])
+}
+
+// closeMark closes the highlight's menu, and the words chosen if any (their bars rubbed out).
+func (s *session) closeMark() {
+	rect := s.mn.Rect()
+	if s.sel != nil {
+		rect = rect.Union(union(s.sel.bars))
+	}
+	s.mn, s.sel, s.unmark = nil, nil, -1
+	s.refresh(rect, device.WfREAGL)
+}
+
+// mark makes a highlight of the words chosen.
+func (s *session) mark() {
+	r, sel := s.r, s.sel
+	t := time.Now()
+	a, b := sel.span()
+	hl := r.marks.add(highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}, r.text)
+	r.marks.save()
+	// its bands (and any it took in) over the page, the bars and the menu gone
+	rect := s.mn.Rect().Union(union(sel.bars))
+	s.mn, s.sel = nil, nil
+	s.relayer()
+	bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
+	s.refresh(rect.Union(union(bs)), device.WfREAGL)
+	fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(t))
 }
 
 // showSel underlines the selection's words (with A2, as the narration's), the bars it had erased.
@@ -636,7 +666,7 @@ func (s *session) inMenu(g device.Gesture) {
 		s.jump(s.backDoc, s.backAt)
 	case id == "read-aloud":
 		s.closeMenu()
-		s.readAloud()
+		s.readAloud(nil)
 	case id == "text" || id == "tab-text" || id == "tab-page": // the sheet in the dock's place, or another of its tabs
 		rect := image.Rectangle{}
 		for _, p := range []*ui.Panel{s.nav, s.sheet} {
@@ -648,17 +678,20 @@ func (s *session) inMenu(g device.Gesture) {
 		s.nav = nil
 		s.drawSheet()
 		s.refresh(rect.Union(s.sheet.Rect()), device.WfREAGL)
-	case id == "remove-highlight":
-		r.marks.list = append(r.marks.list[:s.unmark], r.marks.list[s.unmark+1:]...)
+	case id == "hl-make" && s.sel != nil:
+		s.mark()
+	case id == "hl-remove" && s.unmark >= 0:
+		i := s.unmark
+		r.marks.list = append(r.marks.list[:i], r.marks.list[i+1:]...)
 		r.marks.save()
-		s.mn = nil
+		s.mn, s.unmark = nil, -1
 		s.relayer()
 		s.showPage(device.WfREAGL, false)
-		fmt.Printf("highlight %d removed\n", s.unmark+1)
-	case id == "keep-highlight":
-		rect := s.mn.Rect()
-		s.mn = nil
-		s.refresh(rect, device.WfREAGL)
+		fmt.Printf("highlight %d removed\n", i+1)
+	case id == "hl-listen":
+		from := s.from
+		s.closeMark()
+		s.readAloud(&from)
 	case id != "": // a setting on the sheet
 		t := time.Now()
 		old := s.sheet.Rect()
@@ -680,10 +713,8 @@ func (s *session) inMenu(g device.Gesture) {
 		s.drawMenu()
 		s.showPage(device.WfREAGL, false)
 	case s.mn != nil:
-		if !image.Pt(g.X, g.Y).In(s.mn.Rect()) {
-			rect := s.mn.Rect()
-			s.mn = nil
-			s.refresh(rect, device.WfREAGL)
+		if !image.Pt(g.X, g.Y).In(s.mn.Rect()) { // off the menu: closed, the words left as they were
+			s.closeMark()
 		}
 	default: // off the bar, the dock and the sheet: back to the page
 		if !s.over(g.X, g.Y) {
@@ -702,8 +733,9 @@ func (s *session) over(x, y int) bool {
 	return false
 }
 
-// readAloud starts the narration from the first narrated word on the page shown.
-func (s *session) readAloud() {
+// readAloud starts the narration from the first narrated word on the page shown, or from the word from on it (the
+// narrated word whose box meets its; the page's first if none does).
+func (s *session) readAloud(from *blitz.Word) {
 	r := s.r
 	if s.cued != nil { // still being read: waited for
 		s.narration = <-s.cued
@@ -714,7 +746,23 @@ func (s *session) readAloud() {
 		if c.doc < r.doc {
 			continue
 		}
-		if p, _ := r.book.Find(c.doc, c.id); c.doc > r.doc || p >= r.page() {
+		p, rs := r.book.Find(c.doc, c.id)
+		if c.doc > r.doc || p > r.page() {
+			if first < 0 {
+				first = i
+			}
+			break
+		}
+		if p < r.page() {
+			continue
+		}
+		if first < 0 {
+			first = i // the page's first
+		}
+		if from == nil {
+			break
+		}
+		if slices.ContainsFunc(rs, from.Box.Overlaps) {
 			first = i
 			break
 		}

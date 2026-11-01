@@ -91,7 +91,7 @@ class Device:
 
     def hold(self, x, y, to=None):
         self.write(self.down(x, y))
-        time.sleep(0.9)  # held still past the reader's 500 ms
+        time.sleep(1.2)  # held still past the reader's 800 ms (device/touch.go, holdTime)
         if to:
             for i in range(1, 4):
                 self.write(self.at(x + (to[0] - x) * i // 3, y + (to[1] - y) * i // 3))

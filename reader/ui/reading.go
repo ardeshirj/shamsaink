@@ -44,10 +44,12 @@ func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 }
 
 // atBottom puts a panel drawn by drawPanel at the bottom of a screen h px high, its line moved to its top edge.
-// The panel asking whether to remove a highlight (its words are grey on the page under it).
-func DrawHighlightRemove(fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("highlight-remove.html", nil)
-	return drawPanel(html, ids, fonts, w, 300) // at most: cut to its buttons
+// DrawHighlightMenu draws the menu by words chosen on the page (templates/highlight-menu.html): Highlight (hl-make),
+// or Remove highlight (hl-remove) when made is a highlight held; Listen from here (hl-listen) when the book is
+// narrated. Hang puts it by the words.
+func DrawHighlightMenu(made, narrated bool, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("highlight-menu.html", struct{ Made, Narrated bool }{made, narrated})
+	return drawPanelIn(html, ids, "highlight-menu", fonts, w, 400) // at most: cut to the list
 }
 
 // drawPanel draws a panel over the top of the page from html, as high as its buttons need (at most h px; the last

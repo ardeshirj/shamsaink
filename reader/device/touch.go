@@ -20,8 +20,9 @@ const (
 	absMTPositionX  = 0x35
 	absMTPositionY  = 0x36
 	absMTTrackingID = 0x39
-	swipeMin        = 80 // px a finger moves for a swipe, not a tap
-	holdTime        = 500 * time.Millisecond
+	swipeMin        = 80                     // px a finger moves for a swipe, not a tap
+	holdTime        = 800 * time.Millisecond // a finger held this long is a hold (500 ms made holds by accident)
+	holdStill       = 30                     // px it may move meanwhile and still be held
 )
 
 // A gesture: a tap at (x, y), or a swipe by (dx, dy); or a finger held still (hold), then moved while held (drag,
@@ -42,8 +43,8 @@ const (
 )
 
 // touches grabs the touch screen and sends a gesture to out each time the first finger down is lifted (other fingers
-// are ignored), or is held still for holdTime and then moved and lifted, until the file is closed (which lets go of
-// it). Moves while held are dropped when out is full. turn takes the touch's coordinates to the screen's.
+// are ignored), or is held still (within holdStill) for holdTime and then moved and lifted, until the file is closed
+// (which lets go of it). Moves while held are dropped when out is full. turn takes the touch's coordinates to the screen's.
 func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os.File, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -125,8 +126,8 @@ func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os
 					case out <- Event{Gesture: Gesture{X: x, Y: y, Hold: Dragged}}:
 					default:
 					}
-				case down && (x-x0)*(x-x0)+(y-y0)*(y-y0) > swipeMin*swipeMin:
-					timer.Stop()
+				case down && (x-x0)*(x-x0)+(y-y0)*(y-y0) > holdStill*holdStill:
+					timer.Stop() // moved: a tap or a swipe, not a hold
 				}
 				mu.Unlock()
 			}

@@ -125,20 +125,27 @@ func TestLight(t *testing.T) {
 	}
 }
 
-// The panel's two buttons are found, apart. FONTS and PANEL_PNG as TestMenu's.
-func TestRemovePanel(t *testing.T) {
+// The highlight's menu has the entries asked for, apart, on it: Highlight or Remove highlight, and Listen from here
+// for a narrated book.
+func TestHighlightMenu(t *testing.T) {
 	var fonts *blitz.Fonts
 	if d := os.Getenv("FONTS"); d != "" {
 		fonts = blitz.LoadFonts(d)
 	}
-	m := DrawHighlightRemove(fonts, 1236)
-	a, b := m.buttons["remove-highlight"], m.buttons["keep-highlight"]
-	if a.Empty() || b.Empty() || a.Overlaps(b) || !a.In(m.img.Bounds()) || !b.In(m.img.Bounds()) {
-		t.Errorf("buttons %v", m.buttons)
-	}
-	if p := os.Getenv("PANEL_PNG"); p != "" {
-		f, _ := os.Create(p)
-		defer f.Close()
-		png.Encode(f, m.img)
+	for _, c := range []struct {
+		made, narrated bool
+		want           []string
+	}{{false, false, []string{"hl-make"}}, {false, true, []string{"hl-make", "hl-listen"}},
+		{true, false, []string{"hl-remove"}}, {true, true, []string{"hl-remove", "hl-listen"}}} {
+		m := DrawHighlightMenu(c.made, c.narrated, fonts, 1236)
+		if len(m.buttons) != len(c.want) {
+			t.Errorf("%+v: buttons %v", c, m.buttons)
+		}
+		for i, id := range c.want {
+			r := m.buttons[id]
+			if r.Empty() || !r.In(m.img.Bounds()) || i > 0 && r.Overlaps(m.buttons[c.want[0]]) {
+				t.Errorf("%+v: %s at %v (panel %v)", c, id, r, m.img.Bounds())
+			}
+		}
 	}
 }

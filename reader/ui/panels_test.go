@@ -49,7 +49,9 @@ func TestPanels(t *testing.T) {
 			}
 		}
 	}
-	save("remove", DrawHighlightRemove(fonts, w).img)
+	for _, made := range []bool{false, true} { // the highlight's menu, for words chosen and for a highlight
+		save(fmt.Sprintf("highlight-menu-made-%v", made), DrawHighlightMenu(made, true, fonts, w).img)
+	}
 	for _, code := range []string{"en", "fa"} { // the Light panel under the bar
 		SetLanguage(code)
 		save("light-"+code, DrawLight(40, 7, 10, 160, fonts, w).img)
@@ -220,7 +222,7 @@ func TestPanels(t *testing.T) {
 		for _, tab := range []string{"text", "page"} {
 			save("lang-"+code+"-"+tab, DrawText(Text{Tab: tab, FontSize: 50, LineHeight: 0, Lines: 1.16, Margin: 60}, fonts, w, h).img)
 		}
-		save("lang-"+code+"-remove", DrawHighlightRemove(fonts, w).img)
+		save("lang-"+code+"-highlight-menu", DrawHighlightMenu(false, true, fonts, w).img)
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}}, 1, RTL(), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		cv.Draw(img)
@@ -385,7 +387,7 @@ func TestPanelEdges(t *testing.T) {
 	for name, m := range map[string]*Panel{"text": DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"text-page": DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, fonts, w, h),
 		"light":     DrawLight(40, 3, 10, 160, fonts, w), "light-fa": func() *Panel { SetLanguage("fa"); defer SetLanguage("en"); return DrawLight(40, 3, 10, 160, fonts, w) }(),
-		"remove": DrawHighlightRemove(fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
+		"highlight-menu": DrawHighlightMenu(false, true, fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w), "library-book-menu": DrawBookMenu(false, true, fonts, w),
@@ -420,7 +422,7 @@ func TestPanelEdges(t *testing.T) {
 }
 
 // The panels that are a list whose rows are its buttons, by their last row's id.
-var listRows = map[string]string{"library-book-menu": "book-remove"}
+var listRows = map[string]string{"library-book-menu": "book-remove", "highlight-menu": "hl-listen"}
 
 // The buttons that are an icon alone (no border), besides the bar's.
 var iconButtons = map[string]bool{"list-sort": true, "contents-close": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,
