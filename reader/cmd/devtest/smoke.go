@@ -208,7 +208,7 @@ func (d *dev) holdAt(x, y, x2, y2 int) error {
 	if err := write(append(down, at(x, y)...)); err != nil {
 		return err
 	}
-	time.Sleep(1200 * time.Millisecond) // past the reader's 800 ms (device/touch.go, holdTime)
+	time.Sleep(1500 * time.Millisecond) // past the reader's 1000 ms (device/touch.go, holdTime)
 	for i := 1; i <= 3; i++ {
 		if err := write(at(x+(x2-x)*i/3, y+(y2-y)*i/3)); err != nil {
 			return err

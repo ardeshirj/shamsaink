@@ -20,9 +20,9 @@ const (
 	absMTPositionX  = 0x35
 	absMTPositionY  = 0x36
 	absMTTrackingID = 0x39
-	swipeMin        = 80                     // px a finger moves for a swipe, not a tap
-	holdTime        = 800 * time.Millisecond // a finger held this long is a hold (500 ms made holds by accident)
-	holdStill       = 30                     // px it may move meanwhile and still be held
+	swipeMin        = 80                      // px a finger moves for a swipe, not a tap
+	holdTime        = 1000 * time.Millisecond // a finger held this long is a hold (500 ms made holds by accident, 800 still some while turning pages)
+	holdStill       = 30                      // px it may move meanwhile and still be held
 )
 
 // A gesture: a tap at (x, y), or a swipe by (dx, dy); or a finger held still (hold), then moved while held (drag,
