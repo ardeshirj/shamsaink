@@ -35,6 +35,10 @@ fails when it is stale): principles and rules (`spec/principles.yaml`, each with
 components, the flow, every screen with its controls and renders (at a third of their size), and the page buttons. It
 replaces `docs/layouts/` as the thing to look at; open it in a browser.
 
+**CI** (`.github/workflows/design.yml`, on every push): gofmt, vet and `go test ./design/...`: the spec against the templates,
+CSS, words and icons, the flow, and the generated files fresh. The renders need the engine's library (built with Rust)
+and the fonts folder, so `make design` runs on the Mac; a CI job for them needs the engine built and cached first.
+
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
 ## Retiring `docs/layouts/`

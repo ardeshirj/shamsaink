@@ -1,0 +1,25 @@
+# The design system's checks that need no engine and no device (docs/design-system.md): the spec held against the
+# templates, the stylesheet, the words and the icons; the flow; the generated files (ui.css's variables, tokens_gen.go and
+# docs/design/system.html) fresh. The renders (make design) need the engine's library and run on the Mac for now.
+name: design
+on:
+  push:
+  pull_request:
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: reader/go.mod
+          cache-dependency-path: reader/go.sum
+      - name: gofmt
+        working-directory: reader
+        run: test -z "$(gofmt -l design ui/tokens_gen.go)"
+      - name: vet
+        working-directory: reader
+        run: go vet ./design/...
+      - name: spec, generated files, flow
+        working-directory: reader
+        run: go test -count=1 ./design/...
