@@ -1,6 +1,8 @@
 {
  "placement": "screen",
  "boxes": {
-  "lang-follow": [1114, 214, 1224, 276]
+  "lang-follow": [1114, 214, 1224, 276],
+  "sleep-dec": [796, 300, 884, 356],
+  "sleep-inc": [1132, 300, 1220, 356]
  }
 }

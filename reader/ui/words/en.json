@@ -65,6 +65,8 @@
   "page-tab": "Page",
   "reset": "Reset",
   "px": "%s px",
+  "min": "%s min",
+  "sleep-after": "Sleep after",
   "times": "%s×",
   "light": "Light",
   "warmth": "Warmth",

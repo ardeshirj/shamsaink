@@ -6,6 +6,7 @@ import (
 	"shamsainkreader/device"
 	"shamsainkreader/library"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -181,8 +182,26 @@ func TestRoles(t *testing.T) {
 func TestSleepAfter(t *testing.T) {
 	s := load(t)
 	for _, d := range s.Devices {
-		if time.Duration(d.SleepAfter)*time.Minute != device.SleepAfter {
-			t.Errorf("%s: sleep_after_min %d, device.SleepAfter %v", d.Name, d.SleepAfter, device.SleepAfter)
+		if time.Duration(d.SleepAfter)*time.Minute != device.DefaultSleepAfter {
+			t.Errorf("%s: sleep_after_min %d, device.DefaultSleepAfter %v", d.Name, d.SleepAfter, device.DefaultSleepAfter)
 		}
 	}
+}
+
+// The sleep setting's choices are the device's.
+func TestSleepChoices(t *testing.T) {
+	s := load(t)
+	var want []string
+	for _, m := range device.SleepMinutes {
+		want = append(want, strconv.Itoa(m))
+	}
+	for _, ctl := range s.Screens["library-language"].Controls {
+		if ctl.ID == "sleep" {
+			if !slices.Equal(ctl.Values, want) {
+				t.Errorf("sleep: spec %v, device %v", ctl.Values, want)
+			}
+			return
+		}
+	}
+	t.Error("library-language has no sleep")
 }

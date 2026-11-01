@@ -56,3 +56,16 @@ func TestLanguageSetting(t *testing.T) {
 		t.Errorf("following again: %s", b)
 	}
 }
+
+// The sleep timeout's stepper goes through the choices and stops at both ends; never is the longest.
+func TestNextSleep(t *testing.T) {
+	for _, c := range []struct {
+		cur    int
+		longer bool
+		want   int
+	}{{10, true, 15}, {10, false, 5}, {5, false, 5}, {60, true, 0}, {0, true, 0}, {0, false, 60}, {7, true, 15}} {
+		if got := nextSleep(c.cur, c.longer); got != c.want {
+			t.Errorf("nextSleep(%d, %v) = %d, want %d", c.cur, c.longer, got, c.want)
+		}
+	}
+}

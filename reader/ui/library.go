@@ -153,11 +153,18 @@ func DrawLibraryMenu(under int, settings bool, fonts *blitz.Fonts, w int) *Panel
 	return m
 }
 
-// DrawLibraryLanguage draws the language panel, directly under the bar (under px from the top), in place of the menu it
+// DrawLibraryLanguage draws the settings panel (the language, the sleep timeout; sleepMin 0: never), directly under the bar (under px from the top), in place of the menu it
 // was opened from: no title, one row, "Follow book language" and its switch at the row's far end (the button
-// lang-follow; follow says whether it is on).
-func DrawLibraryLanguage(follow bool, under int, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("library-language.html", struct{ Follow bool }{follow})
+// lang-follow; follow says whether it is on) and a row for the sleep timeout (sleep-dec and sleep-inc).
+func DrawLibraryLanguage(follow bool, sleepMin, under int, fonts *blitz.Fonts, w int) *Panel {
+	sleep := word("never")
+	if sleepMin > 0 {
+		sleep = word("min", num(sleepMin))
+	}
+	html, ids := render("library-language.html", struct {
+		Follow bool
+		Sleep  string
+	}{follow, sleep})
 	m := drawPanel(html, ids, fonts, w, 400) // at most: cut to its switch
 	m.y0 = under
 	return m

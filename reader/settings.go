@@ -6,9 +6,12 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 
+	"shamsainkreader/device"
 	"shamsainkreader/files"
 
 	blitz "shamsainkengine"
@@ -24,6 +27,8 @@ type settings struct {
 	// The interface's language (lang.go): the menus follow the book's language unless this is set ("Follow book language"
 	// off: English everywhere). Stored as the opposite so that a file from before it, without the key, follows the book.
 	EnglishOnly bool `json:"english_only,omitempty"`
+	// Minutes untouched before the device is put to sleep (device.SleepMinutes; 0: never).
+	SleepMin int `json:"sleep_min"`
 	// The front light (light.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
@@ -33,7 +38,7 @@ type settings struct {
 // defaults are the settings before any is set (the environment's, else the reader's own).
 func defaults() *settings {
 	f := func(s string) float32 { v, _ := strconv.ParseFloat(s, 32); return float32(v) }
-	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin), LeadMs: atoi(leadMs)}
+	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin), LeadMs: atoi(leadMs), SleepMin: int(device.DefaultSleepAfter / time.Minute)}
 }
 
 func loadSettings(dir string) *settings {
@@ -86,4 +91,19 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 		return false
 	}
 	return true
+}
+
+// nextSleep is the sleep timeout after cur minutes, a step longer or shorter in device.SleepMinutes (never, 0, is the
+// last; it stops at both ends).
+func nextSleep(cur int, longer bool) int {
+	i := slices.Index(device.SleepMinutes, cur)
+	if i < 0 {
+		i = slices.Index(device.SleepMinutes, int(device.DefaultSleepAfter/time.Minute))
+	}
+	if longer {
+		i++
+	} else {
+		i--
+	}
+	return device.SleepMinutes[max(0, min(i, len(device.SleepMinutes)-1))]
 }

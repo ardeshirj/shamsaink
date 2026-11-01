@@ -154,7 +154,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the language panel in the menu's place
 	openLang := func() {
 		old := panel.Rect()
-		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.TopBarHeight(), rd.fonts, scr.W)
+		panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
@@ -242,7 +242,15 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				set.save(rd.dir)
 				build() // the head drawn with the menu button still on
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
+				panel.Over(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
+			case (id == "sleep-dec" || id == "sleep-inc") && langOpen:
+				set.SleepMin = nextSleep(set.SleepMin, id == "sleep-inc")
+				set.save(rd.dir)
+				rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
+				v.Draw(rd.over)
+				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
 			case strings.HasPrefix(id, "sort-"):

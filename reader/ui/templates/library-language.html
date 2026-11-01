@@ -1,7 +1,8 @@
-{{/* The language panel, under the bar (library.go), opened from the menu's Reader language: no title, one row, the
+{{/* The settings panel (the file keeps its first name), under the bar (library.go), opened from the menu's Reader language: no title, one row, the
 setting's name at the start and its switch at the far end (the right in English, the left in Farsi: the page's
 direction is the interface's). */ -}}
 {{template "head" ""}}<style>
 .lang { justify-content: space-between; }
 </style></head><body>
-<div class="row lang"><span>{{t "follow-book"}}</span>{{template "toggle" pick "lang-follow" "" .Follow}}</div></body></html>
+<div class="row lang"><span>{{t "follow-book"}}</span>{{template "toggle" pick "lang-follow" "" .Follow}}</div>
+<div class="set">{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div></body></html>

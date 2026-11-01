@@ -91,7 +91,7 @@ func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
 			select {
 			case <-t.C:
 				idle := time.Since(time.Unix(0, d.active.Load()))
-				if idle >= SleepAfter && !d.dozing.Load() {
+				if limit := time.Duration(d.sleepAfter.Load()); limit > 0 && idle >= limit && !d.dozing.Load() {
 					select {
 					case out <- Event{Sleep: true}:
 						d.active.Store(time.Now().UnixNano()) // asked: counts again if it is not taken at once
