@@ -24,6 +24,9 @@ p { margin: 0.3em 0; }
 /* a button: its words, and an icon before them centred on them */
 span.b { display: inline-flex; align-items: center; gap: 0.3em; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }
 
+/* a button that is on (Dark mode): filled, its words and icon in the paper's colour */
+span.b.on { background: var(--ink); color: var(--paper); }
+
 /* The switch: a track with a knob, the knob at the end when on. */
 span.s { display: inline-block; width: 2.4em; height: 1.2em; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.6em; }
 span.s span.k { display: block; width: 1.2em; height: 1.2em; border-radius: 0.6em; background: var(--ink); }
