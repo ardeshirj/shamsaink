@@ -244,9 +244,9 @@ func TestPanels(t *testing.T) {
 	lib.Draw(img)
 	save("library-empty", img)
 	lib.Close()
-	save("splash", Splash(t.TempDir(), fonts, w, h))
-	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680))
-	save("loading-kobo", Loading(t.TempDir(), fonts, 1264, 1680))
+	save("splash", Splash(t.TempDir(), fonts, w, h, false).Gray)
+	save("splash-kobo", Splash(t.TempDir(), fonts, 1264, 1680, false).Gray)
+	save("loading-kobo", Loading(t.TempDir(), fonts, 1264, 1680, false).Gray)
 	ticks := []float64{0, 0.09, 0.18, 0.31, 0.45, 0.58, 0.7, 0.84}
 	for _, rtl := range []bool{true, false} {
 		for _, back := range []int{0, 7} {

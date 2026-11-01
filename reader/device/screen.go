@@ -107,6 +107,27 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 	s.send(r, waveform, flash)
 }
 
+// ShowRGBA is ShowPart for a colour picture p (the whole screen's), on a colour screen (four bytes a pixel: red, green, blue,
+// transparency, as the Kobo's framebuffer has them; the transparency is made opaque). On a grey screen the picture's grey.
+func (s *Screen) ShowRGBA(p *image.RGBA, r image.Rectangle, waveform uint32, flash bool) {
+	s.Wait()
+	for y := r.Min.Y; y < r.Max.Y; y++ {
+		src := p.Pix[y*p.Stride+r.Min.X*4 : y*p.Stride+r.Max.X*4]
+		at := (s.y0+y)*s.line + r.Min.X*s.bytes
+		if s.bytes == 1 {
+			for i := 0; i < len(src); i += 4 { // a grey of the colour: its green weighs most
+				s.mem[at+i/4] = uint8((299*uint32(src[i]) + 587*uint32(src[i+1]) + 114*uint32(src[i+2])) / 1000)
+			}
+			continue
+		}
+		copy(s.mem[at:], src)
+		for i := 3; i < len(src); i += 4 {
+			s.mem[at+i] = 0xff
+		}
+	}
+	s.send(r, waveform, flash)
+}
+
 // Saved is what the screen showed, from Save, for Restore.
 type Saved []byte
 

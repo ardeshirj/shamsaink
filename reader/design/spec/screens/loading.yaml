@@ -1,0 +1,10 @@
+name: loading
+layer: screen
+templates: [loading.html]
+buttons: none
+status: built
+purpose: "A book slow to open from the library: the mark and Opening…, in colour on a colour screen. Left when the page is ready."
+enter: [{gesture: slow-open, from: library}]
+controls: []
+dismiss: automatic
+words: [opening]

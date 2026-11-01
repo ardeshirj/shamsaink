@@ -171,7 +171,7 @@ func Validate(s *Spec, src Sources) []string {
 			}
 		}
 		// every way out lands on the page: a screen is left by a tap off it, or by a control that goes to reading
-		if sc.Dismiss != "" && sc.Dismiss != "tap-outside" {
+		if sc.Dismiss != "" && sc.Dismiss != "tap-outside" && sc.Dismiss != "automatic" {
 			ok := false
 			for _, c := range sc.Controls {
 				ok = ok || c.ID == sc.Dismiss && c.Action == "goto" && (c.To == pageScreen(s) || enteredFrom(sc, c.To))
@@ -217,6 +217,9 @@ func Validate(s *Spec, src Sources) []string {
 			}
 		}
 		for _, e := range sc.Enter {
+			if e.Gesture == "app-start" && e.From == "" { // the program starting: no screen before it
+				continue
+			}
 			from := s.Screens[e.From]
 			if from == nil {
 				f("screen %s: entered from %q, which is no screen", n, e.From)
@@ -283,7 +286,7 @@ func Validate(s *Spec, src Sources) []string {
 		grew = false
 		for n, sc := range s.Screens {
 			for _, e := range sc.Enter {
-				if reach[e.From] && !reach[n] {
+				if (reach[e.From] || e.Gesture == "app-start" && e.From == "") && !reach[n] {
 					reach[n], grew = true, true
 				}
 			}

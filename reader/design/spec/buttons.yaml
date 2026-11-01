@@ -27,3 +27,8 @@ maps:
     back: One word shorter
     hold_forward: Highlight
     hold_back: Cancel
+  none:        # a screen shown for a moment, left by itself (the opening screens)
+    forward: Nothing, the screen is left when the work is done
+    back: Nothing
+    hold_forward: Nothing
+    hold_back: Nothing

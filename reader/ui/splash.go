@@ -1,9 +1,12 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"hash/fnv"
 	"image"
+	"image/draw"
+	"image/png"
 	"os"
 	"path/filepath"
 	"time"
@@ -23,21 +26,33 @@ const SplashFor = 2 * time.Second
 
 type splashData struct{ Top int }
 
-// Splash is the opening screen for a screen w × h: read from DIR/cache, else drawn and kept there.
-func Splash(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
-	return opening("splash", dir, fonts, w, h)
+// Opening is an opening screen: the grey picture (always, also the Kobo's sleep screen), and on a colour screen the colour
+// one, the grey layout with the logos in their colours.
+type Opening struct {
+	Gray *image.Gray
+	RGBA *image.RGBA // nil: a grey screen
+}
+
+// Splash is the opening screen for a screen w × h: read from DIR/cache, else drawn and kept there; with colour, in colour
+// as well.
+func Splash(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
+	return opening("splash", dir, fonts, w, h, colour)
 }
 
 // Loading is the screen for a book that is slow to open from the library (templates/loading.html): the mark and
 // "Opening…", kept like Splash.
-func Loading(dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
-	return opening("loading", dir, fonts, w, h)
+func Loading(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
+	return opening("loading", dir, fonts, w, h, colour)
 }
 
-func opening(name, dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
-	// the logos, in brand/, made from FarsiEPUB's brand folder (our Blitz draws no SVG), read by the engine as files
-	// beside the page: ShamsaInk's mark, from brand/shamsaink/mark-1bit.svg (rsvg-convert -w 240 -h 240 -b white),
-	// and FarsiEPUB's logo, from brand/farsiepub/logo.svg (rsvg-convert -h 60 -b white)
+// The logos, in brand/, from FarsiEPUB's brand folder, in colour, one set for every screen (our Blitz draws no SVG): ShamsaInk's
+// mark from brand/shamsaink/mark.svg (rsvg-convert -w 240 -h 240 -b white), FarsiEPUB's logo from brand/farsiepub/logo.svg
+// (rsvg-convert -h 60 -b white). A grey screen shows them in grey, as the engine draws them; a colour screen has each put
+// over the box of the image with its id in the page, in its colours.
+var colourLogos = []struct{ id, file string }{{"mark", "templates/brand/shamsaink.png"}, {"by-logo", "templates/brand/farsiepub.png"}}
+
+func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
+	// the logos (colourLogos), read by the engine as files beside the page
 	mark, _ := files.ReadFile("templates/brand/shamsaink.png")
 	logo, _ := files.ReadFile("templates/brand/farsiepub.png")
 	html, _ := render(name+".html", splashData{Top: h * 3 / 10})
@@ -45,11 +60,23 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 	sum.Write([]byte(html))
 	sum.Write(mark)
 	sum.Write(logo)
-	path := filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-%08x.gray", name, w, h, sum.Sum32()))
+	grey := filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-%08x.gray", name, w, h, sum.Sum32()))
+	rgbaPath := filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-%08x.rgba", name, w, h, sum.Sum32()))
 	img := image.NewGray(image.Rect(0, 0, w, h))
-	if b, err := os.ReadFile(path); err == nil && len(b) == len(img.Pix) {
+	var rgba *image.RGBA
+	if colour {
+		rgba = image.NewRGBA(img.Rect)
+	}
+	// both kept: the grey one is the sleep screen's, and what a colour one is made of
+	if b, err := os.ReadFile(grey); err == nil && len(b) == len(img.Pix) {
 		copy(img.Pix, b)
-		return img
+		if !colour {
+			return &Opening{Gray: img}
+		}
+		if c, err := os.ReadFile(rgbaPath); err == nil && len(c) == len(rgba.Pix) {
+			copy(rgba.Pix, c)
+			return &Opening{img, rgba}
+		}
 	}
 	t := time.Now()
 	rest := readFor(html)
@@ -66,10 +93,44 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int) *image.Gray {
 	defer b.Close()
 	b.Layout(0)
 	b.Draw(0, img)
-	os.MkdirAll(filepath.Dir(path), 0o755)
-	if err := os.WriteFile(path, img.Pix, 0o644); err != nil {
+	os.MkdirAll(filepath.Dir(grey), 0o755)
+	if err := os.WriteFile(grey, img.Pix, 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "shamsaink: the opening screen not kept:", err)
 	}
+	o := &Opening{Gray: img}
+	if colour {
+		o.RGBA = colourOf(img, func(id string) image.Rectangle { _, rs := b.Find(0, id); return union(rs) })
+		if err := os.WriteFile(rgbaPath, o.RGBA.Pix, 0o644); err != nil {
+			fmt.Fprintln(os.Stderr, "shamsaink: the colour opening screen not kept:", err)
+		}
+	}
 	fmt.Printf("  opening screen drawn in %.0f ms\n", ms(t))
-	return img
+	return o
+}
+
+// colourOf is the grey picture as colour, with each logo that has a colour one put over the box of its image (where finds
+// it by id): a logo whose box is not about the picture's size is left grey.
+func colourOf(img *image.Gray, where func(id string) image.Rectangle) *image.RGBA {
+	rgba := image.NewRGBA(img.Rect)
+	for i, g := range img.Pix {
+		rgba.Pix[4*i], rgba.Pix[4*i+1], rgba.Pix[4*i+2], rgba.Pix[4*i+3] = g, g, g, 255
+	}
+	for _, l := range colourLogos {
+		data, err := files.ReadFile(l.file)
+		if err != nil {
+			continue
+		}
+		pic, err := png.Decode(bytes.NewReader(data))
+		if err != nil {
+			continue
+		}
+		box := where(l.id)
+		// the layout's box may be a pixel off the picture's size (rounding); more than two is another picture
+		pw, ph := pic.Bounds().Dx(), pic.Bounds().Dy()
+		if box.Empty() || max(box.Dx()-pw, pw-box.Dx()) > 2 || max(box.Dy()-ph, ph-box.Dy()) > 2 {
+			continue
+		}
+		draw.Draw(rgba, image.Rect(box.Min.X, box.Min.Y, box.Min.X+pw, box.Min.Y+ph), pic, pic.Bounds().Min, draw.Src)
+	}
+	return rgba
 }

@@ -37,6 +37,21 @@ func Open() (*Device, error) {
 	return d, err
 }
 
+// Colour says whether the screen is a colour one: the Kobo Libra Colour (and the Tolino Vision Color, its board's twin), told
+// by the product id at the end of the Kobo's version file (FBInk: 390 and 690; the Clara BW, with the same four bytes a
+// pixel, is grey).
+func (d *Device) Colour() bool {
+	if d.Kind != Kobo {
+		return false
+	}
+	b, err := os.ReadFile(env("KOBO_VERSION", "/mnt/onboard/.kobo/version"))
+	if err != nil {
+		return false
+	}
+	id := strings.TrimSpace(string(b))
+	return strings.HasSuffix(id, "-000000000390") || strings.HasSuffix(id, "-000000000690")
+}
+
 // An Event: a gesture on the touch screen, or the device wanting to sleep (Sleep): on the Kindle, powerd going to the
 // screensaver; on the Kobo, a press of the power button.
 type Event struct {

@@ -17,10 +17,10 @@ import (
 // browse shows the library (DIR/books) until it is left from its menu: a tap on a book reads it, and leaving the book
 // comes back to the library, scanned again for the book's place.
 func (rd *reader) browse(t time.Time) error {
-	splash := ui.Splash(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H)
+	splash := ui.Splash(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H, rd.dev.Colour())
 	// the opening screen at once, before the shelf is scanned and the library drawn: starting takes a while (the program
 	// loads, the books are read) and the screen shows Kobo's until then
-	rd.dev.Screen.Show(splash, device.WfGC16, true)
+	showOpening(rd.dev.Screen, splash, device.WfGC16, true)
 	rd.splashUntil = time.Now().Add(ui.SplashFor)
 	rd.lib = true
 	for {
@@ -43,7 +43,7 @@ func (rd *reader) browse(t time.Time) error {
 // the pager turns its pages; the filters under the bar choose which books; the sort button at the end of the filters
 // opens a panel to sort them; a finger held on a book opens its menu (library/changes.go); the bar's menu leaves. The power button sleeps (the Kobo) and wakes on
 // the library. What is chosen is kept (library/shelf.go).
-func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
+func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	scr := rd.dev.Screen
 	all := library.Shelf(library.Scan(rd.dir), rd.dir)
 	view, _ := library.LoadView(rd.dir)
@@ -163,7 +163,7 @@ func (rd *reader) choose(t time.Time, splash *image.Gray) (string, error) {
 		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:
-			if rd.dev.Doze(rd.dir, splash) {
+			if rd.dev.Doze(rd.dir, splash.Gray) {
 				for len(events) > 0 { // the touches made while asleep
 					<-events
 				}

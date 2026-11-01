@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/draw"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -46,6 +47,7 @@ func designBooks() []Book {
 // rendered is what a render drew: the picture, and the ids of the buttons on it.
 type rendered struct {
 	img       *image.Gray
+	rgba      *image.RGBA                // the colour picture, for a screen that has one (the img is its grey)
 	boxes     map[string]image.Rectangle // where each button is
 	placement string                     // "screen": the boxes are on the screen; "relative": on the panel, which is hung by something (a row, words)
 }
@@ -60,10 +62,10 @@ func (r rendered) ids() []string {
 }
 
 // pr is a panel as the reader places it on the screen; rel one that is hung by a row or by words, its boxes on itself.
-func pr(p *Panel) rendered { return rendered{p.img, p.Boxes(), "screen"} }
+func pr(p *Panel) rendered { return rendered{img: p.img, boxes: p.Boxes(), placement: "screen"} }
 
 func rel(p *Panel) rendered {
-	r := rendered{p.img, map[string]image.Rectangle{}, "relative"}
+	r := rendered{img: p.img, boxes: map[string]image.Rectangle{}, placement: "relative"}
 	for id, b := range p.Boxes() {
 		r.boxes[id] = b.Sub(p.Rect().Min)
 	}
@@ -85,6 +87,14 @@ func batteryBox(f *blitz.Fonts, w int) image.Rectangle {
 	return DrawTopBar(libraryTopBar, f, w).Box("topbar-battery")
 }
 
+// opened is an opening screen as a render: no buttons.
+func opened(o *Opening) rendered {
+	return rendered{img: o.Gray, rgba: o.RGBA, boxes: map[string]image.Rectangle{}, placement: "screen"}
+}
+
+// tmp is a folder to keep a drawing in that is not kept.
+func tmp() string { d, _ := os.MkdirTemp("", "design"); return d }
+
 func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	draw(img)
@@ -94,6 +104,10 @@ func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 // designRenders has, for each screen of the spec that is drawn, the states to draw it in. The page (reading) is the
 // engine's and is not here.
 var designRenders = map[string][]renderCase{
+	"splash": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, false)) }},
+		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
+	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
+		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: "Chapter one", Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},
@@ -112,7 +126,7 @@ var designRenders = map[string][]renderCase{
 	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		cv := NewContents([]Entry{{Title: "Chapter one"}, {Title: "باران از صبح", Depth: 1}, {Title: "Mixed: کتاب Book"}, {Title: "Chapter four"}}, 1, RTL(), f, w, h)
 		defer cv.Close()
-		return rendered{screenOf(w, h, cv.Draw), cv.Boxes(), "screen"}
+		return rendered{img: screenOf(w, h, cv.Draw), boxes: cv.Boxes(), placement: "screen"}
 	}}},
 	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(82, barHeight(f, w), batteryBox(f, w), f, w))
@@ -122,7 +136,7 @@ var designRenders = map[string][]renderCase{
 	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
 		lib := NewLibrary(designBooks(), libraryHead(f, w), f, w, h)
 		defer lib.Close()
-		return rendered{screenOf(w, h, lib.Draw), lib.Boxes(), "screen"}
+		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
 	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(true, barHeight(f, w), f, w)) }},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryLanguage(false, barHeight(f, w), f, w)) }}},
@@ -201,7 +215,11 @@ func TestScreenRenders(t *testing.T) {
 					name := fmt.Sprintf("%s-%s-%s", screen, c.name, lang)
 					r := c.draw(fonts, d.Screen.Width, d.Screen.Height)
 					path := filepath.Join("..", "design", "golden", d.Name, name)
-					compareGolden(t, path+".png", name, r.img, update)
+					if r.rgba != nil {
+						compareGoldenRGBA(t, path+".png", name, r.rgba, update)
+					} else {
+						compareGolden(t, path+".png", name, r.img, update)
+					}
 					compareBoxes(t, path+".json", name, r, update)
 				}
 			}
@@ -318,5 +336,38 @@ func compareBoxes(t *testing.T, path, name string, r rendered, update bool) {
 	}
 	if !bytes.Equal(got, want) {
 		t.Errorf("%s: the buttons' boxes differ from the kept ones", name)
+	}
+}
+
+// compareGoldenRGBA is compareGolden for a colour picture.
+func compareGoldenRGBA(t *testing.T, path, name string, img *image.RGBA, update bool) {
+	var buf bytes.Buffer
+	png.Encode(&buf, img)
+	if update {
+		os.MkdirAll(filepath.Dir(path), 0o755)
+		if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	f, err := os.Open(path)
+	if err != nil {
+		t.Errorf("%s: no kept render (GOLDEN=update keeps it): %v", name, err)
+		return
+	}
+	defer f.Close()
+	want, err := png.Decode(f)
+	if err != nil {
+		t.Errorf("%s: %v", name, err)
+		return
+	}
+	g := image.NewRGBA(want.Bounds())
+	draw.Draw(g, g.Rect, want, want.Bounds().Min, draw.Src)
+	if g.Rect != img.Rect || !bytes.Equal(g.Pix, img.Pix) {
+		t.Errorf("%s: differs from the kept render", name)
+		if out := os.Getenv("DESIGN_OUT"); out != "" {
+			os.MkdirAll(out, 0o755)
+			os.WriteFile(filepath.Join(out, name+".png"), buf.Bytes(), 0o644)
+		}
 	}
 }

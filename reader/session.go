@@ -27,7 +27,7 @@ type session struct {
 	set    *settings
 	o      blitz.Options
 	t      time.Time   // when the book was asked for
-	splash *image.Gray // the opening screen, the Kobo's sleep screen when sleep/ has no picture
+	splash *ui.Opening // the opening screen, the Kobo's sleep screen when sleep/ has no picture
 
 	events  <-chan device.Event
 	stop    func()        // lets go of the touch screen and stops listening for sleep
@@ -87,7 +87,7 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	if s.events, s.stop, err = s.dev.Inputs(); err != nil {
 		return nil, err
 	}
-	s.splash = ui.Splash(rd.dir, rd.fonts, s.scr.W, s.scr.H)
+	s.splash = ui.Splash(rd.dir, rd.fonts, s.scr.W, s.scr.H, s.dev.Colour())
 	done := make(chan error, 1)
 	go func() {
 		t0 := time.Now()
@@ -114,9 +114,9 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	case <-time.After(ui.SplashAfter - time.Since(t)): // from when the book was asked for, so its flash ends sooner
 		screen := s.splash
 		if rd.lib { // from the library: its own screen, the opening one is for starting
-			screen = ui.Loading(rd.dir, rd.fonts, s.scr.W, s.scr.H)
+			screen = ui.Loading(rd.dir, rd.fonts, s.scr.W, s.scr.H, s.dev.Colour())
 		}
-		s.scr.Show(screen, device.WfGC16, true)
+		showOpening(s.scr, screen, device.WfGC16, true)
 		fmt.Printf("  opening screen shown after %.0f ms\n", ms(t))
 		err = <-done
 	}
@@ -278,7 +278,7 @@ func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()
 	}
-	if !s.dev.Doze(s.rd.dir, s.splash) {
+	if !s.dev.Doze(s.rd.dir, s.splash.Gray) {
 		s.asleep = true
 		s.leave()
 		return
