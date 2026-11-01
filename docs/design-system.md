@@ -85,5 +85,12 @@ spec's. `e2e/kobo-basics.txt`: a jump, pages, a highlight made and removed throu
 are found by the position the reader logs (`highlight menu: ... at X,Y`) plus the kept relative boxes. Snapshots are compared byte for byte
 (the clock's strip aside) with references a run with `SAVE=1` keeps in `e2e/out/` (drawn from a book: not committed).
 
+**Refresh** (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) is sent with GL16, a partial update that touches only
+that area; REAGL is a full update on the Kobo's driver and blinks. A whole screen keeps REAGL for a page turn; it flashes (GC16) only
+where everything changes: waking (white, then the page), Clean screen, Dark mode, the splash. The rule is in `device.Screen.ShowPart`.
+**Settings** the reader keeps (the library's Settings panel and the Light panel): the interface language, **Sleep after** (5 to 60 minutes, or
+never; the reader puts the Kobo to sleep as the power button does; the choices are `device.SleepMinutes`, held against the spec by a test) and **Dark
+mode** (the Light panel's button, filled when on: the driver inverts every grey it writes, so the page, bar and panels invert together; colour pictures and the splash do not).
+
 **Still to do** (roadmap group 6): the device-only rule
 as `requires:` on a control; a profile for the Kindle. The unbuilt screens are specified when they are built (above).

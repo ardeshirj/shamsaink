@@ -55,7 +55,9 @@ the Kobo it earned it sooner than planned.)
 **5. Daily use on the Kobo** (next)
 - [ ] A night asleep on battery (and the crash seen on opening after a long sleep)
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
-- [ ] Sleep after idle minutes (a timer on the session's loop)
+- [x] Sleep after idle minutes: the reader sleeps the Kobo as the power button does after 5 to 60 minutes untouched, or never (a stepper in Settings, 10 by default; `device.SleepMinutes`; 2026-11-01). Seen to sleep and wake on the Kobo
+- [x] Dark mode: a button in the Light panel inverts the whole screen (the driver writes each grey inverted, colour pictures as they are), kept in the settings; the first try, to judge in daily use (2026-11-01)
+- [x] The screen without blinks (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) refreshes with GL16, which is partial; REAGL is a full update on the Kobo's driver and blinked. A flash only where the whole screen changes (wake: white, then the page; Clean screen; Dark mode). Page turns keep REAGL
 - [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
@@ -82,6 +84,8 @@ the Kobo it earned it sooner than planned.)
 
 **8. Read-along on the Kobo**
 - [ ] One pipeline kept open a session (13's `PLAN.md`)
+- [ ] The sleep timer waits while narration plays (today it counts only touches), and the Bluetooth reboot on leaving
+  the reader (the launcher reboots when `mtkbtd` runs; a "Restarting" screen first; maybe stop the daemon and its driver before Nickel: not tried, it may panic the kernel)
 - [ ] The hour: drop-outs and drift over an hour, Nickel stopped
 - [ ] Voice timing, a stepper per pair of headphones (below)
 
