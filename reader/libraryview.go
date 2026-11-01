@@ -252,7 +252,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				v.Draw(rd.over)
 				panel = ui.DrawLibraryLanguage(!set.EnglishOnly, set.SleepMin, v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
-				scr.Show(rd.over, device.WfREAGL, false)
+				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's row only
 			case strings.HasPrefix(id, "sort-"):
 				view.SetSort(filter, strings.TrimPrefix(id, "sort-"))
 				keep()

@@ -22,6 +22,7 @@ const (
 // The MediaTek driver's waveform modes (MTK_WAVEFORM_MODE_*, HWTCON_WAVEFORM_MODE_*: the same numbers).
 const (
 	WfGC16  = 2
+	WfGL16  = 3 // partial, 16 greys, no flash: for a panel opening over the page (REAGL is always a full update on the Kobo's driver)
 	WfREAGL = 4
 	WfA2    = 6
 )
@@ -100,6 +101,13 @@ func (s *Screen) Inverted() bool { return s.invert }
 
 // ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
 func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
+	// REAGL is a full update on the Kobo's driver and blinks the area it covers: for a part of the screen (a panel
+	// opening, a switch, a bar's icon) the partial GL16 is used instead, so only what changed is touched and nothing
+	// flashes. A whole screen (a page turn) keeps REAGL; a flash is asked for by the caller, and is for what changes
+	// the whole screen (a book opened, the screen cleaned, a wake).
+	if waveform == WfREAGL && !flash && s.bytes == 4 && r != image.Rect(0, 0, s.W, s.H) {
+		waveform = WfGL16
+	}
 	s.Wait()
 	for y := r.Min.Y; y < r.Max.Y; y++ {
 		src := p.Pix[y*p.Stride+r.Min.X : y*p.Stride+r.Max.X]
