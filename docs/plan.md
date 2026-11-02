@@ -60,6 +60,7 @@ the Kobo it earned it sooner than planned.)
 - [x] The Kobo's page buttons (2026-11-01): the lower goes forward, the upper back (Kobo's own default), a press acting when it is let go; a hold (about 0.4 s) is the next or previous chapter; "Reverse page buttons" in Settings swaps them. A highlight's hold is 1 s (800 ms started some turning pages)
 - [x] The screen without blinks (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) refreshes with GL16, which is partial; REAGL is a full update on the Kobo's driver and blinked. A flash only where the whole screen changes (wake: white, then the page; Clean screen; Dark mode). Page turns keep REAGL
 - [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
+- [ ] A frozen reader caught (2026-11-02, seen on the Kobo: the reader sat in `epoll_wait` at 0% CPU after a read-aloud failed with `mplay` not found, and the screen did not answer; killed by hand, log kept as `logs/reader-frozen-1443.log`). Find the cause first (the missing `mplay`?), then a watchdog in `launch.sh`: the touch controller's interrupt count (`elan_ktf` in `/proc/interrupts`) rises for ~10 s while the reader's own count of handled input events (a small file in `/tmp`) does not, then kill the reader and return to Nickel, the reason in the log. A second layer: a timestamp the event loop refreshes every few seconds, stale for ~1 minute. Idle alone is not a freeze (reading is idle)
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
   more per book, cause not found)
@@ -141,7 +142,7 @@ week and remove it)
 - [ ] A way to choose the book: stage 7's text rows (covers, search and the keyboard are not in the beta)
 - [ ] The interface language switch tried on the Kobo, the Farsi wording reviewed by the maintainer
 - [ ] A failsafe: if the reader crashes or hangs, the Kobo gets back to Nickel on its own (checked by killing it in
-  every state: a book open, asleep, narrating)
+  every state: a book open, asleep, narrating); includes the watchdog for a reader that is running but not answering touches (stage 5)
 
 *Read-along, what makes it different (in the beta, stage 8's part of it)*
 - [ ] One pipeline kept open a session, so starting to listen no longer costs today's ~2–2.5 s
