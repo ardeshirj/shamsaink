@@ -11,71 +11,6 @@ licence: `design.md`, sections 6 and 7. This is the **working plan**; the public
 Next: **daily use on the Kobo**, a week or two of reading Farsi books on it (stage 5). Done when it is the reader
 picked for Farsi books.
 
-## Releases (2026-11-02)
-Two checklists that cut across the stages below: what must be true to make the repository public and tag the first
-**beta**, and what comes after it toward a **stable** release. The stages say how; these say when. An item is checked
-once done and tried on a device.
-
-**Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46, only; a stranger can install it, choose a book, read for a
-week and remove it)
-
-*The repository, public (first, untagged: the audit, then the flip)*
-- [ ] History audit: no book, book text, drawn page, key, IP or hostname anywhere in git history, not only in the tree
-- [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
-- [x] `LICENSE` (Apache-2.0), `NOTICE`, `BRAND.md` (2026-10-30)
-- [ ] The README, for people who find the code: the mark (SVG copies of FarsiEPUB's `mark.svg` and `mark-dark.svg` in
-  `docs/brand/`, light and dark), what it is, honest status, a screenshot from our own test EPUB, a map of the
-  repository, a link to ShamsaInk's page on FarsiEPUB for everything about using it, licence and brand
-- [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, DejaVu)
-
-*The reader, steady enough*
-- [ ] Stage 5 done: the night on battery, the crash on opening after a long sleep, sleep while plugged in, the first
-  page from the cache, a week or two of reading with nothing left that hurts
-- [ ] A way to choose the book: stage 7's text rows (covers, search and the keyboard are not in the beta)
-- [ ] The interface language switch tried on the Kobo, the Farsi wording reviewed by the maintainer
-- [ ] A failsafe: if the reader crashes or hangs, the Kobo gets back to Nickel on its own (checked by killing it in
-  every state: a book open, asleep, narrating)
-
-*Read-along, what makes it different (in the beta, stage 8's part of it)*
-- [ ] One pipeline kept open a session, so starting to listen no longer costs today's ~2–2.5 s
-- [ ] The hour: no drop-outs or drift over an hour of narration, Nickel stopped
-- [ ] The sleep timer waits while narration plays, and the screen and the narration stay together across the power button
-- [ ] Leaving the reader after Bluetooth has been on: the reboot is clean, with a "Restarting" screen first, and never
-  loses the place, the highlights or the settings
-- [ ] Voice timing: a stepper in the Listen tab, remembered per pair of headphones
-- [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL,
-  which also gives the end-to-end tests a narrated scenario; FarsiEPUB's narrated books work as well
-- [ ] Headphones tried: a short list of those it worked with, in the release notes
-
-*The release*
-- [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line) and the technical install notes here
-  (`docs/devices/kobo/`), the readers' guide on FarsiEPUB following them; the uninstall in one line, all followed from
-  a clean start on the Kobo
-- [ ] A test EPUB of our own text, narrated (above), its end-to-end scenarios and pictures committed, `make e2e` passing
-- [ ] Release notes: the known limits (one device and firmware, read-along needing Bluetooth headphones and the reboot
-  after them, the Kobo's own bugs in `docs/devices/kobo/README.md`) and how to report a problem
-- [ ] The tag `v0.1.0-beta` and a GitHub release with the package and its checksum
-
-**After the beta, toward stable, `v1.0`**
-- [ ] Read-along made smoother (stage 8's rest): no Bluetooth reboot (stopping the daemon and its driver before Nickel,
-  if it can be done without the kernel panic), a wider list of headphones, the player's screens (listening, paused)
-- [ ] The layout (stage 6) built: layers, the dock, components, the word panel, footnotes in place, the sleep screen's
-  choice
-- [ ] The library finished (stage 7): covers, the keyboard and search
-- [ ] Books over the air, OPDS (stage 7): with ShamsaInk part of FarsiEPUB, its library's feed is the first catalogue
-- [ ] An upgrade that keeps what the reader made: settings, highlights, places and the cache across versions (the
-  cache format versioned, an old one dropped cleanly), tried by upgrading from the beta
-- [ ] A release made by one command or CI: the package built, checksummed and attached, the version in the binary and
-  in Settings
-- [ ] Tested on more than ours: several books, Farsi and English, with a picture-heavy one and a scan; an end-to-end
-  scenario for each feature
-- [ ] Stable over time: a month of daily use without a crash or a wrong page, memory flat over days
-- [ ] More devices: another Kobo model or firmware, then the Kindle (stage 9) with a launcher of its own; each its own
-  tested line in the release notes
-- [ ] A user guide on FarsiEPUB's ShamsaInk page: install, the controls, the settings, the panels, troubleshooting
-- [ ] Upstream posted (the maintainer posts): go-toolkit's trim, go-text's fix, Blitz's two patches, the Wi-Fi loaders
-- [ ] The tag `v1.0`
-
 ## Progress: one list, how we got here and what is left
 Stages 0 to 4 are done, in the order they were done; from stage 5 on, in order of priority. An item is checked once
 done and tried on a device, and stays in its stage; new work goes where it belongs as it is decided. The sections
@@ -182,6 +117,71 @@ the Kobo it earned it sooner than planned.)
 - [ ] A launcher of our own (a KUAL item, Amazon's interface stopped while reading), in place of KOReader's plugin
   ("Hosts", below)
 - [ ] Night mode, driven by us (refresh, experiment 10)
+
+## Releases (2026-11-02)
+Two checklists that cut across the stages above: what must be true to make the repository public and tag the first
+**beta**, and what comes after it toward a **stable** release. The stages say how; these say when. An item is checked
+once done and tried on a device.
+
+**Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46, only; a stranger can install it, choose a book, read for a
+week and remove it)
+
+*The repository, public (first, untagged: the audit, then the flip)*
+- [ ] History audit: no book, book text, drawn page, key, IP or hostname anywhere in git history, not only in the tree
+- [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
+- [x] `LICENSE` (Apache-2.0), `NOTICE`, `BRAND.md` (2026-10-30)
+- [ ] The README, for people who find the code: the mark (SVG copies of FarsiEPUB's `mark.svg` and `mark-dark.svg` in
+  `docs/brand/`, light and dark), what it is, honest status, a screenshot from our own test EPUB, a map of the
+  repository, a link to ShamsaInk's page on FarsiEPUB for everything about using it, licence and brand
+- [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, DejaVu)
+
+*The reader, steady enough*
+- [ ] Stage 5 done: the night on battery, the crash on opening after a long sleep, sleep while plugged in, the first
+  page from the cache, a week or two of reading with nothing left that hurts
+- [ ] A way to choose the book: stage 7's text rows (covers, search and the keyboard are not in the beta)
+- [ ] The interface language switch tried on the Kobo, the Farsi wording reviewed by the maintainer
+- [ ] A failsafe: if the reader crashes or hangs, the Kobo gets back to Nickel on its own (checked by killing it in
+  every state: a book open, asleep, narrating)
+
+*Read-along, what makes it different (in the beta, stage 8's part of it)*
+- [ ] One pipeline kept open a session, so starting to listen no longer costs today's ~2–2.5 s
+- [ ] The hour: no drop-outs or drift over an hour of narration, Nickel stopped
+- [ ] The sleep timer waits while narration plays, and the screen and the narration stay together across the power button
+- [ ] Leaving the reader after Bluetooth has been on: the reboot is clean, with a "Restarting" screen first, and never
+  loses the place, the highlights or the settings
+- [ ] Voice timing: a stepper in the Listen tab, remembered per pair of headphones
+- [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL,
+  which also gives the end-to-end tests a narrated scenario; FarsiEPUB's narrated books work as well
+- [ ] Headphones tried: a short list of those it worked with, in the release notes
+
+*The release*
+- [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line) and the technical install notes here
+  (`docs/devices/kobo/`), the readers' guide on FarsiEPUB following them; the uninstall in one line, all followed from
+  a clean start on the Kobo
+- [ ] A test EPUB of our own text, narrated (above), its end-to-end scenarios and pictures committed, `make e2e` passing
+- [ ] Release notes: the known limits (one device and firmware, read-along needing Bluetooth headphones and the reboot
+  after them, the Kobo's own bugs in `docs/devices/kobo/README.md`) and how to report a problem
+- [ ] The tag `v0.1.0-beta` and a GitHub release with the package and its checksum
+
+**After the beta, toward stable, `v1.0`**
+- [ ] Read-along made smoother (stage 8's rest): no Bluetooth reboot (stopping the daemon and its driver before Nickel,
+  if it can be done without the kernel panic), a wider list of headphones, the player's screens (listening, paused)
+- [ ] The layout (stage 6) built: layers, the dock, components, the word panel, footnotes in place, the sleep screen's
+  choice
+- [ ] The library finished (stage 7): covers, the keyboard and search
+- [ ] Books over the air, OPDS (stage 7): with ShamsaInk part of FarsiEPUB, its library's feed is the first catalogue
+- [ ] An upgrade that keeps what the reader made: settings, highlights, places and the cache across versions (the
+  cache format versioned, an old one dropped cleanly), tried by upgrading from the beta
+- [ ] A release made by one command or CI: the package built, checksummed and attached, the version in the binary and
+  in Settings
+- [ ] Tested on more than ours: several books, Farsi and English, with a picture-heavy one and a scan; an end-to-end
+  scenario for each feature
+- [ ] Stable over time: a month of daily use without a crash or a wrong page, memory flat over days
+- [ ] More devices: another Kobo model or firmware, then the Kindle (stage 9) with a launcher of its own; each its own
+  tested line in the release notes
+- [ ] A user guide on FarsiEPUB's ShamsaInk page: install, the controls, the settings, the panels, troubleshooting
+- [ ] Upstream posted (the maintainer posts): go-toolkit's trim, go-text's fix, Blitz's two patches, the Wi-Fi loaders
+- [ ] The tag `v1.0`
 
 ## Hosts
 Only the host knows the host: the engine, the book and its cache (`book.go`), the settings and reading one book
