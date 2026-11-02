@@ -114,7 +114,8 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 	// opening, a switch, a bar's icon) the partial GL16 is used instead, so only what changed is touched and nothing
 	// flashes. A whole screen (a page turn) keeps REAGL; a flash is asked for by the caller, and is for what changes
 	// the whole screen (a book opened, the screen cleaned, a wake).
-	if waveform == WfREAGL && !flash && s.bytes == 4 && r != image.Rect(0, 0, s.W, s.H) {
+	// In dark mode REAGL's full update shows as a flash of the whole black page, so a page turn uses GL16 too.
+	if waveform == WfREAGL && !flash && s.bytes == 4 && (s.invert || r != image.Rect(0, 0, s.W, s.H)) {
 		waveform = WfGL16
 	}
 	s.Wait()
