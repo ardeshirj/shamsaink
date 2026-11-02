@@ -5,8 +5,8 @@ section 6). This file says what those are and how they may be used.
 
 ## What the brand is
 - **The names** ShamsaInk and FarsiEPUB.
-- **ShamsaInk's mark:** an eight-pointed star of two squares, one turned 45°, a smaller star inside, and a dot of five
-  squares at its centre; one file, in colour (`mark.svg`), which a grey screen shows in grey: the near-black star stays black and the saffron dot turns mid-grey.
+- **ShamsaInk's mark:** an eight-pointed star of two squares, one turned 45°, a smaller star inside, and four round
+  dots around a saffron one at its centre; one file, in colour (`mark.svg`), which a grey screen shows in grey: the near-black star stays black and the saffron dot turns mid-grey.
 - **FarsiEPUB's logo:** its star, with one saffron dot, and the wordmark "FarsiEPUB".
 - **Where they are here:** `reader/ui/templates/brand/` (`shamsaink.png`, `farsiepub.png`) and the opening screen that shows
   them, `reader/ui/templates/splash.html`.
