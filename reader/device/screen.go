@@ -55,7 +55,8 @@ type Screen struct {
 	W, H, line, y0 int
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
-	invert         bool // dark mode: every grey drawn is inverted on its way into the framebuffer (SetInvert)
+	tint           image.Rectangle // drawn red on a colour screen (SetTint): the battery when it is low
+	invert         bool            // dark mode: every grey drawn is inverted on its way into the framebuffer (SetInvert)
 }
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
@@ -96,6 +97,14 @@ func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
 // screen with a flash.
 func (s *Screen) SetInvert(on bool) { s.invert = on }
 
+// SetTint draws r of the screen in red from the next Show on, on a colour screen (a grey one ignores it): each ink grey
+// there becomes red, paper staying paper (white, or black in dark mode). The empty rectangle takes it off. For the
+// battery when it is low, so it follows every page, panel and refresh that covers the bar.
+func (s *Screen) SetTint(r image.Rectangle) { s.tint = r }
+
+// LowBattery is the share, in per cent, at which the battery in the bar turns red.
+const LowBattery = 15
+
 // Inverted says whether dark mode is on.
 func (s *Screen) Inverted() bool { return s.invert }
 
@@ -122,7 +131,19 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 			continue
 		}
 		row := unsafe.Slice((*uint32)(unsafe.Pointer(&s.mem[at])), len(src))
+		tinted := y >= s.tint.Min.Y && y < s.tint.Max.Y
 		for i, g := range src {
+			if tinted && r.Min.X+i >= s.tint.Min.X && r.Min.X+i < s.tint.Max.X {
+				ink := 255 - uint32(g) // 0 paper to 255 ink
+				paper := uint32(255)
+				if s.invert {
+					paper = 0
+				}
+				// from paper to red (#d62b2b), in the framebuffer's order: red, green, blue, transparency
+				ch := func(c uint32) uint32 { return (paper*(255-ink) + c*ink) / 255 }
+				row[i] = 0xff000000 | ch(0x2b)<<16 | ch(0x2b)<<8 | ch(0xd6)
+				continue
+			}
 			if s.invert {
 				g = ^g
 			}

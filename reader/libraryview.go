@@ -54,6 +54,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	ui.SetLanguage("en")
 	topBar := ui.TopBar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Menu: true}
 	var v *ui.List
+	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
 	// build lays out the library again for the view's choices, on its first page
 	build := func() {
@@ -84,6 +85,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			v.Close()
 		}
 		v = ui.NewLibrary(rows, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
+		setHead = func() {
+			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
+			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery)
+		}
+		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery)
 	}
 	build()
 	defer func() { v.Close() }()
@@ -118,7 +124,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	open := func(menu bool) {
 		langOpen = false
 		lv.MenuOn, lv.SortOn = menu, !menu
-		v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
+		setHead()
 		if menu {
 			panel = ui.DrawLibraryMenu(v.TopBarHeight(), true, rd.fonts, scr.W)
 		} else {
@@ -294,7 +300,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				}
 				held, bookPanel = -1, ""
 				panel, langOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false
-				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
+				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
 			}
@@ -307,7 +313,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case head == "topbar-light": // the Light panel under the top bar, the sun filled
 			if _, _, ok := rd.dev.Light(); ok {
 				lightOpen, topBar.LightOn = true, true
-				v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
+				setHead()
 				panel = rd.drawLight(v.TopBarHeight())
 				v.Draw(rd.over)
 				panel.Over(rd.over)
@@ -316,7 +322,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case head == "topbar-battery": // its level in a box under it, closed by the next tap (the panel's default)
 			box := v.HeadBox("topbar-battery")
 			topBar.BatteryOn = true
-			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W)) // the battery inverted while its level is open
+			setHead() // the battery inverted while its level is open
 			panel = ui.DrawBattery(topBar.Battery, v.TopBarHeight(), box, rd.fonts, scr.W)
 			v.Draw(rd.over)
 			panel.Over(rd.over)
@@ -345,4 +351,13 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+// tintBattery has the battery's box red on a colour screen when its level (per cent) is low, else back to ink.
+func tintBattery(scr *device.Screen, box image.Rectangle, level int) {
+	if level >= 0 && level <= device.LowBattery {
+		scr.SetTint(box)
+	} else {
+		scr.SetTint(image.Rectangle{})
+	}
 }

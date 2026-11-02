@@ -475,6 +475,7 @@ func (s *session) drawTopBar() {
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
 		Battery: s.dev.Battery(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
+	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery())
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
