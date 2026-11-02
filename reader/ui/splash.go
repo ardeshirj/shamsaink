@@ -14,7 +14,7 @@ import (
 	blitz "shamsainkengine"
 )
 
-// The opening screen (roadmap, "An opening screen"): shown when a book is not open within SplashAfter, so a quick
+// The opening screen (plan, "An opening screen"): shown when a book is not open within SplashAfter, so a quick
 // open goes straight to its page (the screen's flash would hold the page back ~0.4 s, and an opening up to 3 s is not worth a screen). Drawn once from
 // templates/splash.html and kept as a picture in DIR/cache (a new one whenever the template or the screen's size changes),
 // so showing it is a copy and a refresh, the ink moving while the book opens.

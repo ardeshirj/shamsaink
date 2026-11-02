@@ -92,5 +92,5 @@ where everything changes: waking (white, then the page), Clean screen, Dark mode
 never; the reader puts the Kobo to sleep as the power button does; the choices are `device.SleepMinutes`, held against the spec by a test) and **Dark
 mode** (the Light panel's button, filled when on: the driver inverts every grey it writes, so the page, bar and panels invert together; colour pictures and the splash do not).
 
-**Still to do** (roadmap group 6): the device-only rule
+**Still to do** (the plan, stage 6): the device-only rule
 as `requires:` on a control; a profile for the Kindle. The unbuilt screens are specified when they are built (above).

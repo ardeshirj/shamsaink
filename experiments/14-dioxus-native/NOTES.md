@@ -3,7 +3,7 @@ Run it: `sh experiments/14-dioxus-native/run.sh [N]` (Docker image `eink-rust`; 
 
 # Experiment 14: the menu as Go templates, or as Dioxus components
 
-2026-10-30. The question (roadmap, "The reader's panels"): should the panels stay Go `html/template`s drawn by Blitz, or
+2026-10-30. The question (plan, "The reader's panels"): should the panels stay Go `html/template`s drawn by Blitz, or
 become Dioxus components on Blitz through `dioxus-native-dom`? This is a spike that draws **today's menu both ways**
 and measures it. Mac only (Docker, native arm64 Linux), nothing on a device, nothing decided.
 

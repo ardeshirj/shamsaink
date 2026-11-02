@@ -160,7 +160,7 @@ not `LEAD_MS`), and nothing about it was noticed. Then `LEAD_MS` 150 and 450: at
 (the underline held back too long); "200 is fine, it is hard to tell difference in these ms". **`LEAD_MS` is 200 by
 default now.** (A reader playing its own sound has no such lead to guess: it takes the time from its player.)
 
-## Step 4: one EPUB file from `/mnt/us` (2026-10-25, `run-epub.sh`; the roadmap's stage 0)
+## Step 4: one EPUB file from `/mnt/us` (2026-10-25, `run-epub.sh`; the plan's stage 0)
 `blitz-engine` reads an EPUB file as it is now (`src/epub.rs`, `Epub`: the zip's central directory read once at
 open, each file read and inflated when Blitz asks; `miniz_oxide`, already in the tree through `png`). `blitz-open`
 takes either the folder or the `.epub`. **Pages identical** either way (Mac: every page's hash, three books).

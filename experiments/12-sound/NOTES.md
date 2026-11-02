@@ -1,4 +1,4 @@
-# Experiment 12: sound on the Kindle, over Bluetooth (roadmap, stage 4)
+# Experiment 12: sound on the Kindle, over Bluetooth (plan, stage 4)
 
 **Question:** can our narration play on the Kindle itself, so read-along needs no Mac (09) and no PocketBook? The
 Kindle Paperwhite 11th gen has no speaker: its sound goes to Bluetooth headphones only, as for Audible and VoiceView.
@@ -45,7 +45,7 @@ in the Kindle's own settings, *Buried Alive*'s chapter 1 played to them while 09
 
    go-mp3 always gives stereo (twice the work for this mono narration); Rust is still ~6× faster. **So decoding
    goes in the engine, in Rust** (symphonia, behind the C API): a narration file decoded just before it plays, fed to
-   `mplay` through a pipe, nothing stored. A point for the all-Rust question (roadmap, "Not decided").
+   `mplay` through a pipe, nothing stored. A point for the all-Rust question (plan, "Not decided").
 
 ## For the reader
 - Sound: `mplay` as it is, raw PCM from a file (a process per narration file, each started at its time on the

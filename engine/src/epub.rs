@@ -1,4 +1,4 @@
-//! An EPUB file read as it is, as a reader opens one (stage 0 of docs/roadmap.md): the zip's central directory read
+//! An EPUB file read as it is, as a reader opens one (stage 0 of docs/plan.md): the zip's central directory read
 //! once at open, then each file read and inflated when Blitz asks for it. One open file instead of one open per file
 //! of the book, which matters on the Kindle's FUSE storage (09). Stored and deflated entries, the two methods EPUBs
 //! use; no zip64 (an EPUB over 4 GB).

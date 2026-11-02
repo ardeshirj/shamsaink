@@ -20,7 +20,7 @@ import (
 	blitz "shamsainkengine"
 )
 
-// Read-along (roadmap, stage 4): the book's narration played to the Bluetooth headphones paired in the Kindle's own
+// Read-along (plan, stage 4): the book's narration played to the Bluetooth headphones paired in the Kindle's own
 // settings, each word underlined when the narrator reaches it (experiments 09 and 12). The sound goes through
 // Amazon's mplay, from a raw file (it cannot play from a pipe: experiment 12): each part of the narration is decoded
 // by the engine into RAM while the one before it plays (in the background: a long part takes ~2 s), and its mplay

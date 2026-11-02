@@ -1,5 +1,5 @@
 #!/bin/sh
-# On the Kindle (step 4, the roadmap's stage 0): a book opened as one EPUB file, as a reader opens it, against the
+# On the Kindle (step 4, the plan's stage 0): a book opened as one EPUB file, as a reader opens it, against the
 # unpacked folder the bundle has had so far, both on /mnt/us (FUSE). blitz-open-par (08's), at 09's documents, for each:
 #   - a first open (no cache file), cold (the kernel's file cache dropped first: as after a while away) and warm;
 #   - a reopen from the book's cache file (written once), cold and warm.

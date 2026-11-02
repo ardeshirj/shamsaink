@@ -3,7 +3,7 @@
 **The question:** on a Kobo, more open than the Kindle, does read-along get sound without going around the device
 (12's NOTES.md: Amazon's player tool, a mixer only `mplay` wakes, headphones dropped after 20 minutes), and how much of
 the reader carries over? This decides stage 4's device and whether stage 5 (stand-alone, Plato's way) is worth it
-(`docs/roadmap.md`). The device: a **Kobo Libra Colour**, the one on hand (2026-10-29), firmware 4.x, so KOReader's plain `kobo`
+(`docs/plan.md`). The device: a **Kobo Libra Colour**, the one on hand (2026-10-29), firmware 4.x, so KOReader's plain `kobo`
 build (`kobov5` is for firmware 5.x, seen so far on Kobo-made Tolinos). The Clara BW was chosen first (2026-10-28:
 black and white, so plain grey text); the Libra Colour's colour filter greys the text a little, which matters for
 reading, not for this experiment's questions: the screen driver and the Bluetooth sound stack are the same MediaTek
@@ -88,7 +88,7 @@ as on the Kindle, made safe by a patch; and **without KOReader**, from NickelMen
 Step 4's sound is tried under both.
 
 2. **Inside KOReader: our page on its screen, and a safe exit.**
-   - `screen.go` and `touch.go` behind a small table per device (the roadmap's `reader/device`; the Kindle checked to
+   - `screen.go` and `touch.go` behind a small table per device (the plan's `reader/device`; the Kindle checked to
      still work, every page identical), the Libra Colour's entry: `hwtcon`'s ioctl, the page widened to 32 bits (and
      turned, if the framebuffer's portrait is not the panel's), its touch (screen x = touch y, screen y = 1680 −
      touch x: NOTES.md) and the page-turn buttons. The second core switched on by us for a chapter's layout and off

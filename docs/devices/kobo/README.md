@@ -9,7 +9,7 @@ and a dated log of what we found.
 ## Paths
 On the Kobo, everything of ours is under `/mnt/onboard/.adds/` (the storage the Mac sees over USB; a dot-folder, so
 Kobo does not import it). Nothing is written outside it except RAM (`/var/tmp`). `$D` = `/mnt/onboard/.adds/shamsaink`.
-Until the reader has a library (roadmap item 7), NickelMenu → ShamsaInk opens the newest EPUB under `books/` (one
+Until the reader has a library (plan, stage 7), NickelMenu → ShamsaInk opens the newest EPUB under `books/` (one
 folder down); over SSH, `sh launch.sh books/rtlbook/gandom.epub` opens a given one (add books with `scp` into a source
 folder). The logs are kept only while a book is open (`make kobo-reader-log`); Kobo's own system log is in RAM, gone
 with a reboot, and the kernel has no `pstore`.

@@ -1,7 +1,7 @@
 # ShamsaInk's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
 What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
-the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `roadmap.md`; the details and every
+the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `plan.md`; the details and every
 measurement in the experiments' NOTES.md files (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
 
 ## 1. The layers
@@ -143,7 +143,7 @@ flowchart LR
   text, between the edges most of the page's lines share, measured on the page's ink (the book's own margins count;
   0.2 ms a page on the Mac). Drawing it in each book's own font was tried: ~70 ms more a book opened on the Kindle.
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
-  API or moved, for no measured cost today. An idea for later (roadmap, "The reader's panels").
+  API or moved, for no measured cost today. An idea for later (the plan, "The reader's panels").
 
 ## 3. The engines
 
@@ -180,7 +180,7 @@ flowchart LR
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
 | sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |
-| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); read-along on the Kobo to come (roadmap, group 8) |
+| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); read-along on the Kobo to come (plan, stage 8) |
 | launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | the Kobo's (NickelMenu, `launch.sh`); the Kindle's later |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
 

@@ -13,8 +13,11 @@ Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, now `ardeshirj
 once it does something). A side project
 of the maintainer of **FarsiEPUB** (`~/Github/farsiepub`, private: a website converting Farsi PDFs to EPUB and a
 library of public-domain Farsi classics) and **rtlbook** (`~/Github/rtlbook`, public: the engine that makes those
-EPUBs). It overlaps with them but is neither: don't add it to their repos or docs, and ask before mentioning it
-anywhere public.
+EPUBs). It overlaps with them but is neither: don't add it to **rtlbook** or its docs, and ask before mentioning it
+anywhere public there. **Decided 2026-11-02: ShamsaInk is part of FarsiEPUB**, whose website will be its home for
+readers (what it is, install and uninstall, sleep screens to download, the narrated book to try); this repository keeps
+the code, the technical docs and the releases' packages. Still: change nothing in FarsiEPUB's repository (`~/Github/farsiepub`)
+unless asked, and its pages are the maintainer's to write and publish.
 
 ## The idea
 A light EPUB reader for **Linux e-ink devices**, not Android ones (the maintainer: Android e-ink uses much more battery
@@ -81,7 +84,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`).
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
   and FarsiEPUB and their marks, in `reader/ui/templates/brand/` and the opening screen). So code from KOReader, Plato
-  (AGPL-3.0) or FBInk (GPL) is read, never copied. The roadmap's "Licence and brand" has what a first release needs.
+  (AGPL-3.0) or FBInk (GPL) is read, never copied. The plan's "Licence and brand" has what a first release needs.
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
@@ -139,13 +142,13 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
   book: none of 08's opening or the cache), input, sound on the device.
 
-## Next steps: `docs/roadmap.md`
-Its **Progress** list (near the top) is one checklist, kept current: groups 0 to 4 done, in the order they were done
+## Next steps: `docs/plan.md`
+Its **Progress** list (near the top) is one checklist, kept current: stages 0 to 4 done, in the order they were done
 (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
 rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/design-system.md`, `docs/design/system.html`: layers,
 interface language, components, the dock); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
 and upstream (the maintainer posts from their GitHub account); (9) the Kindle, later. An item is checked once done
-and tried on a device and stays in its group; new work goes where it belongs as it is decided.
+and tried on a device and stays in its stage; new work goes where it belongs as it is decided.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.
@@ -164,7 +167,7 @@ and tried on a device and stays in its group; new work goes where it belongs as 
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
-  renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: roadmap, "The reader's panels".
+  renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.

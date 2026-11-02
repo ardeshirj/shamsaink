@@ -1,4 +1,4 @@
-# Experiment 11: a minimal reader (roadmap, stage 2)
+# Experiment 11: a minimal reader (plan, stage 2)
 
 Opened from KOReader's file manager: one EPUB, tap or swipe to turn pages, its place kept, reopened at once from its
 cache, a clean way back to KOReader. Built in steps; this file records each as it is done.
@@ -147,7 +147,7 @@ The first book in a new process costs ~0.55 s more than a later one, its code ru
 FUSE page by page, 09's finding); a later one costs only its chapter. Kept running between books: 36 MB resident.
 So of the ~1.2 s a cold first book costs, ~0.34 s is before `main` (reading the 21 MB program, Go's runtime and every
 package's init, go-toolkit's included), ~0.55 s first-run code: which part is go-toolkit's is the question for the
-all-Rust note in the roadmap (to measure apart: a Go program of the same size without go-toolkit).
+all-Rust note in the plan (to measure apart: a Go program of the same size without go-toolkit).
 
 **Leaving, timed** (the reader and the plugin log it): the reader keeps the place, closes the book and lets go of the
 touch screen in 10–14 ms; KOReader takes it back in 84–93 ms and redraws its screen with a flash in 397–413 ms
@@ -156,7 +156,7 @@ full refresh, as when it closes a book of its own, left as it is. The plugin's 0
 reader (for KOReader to redraw without the dialog) was dropped: the reader covers the screen anyway. Since: a book
 shown in 62–285 ms in a running reader, 451 ms the first in a new one, then the flash (~0.37 s).
 
-## Settings, in the reader (2026-10-27; roadmap stage 3)
+## Settings, in the reader (2026-10-27; plan, stage 3)
 A tap on the top strip opens a menu over the top of the page (`reader/menu.go`), drawn by the engine from HTML (its
 buttons found by id with `Find`, `reader/menu_test.go` draws it and checks them); only that strip is refreshed. Close
 the book, reset the settings, text size, line spacing, margins (− and +, the page laid out again at once, the place
