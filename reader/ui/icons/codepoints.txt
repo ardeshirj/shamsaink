@@ -28,3 +28,11 @@ circle e18a
 info e2ce
 trash e4a6
 circle-half e18c
+lightning e2de
+check e182
+battery-low e0c4
+battery-medium e0c6
+battery-high e0c2
+battery-full e0c0
+battery-charging e0ba
+battery-warning e0c8

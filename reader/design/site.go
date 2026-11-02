@@ -81,6 +81,7 @@ func Site(s *Spec, golden fs.FS, goldenURL string) ([]byte, error) {
 				}
 				ss.Images[c] = append(ss.Images[c], img)
 			}
+			sort.SliceStable(ss.Cases, func(i, j int) bool { return indexOf(sc.Order, ss.Cases[i]) < indexOf(sc.Order, ss.Cases[j]) })
 			sd.Screens = append(sd.Screens, ss)
 		}
 		data.Devices = append(data.Devices, sd)

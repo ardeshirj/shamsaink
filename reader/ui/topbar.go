@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	blitz "shamsainkengine"
+
+	"shamsainkreader/device"
 )
 
 // The bar: the same at the top of the library and over a book (docs/design/system.html).
@@ -18,9 +20,28 @@ type TopBar struct {
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
 	MenuOn            bool   // the same for the menu button
 	BatteryOn         bool   // the same for the battery: its level box is open, the battery drawn inverted
+	Charging, Full    bool   // on the charger: the charging glyph, charging or full
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
 	RTL               bool
+}
+
+// BatteryIcon is the battery's glyph (Phosphor's): charging, warning when low (15% or less, as the red is), else its level in
+// five steps.
+func (b TopBar) BatteryIcon() string {
+	switch {
+	case b.Charging || b.Full:
+		return "battery-charging"
+	case b.Battery <= device.LowBattery:
+		return "battery-warning"
+	case b.Battery < 35:
+		return "battery-low"
+	case b.Battery < 60:
+		return "battery-medium"
+	case b.Battery < 85:
+		return "battery-high"
+	}
+	return "battery-full"
 }
 
 // The top bar's data for templates/topbar.html: the top bar and the direction of the page.
@@ -64,21 +85,38 @@ func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 	return p
 }
 
-// DrawBattery draws the battery's level (percent) in a box hanging from the bar (under px high) under its battery,
+// BatteryState is what to say about the battery besides its level: the word's key for charging, fully charged (on the
+// charger) or low (15% or less, as the red is), else "" for nothing.
+func BatteryState(percent int, charging, full bool) string {
+	switch {
+	case full:
+		return "battery-full"
+	case charging:
+		return "battery-charging"
+	case percent >= 0 && percent <= device.LowBattery:
+		return "battery-low"
+	}
+	return ""
+}
+
+// DrawBattery draws the battery's level (percent) in a box hanging from the bar (under px high) under its battery, and below it its state (BatteryState's key, or ""),
 // whose box on the screen is batt (the bar's Box("topbar-battery")); w px wide. No buttons: any tap closes it.
-func DrawBattery(percent, under int, batt image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
+func DrawBattery(percent int, state string, under int, batt image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
 	const margin = 40 // the page's margin in drawPanelIn
 	d := struct {
-		Level  string
-		Margin template.CSS
+		Level, State string
+		Margin       template.CSS
 	}{Level: word("percent", num(percent))}
+	if state != "" {
+		d.State = word(state)
+	}
 	if RTL() { // the battery at the left: the box's left edge under its left edge
 		d.Margin = template.CSS(fmt.Sprintf("margin-left: %dpx; margin-right: auto;", max(batt.Min.X-margin, 0)))
 	} else {
 		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-batt.Max.X, 0)))
 	}
 	html, ids := render("battery.html", d)
-	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 300)
+	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 900) // tall: a page that ends before the box does cuts its bottom edge (Farsi, with a state line)
 	m.y0 += under
 	return m
 }

@@ -141,7 +141,45 @@ func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 // Usage writes one line to the log for the usage table (`make kobo-usage`): the event (start, stop, sleep, wake), the time
 // in UTC, the battery's charge (per cent), whether it is on a charger, and extra (" asleep=SECONDS" on a wake).
 func (d *Device) Usage(event, extra string) {
-	fmt.Printf("usage: %s at=%s battery=%d plugged=%t%s\n", event, time.Now().UTC().Format(time.RFC3339), d.Battery(), plugged(), extra)
+	fmt.Printf("usage: %s at=%s battery=%d plugged=%t%s%s\n", event, time.Now().UTC().Format(time.RFC3339), d.Battery(), plugged(), batteryDetail(), extra)
+}
+
+// batteryDetail is " mV=3694 mA=-159" (the voltage and the current, negative while discharging) from the power supply
+// that has them, so a drop in the charge can be told from the gauge's own correcting itself; "" if none says.
+func batteryDetail() string {
+	caps, _ := filepath.Glob("/sys/class/power_supply/*/capacity") // the battery's own supply, not the charger's
+	read := func(name string) (int, bool) {
+		for _, c := range caps {
+			if b, err := os.ReadFile(filepath.Join(filepath.Dir(c), name)); err == nil {
+				if n, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil {
+					return n, true
+				}
+			}
+		}
+		return 0, false
+	}
+	out := ""
+	if v, ok := read("voltage_now"); ok { // µV
+		out += fmt.Sprintf(" mV=%d", v/1000)
+	}
+	if c, ok := read("current_now"); ok {
+		out += fmt.Sprintf(" mA=%d", c/1000)
+	}
+	return out
+}
+
+// Charging says whether the battery is charging; Full whether it is on the charger and full.
+func (d *Device) Charging() bool { return batteryIs("Charging") }
+func (d *Device) Full() bool     { return batteryIs("Full") }
+
+func batteryIs(status string) bool {
+	files, _ := filepath.Glob("/sys/class/power_supply/*/capacity")
+	for _, f := range files {
+		if b, err := os.ReadFile(filepath.Join(filepath.Dir(f), "status")); err == nil {
+			return strings.TrimSpace(string(b)) == status
+		}
+	}
+	return false
 }
 
 // Battery is the battery's charge in per cent, from the kernel's power supplies (the first that has one); -1 if none

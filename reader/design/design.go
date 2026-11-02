@@ -149,6 +149,7 @@ type Screen struct {
 	Internal  []string  `yaml:"internal"` // ids the template registers that are not controls
 	Dismiss   string    `yaml:"dismiss"`  // how it is left for what is under it
 	Buttons   string    `yaml:"buttons"`  // its map of the page buttons (spec/buttons.yaml)
+	Order     []string  `yaml:"order"`    // the order its renders are shown in on the page (their cases); those not listed follow by name
 	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
 }
 

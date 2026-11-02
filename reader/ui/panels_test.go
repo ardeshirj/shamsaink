@@ -62,7 +62,7 @@ func TestPanels(t *testing.T) {
 		SetLanguage(code)
 		b := DrawTopBar(TopBar{Start: "arrow-left", Title: "Title", Time: "8:48", Battery: 82, Menu: true}, fonts, w)
 		batt := b.Box("topbar-battery")
-		lvl := DrawBattery(82, b.Rect().Dy(), batt, fonts, w)
+		lvl := DrawBattery(82, "", b.Rect().Dy(), batt, fonts, w)
 		img := image.NewGray(image.Rect(0, 0, w, 400))
 		for i := range img.Pix {
 			img.Pix[i] = 255

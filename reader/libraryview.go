@@ -52,7 +52,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	set := loadSettings(rd.dir)
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
-	topBar := ui.TopBar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Menu: true}
+	topBar := ui.TopBar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
 	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
@@ -87,9 +87,9 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		v = ui.NewLibrary(rows, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 		setHead = func() {
 			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
-			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery)
+			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 		}
-		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery)
+		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 	}
 	build()
 	defer func() { v.Close() }()
@@ -323,7 +323,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			box := v.HeadBox("topbar-battery")
 			topBar.BatteryOn = true
 			setHead() // the battery inverted while its level is open
-			panel = ui.DrawBattery(topBar.Battery, v.TopBarHeight(), box, rd.fonts, scr.W)
+			panel = ui.DrawBattery(topBar.Battery, ui.BatteryState(topBar.Battery, topBar.Charging, topBar.Full), v.TopBarHeight(), box, rd.fonts, scr.W)
 			v.Draw(rd.over)
 			panel.Over(rd.over)
 			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
@@ -353,9 +353,9 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	return "", nil
 }
 
-// tintBattery has the battery's box red on a colour screen when its level (per cent) is low, else back to ink.
-func tintBattery(scr *device.Screen, box image.Rectangle, level int) {
-	if level >= 0 && level <= device.LowBattery {
+// tintBattery has the battery's box red on a colour screen when its level (per cent) is low and it is not on the charger, else back to ink.
+func tintBattery(scr *device.Screen, box image.Rectangle, level int, onCharger bool) {
+	if !onCharger && level >= 0 && level <= device.LowBattery {
 		scr.SetTint(box)
 	} else {
 		scr.SetTint(image.Rectangle{})

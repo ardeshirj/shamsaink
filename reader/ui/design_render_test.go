@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
 	"image/png"
 	"os"
@@ -17,6 +18,7 @@ import (
 	blitz "shamsainkengine"
 
 	"shamsainkreader/design"
+	"shamsainkreader/device"
 	"shamsainkreader/library"
 )
 
@@ -116,10 +118,34 @@ var designRenders = map[string][]renderCase{
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
 	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
-	"topbar": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"topbar": {{"battery-full", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 100, Menu: true, RTL: RTL()}, f, w))
+	}}, {"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
+	}}, {"battery-medium", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 50, Menu: true, RTL: RTL()}, f, w))
+	}}, {"battery-low", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 25, Menu: true, RTL: RTL()}, f, w))
+	}}, {"battery-warning", enFa, func(f *blitz.Fonts, w, h int) rendered { // red on a colour screen (Screen.SetTint): the colour picture is that
+		p := DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 12, Menu: true, RTL: RTL()}, f, w)
+		r := pr(p)
+		r.rgba = image.NewRGBA(r.img.Rect)
+		box := p.Box("topbar-battery")
+		for y := r.img.Rect.Min.Y; y < r.img.Rect.Max.Y; y++ {
+			for x := r.img.Rect.Min.X; x < r.img.Rect.Max.X; x++ {
+				g := r.img.GrayAt(x, y).Y
+				cr, cg, cb := g, g, g
+				if image.Pt(x, y).In(box) {
+					cr, cg, cb = device.TintRGB(g, false)
+				}
+				r.rgba.SetRGBA(x, y, color.RGBA{cr, cg, cb, 255})
+			}
+		}
+		return r
+	}}, {"battery-charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, Menu: true, BatteryOn: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
 	}}},
 	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
@@ -148,7 +174,13 @@ var designRenders = map[string][]renderCase{
 		return rendered{img: screenOf(w, h, cv.Draw), boxes: cv.Boxes(), placement: "screen"}
 	}}},
 	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawBattery(82, barHeight(f, w), batteryBox(f, w), f, w))
+		return pr(DrawBattery(82, "", barHeight(f, w), batteryBox(f, w), f, w))
+	}}, {"charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawBattery(45, BatteryState(45, true, false), barHeight(f, w), batteryBox(f, w), f, w))
+	}}, {"full", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawBattery(100, BatteryState(100, false, true), barHeight(f, w), batteryBox(f, w), f, w))
+	}}, {"low", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawBattery(12, BatteryState(12, false, false), barHeight(f, w), batteryBox(f, w), f, w))
 	}}},
 	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), false, f, w)) }},
 		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), true, f, w)) }}},

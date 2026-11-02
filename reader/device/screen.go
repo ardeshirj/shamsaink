@@ -102,6 +102,18 @@ func (s *Screen) SetInvert(on bool) { s.invert = on }
 // battery when it is low, so it follows every page, panel and refresh that covers the bar.
 func (s *Screen) SetTint(r image.Rectangle) { s.tint = r }
 
+// TintRGB is the colour of a grey g (0 ink, 255 paper) inside the tint: from paper (white, or black in dark mode) to red
+// (#d62b2b) by how much ink it has. The same for the screen and for the design's renders.
+func TintRGB(g uint8, dark bool) (r, gr, b uint8) {
+	ink := 255 - uint32(g)
+	paper := uint32(255)
+	if dark {
+		paper = 0
+	}
+	ch := func(c uint32) uint8 { return uint8((paper*(255-ink) + c*ink) / 255) }
+	return ch(0xd6), ch(0x2b), ch(0x2b)
+}
+
 // LowBattery is the share, in per cent, at which the battery in the bar turns red.
 const LowBattery = 15
 
@@ -135,14 +147,8 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 		tinted := y >= s.tint.Min.Y && y < s.tint.Max.Y
 		for i, g := range src {
 			if tinted && r.Min.X+i >= s.tint.Min.X && r.Min.X+i < s.tint.Max.X {
-				ink := 255 - uint32(g) // 0 paper to 255 ink
-				paper := uint32(255)
-				if s.invert {
-					paper = 0
-				}
-				// from paper to red (#d62b2b), in the framebuffer's order: red, green, blue, transparency
-				ch := func(c uint32) uint32 { return (paper*(255-ink) + c*ink) / 255 }
-				row[i] = 0xff000000 | ch(0x2b)<<16 | ch(0x2b)<<8 | ch(0xd6)
+				r, gr, b := TintRGB(g, s.invert)
+				row[i] = 0xff000000 | uint32(b)<<16 | uint32(gr)<<8 | uint32(r) // the bytes in memory: red, green, blue, transparency
 				continue
 			}
 			if s.invert {
