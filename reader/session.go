@@ -20,6 +20,7 @@ import (
 // between them (the next page drawn ahead, the next document laid out) is done while nothing is waiting. Each event
 // goes to one handler.
 type session struct {
+	turns  int // pages turned since the screen was last cleaned (a flash: "Clean every N pages", or the Light panel's button)
 	rd     *reader
 	dev    *device.Device
 	scr    *device.Screen
@@ -351,10 +352,18 @@ func (s *session) forget() {
 }
 
 // show shows the page the reading is at, drawn already or now, the place kept and the next page to draw ahead.
-func (s *session) show() {
+func (s *session) show() { s.showAs(false) }
+
+// showAs is show, the page drawn with a flash (a cleaning, GC16) when clean.
+func (s *session) showAs(clean bool) {
 	s.shown = s.rd.pages.get(s.r, s.r.doc, s.r.at, s.r.page())
 	s.rd.pages.touch(s.shown)
-	s.showPage(device.WfREAGL, false)
+	if clean {
+		s.turns = 0
+		s.showPage(device.WfGC16, true)
+	} else {
+		s.showPage(device.WfREAGL, false)
+	}
 	s.r.keep(s.rest)
 	s.ahead = true
 }
@@ -388,9 +397,20 @@ func (s *session) turn(g device.Gesture) {
 		if s.rd.pages.find(s.r.doc, s.r.at) != nil {
 			how = "drawn before"
 		}
-		s.show()
+		// every Nth page turned is drawn with a flash, N the Light panel's "Clean every" for the screen's mode
+		s.turns++
+		clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
+		s.showAs(clean)
+		if clean {
+			how += ", cleaned"
+		}
 		fmt.Printf("document %d page %d: %s, %.0f ms\n", s.r.doc, s.r.at, how, ms(t))
 	}
+}
+
+// readingSettings draws the Reading settings panel under the bar, with the settings as they are.
+func (s *session) readingSettings() *ui.Panel {
+	return ui.DrawReadingSettings(ui.ReadingSettings{CleanLight: s.set.CleanLight, CleanDark: s.set.CleanDark}, s.topBar.Rect().Dy(), s.rd.fonts, s.scr.W)
 }
 
 // where says where the reader is, for the dock.
@@ -624,6 +644,19 @@ func (s *session) inMenu(g device.Gesture) {
 				id = ""
 			}
 		}
+		if s.kind == "menu" && id == "reading-settings" { // the Reading settings panel in the menu's place
+			old := s.list.Rect()
+			s.list, s.kind = s.readingSettings(), "reading-settings"
+			s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
+			return
+		}
+		if s.kind == "reading-settings" && s.set.stepClean(id) { // a stepper: the count of that mode
+			s.set.save(s.rd.dir)
+			old := s.list.Rect()
+			s.list = s.readingSettings()
+			s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
+			return
+		}
 		if id == "leave" {
 			s.rd.quit = true
 			s.leave()
@@ -636,6 +669,7 @@ func (s *session) inMenu(g device.Gesture) {
 				if id == "dark" { // the switch drawn as it is now
 					s.list = s.rd.drawLight(s.topBar.Rect().Dy())
 				}
+				s.turns = 0
 				s.showPage(device.WfGC16, true)
 			case changed:
 				old := s.list.Rect()
@@ -679,7 +713,7 @@ func (s *session) inMenu(g device.Gesture) {
 		}
 	case id == "topbar-menu":
 		s.kind = "menu"
-		s.list = ui.DrawLibraryMenu(s.topBar.Rect().Dy(), false, s.rd.fonts, s.scr.W) // Leave alone: the language is set in the library
+		s.list = ui.DrawMenu(s.topBar.Rect().Dy(), "reading", s.rd.fonts, s.scr.W) // Reading settings and Leave: the device's settings are the library's
 		s.drawTopBar()
 		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 	case strings.HasPrefix(id, "topbar-"): // the headphones, the title: nothing yet

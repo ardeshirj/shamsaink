@@ -153,8 +153,15 @@ var designRenders = map[string][]renderCase{
 	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
 	}}},
-	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, false, barHeight(f, w), f, w)) }},
-		{"dark", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w)) }}},
+	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawLight(40, 7, 10, false, barHeight(f, w), f, w))
+	}},
+		{"dark", en, func(f *blitz.Fonts, w, h int) rendered {
+			return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w))
+		}}},
+	"reading-settings": {{"settings", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawReadingSettings(ReadingSettings{CleanLight: 0, CleanDark: 5}, barHeight(f, w), f, w))
+	}}},
 	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) rendered {
@@ -182,18 +189,18 @@ var designRenders = map[string][]renderCase{
 	}}, {"low", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(12, BatteryState(12, false, false), barHeight(f, w), batteryBox(f, w), f, w))
 	}}},
-	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), false, f, w)) }},
-		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawLibraryMenu(barHeight(f, w), true, f, w)) }}},
+	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "reading", f, w)) }},
+		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "device", f, w)) }}},
 	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
 		lib := NewLibrary(designBooks(), libraryHead(f, w), f, w, h)
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
-	"library-language": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawLibraryLanguage(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true}, barHeight(f, w), f, w))
+	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
-			return pr(DrawLibraryLanguage(LibrarySettings{SleepMin: 0, HasButtons: true, ReverseButtons: true}, barHeight(f, w), f, w))
+			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 0, HasButtons: true, ReverseButtons: true}, barHeight(f, w), f, w))
 		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))

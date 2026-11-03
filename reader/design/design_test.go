@@ -196,7 +196,7 @@ func TestSleepChoices(t *testing.T) {
 	for _, m := range device.SleepMinutes {
 		want = append(want, strconv.Itoa(m))
 	}
-	for _, ctl := range s.Screens["library-language"].Controls {
+	for _, ctl := range s.Screens["library-settings"].Controls {
 		if ctl.ID == "sleep" {
 			if !slices.Equal(ctl.Values, want) {
 				t.Errorf("sleep: spec %v, device %v", ctl.Values, want)
@@ -204,7 +204,7 @@ func TestSleepChoices(t *testing.T) {
 			return
 		}
 	}
-	t.Error("library-language has no sleep")
+	t.Error("library-settings has no sleep")
 }
 
 // A control that requires what the device lacks is not expected of it: a device with no light is not asked to draw the sun

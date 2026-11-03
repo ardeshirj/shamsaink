@@ -1,10 +1,10 @@
 {{/* The library's menu (library.go): a narrow list hanging from the bar's menu button, at the bar's end, an entry a
-row with its icon: Reader language (opens its panel, DrawLibraryLanguage) and leaving to Kobo's interface. The whole row is the button; the last entry (Leave) is set apart by an
-ink line. Settings and About come as rows above it. DrawLibraryMenu crops the page to the list's box. */ -}}
+row with its icon: Settings in the library (opens its panel, DrawLibrarySettings), Reading settings in a book (DrawReadingSettings) and leaving to Kobo's interface. The whole row is the button; the last entry (Leave) is set apart by an
+ink line. Settings and About come as rows above it. DrawMenu crops the page to the list's box. */ -}}
 {{template "head" .Dir}}<style>
 ul.menu { list-style: none; margin: 0; margin-inline-start: auto; padding: 0; width: max-content; border: var(--line) solid var(--ink); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); }
 .menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
 .menu li + li { border-top: 2px solid #999; }
 .menu li:last-child:not(:first-child) { border-top: var(--line) solid var(--ink); }
 </style></head><body>
-<ul class="menu" id="menu-list">{{if .Settings}}<li id="{{id "language"}}">{{icon "gear"}}{{t "settings"}}</li>{{end}}<li id="{{id "leave"}}">{{icon "sign-out"}}{{t "leave"}}</li></ul></body></html>
+<ul class="menu" id="menu-list">{{if eq .Which "device"}}<li id="{{id "settings"}}">{{icon "gear"}}{{t "device-settings"}}</li>{{else if eq .Which "reading"}}<li id="{{id "reading-settings"}}">{{icon "gear"}}{{t "reading-settings"}}</li>{{end}}<li id="{{id "leave"}}">{{icon "sign-out"}}{{t "leave"}}</li></ul></body></html>

@@ -126,7 +126,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		lv.MenuOn, lv.SortOn = menu, !menu
 		setHead()
 		if menu {
-			panel = ui.DrawLibraryMenu(v.TopBarHeight(), true, rd.fonts, scr.W)
+			panel = ui.DrawMenu(v.TopBarHeight(), "device", rd.fonts, scr.W)
 		} else {
 			panel = ui.DrawLibrarySort(slices.Index(library.Sorts, view.SortOf(filter)), v.HeadHeight(), rd.fonts, scr.W)
 		}
@@ -160,7 +160,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the language panel in the menu's place
 	openLang := func() {
 		old := panel.Rect()
-		panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+		panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
@@ -244,7 +244,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
-			case id == "language" && lv.MenuOn && !langOpen:
+			case id == "settings" && lv.MenuOn && !langOpen:
 				langOpen = true
 				openLang()
 			case id == "lang-follow" && langOpen:
@@ -252,7 +252,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				set.save(rd.dir)
 				build() // the head drawn with the menu button still on
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
 			case id == "buttons-reverse" && langOpen:
@@ -260,7 +260,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				set.save(rd.dir)
 				rd.dev.SetReverseButtons(set.ReverseButtons)
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's rows only
 			case (id == "sleep-dec" || id == "sleep-inc") && langOpen:
@@ -268,7 +268,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				set.save(rd.dir)
 				rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
 				v.Draw(rd.over)
-				panel = ui.DrawLibraryLanguage(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+				panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's row only
 			case strings.HasPrefix(id, "sort-"):

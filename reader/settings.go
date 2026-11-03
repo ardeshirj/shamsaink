@@ -34,6 +34,10 @@ type settings struct {
 	Dark bool `json:"dark,omitempty"`
 	// The page buttons swapped (the lower goes back): off by default, the lower button forward.
 	ReverseButtons bool `json:"reverse_buttons,omitempty"`
+	// Clean the screen (a full refresh with its flash) every this many page turns, one count for light mode (none at first)
+	// and one for dark, where ghosting shows most (0: never). A choice of cleanSteps, set in the Reading settings.
+	CleanLight int `json:"clean_light"`
+	CleanDark  int `json:"clean_dark"`
 	// The front light (light.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
@@ -43,7 +47,7 @@ type settings struct {
 // defaults are the settings before any is set (the environment's, else the reader's own).
 func defaults() *settings {
 	f := func(s string) float32 { v, _ := strconv.ParseFloat(s, 32); return float32(v) }
-	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin), LeadMs: atoi(leadMs), SleepMin: int(device.DefaultSleepAfter / time.Minute)}
+	return &settings{FontSize: f(fontSize), LineHeight: f(lineHeight), Margin: atoi(margin), LeadMs: atoi(leadMs), SleepMin: int(device.DefaultSleepAfter / time.Minute), CleanDark: 5}
 }
 
 func loadSettings(dir string) *settings {
@@ -111,6 +115,45 @@ func nextSleep(cur int, longer bool) int {
 		i--
 	}
 	return device.SleepMinutes[max(0, min(i, len(device.SleepMinutes)-1))]
+}
+
+// cleanSteps are the page counts "Clean every" steps through (0: off).
+var cleanSteps = []int{0, 3, 5, 10, 20}
+
+// cleanEvery is how many page turns come between cleanings now, by the screen's mode (0: never).
+func (s *settings) cleanEvery() int {
+	if s.Dark {
+		return s.CleanDark
+	}
+	return s.CleanLight
+}
+
+// stepClean applies a Reading settings stepper's button (clean-light-dec, clean-light-inc, clean-dark-dec, clean-dark-inc):
+// that mode's count to the next or the previous of cleanSteps; false for any other id.
+func (s *settings) stepClean(id string) bool {
+	var p *int
+	switch {
+	case strings.HasPrefix(id, "clean-light-"):
+		p = &s.CleanLight
+	case strings.HasPrefix(id, "clean-dark-"):
+		p = &s.CleanDark
+	default:
+		return false
+	}
+	if !strings.HasSuffix(id, "-dec") && !strings.HasSuffix(id, "-inc") {
+		return false
+	}
+	i := slices.Index(cleanSteps, *p)
+	if i < 0 {
+		i = 0
+	}
+	if strings.HasSuffix(id, "-inc") {
+		i++
+	} else {
+		i--
+	}
+	*p = cleanSteps[max(0, min(i, len(cleanSteps)-1))]
+	return true
 }
 
 // settingsView is what the settings panel shows for set on dev.

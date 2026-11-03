@@ -1,7 +1,8 @@
 {{/* The Light panel (DrawLight; docs/design/system.html): hanging under the bar, opened by
 its sun, in the library and in a book. The light's level (a small sun for less, a large one for more) and its warmth (the
 sun for cooler, the moon for warmer) as sliders, and a button that cleans the
-screen (a full refresh, with its flash). Any tap off it closes it. */ -}}
+screen (a full refresh, with its flash). How often the page turns clean it on their own is a setting
+(Reading settings, in a book's menu). Any tap off it closes it. */ -}}
 {{template "head" ""}}</head><body>
 {{template "slider" slide (t "light") "light" "" .LevelShare "sun" "sun" true}}
 {{template "slider" slide (t "warmth") "warmth" "" .WarmthShare "sun" "moon" false}}

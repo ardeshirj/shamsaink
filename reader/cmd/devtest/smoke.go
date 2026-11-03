@@ -338,7 +338,7 @@ func smoke(name string) bool {
 	if scr, err = d.screen(); err != nil {
 		return fail("the screen read", err)
 	}
-	for _, id := range []string{"language", "leave"} {
+	for _, id := range []string{"settings", "leave"} {
 		b, _ := box(menu, id)
 		n := scr.dark(b)
 		step(n >= 20, "ink at the menu's "+id, fmt.Sprintf("%d dark pixels at %v", n, b))

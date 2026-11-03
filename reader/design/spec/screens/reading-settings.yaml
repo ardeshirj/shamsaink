@@ -1,0 +1,12 @@
+name: reading-settings
+layer: panel
+templates: [reading-settings.html]
+buttons: ring
+status: built
+purpose: "Reading settings, in a book, in the menu's place: what acts on reading and does not need the page showing behind it (the Text sheet in the dock does). Now: the screen cleaned on its own (the automatic Clean screen: a full refresh, with its flash) every N page turns, light mode and dark apart. A tap applies it at once."
+enter: [{gesture: tap, control: reading-settings, from: menu}]
+controls:
+  - {id: clean-light, component: stepper, action: act, does: "page turns between cleanings of the screen in light mode, or never", values: ["0", "3", "5", "10", "20"]}
+  - {id: clean-dark, component: stepper, action: act, does: "page turns between cleanings of the screen in dark mode, or never (5 at first)", values: ["0", "3", "5", "10", "20"]}
+dismiss: tap-outside
+words: [clean-auto, in-light-mode, in-dark-mode, every-pages, never]

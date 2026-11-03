@@ -117,7 +117,7 @@ func TestPanels(t *testing.T) {
 		lib := NewLibrary(books, LibraryHead(topBar, v, fonts, w), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		lib.Draw(img)
-		p, under := DrawLibraryMenu(lib.TopBarHeight(), true, fonts, w), lib.TopBarHeight()
+		p, under := DrawMenu(lib.TopBarHeight(), "device", fonts, w), lib.TopBarHeight()
 		if v.SortOn {
 			under = lib.HeadHeight()
 			p = DrawLibrarySort(1, under, fonts, w)
@@ -177,10 +177,10 @@ func TestPanels(t *testing.T) {
 			for _, follow := range []bool{true, false} {
 				img := image.NewGray(image.Rect(0, 0, w, h))
 				lib.Draw(img)
-				p := DrawLibraryLanguage(LibrarySettings{Follow: follow, SleepMin: 10, HasButtons: true}, lib.TopBarHeight(), fonts, w)
+				p := DrawLibrarySettings(LibrarySettings{Follow: follow, SleepMin: 10, HasButtons: true}, lib.TopBarHeight(), fonts, w)
 				p.Over(img)
-				save(fmt.Sprintf("library-language-%s-follow%v", code, follow), img)
-				save(fmt.Sprintf("library-language-%s-follow%v-panel", code, follow), p.img)
+				save(fmt.Sprintf("library-settings-%s-follow%v", code, follow), img)
+				save(fmt.Sprintf("library-settings-%s-follow%v-panel", code, follow), p.img)
 				r, ok := p.buttons["lang-follow"]
 				if !ok || r.Empty() || !r.In(p.img.Bounds()) {
 					t.Errorf("%s: switch %v (found %v)", code, r, ok)
@@ -193,24 +193,27 @@ func TestPanels(t *testing.T) {
 			}
 			img := image.NewGray(image.Rect(0, 0, w, h))
 			lib.Draw(img)
-			m := DrawLibraryMenu(lib.TopBarHeight(), true, fonts, w)
+			m := DrawMenu(lib.TopBarHeight(), "device", fonts, w)
 			m.Over(img)
 			save("library-menu-"+code, img)
 			save("library-menu-"+code+"-panel", m.img)
-			for _, id := range []string{"language", "leave"} {
+			for _, id := range []string{"settings", "leave"} {
 				if r, ok := m.buttons[id]; !ok || r.Empty() || !r.In(m.img.Bounds()) {
 					t.Errorf("%s: menu entry %s: %v (found %v)", code, id, r, ok)
 				}
 			}
-			if m.buttons["language"].Max.Y > m.buttons["leave"].Min.Y {
+			if m.buttons["settings"].Max.Y > m.buttons["leave"].Min.Y {
 				t.Errorf("%s: Settings is not above Leave", code)
 			}
 			lib.Close()
 		}
-		// a book's menu, in the book's language: Leave alone, no Settings
-		bm := DrawLibraryMenu(160, false, fonts, w)
-		if _, ok := bm.buttons["language"]; ok {
+		// a book's menu, in the book's language: Reading settings above Leave, no Settings
+		bm := DrawMenu(160, "reading", fonts, w)
+		if _, ok := bm.buttons["settings"]; ok {
 			t.Errorf("%s: a book's menu has Settings", code)
+		}
+		if _, ok := bm.buttons["reading-settings"]; !ok {
+			t.Errorf("%s: a book's menu has no Reading settings", code)
 		}
 		if _, ok := bm.buttons["leave"]; !ok {
 			t.Errorf("%s: a book's menu has no Leave", code)
@@ -393,7 +396,7 @@ func TestPanelEdges(t *testing.T) {
 		}(),
 		"highlight-menu": DrawHighlightMenu(false, true, fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
-		"library-menu": DrawLibraryMenu(160, true, fonts, w), "book-menu": DrawLibraryMenu(160, false, fonts, w),
+		"library-menu": DrawMenu(160, "device", fonts, w), "book-menu": DrawMenu(160, "reading", fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w), "library-book-menu": DrawBookMenu(false, true, fonts, w),
 		"library-book-remove": DrawBookRemove("A title", false, fonts, w)} {
 		for id, r := range m.buttons {

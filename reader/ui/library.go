@@ -136,14 +136,16 @@ func segmentsOf(prefix string, names, labels []string, on int) []button {
 	return bs
 }
 
-// DrawLibraryMenu draws the library's menu: a narrow list hanging from the bar's menu button, directly under the bar
-// (under px from the top), at the bar's end (the left when the interface is right to left, in a Farsi book): Settings (language,
-// only with settings: the library's, never a book's) and leave to Kobo's interface (leave), a row an entry.
-func DrawLibraryMenu(under int, settings bool, fonts *blitz.Fonts, w int) *Panel {
+// DrawMenu draws the bar's menu: a narrow list hanging from the bar's menu button, directly under the bar (under px from
+// the top), at the bar's end (the left when the interface is right to left, in a Farsi book): the settings that suit
+// where it is, named by which, and leave to Kobo's interface (leave), a row an entry. In the library which is "device":
+// Settings (the button settings, DrawLibrarySettings); in a book "reading": Reading settings (reading-settings,
+// DrawReadingSettings).
+func DrawMenu(under int, which string, fonts *blitz.Fonts, w int) *Panel {
 	d := struct {
-		Dir      string
-		Settings bool
-	}{"ltr", settings}
+		Dir   string
+		Which string
+	}{"ltr", which}
 	if RTL() {
 		d.Dir = "rtl"
 	}
@@ -153,7 +155,7 @@ func DrawLibraryMenu(under int, settings bool, fonts *blitz.Fonts, w int) *Panel
 	return m
 }
 
-// LibrarySettings is what the settings panel shows: the interface follows the book's language, the sleep timeout in
+// LibrarySettings is what the Settings panel shows: the interface follows the book's language, the sleep timeout in
 // minutes (0: never), whether the device has page buttons, and whether they are reversed.
 type LibrarySettings struct {
 	Follow         bool
@@ -162,16 +164,16 @@ type LibrarySettings struct {
 	ReverseButtons bool
 }
 
-// DrawLibraryLanguage draws the settings panel, directly under the bar (under px from the top), in place of the menu it
+// DrawLibrarySettings draws the Settings panel, directly under the bar (under px from the top), in place of the menu it
 // was opened from: no title, rows with the setting's name at the start and its switch or stepper at the far end:
 // "Follow book language" (the button lang-follow), "Sleep after" (sleep-dec and sleep-inc), and on a device with page
 // buttons "Reverse page buttons" (buttons-reverse).
-func DrawLibraryLanguage(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
+func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
 	sleep := word("never")
 	if st.SleepMin > 0 {
 		sleep = word("min", num(st.SleepMin))
 	}
-	html, ids := render("library-language.html", struct {
+	html, ids := render("library-settings.html", struct {
 		LibrarySettings
 		Sleep string
 	}{st, sleep})
@@ -264,4 +266,24 @@ func DrawBookRemove(title string, rtl bool, fonts *blitz.Fonts, w int) *Panel {
 	}
 	html, ids := render("library-book-remove.html", d)
 	return drawPanelIn(html, ids, "book-remove-box", fonts, w, 900)
+}
+
+// ReadingSettings is what the Reading settings panel shows: how many page turns come between cleanings of the screen
+// (a flash), in light mode and in dark (0: off).
+type ReadingSettings struct{ CleanLight, CleanDark int }
+
+// DrawReadingSettings draws the Reading settings panel, directly under the bar (under px from the top), in place of the
+// menu it was opened from, inside a book: the screen cleaned every so many pages, light mode and dark apart, each a stepper
+// (clean-light-dec, clean-light-inc, clean-dark-dec, clean-dark-inc).
+func DrawReadingSettings(st ReadingSettings, under int, fonts *blitz.Fonts, w int) *Panel {
+	every := func(n int) string {
+		if n <= 0 {
+			return word("never")
+		}
+		return word("every-pages", num(n))
+	}
+	html, ids := render("reading-settings.html", struct{ Light, Dark string }{every(st.CleanLight), every(st.CleanDark)})
+	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
+	m.y0 = under
+	return m
 }

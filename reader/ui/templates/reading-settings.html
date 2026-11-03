@@ -1,0 +1,12 @@
+{{/* The Reading settings panel (DrawReadingSettings; docs/design/system.html), under the bar, opened from a book's menu in the
+menu's place: no title, the settings that act on reading (the Text sheet in the dock is for what needs the page showing
+behind it). Now: how many page turns come between cleanings of the screen, a flash that clears the ghosting, light mode and
+dark apart (dark shows ghosting most). Its header names it as the automatic version of the Light panel's Clean screen button. A tap applies it at once. */ -}}
+{{template "head" ""}}<style>
+/* the value is a phrase ("Every 5 pages"), wider than the steppers' usual column */
+div.set { grid-template-columns: 1fr 2.4em 10em 2.4em; }
+div.set > .v { white-space: nowrap; }
+</style></head><body>
+<div class="slider"><div class="sname"><span>{{t "clean-auto"}}</span></div></div>
+<div class="set">{{template "stepper" step (t "in-light-mode") "clean-light" .Light}}</div>
+<div class="set">{{template "stepper" step (t "in-dark-mode") "clean-dark" .Dark}}</div></body></html>

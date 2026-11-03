@@ -3,9 +3,11 @@ layer: panel
 templates: [library-menu.html]
 buttons: ring
 status: built
-purpose: "A narrow list hanging from the bar's menu button. In a book only Leave; in the library Settings above it."
+purpose: "A narrow list hanging from the bar's menu button: Leave to Kobo's interface, with Settings above it in the library and Reading settings above it in a book."
 enter: [{gesture: tap, control: topbar-menu, from: topbar}, {gesture: tap, control: topbar-menu, from: library}]
 controls:
-  - {id: language, component: menu-item, action: replace, to: library-language, when: "in the library"}
+  - {id: settings, component: menu-item, action: replace, to: library-settings, when: "in the library"}
+  - {id: reading-settings, component: menu-item, action: replace, to: reading-settings, when: "in a book"}
   - {id: leave, component: menu-item, action: act, does: "leaves to Kobo's interface"}
 dismiss: tap-outside
+words: [device-settings, reading-settings, leave]
