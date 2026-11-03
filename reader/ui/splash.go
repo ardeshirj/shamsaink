@@ -46,20 +46,21 @@ func Loading(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
 }
 
 // The logos, in brand/, from FarsiEPUB's brand folder, in colour, one set for every screen (our Blitz draws no SVG): ShamsaInk's
-// mark from brand/shamsaink/mark.svg (rsvg-convert -w 240 -h 240 -b white), FarsiEPUB's logo from brand/farsiepub/logo.svg
-// (rsvg-convert -h 60 -b white). A grey screen shows them in grey, as the engine draws them; a colour screen has each put
+// mark from brand/shamsaink/mark.svg (rsvg-convert -w 240 -h 240 -b white), for the Loading screen, and the stacked logo
+// (the mark, the name and "by FarsiEPUB") from brand/shamsaink/logo-stack.svg (rsvg-convert -w 400 -b white), for the
+// opening screen. A grey screen shows them in grey, as the engine draws them; a colour screen has each put
 // over the box of the image with its id in the page, in its colours.
-var colourLogos = []struct{ id, file string }{{"mark", "templates/brand/shamsaink.png"}, {"by-logo", "templates/brand/farsiepub.png"}}
+var colourLogos = []struct{ id, file string }{{"mark", "templates/brand/shamsaink.png"}, {"logo", "templates/brand/shamsaink-stack.png"}}
 
 func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
 	// the logos (colourLogos), read by the engine as files beside the page
 	mark, _ := files.ReadFile("templates/brand/shamsaink.png")
-	logo, _ := files.ReadFile("templates/brand/farsiepub.png")
+	stack, _ := files.ReadFile("templates/brand/shamsaink-stack.png")
 	html, _ := render(name+".html", splashData{Top: h * 3 / 10})
 	sum := fnv.New32a()
 	sum.Write([]byte(html))
 	sum.Write(mark)
-	sum.Write(logo)
+	sum.Write(stack)
 	grey := filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-%08x.gray", name, w, h, sum.Sum32()))
 	rgbaPath := filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-%08x.rgba", name, w, h, sum.Sum32()))
 	img := image.NewGray(image.Rect(0, 0, w, h))
@@ -84,8 +85,8 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Openi
 		switch path {
 		case "brand/shamsaink.png":
 			return mark, nil
-		case "brand/farsiepub.png":
-			return logo, nil
+		case "brand/shamsaink-stack.png":
+			return stack, nil
 		}
 		return rest(path)
 	}

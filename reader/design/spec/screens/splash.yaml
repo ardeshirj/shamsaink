@@ -3,8 +3,8 @@ layer: screen
 templates: [splash.html]
 buttons: none
 status: built
-purpose: "The opening screen, at once when the reader starts (before the shelf is scanned) and while a book opens: ShamsaInk's mark, the name and FarsiEPUB's logo. In colour on a colour screen, else grey; a quick open goes straight to the page."
+purpose: "The opening screen, at once when the reader starts (before the shelf is scanned) and while a book opens: ShamsaInk's stacked logo from FarsiEPUB's brand (the mark, the name, and the words by FarsiEPUB under it, no second logo). In colour on a colour screen, else grey; a quick open goes straight to the page."
 enter: [{gesture: app-start}, {gesture: slow-open, from: library}]
 controls: []
 dismiss: automatic
-words: [by]
+words: []

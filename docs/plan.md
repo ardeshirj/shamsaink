@@ -241,7 +241,7 @@ evening by the clock); *kashida* (Persian lines justified by stretching letters,
 to check first); *a dictionary* (for Farsi classics, Attar, Rumi, Bayhaqi, a gloss of old words; English too; an offline
 dictionary's licence, to find).
 
-**The opening screen** (built): ShamsaInk's mark, "by" FarsiEPUB's logo (`splash.html`, `ui/templates/brand/`), shown when a
+**The opening screen** (built): ShamsaInk's stacked logo (the mark, the name, "by FarsiEPUB" in words; FarsiEPUB's brand `logo-stack.svg`; `splash.html`, `ui/templates/brand/`), shown when a
 book takes over 0.3 s; drawn once (60 ms on the Kobo) and kept as a picture in the cache. Not Kobo's boot screen
 (Kobo's system files, undone by every update).
 

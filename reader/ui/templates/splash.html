@@ -1,16 +1,12 @@
-{{/* The opening screen, shown while a book opens (splash.go): ShamsaInk's mark (brand/shamsaink.png, from
-FarsiEPUB's brand/shamsaink/mark.svg, in colour, at the size drawn: our Blitz draws no SVG; a grey screen shows it grey, a colour
-one has the colour picture put over it, splash.go), the name,
-and whose it is (brand/farsiepub.png, from FarsiEPUB's brand/farsiepub/logo.svg at 60 px high). Top: the space
+{{/* The opening screen, shown while a book opens (splash.go): ShamsaInk's stacked logo for a title screen, which is the
+mark, the name close under it and "by FarsiEPUB" under that at half its size, all one picture (brand/shamsaink-stack.png,
+from FarsiEPUB's brand/shamsaink/logo-stack.svg at 400x435 px, in colour: our Blitz draws no SVG; a grey screen shows it
+grey, a colour one has the colour picture put over it, splash.go). Never drawn by hand (FarsiEPUB's brand README, "Credit:
+the product opens, FarsiEPUB closes"): words only for the credit, no FarsiEPUB logo, so no second star. Top: the space
 above it, px. */ -}}
 {{template "head" ""}}<style>
-html { font-size: 40px; }
 body { padding-top: {{.Top}}px; text-align: center; }
-.mark { display: block; margin: 0 auto 1.2em; }
-h1 { font-size: 2.4em; font-weight: normal; letter-spacing: 0.04em; margin: 0; }
-.by { display: flex; align-items: center; justify-content: center; gap: 0.4em; margin-top: 0.5em; font-size: 0.8em; color: #555; }
+.logo { display: block; margin: 0 auto; }
 </style></head><body>
-<img class="mark" id="mark" src="brand/shamsaink.png" width="240" height="240">
-<h1>ShamsaInk</h1>
-<div class="by"><span>{{t "by"}}</span><img id="by-logo" src="brand/farsiepub.png" alt="FarsiEPUB"></div>
+<img class="logo" id="logo" src="brand/shamsaink-stack.png" width="400" height="435">
 </body></html>

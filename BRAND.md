@@ -17,15 +17,15 @@ section 6). This file says what those are and how they may be used.
   surface seen at once, at least 32 px high with clear space (half the mark) round it. A large title surface (an opening screen,
   a splash, the one-screen read-along video) may stack it instead, centred: the mark, the name close under it, then "by FarsiEPUB"
   under the name, spaced as the signature spaces them (the by-line's capitals a quarter of the name's size under its baseline), with
-  no FarsiEPUB logo. The read-along video was made that way; `splash.html` does
-  not follow this yet. FarsiEPUB's own logo is not shown beside the product's.
-- **Where they are here:** `reader/ui/templates/brand/` (`shamsaink.png`, `farsiepub.png`) and the opening screen that shows
+  no FarsiEPUB logo. The read-along video was made that way, and so is `splash.html`
+  (brand/'s `logo-stack.svg`, one picture). FarsiEPUB's own logo is not shown beside the product's.
+- **Where they are here:** `reader/ui/templates/brand/` (`shamsaink.png`, the mark, for the loading screen; `shamsaink-stack.png`, the stacked credited logo) and the opening screen that shows
   them, `reader/ui/templates/splash.html`; and `docs/brand/` (`mark.svg`, `mark-dark.svg`, `shamsaink-logo-by.svg`,
   `shamsaink-logo-by-dark.svg`: copies of FarsiEPUB's files, for the README on a light or a dark page).
 
 Both are made from FarsiEPUB's brand files, the source of truth for the marks, their colours and their rules
 (`brand/` in FarsiEPUB's repository): the PNGs here are copies at the size drawn (`shamsaink.png` from `brand/shamsaink/mark.svg`,
-`farsiepub.png` from `brand/farsiepub/logo.svg`; the commands are in `reader/ui/splash.go`). On a colour screen (the Kobo Libra
+`shamsaink-stack.png` from `brand/shamsaink/logo-stack.svg`; the commands are in `reader/ui/splash.go`). On a colour screen (the Kobo Libra
 Colour) the opening screen shows them in colour, on every other it is grey.
 
 ## Using them
