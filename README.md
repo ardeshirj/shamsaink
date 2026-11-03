@@ -1,8 +1,6 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/brand/shamsaink-logo-by-dark.svg">
-    <img src="docs/brand/shamsaink-logo-by.svg" alt="ShamsaInk, by FarsiEPUB" height="72">
-  </picture>
+  <img src="docs/brand/shamsaink-logo-by.svg#gh-light-mode-only" alt="ShamsaInk, by FarsiEPUB" height="72">
+  <img src="docs/brand/shamsaink-logo-by-dark.svg#gh-dark-mode-only" alt="ShamsaInk, by FarsiEPUB" height="72">
 </p>
 
 <p align="center">
@@ -25,10 +23,7 @@ page of *Buried Alive*, chapter 2, in all three:
 <th width="33%"><a href="https://github.com/baskerville/plato">Plato</a></th>
 <th width="33%"><a href="https://github.com/koreader/koreader">KOReader</a></th>
 <th width="33%">
-<picture>
-<source media="(prefers-color-scheme: dark)" srcset="docs/brand/mark-dark.svg">
-<img src="docs/brand/mark.svg" alt="" height="22" align="absmiddle">
-</picture>
+<img src="docs/brand/mark.svg#gh-light-mode-only" alt="" height="22" align="absmiddle"><img src="docs/brand/mark-dark.svg#gh-dark-mode-only" alt="" height="22" align="absmiddle">
 ShamsaInk
 </th>
 </tr>
