@@ -94,3 +94,23 @@ Newest last; each a dated entry, what was seen and how sure we are. The bugs abo
   Cause not known; the Kobo's driver, with our restarts as the likely trigger. **Not pursued until it happens again.**
   If it does: keep the kernel log running ~90 s past Nickel's start with a `sync` a second, and reboot between e2e
   runs.
+- **2026-11-02, Nickel stuck on a black screen after Plato, when our launcher had removed its FIFO.** Plato was run
+  (to see how it draws Farsi) by a copy of its `plato.sh` while our launcher had Nickel stopped. When Plato ended, its
+  own script started Nickel with KOReader's `nickel.sh`: Nickel ran (busy, 90 s of CPU) with a black frame buffer
+  and SSH answering, so the Kobo looked frozen. Cause, seen: `/tmp/nickel-hardware-status` was a plain file, not the
+  FIFO that our `start_nickel` makes (`mkfifo`; our stop removes it), which `nickel.sh` does not recreate; Nickel also
+  had the ALSA audio sink instead of the MediaTek Bluetooth one. Fixed by stopping that Nickel and starting it with
+  `sh launch.sh nickel` (a FIFO again, the right sink, Wi-Fi back, the home screen in under a minute). Plato started
+  later from NickelMenu, with the FIFO in place, ended with a working Nickel (but still the ALSA sink until the next
+  start through our launcher or a reboot). **So: after our launcher has stopped Nickel, start it with `launch.sh
+  nickel`, never by ending Plato or KOReader's `nickel.sh`.** Plato from NickelMenu says it is running on a Kobo Libra
+  Colour (the "Touch A/B" of the first run was my launching it with no Nickel to take its environment from). **Plato
+  and Farsi, checked the same day, measured on grabs of the framebuffer of *Buried Alive*, chapter 2 («حاجی مراد»):** in
+  Plato the last line of a paragraph spans x 120–643 of a column of 116–1146: flush left, so the paragraph is laid out
+  left to right; in KOReader it spans 620–1215 of 45–1219: flush right, as right-to-left text should be. The word order
+  inside Plato's lines looked right when read against the EPUB's `sec002.xhtml`, but that was read by eye, which is
+  unreliable for right-to-left text: only the alignment is measured. So what looked reversed in Plato may be the
+  paragraph's direction (left to right) and not, or not only, the words.
+  KOReader draws this page
+  in the right direction; its lines are broken differently from a browser's (experiment 03's NOTES: 42–67% of line starts
+  as Chromium's on rtlbook's books, against 94–100% for our layout).

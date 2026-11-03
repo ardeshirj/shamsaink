@@ -168,11 +168,18 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
   renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
+- **The experiments' full code is behind the `experiments-archive` tag** (2026-11-02, pushed), for when main is trimmed
+  to their notes: never move a pushed tag, tag each later experiment as `experiment/NN-name` just before trimming it, rerun old
+  experiments from the tag, not main (`experiments/README.md`).
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.
 - **Never commit books, book text or pages drawn from them** (`.gitignore` covers `book/`, `out/`, `*.epub`,
   `index.html`). Test books are copied in locally; FarsiEPUB's are under `~/Github/farsiepub/pipeline/.work/books/`.
+  **Exceptions (the maintainer, 2026-11-02), pages of *Buried Alive*, a public-domain book published on FarsiEPUB:**
+  the README's comparison of Plato, KOReader and ShamsaInk in `docs/images/` (one page of chapter 2), and the
+  read-along video's thumbnail there (a frame of «داود گوژپشت»). The browser demo's pages and voice (`docs/demo/data/`) stay
+  out of git. No other page.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
 - **The Kindle:** set up as in `docs/devices/kindle/setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
