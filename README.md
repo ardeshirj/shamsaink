@@ -15,7 +15,7 @@ overlooked on these devices: Plato sets its paragraphs reversed, and KOReader br
 browser and has declined narrated books.
 
 ShamsaInk is the reader built for it. It sets right-to-left books the way a browser sets them, and reads a narrated book
-along with you, underlining each word as it is spoken. Blitz, a CSS engine written in Rust, draws the pages, so books and
+along with you\*, underlining each word as it is spoken. Blitz, a CSS engine written in Rust, draws the pages, so books and
 the reader's own panels are ordinary HTML and CSS, and each device sits behind one small interface, which makes it easy
 to adapt to new devices. Here is the same page of *Buried Alive*, chapter 2, in all three:
 
@@ -42,7 +42,7 @@ Chromium's in 42–67% of lines. It has declined narrated books
 </td>
 <td valign="top">
 <img src="docs/images/compare-shamsaink.png" alt="ShamsaInk: the paragraph is right to left, with the last line at the right edge">
-<br>Sets Farsi right to left, matches Chromium's line starts in 88–99% of lines on the same books, and reads along,
+<br>Sets Farsi right to left, matches Chromium's line starts in 88–99% of lines on the same books, and reads along*,
 with each narrated word underlined as it is spoken (see the video below).
 </td>
 </tr>
@@ -61,6 +61,8 @@ We want Farsi and other right-to-left books done properly, and books that read a
   <sub><b>Read-along, with sound</b> (YouTube; emulated in the browser, the same pages and timings as on the Kobo)</sub>
 </p>
 -->
+
+<sub>\* Kindle: the underlining works, but sound is unofficial and unreliable. Kobo is the first target.</sub>
 
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
 books are what it was made to read well, but it opens any EPUB.
