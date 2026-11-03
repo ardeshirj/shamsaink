@@ -11,12 +11,13 @@
 
 ## Why it exists
 An e-ink screen is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
-overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently
-from a browser and has declined narrated books. ShamsaInk is the reader built for it, on modern technology: Blitz, a CSS
-engine written in Rust, draws the pages, so books and the reader's own panels are ordinary HTML and CSS, and each device
-sits behind one small interface, which makes it easy to adapt to new devices and new needs. It sets right-to-left books the
-way a browser sets them, and reads a narrated book along with you, underlining each word as it is spoken. Here is the same
-page of *Buried Alive*, chapter 2, in all three:
+overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently from a
+browser and has declined narrated books.
+
+ShamsaInk is the reader built for it. It sets right-to-left books the way a browser sets them, and reads a narrated book
+along with you, underlining each word as it is spoken. Blitz, a CSS engine written in Rust, draws the pages, so books and
+the reader's own panels are ordinary HTML and CSS, and each device sits behind one small interface, which makes it easy
+to adapt to new devices. Here is the same page of *Buried Alive*, chapter 2, in all three:
 
 <table>
 <tr>
