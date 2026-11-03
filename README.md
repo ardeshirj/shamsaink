@@ -6,17 +6,19 @@
 </p>
 
 <p align="center">
-  A light EPUB reader for Linux e-ink devices.<br>
-  Right-to-left books done properly, Farsi first, and narration that follows word by word.
+  A light EPUB reader for e-ink, built on open source tools such as
+  <a href="https://github.com/readium/go-toolkit">Readium</a> and <a href="https://github.com/DioxusLabs/blitz">Blitz</a>.<br>
+  Right-to-left books done properly, Farsi first.
 </p>
 
 ## Why it exists
-An e-ink screen is a good way to read: easy on the eyes, free of notifications and distraction, and a charge lasts a
-long time. A light program made for the Linux devices that have one (Kobo, Kindle, PocketBook, reMarkable) keeps it
-that way.
-
-For Farsi, the reading experience is missing. The same page of *Buried Alive*, chapter 2, in the two open source readers
-for Kobo and in ShamsaInk:
+An e-ink screen is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
+overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently
+from a browser and has declined narrated books. ShamsaInk is the reader built for it, on modern technology: Blitz, a CSS
+engine written in Rust, draws the pages, so books and the reader's own panels are ordinary HTML and CSS, and each device
+sits behind one small interface, which makes it easy to adapt to new devices and new needs. It sets right-to-left books the
+way a browser sets them, and reads a narrated book along with you, underlining each word as it is spoken. Here is the same
+page of *Buried Alive*, chapter 2, in all three:
 
 <table>
 <tr>
@@ -33,18 +35,19 @@ ShamsaInk
 <tr>
 <td valign="top">
 <img src="docs/images/compare-plato.png" alt="Plato: the last line of the paragraph sits at the left edge">
-<br>Lays Farsi paragraphs out left to right, although the language reads right to left: the last line sits at the
-left.
+<br>Although the book declares its direction, right to left, it sets Farsi paragraphs reversed, left to right: the last
+line sits at the left.
 </td>
 <td valign="top">
 <img src="docs/images/compare-koreader.png" alt="KOReader: the paragraph is right to left, with lines broken differently from a browser">
-<br>Gets the direction right, but breaks lines differently from a browser (on rtlbook's books its line starts match
-Chromium's in 42–67% of lines, ours in 94–100%). It has declined narrated books.
+<br>Gets the direction right, but breaks lines differently from a browser: on rtlbook's books its line starts match
+Chromium's in 42–67% of lines. It has declined narrated books
+(<a href="https://github.com/koreader/koreader/issues/9548">#9548</a>).
 </td>
 <td valign="top">
 <img src="docs/images/compare-shamsaink.png" alt="ShamsaInk: the paragraph is right to left, with the last line at the right edge">
-<br>Sets Farsi right to left, breaks lines almost always as a browser does, and reads along, with
-each narrated word underlined as it is spoken (see the video below).
+<br>Sets Farsi right to left, matches Chromium's line starts in 88–99% of lines on the same books, and reads along,
+with each narrated word underlined as it is spoken (see the video below).
 </td>
 </tr>
 </table>
@@ -66,23 +69,30 @@ We want Farsi and other right-to-left books done properly, and books that read a
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
 books are what it was made to read well, but it opens any EPUB.
 
-## Built on existing tools
-We do not rewrite what open source already does well. We build on two projects:
-- [Blitz](https://github.com/DioxusLabs/blitz), a modern CSS engine in Rust (with Parley for text), draws the pages.
-  We add the pagination, a glyph layer and a cache that make it as fast as KOReader's engine on these devices.
-- [Readium's Go toolkit](https://github.com/readium/go-toolkit) reads the EPUB for us. It opens the book and provides
-  what the pages are drawn from and around: the chapters in reading order, the table of contents, reading positions
-  and the narration timings that tell us which word is being spoken.
+## Why build on existing tools
+Why rewrite what modern open source already does well? We tried, and measured:
+
+- **A browser's CSS is years of work.** Our own layout matched a browser on four Farsi books, but only for
+  the CSS those books use: on a real English book it got 89 pages right where [Blitz](https://github.com/DioxusLabs/blitz)
+  got 383 of 388. Blitz is a modern CSS engine in Rust built on Firefox's style engine, with Parley for text. So Blitz
+  draws the pages, and we add the pagination, a glyph layer and a cache that make it as fast as KOReader's engine on
+  these devices.
+- **EPUB is a large standard.** [Readium's Go toolkit](https://github.com/readium/go-toolkit) reads it for us: the chapters in
+  reading order, the table of contents, reading positions and the narration timings that tell us which word is being
+  spoken. It is an established open source toolkit, and it runs on these devices as it is.
+- **Farsi shaping and line breaking come with Blitz.** Right-to-left text, joined letters and a browser's line breaks are
+  the hard part, and a browser engine already does them: on Farsi books Blitz's line starts match Chromium's in 88–99% of lines.
+- **One small program, no GPL.** None of it is GPL. The alternative we measured, KOReader's engine, is GPL-2.0 and would
+  bring a C toolchain for every device; here it is one static binary for all of them.
 
 What is our own is the screen (refresh, touch, sleep, sound) and the reader on top: the panels, the settings, the
-library and the read-along. [`docs/design.md`](docs/design.md) has how the parts fit and what each one depends on;
-the experiments' notes in [`experiments/`](experiments/) have the measurements behind the choices.
+library and the read-along. [`docs/design.md`](docs/design.md) has how the parts fit and what each one depends on.
 
 ## What it does
 - **Reads right-to-left text properly.** Farsi shaping and direction come out right, with no `dir` attributes needed in
   the book. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
-- **Is light.** One static binary, at the speed of KOReader's engine (crengine) on these devices, and a cache file per
-  book so a reopened book comes up quickly.
+- **Is quick.** One static binary, as fast as KOReader's engine (crengine) on these devices, and a cache file per book
+  so a reopened book comes up quickly.
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones
   and marks each word as it is spoken.
 - **Is made for the screen.** Page turns without flashes, partial refreshes for panels and menus, a dark mode, the
@@ -96,7 +106,6 @@ the experiments' notes in [`experiments/`](experiments/) have the measurements b
 | [`engine/`](engine/) | The page engine: Rust, Blitz with our layout, glyph drawing and the cache |
 | [`bench/`](bench/) | One interface over the engines, to compare them on the same books |
 | [`docs/`](docs/) | [Design](docs/design.md), the [design system](docs/design-system.md), the devices ([Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/plan.md) |
-| [`experiments/`](experiments/) | The fourteen experiments that led here, each with its own `NOTES.md` |
 | [`e2e/`](e2e/) | End-to-end scenarios run on a device |
 
 ## Trying it
@@ -104,6 +113,9 @@ Not for everyone yet. Putting it on a Kobo means building it, installing NickelM
 stops Kobo's own interface while a book is open. [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md) is the
 developer's guide, written for the maintainer's device. An installer and a guide for readers are part of the first
 beta ([`ROADMAP.md`](ROADMAP.md)).
+
+Tried so far on a **Kobo Libra Colour** (firmware 4.46) and a jailbroken Kindle Paperwhite (11th generation) inside
+KOReader; nothing else yet.
 
 ## About the name
 A *shamsa* (شمسه, "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript,
