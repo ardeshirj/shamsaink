@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShamsaInk read-along, in the browser</title>
+<style>
+  @font-face { font-family: Vazirmatn; src: url(fonts/Vazirmatn-Regular.ttf); }
+  :root { --paper: #fff; --ink: #16181d; --muted: #5b616b; --bg: #ececec; --line: #c4c7cc; --bar: #000; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14161a; --ink: #e8e9ec; --muted: #9ba1aa; --line: #343942; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.15rem; margin: 0 0 4px; }
+  p.note { color: var(--muted); margin: 0 0 16px; font-size: .95rem; }
+  /* A generic e-reader body, after the Libra's proportions (screen 106 mm wide in a body 144.6 mm wide, the grip side
+     on the right with the two page buttons); no maker's name or logo. Paddings are % of the body's width. */
+  .kobo { --sw: min(520px, calc((100vh - 250px) * 1264 / 1680), 80vw); position: relative; margin: 0 auto;
+          width: calc(var(--sw) / .733); padding: 6.9% 18.7% 6.9% 7.6%; border-radius: 5% / 4.5%;
+          background: linear-gradient(160deg, #3a3d43, #24262a); box-shadow: 0 12px 32px rgba(0,0,0,.28), inset 0 0 0 2px rgba(255,255,255,.07); }
+  .device { position: relative; width: 100%; background: var(--paper); aspect-ratio: 1264 / 1680; cursor: pointer;
+            box-shadow: 0 0 0 2px #0e0f11; }
+  .device img { display: block; width: 100%; height: 100%; }
+  .pbtn { position: absolute; right: 7.2%; width: 5.2%; height: 11.5%; border-radius: 40% / 8%; cursor: pointer;
+          background: linear-gradient(90deg, #4a4d54, #3a3d43); box-shadow: 0 1px 2px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.08); }
+  .pbtn:hover { background: linear-gradient(90deg, #5a5e66, #494c53); }
+  .pbtn:active { transform: translateY(1px); }
+  .pbtn.up { top: calc(50% - 13.5%); } .pbtn.down { top: calc(50% + 2%); }
+  .bar { position: absolute; background: var(--bar); pointer-events: none; }
+  .controls { display: flex; gap: 12px; align-items: center; justify-content: center; margin: 16px 0 8px; flex-wrap: wrap; }
+  button { font: inherit; padding: 8px 20px; border: 2px solid var(--ink); background: transparent; color: var(--ink);
+           border-radius: 6px; cursor: pointer; }
+  button:hover { background: var(--ink); color: var(--bg); }
+  #status { color: var(--muted); font-size: .9rem; min-width: 12ch; }
+  footer { color: var(--muted); font-size: .85rem; margin-top: 20px; }
+  footer a { color: inherit; }
+  .veil { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(255,255,255,.55); }
+  .veil[hidden] { display: none; }
+  .veil span { background: var(--paper); color: #16181d; border: 2px solid #16181d; border-radius: 6px; padding: 10px 22px; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ShamsaInk read-along, in the browser</h1>
+  <p class="note">An emulation: the pages are drawn by ShamsaInk's own engine, the word timings and the voice are the
+  book's, and the bar is placed as the reader places it on a Kobo. Press play, with the sound on. Tap a word to start
+  from it.</p>
+
+  <div class="kobo">
+    <div class="device" id="device">
+      <img id="page" alt="A page of the book" draggable="false">
+      <div id="bars"></div>
+      <div class="veil" id="veil"><span>▶ Play</span></div>
+    </div>
+    <div class="pbtn up" id="up" role="button" tabindex="0" aria-label="Previous page" title="Previous page"></div>
+    <div class="pbtn down" id="down" role="button" tabindex="0" aria-label="Next page" title="Next page"></div>
+  </div>
+
+  <div class="controls">
+    <button id="play">Play</button>
+    <button id="restart">From the start</button>
+    <button id="record" title="Plays it through once, with sound, and saves the device as a video (keep this tab in front)">Record video</button>
+    <span id="status" aria-live="polite"></span>
+  </div>
+
+  <footer>
+    On the device the same bar is drawn with a fast partial refresh (A2) while the voice plays through Bluetooth
+    headphones. <a href="https://github.com/ardeshirj/shamsaink">ShamsaInk</a>, part of FarsiEPUB.
+  </footer>
+</main>
+
+<script>
+"use strict";
+(async () => {
+  const data = await (await fetch("data/words.json")).json();
+  const W = data.width, H = data.height;
+  const $ = id => document.getElementById(id);
+  const pageImg = $("page"), bars = $("bars"), veil = $("veil"), playBtn = $("play"), status = $("status");
+
+  const pages = data.pages.map(src => { const i = new Image(); i.src = "data/" + src; return i; });
+  const audios = data.parts.map(p => { const a = new Audio("data/" + p.audio); a.preload = "auto"; return a; });
+  const words = data.words;
+  let part = 0, shownPage = -1, cur = -1, playing = false, raf = 0, marked = null, recording = false;
+
+  function showPage(n) { if (n !== shownPage) { shownPage = n; pageImg.src = pages[n].src; } }
+  function mark(w) {
+    marked = w;
+    bars.textContent = "";
+    if (!w) return;
+    for (const [x0, , x1, y1] of w.Boxes) {           // under each box, from 3 to 9 px: session.underline on the device
+      const d = document.createElement("div");
+      d.className = "bar";
+      d.style.cssText = `left:${x0 / W * 100}%;width:${(x1 - x0) / W * 100}%;top:${(y1 + 3) / H * 100}%;height:${6 / H * 100}%`;
+      bars.appendChild(d);
+    }
+  }
+  function wordAt(p, t) {                              // the word of part p being spoken at time t of its file
+    let lo = 0, hi = words.length - 1, hit = -1;
+    while (lo <= hi) {
+      const m = (lo + hi) >> 1, w = words[m];
+      if (w.Part < p || (w.Part === p && w.T1 <= t)) lo = m + 1;
+      else if (w.Part > p || w.T0 > t) hi = m - 1;
+      else { hit = m; break; }
+    }
+    return hit;
+  }
+  function seek(p, t) {
+    audios.forEach((a, i) => { if (i !== p) a.pause(); });
+    part = p;
+    const a = audios[p];
+    const set = () => { a.currentTime = t; };
+    a.readyState >= 1 ? set() : a.addEventListener("loadedmetadata", set, { once: true });
+    cur = -1;
+  }
+  function tick() {
+    const a = audios[part], t = a.currentTime;
+    const i = wordAt(part, t);
+    if (i >= 0 && i !== cur) { cur = i; showPage(words[i].Page); mark(words[i]); }
+    const end = data.parts[part].end;
+    if (a.ended || t >= end - 0.02) {
+      if (part + 1 < audios.length) { seek(part + 1, data.parts[part + 1].begin); audios[part].play(); }
+      else { finish(); return; }
+    }
+    status.textContent = `word ${Math.max(cur, 0) + 1} of ${words.length}`;
+    raf = requestAnimationFrame(tick);
+  }
+  function play() { playing = true; veil.hidden = true; playBtn.textContent = "Pause"; audios[part].play().then(() => { raf = requestAnimationFrame(tick); }); }
+  function pause() { playing = false; playBtn.textContent = "Play"; audios[part].pause(); cancelAnimationFrame(raf); }
+  function finish() {
+    pause(); status.textContent = "the end of the demo";
+    if (recording) { setTimeout(() => { stopRecording(); start(); }, 1500); return; }   // the last frame held a moment
+    start(); veil.hidden = false; veil.firstChild.textContent = "▶ Again";
+  }
+  function start() { seek(0, data.parts[0].begin); showPage(0); mark(null); }
+
+  playBtn.onclick = () => (playing ? pause() : play());
+  veil.onclick = () => play();
+  $("restart").onclick = () => { const was = playing; if (was) pause(); start(); play(); };
+  $("device").addEventListener("click", ev => {        // a tap on a word starts the narration from it
+    if (ev.target === veil || veil.contains(ev.target) && !veil.hidden) return;
+    const r = $("device").getBoundingClientRect();
+    const x = (ev.clientX - r.left) / r.width * W, y = (ev.clientY - r.top) / r.height * H;
+    const hit = words.findIndex(w => w.Page === shownPage && w.Boxes.some(([x0, y0, x1, y1]) => x >= x0 && x <= x1 && y >= y0 && y <= y1 + 10));
+    if (hit < 0) return;
+    const was = playing; if (was) { cancelAnimationFrame(raf); }
+    seek(words[hit].Part, words[hit].T0);
+    cur = -1; if (!playing) { showPage(words[hit].Page); mark(words[hit]); } else { audios[part].play().then(() => { raf = requestAnimationFrame(tick); }); }
+  });
+  function jump(n) {                                   // a page button: the narration from the page's first word
+    if (n < 0 || n >= pages.length) return;
+    const i = words.findIndex(w => w.Page === n);
+    if (i < 0) return;
+    cancelAnimationFrame(raf);
+    seek(words[i].Part, words[i].T0);
+    showPage(n); mark(words[i]);
+    if (playing) audios[part].play().then(() => { raf = requestAnimationFrame(tick); });
+  }
+  for (const [id, by] of [["up", -1], ["down", 1]]) {   // as on the Kobo: the lower goes forward, the upper back
+    const b = $(id);
+    b.onclick = () => jump(shownPage + by);
+    b.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); jump(shownPage + by); } };
+  }
+
+  // --- the device as a video: 1920 x 1080, a title card, the device with its brand panel, an end card; with the sound ---
+  const cv = document.createElement("canvas"); cv.width = 1920; cv.height = 1080;
+  const g = cv.getContext("2d");
+  // FarsiEPUB's brand rule (brand/overview.html, "How to credit FarsiEPUB"): the product is the main brand and FarsiEPUB its
+  // endorser, "by FarsiEPUB" under the name in one fixed asset; on a surface seen at once, as a video frame is, it sits at the
+  // foot, after the content, at least 32 px high. BRAND.md here.
+  const brand = { sig: new Image() };
+  brand.sig.src = "brand/shamsaink-logo-by.svg";
+  const BG = "#ececec", INK = "#1f1d1a", MUTED = "#5b616b", TEXT = "Vazirmatn, system-ui, -apple-system, Arial, sans-serif";
+  function body(x, y, w, h, r, fill) { g.beginPath(); g.roundRect(x, y, w, h, r); g.fillStyle = fill; g.fill(); }
+  function drawDevice(dx, dy, dh0) {
+    const dw = dh0 / 1.112, sw = dw * 0.737, sh = sw * H / W, dh = sh + 2 * 0.069 * dw;
+    const sx = dx + 0.076 * dw, sy = dy + 0.069 * dw;
+    g.save(); g.shadowColor = "rgba(0,0,0,.28)"; g.shadowBlur = 32; g.shadowOffsetY = 12;
+    const grad = g.createLinearGradient(dx, dy, dx + dw, dy + dh); grad.addColorStop(0, "#3a3d43"); grad.addColorStop(1, "#24262a");
+    body(dx, dy, dw, dh, dw * 0.05, grad); g.restore();
+    g.fillStyle = "#0e0f11"; g.fillRect(sx - 2, sy - 2, sw + 4, sh + 4);
+    g.fillStyle = "#fff"; g.fillRect(sx, sy, sw, sh);
+    if (shownPage >= 0 && pages[shownPage].complete) g.drawImage(pages[shownPage], sx, sy, sw, sh);
+    if (marked) {
+      g.fillStyle = "#000";
+      for (const [x0, , x1, y1] of marked.Boxes) g.fillRect(sx + x0 / W * sw, sy + (y1 + 3) / H * sh, (x1 - x0) / W * sw, 6 / H * sh);
+    }
+    for (const top of [0.5 - 0.135, 0.5 + 0.02]) {      // the page buttons
+      const bw = 0.052 * dw;
+      body(dx + dw - 0.072 * dw - bw, dy + top * dh, bw, 0.115 * dh, bw * 0.4, "#43464c");
+    }
+  }
+  function logo(img, cx, y, h) {                         // centred on cx, h high; returns its bottom
+    if (img.complete && img.naturalWidth) { const w = h * img.naturalWidth / img.naturalHeight; g.drawImage(img, cx - w / 2, y, w, h); }
+    return y + h;
+  }
+  function lines(cx, y, size, color, list, step) {
+    g.textAlign = "center"; g.textBaseline = "top"; g.font = `${size}px ${TEXT}`; g.fillStyle = color;
+    for (const t of list) { g.fillText(t, cx, y); y += step; }
+  }
+  function drawFrame() {                                 // the one screen of the video
+    g.fillStyle = BG; g.fillRect(0, 0, 1920, 1080);
+    drawDevice(170, 50, 980);
+    const cx = 1370;
+    lines(cx, 190, 64, INK, ["Read-along"], 76);
+    lines(cx, 290, 34, MUTED, ["The narrated word is underlined", "as it is spoken"], 48);
+    lines(cx, 560, 24, MUTED, ["Emulated in the browser: the pages, the timings", "and the voice are the Kobo's"], 34);
+    logo(brand.sig, cx, 880, 120);                       // the signature at the foot
+  }
+  let rec = null, recChunks = [], audioCtx = null, mix = null;
+  const recBtn = $("record");
+  function recLoop() { if (!recording) return; drawFrame(); requestAnimationFrame(recLoop); }
+  async function startRecording() {
+    if (!("MediaRecorder" in window) || !cv.captureStream) { status.textContent = "this browser cannot record: try Chrome"; return; }
+    if (playing) pause();
+    await Promise.all([brand.sig.decode(), document.fonts.load("30px Vazirmatn")]).catch(() => {});
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    await audioCtx.resume();
+    if (!mix) {                                          // each audio element joins the sound graph once
+      mix = audioCtx.createMediaStreamDestination();
+      audios.forEach(a => { const src = audioCtx.createMediaElementSource(a); src.connect(audioCtx.destination); src.connect(mix); });
+    }
+    const stream = cv.captureStream(30);
+    mix.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+    const mp4 = ["video/mp4;codecs=avc1.640028,mp4a.40.2", "video/mp4;codecs=avc1,mp4a.40.2", "video/mp4"];   // ?format=mp4
+    const webm = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+    const mime = (q.get("format") === "mp4" ? mp4 : webm).find(m => MediaRecorder.isTypeSupported(m));
+    if (!mime) { status.textContent = "this browser cannot record that format"; document.title = "unsupported"; recording = false; return; }
+    rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4000000, audioBitsPerSecond: 128000 });
+    recChunks = [];
+    rec.ondataavailable = ev => { if (ev.data.size) recChunks.push(ev.data); };
+    rec.onstop = async () => {
+      const type = rec.mimeType.split(";")[0], ext = type === "video/mp4" ? "mp4" : "webm";
+      const blob = new Blob(recChunks, { type });
+      if (q.has("upload")) {                           // for a run without a person: the file goes to the local server
+        await fetch("/upload?name=" + encodeURIComponent(q.get("upload") || "read-along." + ext), { method: "PUT", body: blob });
+        document.title = "uploaded"; status.textContent = "uploaded"; return;
+      }
+      const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "shamsaink-read-along." + ext; a.click();
+      status.textContent = "saved shamsaink-read-along." + ext; recBtn.disabled = false;
+    };
+    recording = true; recBtn.disabled = true; status.textContent = "recording… keep this tab in front";
+    start(); rec.start(1000); recLoop();
+    setTimeout(play, 600);                               // the first frame is in the file before the voice begins
+    if (q.get("limit")) setTimeout(stopRecording, Number(q.get("limit")) * 1000);   // a test: only the first seconds
+  }
+  function stopRecording() { recording = false; if (rec && rec.state !== "inactive") rec.stop(); }
+  recBtn.onclick = startRecording;
+  const q = new URLSearchParams(location.search);       // ?record=1&upload=NAME[&limit=SECONDS]: records by itself
+  start();
+  if (q.has("record")) startRecording();
+  if (q.has("still")) {                                 // ?still=1: the video's one screen, to look at
+    await Promise.all([brand.sig.decode(), document.fonts.load("30px Vazirmatn")]).catch(() => {});
+    showPage(0); mark(words[12]); drawFrame();
+    document.body.style.margin = "0"; document.body.replaceChildren(cv);
+  }
+})();
+</script>
+</body>
+</html>

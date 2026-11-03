@@ -2,8 +2,11 @@
 *.epub
 book/
 out/
+# The browser demo's pages and voice are the book's, made by reader/webdemo_test.go (docs/demo/)
+docs/demo/data/
 experiments/*/bench/
 index.html
+!docs/demo/index.html
 # Built or fetched
 bin/
 patched/
