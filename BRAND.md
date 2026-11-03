@@ -11,15 +11,17 @@ section 6). This file says what those are and how they may be used.
   "by FarsiEPUB" in words under the name, in one fixed file (`shamsaink-logo-by.svg`, `shamsaink-logo-by-dark.svg`), made
   by FarsiEPUB's `brand/make.py`. It is never redrawn, and FarsiEPUB's own logo (its star and wordmark) is not shown beside it.
 - **FarsiEPUB's logo:** its star, with one saffron dot, and the wordmark "FarsiEPUB".
-- **How FarsiEPUB is credited** (FarsiEPUB's `brand/overview.html`, "How to credit FarsiEPUB"): ShamsaInk is the main brand and
-  FarsiEPUB its endorser. On a surface people scroll (a README, a site) the credited logo is at the top; on a surface seen at
-  once (a card, a video frame) it is at the foot; at least 32 px high; where there is no room, the words "by FarsiEPUB" once.
-  The README and the demo's video follow this; the opening screen (`splash.html`) does not yet.
+- **How FarsiEPUB is credited** (FarsiEPUB's `brand/README.md`, "Credit: an endorsed brand"): ShamsaInk is the main brand and
+  FarsiEPUB its endorser, as "by FarsiEPUB" in words, at 50% of the name's size, in ink, once per surface. The signature
+  (`shamsaink-logo-by.svg`, never redrawn) is at the **top** of a surface people scroll (this README) and at the **foot** of a
+  surface seen at once, at least 32 px high with clear space (half the mark) round it. A large title surface (an opening screen,
+  a splash, the one-screen read-along video) may stack it instead, centred: the mark, the name close under it, then "by FarsiEPUB"
+  under the name, spaced as the signature spaces them (the by-line's capitals a quarter of the name's size under its baseline), with
+  no FarsiEPUB logo. The read-along video was made that way; `splash.html` does
+  not follow this yet. FarsiEPUB's own logo is not shown beside the product's.
 - **Where they are here:** `reader/ui/templates/brand/` (`shamsaink.png`, `farsiepub.png`) and the opening screen that shows
-  them, `reader/ui/templates/splash.html`; `docs/brand/` (`mark.svg`, `mark-dark.svg`, `shamsaink-logo-by.svg`,
-  `shamsaink-logo-by-dark.svg`: copies of FarsiEPUB's files, for the README on a light or a dark page); and `docs/demo/brand/`
-  (`mark.svg`, `shamsaink-logo-by.svg`: the same copies, so the browser demo can be hosted on its own and draws the logo into
-  its video).
+  them, `reader/ui/templates/splash.html`; and `docs/brand/` (`mark.svg`, `mark-dark.svg`, `shamsaink-logo-by.svg`,
+  `shamsaink-logo-by-dark.svg`: copies of FarsiEPUB's files, for the README on a light or a dark page).
 
 Both are made from FarsiEPUB's brand files, the source of truth for the marks, their colours and their rules
 (`brand/` in FarsiEPUB's repository): the PNGs here are copies at the size drawn (`shamsaink.png` from `brand/shamsaink/mark.svg`,

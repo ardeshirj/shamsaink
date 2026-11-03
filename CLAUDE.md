@@ -178,8 +178,7 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   `index.html`). Test books are copied in locally; FarsiEPUB's are under `~/Github/farsiepub/pipeline/.work/books/`.
   **Exceptions (the maintainer, 2026-11-02), pages of *Buried Alive*, a public-domain book published on FarsiEPUB:**
   the README's comparison of Plato, KOReader and ShamsaInk in `docs/images/` (one page of chapter 2), and the
-  read-along video's thumbnail there (a frame of «داود گوژپشت»). The browser demo's pages and voice (`docs/demo/data/`) stay
-  out of git. No other page.
+  read-along video's thumbnail there (a frame of «داود گوژپشت»). No other page.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
 - **The Kindle:** set up as in `docs/devices/kindle/setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
