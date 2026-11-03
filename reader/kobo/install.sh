@@ -13,11 +13,12 @@ if [ "$open" = yes ] && [ "$($R 'pidof mtkbtd >/dev/null && echo yes || echo no'
   echo "the reader is open and Bluetooth is on: leaving it would reboot the Kobo, so it is not restarted. Leave it yourself, then install again"
   exit 1
 fi
+KEEP=$(cd reader/out/fonts && echo *.ttf) # fonts no longer in the folder are removed from the device
 $R "mkdir -p $DIR/fonts $DIR/books $DIR/sleep"
 scp -q reader/out/shamsaink "$HOST:$DIR/shamsaink.new"
 scp -q reader/kobo/launch.sh "$HOST:$DIR/launch.sh.new"
 scp -q reader/out/fonts/* "$HOST:$DIR/"
-$R "cd $DIR && mv shamsaink.new shamsaink && mv launch.sh.new launch.sh && mv *.ttf fonts/ && rm -f cache/splash-*.gray"
+$R "cd $DIR && mv shamsaink.new shamsaink && mv launch.sh.new launch.sh && mv *.ttf fonts/ && (cd fonts && for f in *.ttf; do case \" $KEEP \" in *\" \$f \"*) ;; *) rm -f \$f;; esac; done) && rm -f cache/splash-*.gray"
 echo "reader and launcher copied to $HOST"
 if [ "$open" = yes ]; then
   echo "the reader was open: restarting it on the new build"

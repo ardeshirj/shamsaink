@@ -1,9 +1,9 @@
 {
  "placement": "screen",
  "boxes": {
-  "sort-added": [925, 449, 1221, 507],
-  "sort-author": [630, 449, 926, 507],
-  "sort-recent": [43, 449, 336, 507],
-  "sort-title": [335, 449, 631, 507]
+  "sort-added": [925, 465, 1221, 539],
+  "sort-author": [630, 465, 926, 539],
+  "sort-recent": [43, 465, 336, 539],
+  "sort-title": [335, 465, 631, 539]
  }
 }

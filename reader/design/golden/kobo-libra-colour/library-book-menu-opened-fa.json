@@ -1,9 +1,9 @@
 {
  "placement": "relative",
  "boxes": {
-  "book-again": [3, 100, 532, 199],
-  "book-details": [3, 199, 532, 298],
-  "book-finish": [3, 3, 532, 100],
-  "book-remove": [3, 298, 532, 398]
+  "book-again": [3, 93, 532, 185],
+  "book-details": [3, 185, 532, 277],
+  "book-finish": [3, 3, 532, 93],
+  "book-remove": [3, 277, 532, 370]
  }
 }

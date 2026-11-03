@@ -574,12 +574,16 @@ pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
     entries.sort_by_key(|e| e.file_name());
     for e in entries {
         let name = e.file_name().to_string_lossy().into_owned();
-        let generic = if name.contains("Mono") {
+        let generic = if name.starts_with("Parastoo") {
+            "serif+sans" // one family (no separate sans and serif designs): both generics, so it is one file, not two copies
+        } else if name.contains("Mono") {
             "monospace"
         } else if name.contains("Serif") {
             "serif"
         } else if name.contains("Sans") {
             "sans-serif"
+        } else if name.starts_with("Vazirmatn") {
+            "named" // the interface's font: found by its name (ui.css), in no generic family, so books never fall back to it
         } else {
             continue;
         };
@@ -599,6 +603,7 @@ fn font_context(fonts: &[(&str, Vec<u8>)]) -> Option<parley::FontContext> {
     for (generic, data) in fonts {
         let gs: &[G] = match *generic {
             "serif" => &[G::Serif],
+            "serif+sans" => &[G::Serif, G::SansSerif, G::SystemUi, G::UiSansSerif],
             "sans-serif" => &[G::SansSerif, G::SystemUi, G::UiSansSerif],
             "monospace" => &[G::Monospace, G::UiMonospace],
             _ => &[],

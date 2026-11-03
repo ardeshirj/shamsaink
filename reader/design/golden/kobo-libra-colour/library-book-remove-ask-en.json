@@ -1,7 +1,7 @@
 {
  "placement": "relative",
  "boxes": {
-  "book-remove-no": [272, 191, 425, 247],
-  "book-remove-yes": [35, 191, 252, 247]
+  "book-remove-no": [253, 236, 397, 308],
+  "book-remove-yes": [35, 236, 233, 308]
  }
 }

@@ -19,7 +19,7 @@ li .pct { position: absolute; top: 0.35em; inset-inline-end: 0; display: flex; a
 /* the share read as a short bar, filled from the row's start */
 li .pct .prog { display: flex; width: 3.5em; height: 0.4em; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 0.3em; }
 li .pct .prog i { display: block; height: 100%; background: var(--ink); }
-li .pct.when { font-family: "DejaVu Sans", sans-serif; font-size: 0.75em; color: #444; } /* the interface's words, in a Farsi row too */
+li .pct.when { font-family: Vazirmatn, "DejaVu Sans", sans-serif; font-size: 0.75em; color: #444; } /* the interface's words, in a Farsi row too */
 li .pct.tag { height: auto; top: 0.55em; font-size: 0.75em; line-height: 1.3; padding: 2px 0.4em 0; border: 2px solid var(--ink); border-radius: 0.3em; }
 </style></head><body><ul>
 {{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}"{{textlang .Title}}>
