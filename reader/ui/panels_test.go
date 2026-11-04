@@ -231,7 +231,7 @@ func TestPanels(t *testing.T) {
 		cv.Draw(img)
 		save("lang-"+code+"-contents", img)
 		cv.Close()
-		// a Farsi book's contents, in either language: its entries right to left, in Parastoo
+		// a Farsi book's contents, in either language: its entries right to left, in Vazirmatn
 		cv = NewContents([]Entry{{Title: "دیباچه"}, {Title: "بخش یکم: مرده‌خورها"}, {Title: "باران از صبح", Depth: 1}, {Title: "کوچهٔ خالی", Depth: 1},
 			{Title: "بخش دوم: سفر به ماه"}}, 2, true, fonts, w, h)
 		img = image.NewGray(image.Rect(0, 0, w, h))

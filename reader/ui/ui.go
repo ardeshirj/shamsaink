@@ -170,7 +170,8 @@ func render(name string, data any) (html string, ids []string) {
 }
 
 // textLang is the lang attribute for a piece of text that is not the interface's (a book's title, a chapter's): " lang=\"fa\""
-// when it is in the Arabic script, so it is set in Parastoo (ui.css), else nothing.
+// when it is in the Arabic script, so it is marked as Farsi (its direction and line breaking; the face is the interface's,
+// Vazirmatn, since 2026-11-04), else nothing.
 func textLang(s string) template.HTMLAttr {
 	for _, r := range s {
 		if unicode.Is(unicode.Arabic, r) {

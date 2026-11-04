@@ -9,14 +9,11 @@
   --gap: 0.5em;         /* between buttons side by side, and between rows of them */
 }
 /* end generated */
-/* The panels in Vazirmatn (Latin and Farsi alike: the interface's face), a book's own words (a title, a chapter's, a
-   library row marked lang="fa": textlang) in Parastoo, the book's face. Trial, 2026-11-02: the whole page when the
-   interface is in Farsi (its html's lang) is Vazirmatn too. By the
-   attribute, since the engine does not apply :lang(); fonts named, not generic families, whose first font depends on
-   the fonts folder. */
+/* Everything in the panels is Vazirmatn, Latin and Farsi alike, a book's own words too (a title, a chapter's, a library
+   row, marked lang="fa" by textlang): FarsiEPUB's brand rule, "where text is both (a book's title in a list), it is
+   interface" (2026-11-04; until then those were Parastoo). Parastoo is the page's face only. Fonts named, not generic
+   families, whose first font depends on the fonts folder. */
 html { font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
-[lang="fa"] { font-family: Parastoo, serif; }
-html[lang="fa"] { font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
 body { margin: 0; }
 p { margin: 0.3em 0; }
 
