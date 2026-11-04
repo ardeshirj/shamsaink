@@ -120,6 +120,7 @@ A *shamsa* (شمسه, "little sun") is the illuminated sunburst medallion on the
 the first thing a reader saw on opening a book. *Ink* is the illuminator's, and the screen's. The mark is an
 eight-pointed star with a saffron dot at its centre.
 
-## Licence
-The code is under the [Apache License 2.0](LICENSE) (notices in [`NOTICE`](NOTICE)). The names ShamsaInk and FarsiEPUB
-and their marks are not covered by it: [`BRAND.md`](BRAND.md) says how they may be used.
+## License
+The code is under the [Apache License 2.0](LICENSE); credits for what it builds on are in [NOTICE](NOTICE). The names
+ShamsaInk and FarsiEPUB and their logos are not part of the license: all rights reserved. ShamsaInk is by FarsiEPUB. Please
+don't use the names or logos for your own product or fork. [BRAND.md](BRAND.md) says how they may be used.
