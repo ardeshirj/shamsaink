@@ -80,8 +80,8 @@ Why rewrite what modern open source already does well? We tried, and measured:
   spoken. It is an established open source toolkit, and it runs on these devices as it is.
 - **Farsi shaping and line breaking come with Blitz.** Right-to-left text, joined letters and a browser's line breaks are
   the hard part, and a browser engine already does them: on Farsi books Blitz's line starts match Chromium's in 88–99% of lines.
-- **One small program, no GPL.** None of it is GPL. The alternative we measured, KOReader's engine, is GPL-2.0 and would
-  bring a C toolchain for every device; here it is one static binary for all of them.
+- **Modern and self-contained.** Rust and Go, with Blitz drawing the pages from ordinary HTML and CSS: one static
+  binary for all the devices, with nothing to install around it.
 
 What is our own is the screen (refresh, touch, sleep, sound) and the reader on top: the panels, the settings, the
 library and the read-along. [`docs/design.md`](docs/design.md) has how the parts fit and what each one depends on.
@@ -89,8 +89,8 @@ library and the read-along. [`docs/design.md`](docs/design.md) has how the parts
 ## What it does
 - **Reads right-to-left text properly.** Farsi shaping and direction come out right, with no `dir` attributes needed in
   the book. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
-- **Is quick.** One static binary, as fast as KOReader's engine (crengine) on these devices, and a cache file per book
-  so a reopened book comes up quickly.
+- **Is quick.** As fast as KOReader's engine (crengine) on these devices, and a cache file per book so a reopened
+  book comes up quickly.
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones
   and marks each word as it is spoken.
 - **Is made for the screen.** Page turns without flashes, partial refreshes for panels and menus, a dark mode, the
