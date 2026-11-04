@@ -10,7 +10,7 @@
 </p>
 
 ## Why it exists
-An e-ink screen is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
+An e-ink device is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
 overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently from a
 browser and has declined narrated books.
 
