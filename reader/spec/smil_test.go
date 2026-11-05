@@ -6,7 +6,9 @@ import (
 	"math"
 	"testing"
 
+	"github.com/readium/go-toolkit/pkg/guidednavigation"
 	"github.com/readium/go-toolkit/pkg/parser/epub"
+	"github.com/readium/go-toolkit/pkg/util/url"
 )
 
 // The clock values of clipBegin and clipEnd (SMIL 3.0 clock value syntax: the spec's own examples "23s", "10s",
@@ -39,6 +41,36 @@ func TestClockValues(t *testing.T) {
 	for _, bad := range []string{"abc", "5x", "s"} {
 		if got := epub.ParseClockValue(bad); got != nil {
 			t.Errorf("%q: got %v, want none", bad, *got)
+		}
+	}
+}
+
+// Clip: an object without audio (the overlay's groups) is no audio and no panic; a clip has its times; a missing
+// clipBegin is 0; a missing clipEnd, or no clip, is open-ended.
+func TestClip(t *testing.T) {
+	ref := func(s string) url.URL {
+		u, err := url.URLFromString(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return u
+	}
+	for _, c := range []struct {
+		name       string
+		o          guidednavigation.GuidedNavigationObject
+		file       string
+		begin, end float64
+		kind       Audio
+	}{
+		{"a group", guidednavigation.GuidedNavigationObject{}, "", 0, 0, NoAudio},
+		{"both times", guidednavigation.GuidedNavigationObject{AudioRef: ref("audio/a.mp4#t=1.5,2")}, "audio/a.mp4", 1.5, 2, Clipped},
+		{"no begin", guidednavigation.GuidedNavigationObject{AudioRef: ref("audio/a.mp4#t=,2")}, "audio/a.mp4", 0, 2, Clipped},
+		{"no end", guidednavigation.GuidedNavigationObject{AudioRef: ref("audio/a.mp4#t=1")}, "audio/a.mp4", 0, 0, OpenEnded},
+		{"no clip", guidednavigation.GuidedNavigationObject{AudioRef: ref("audio/a.mp3")}, "audio/a.mp3", 0, 0, OpenEnded},
+	} {
+		file, begin, end, kind := Clip(c.o)
+		if kind != c.kind || file != c.file || begin != c.begin || end != c.end {
+			t.Errorf("%s: got %q %v %v kind %d, want %q %v %v kind %d", c.name, file, begin, end, kind, c.file, c.begin, c.end, c.kind)
 		}
 	}
 }

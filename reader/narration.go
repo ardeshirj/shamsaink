@@ -16,6 +16,7 @@ import (
 	"github.com/readium/go-toolkit/pkg/pub"
 
 	blitz "shamsainkengine"
+	"shamsainkreader/spec"
 )
 
 // Read-along (plan, stage 8): the book's narration played to the Bluetooth headphones paired in Kobo's own settings,
@@ -53,19 +54,14 @@ func cues(ctx context.Context, p *pub.Publication) []cue {
 	var walk func(doc int, objs []guidednavigation.GuidedNavigationObject)
 	walk = func(doc int, objs []guidednavigation.GuidedNavigationObject) {
 		for _, o := range objs {
-			// the spec (Reading Systems 3.3, 9.2.2): no clipBegin is 0; no clipEnd, or no clip at all, runs to the end of the
-			// file, which needs the file's length and is not done: those words are left out, and counted
-			if o.TextRef != nil && o.AudioFile().String() != "" {
-				c := o.AudioClip()
-				if c == nil || c.End == nil {
+			// the spec's defaults for a clip are in spec.Clip; a clip with no end (or none at all) runs to the end of the file,
+			// which needs the file's length and is not done: those words are left out, and counted
+			if file, begin, end, kind := spec.Clip(o); o.TextRef != nil {
+				switch kind {
+				case spec.Clipped:
+					out = append(out, cue{doc: doc, id: o.TextRef.Fragment(), file: file, begin: begin, end: end})
+				case spec.OpenEnded:
 					openEnded++
-				} else {
-					begin := 0.0
-					if c.Begin != nil {
-						begin = c.Begin.Seconds()
-					}
-					out = append(out, cue{doc: doc, id: o.TextRef.Fragment(), file: o.AudioFile().String(),
-						begin: begin, end: c.End.Seconds()})
 				}
 			}
 			walk(doc, o.Children)
