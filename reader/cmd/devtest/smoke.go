@@ -23,6 +23,7 @@ type dev struct {
 	prof *design.Device
 	name string
 	mark int
+	env  string // KEY=VALUE settings the reader is started with (a scenario's env step)
 }
 
 // load reads the spec's profile and the access facts of a device.
@@ -237,7 +238,7 @@ func (d *dev) start() (stop func(), line string, err error) {
 		return nil, "", fmt.Errorf("the reader is already running on the device: leave it first")
 	}
 	d.mark = d.logLines()
-	if _, err := d.sh("cd "+d.a.Dir+" && nohup sh launch.sh >/dev/null 2>&1 </dev/null &", nil); err != nil {
+	if _, err := d.sh("cd "+d.a.Dir+" && nohup env "+d.env+" sh launch.sh >/dev/null 2>&1 </dev/null &", nil); err != nil {
 		return nil, "", err
 	}
 	stop = func() {

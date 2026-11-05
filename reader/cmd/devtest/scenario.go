@@ -25,6 +25,11 @@ import (
 //	snap NAME                 the screen copied: e2e/out/SCENARIO/NAME.pgm, compared byte for byte with refs/NAME.pgm
 //	                          (--save keeps it as the reference), the clock's strip aside
 //	wait SECONDS
+//	env KEY=VALUE...          settings the reader is started with, before open: the heartbeat and the watcher on a faster
+//	                          clock, HEARTBEAT_EVERY=1s WATCH_EVERY=4 (a freeze caught in 8 to 12 s, not 20 to 30)
+//	freeze                    the reader stopped (SIGSTOP), as a hang that answers nothing
+//	expect-none REGEX SECONDS waits that long and fails if the log has a line like it
+//	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored).
 
@@ -253,6 +258,47 @@ func (p *player) step(a []string) (string, error) {
 			p.hlSeen = true
 		}
 		return line, nil
+	case "env":
+		d.env = strings.Join(a[1:], " ")
+		return "", nil
+	case "freeze":
+		out, err := d.sh("P=$(pidof shamsaink) && kill -STOP $P && echo $P", nil)
+		if err != nil {
+			return "", err
+		}
+		return "reader " + strings.TrimSpace(string(out)) + " stopped", nil
+	case "expect-none":
+		if err := need(2); err != nil {
+			return "", err
+		}
+		s, _ := strconv.ParseFloat(a[len(a)-1], 64)
+		re := regexp.MustCompile(strings.Join(a[1:len(a)-1], " "))
+		time.Sleep(time.Duration(s * float64(time.Second)))
+		out, err := d.sh(fmt.Sprintf("tail -n +%d %s", d.mark+1, d.a.Log), nil)
+		if err != nil {
+			return "", err
+		}
+		for _, l := range strings.Split(string(out), "\n") {
+			if re.MatchString(l) {
+				return "", fmt.Errorf("a line like %q is in the log: %s", re, l)
+			}
+		}
+		return "none in " + a[len(a)-1] + " s", nil
+	case "expect-nickel":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		s, _ := strconv.ParseFloat(a[1], 64)
+		end := time.Now().Add(time.Duration(s * float64(time.Second)))
+		for time.Now().Before(end) {
+			out, err := d.sh("pidof nickel >/dev/null && ! pidof shamsaink >/dev/null && echo yes", nil)
+			if err == nil && strings.TrimSpace(string(out)) == "yes" {
+				p.stop, p.b = nil, nil
+				return "Kobo's interface is back, the reader gone", nil
+			}
+			time.Sleep(2 * time.Second)
+		}
+		return "", fmt.Errorf("Kobo's interface did not come back in %s s", a[1])
 	case "wait":
 		if err := need(1); err != nil {
 			return "", err

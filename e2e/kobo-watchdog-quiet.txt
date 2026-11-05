@@ -1,0 +1,16 @@
+# The watchdog leaves a healthy reader alone, on a faster clock (see kobo-watchdog-freeze.txt): a book idle, then a narration
+# playing (to a sink with no headphones: the loop and the clock, not the sound), then the book left the normal way. Not
+# covered: sleep and wake (the Kobo suspends and takes SSH with it; by hand), the library list left alone.
+#     make e2e SCENARIO=e2e/kobo-watchdog-quiet.txt
+env HEARTBEAT_EVERY=1s WATCH_EVERY=4
+open
+expect-none watchdog: 30
+tap page-top
+expect menu drawn
+tap dock read-aloud
+expect read aloud from word
+expect-none watchdog: 40
+tap page-top
+expect read aloud: stopped
+expect-none watchdog: 15
+close

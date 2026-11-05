@@ -136,7 +136,9 @@ func (d *Device) Doze(dir string, fallback *image.Gray) bool {
 	if d.Kind == Kindle {
 		return false
 	}
+	beatSleeping()
 	d.doze(sleepScreen(dir, fallback))
+	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
 	return true
 }

@@ -1,0 +1,13 @@
+# The watchdog catches a reader that answers nothing (docs/design.md, "Keeping the reader alive"), on a faster clock: the
+# reader beats every second and the watcher looks every 4 s, so a freeze is caught in 8 to 12 s, not 20 to 30. Run with
+#     make e2e SCENARIO=e2e/kobo-watchdog-freeze.txt
+# Bluetooth must not have run in this boot (the launcher would reboot the Kobo instead of starting Nickel again). Needs
+# SSH while the reader is open; if that drops, expect-nickel keeps asking.
+env HEARTBEAT_EVERY=1s WATCH_EVERY=4
+open
+wait 6
+freeze
+wait 6
+expect watchdog: the reader \(\d+\) has not answered
+expect reader exited
+expect-nickel 60

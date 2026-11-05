@@ -128,10 +128,49 @@ done) &
 L3=$!
 # Nickel started again however the reader ends; the logs stopped
 leave() {
-  kill "$L1" "$L2" "$L3" 2>/dev/null
+  kill "$L1" "$L2" "$L3" "$L4" 2>/dev/null
   start_nickel
 }
 trap leave EXIT
 trap 'exit 1' HUP INT TERM
+# The watchdog (plan, stage 5): Kobo's own `sickel` pings Nickel and reboots when the pings stop; here the reader's event
+# loops write a counter to /tmp/shamsaink-alive every 5 s (device/heartbeat.go; "sleep" while the sleep screen waits).
+# (WATCH_EVERY, 10 by default, and the reader's HEARTBEAT_EVERY, 5 s, are for tests on a faster clock: e2e/.)
+# A counter that stands still for 20 s (2 looks, 10 s apart: both clocks stop together in a suspend; the longest
+# stall seen is 4 s) is a frozen reader:
+# SIGQUIT first, so Go writes every goroutine's stack to reader.log (what it was waiting on), then SIGKILL, and the exit
+# path below brings Nickel back (a reboot when Bluetooth ran). A reader that has not beaten at all in the first minute
+# counts too (the file is removed before it starts; it beats within 5 s). A long task in the loop must call Beat
+# itself (a big library's first scan: to do).
+watch() {
+  last=""
+  same=0
+  while sleep "${WATCH_EVERY:-10}"; do
+    [ -e /tmp/shamsaink-nowatch ] && { last=""; same=0; continue; } # for tests: touch it to pause the watchdog
+    P=$(pidof shamsaink)
+    [ -n "$P" ] || { last=""; same=0; continue; } # no reader (this watcher outlived the launcher): nothing to watch
+    cur=$(cat /tmp/shamsaink-alive 2>/dev/null)
+    case "$cur" in sleep) last=""; same=0; continue ;; esac
+    if [ "$cur" = "$last" ]; then same=$((same + 1)); else same=0; last=$cur; fi
+    if [ "$same" -ge 2 ]; then
+      log "watchdog: the reader ($P) has not answered for $((${WATCH_EVERY:-10} * 2)) s (counter $cur): its stacks follow, then it is killed"
+      kill -QUIT $P 2>/dev/null
+      sleep 3
+      kill -KILL $P 2>/dev/null
+      # a reader that does not die (a thread stuck in the kernel, the screen's driver) never lets the launcher end: reboot
+      i=0
+      while kill -0 $P 2>/dev/null && [ $i -lt 5 ]; do sleep 1; i=$((i + 1)); done
+      if kill -0 $P 2>/dev/null; then
+        log "watchdog: the reader ($P) did not die after SIGKILL: rebooting"
+        sync
+        reboot
+      fi
+      same=0
+    fi
+  done
+}
+rm -f /tmp/shamsaink-alive
+watch &
+L4=$!
 ./shamsaink "${BOOK:--library}" fonts >> logs/reader.log 2>&1
 log "reader exited ($?)"

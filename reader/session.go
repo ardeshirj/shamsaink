@@ -203,6 +203,8 @@ func (s *session) next(block bool) bool {
 			s.input(e)
 		case <-word:
 			s.speak()
+		case <-s.dev.Beats():
+			s.dev.Beat()
 		}
 		return true
 	}
@@ -211,6 +213,8 @@ func (s *session) next(block bool) bool {
 		s.input(e)
 	case <-word:
 		s.speak()
+	case <-s.dev.Beats():
+		s.dev.Beat()
 	default:
 		return false
 	}
@@ -867,11 +871,11 @@ func (s *session) readAloud(from *blitz.Word) {
 	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
 	nar.begin()
 	s.nar = nar
+	s.dev.Active()
 	s.snd.play(nar)
 	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",
 		first, s.narration[first].doc, ms(t), len(nar.parts))
 	s.due()
-	s.dev.Active()
 }
 
 // due sets the word's timer to the next thing the narration has due, or ends it if nothing is.
@@ -892,11 +896,11 @@ func (s *session) due() {
 func (s *session) speak() {
 	nar := s.nar
 	now := time.Now()
+	s.dev.Active() // the narration is not idle time: the Kobo does not sleep in the middle of it
 	w := -1
 	for nar.next < len(nar.cues) {
 		t, ok := nar.at(nar.cues[nar.next].at)
 		if !ok || now.Before(t.Add(nar.lead)) {
-	s.dev.Active() // the narration is not idle time: the Kobo does not sleep in the middle of it
 			break
 		}
 		w, nar.next = nar.next, nar.next+1

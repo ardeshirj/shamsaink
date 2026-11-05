@@ -165,7 +165,19 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
 	}
-	for e := range events {
+	beats := rd.dev.Beats()
+	for {
+		var e device.Event
+		select {
+		case ev, ok := <-events:
+			if !ok {
+				return "", nil
+			}
+			e = ev
+		case <-beats:
+			rd.dev.Beat()
+			continue
+		}
 		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:
