@@ -871,6 +871,7 @@ func (s *session) readAloud(from *blitz.Word) {
 	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",
 		first, s.narration[first].doc, ms(t), len(nar.parts))
 	s.due()
+	s.dev.Active()
 }
 
 // due sets the word's timer to the next thing the narration has due, or ends it if nothing is.
@@ -895,6 +896,7 @@ func (s *session) speak() {
 	for nar.next < len(nar.cues) {
 		t, ok := nar.at(nar.cues[nar.next].at)
 		if !ok || now.Before(t.Add(nar.lead)) {
+	s.dev.Active() // the narration is not idle time: the Kobo does not sleep in the middle of it
 			break
 		}
 		w, nar.next = nar.next, nar.next+1
@@ -918,7 +920,15 @@ func (s *session) underline(c cue) {
 		s.shown = s.rd.pages.get(r, r.doc, r.at, page)
 		s.rd.pages.touch(s.shown)
 		nar.bars = nil
-		s.showPage(device.WfREAGL, false)
+		// a page the narration turns counts like one turned by hand: every Nth is cleaned with a flash (the words due
+		// while the screen is busy are skipped, ~0.4 s)
+		s.turns++
+		if s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery() {
+			s.turns = 0
+			s.showPage(device.WfGC16, true)
+		} else {
+			s.showPage(device.WfREAGL, false)
+		}
 		r.keep(s.rest)
 	}
 	region := union(nar.bars)

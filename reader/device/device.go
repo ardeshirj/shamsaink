@@ -42,6 +42,9 @@ const DefaultSleepAfter = 10 * time.Minute
 // sleep control lists the same (a test holds them).
 var SleepMinutes = []int{5, 10, 15, 30, 60, 0}
 
+// Active says something is going on that is not a touch (the narration playing): the idle sleep counts from now.
+func (d *Device) Active() { d.active.Store(time.Now().UnixNano()) }
+
 // SetSleepAfter sets how long the Kobo sits untouched before it sleeps; 0: never.
 func (d *Device) SetSleepAfter(t time.Duration) { d.sleepAfter.Store(int64(t)) }
 
