@@ -1,0 +1,41 @@
+{{/* The sleep screen drawn from a small file (sleep.go). Layout "couplet" is FarsiEPUB's screensaver (its
+screensavers/render.py, design.toml): the two verses in Parastoo Bold, each on two lines when long, the poet under them,
+a short rule, the explanation smaller and darker, and the signature (ShamsaInk by FarsiEPUB, brand/shamsaink-by.png from
+FarsiEPUB's brand/shamsaink/logo-by.svg: rsvg-convert -w 720 -b white) at the foot, nothing on top. Layout "title" is the
+opening screen's logo with a text under it. Sizes are FarsiEPUB's, for a 1236 px wide page, scaled with the screen's width
+(U); Poem is the couplet's size after fitting. */ -}}
+{{template "head" .Dir}}<style>
+html { font-size: {{.Size}}px; }
+body { margin: 0; }
+{{if eq .Layout "couplet" -}}
+.page { height: {{.H}}px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center;
+  padding: {{.PadTop}}px {{.PadSide}}px {{.PadBottom}}px; text-align: center; }
+.mid { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.poem { font-family: Parastoo, Vazirmatn, sans-serif; font-weight: bold; font-size: {{.Poem}}px; line-height: 1.4; }
+.v { margin: 0 0 {{.Gap}}px; }
+.v:last-child { margin: 0; }
+.poet { margin-top: {{.PoetGap}}px; font-family: Parastoo, Vazirmatn, sans-serif; font-weight: bold; font-size: {{.PoetSize}}px; }
+.rule { width: {{.RuleW}}px; height: {{.RuleH}}px; background: #000; margin: {{.RuleGap}}px 0; }
+.gloss { margin: 0; width: 100%; font-family: Parastoo, Vazirmatn, sans-serif; font-size: {{.GlossSize}}px; line-height: 1.7; color: #333; }
+.sig { display: block; margin-top: {{.SigGap}}px; }
+</style></head><body>
+<div class="page">
+<div class="mid">
+<div class="poem"{{.TextLang}}>{{range $i, $l := .Lines}}<p class="v" id="v{{$i}}">{{$l}}</p>{{end}}</div>
+{{if .Poet}}<div class="poet"{{.PoetLang}}>{{.Poet}}</div>{{end}}
+{{if .Gloss}}<div class="rule"></div><p class="gloss"{{.GlossLang}}>{{.Gloss}}</p>{{end}}
+</div>
+<img class="sig" id="sig" src="brand/shamsaink-by.png" width="{{.SigW}}" height="{{.SigH}}">
+</div>
+</body></html>
+{{- else -}}
+body { padding: {{.Top}}px {{.Side}}px 0; text-align: center; }
+.logo { display: block; margin: 0 auto; }
+.text { margin: 1.6em 0 0; line-height: 1.7; white-space: pre-line; }
+.credit { margin: 0.8em 0 0; font-size: 0.7em; color: #555; }
+</style></head><body>
+<img class="logo" id="logo" src="brand/shamsaink-stack.png" width="{{.LogoW}}" height="{{.LogoH}}">
+<p class="text"{{.TextLang}}>{{.Text}}</p>
+{{if .Credit}}<p class="credit"{{.CreditLang}}>{{if eq .Layout "quote"}}— {{end}}{{.Credit}}</p>{{end}}
+</body></html>
+{{- end}}

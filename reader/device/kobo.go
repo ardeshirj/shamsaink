@@ -196,10 +196,11 @@ func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
 	return func() { once.Do(func() { close(quit) }) }
 }
 
-// sleepScreen is a picture from DIR/sleep (PNG or JPEG, one at random) fitted to the screen on white, else fallback.
-func sleepScreen(dir string, fallback *image.Gray) *image.Gray {
+// sleepScreen is one file from DIR/sleep, chosen at random: a picture (PNG or JPEG) fitted to the screen on white, or a
+// small YAML file (.yml, .yaml) drawn by render at the screen's own size; else fallback.
+func sleepScreen(dir string, fallback *image.Gray, render func(yml []byte) (*image.Gray, error)) *image.Gray {
 	var pics []string
-	for _, ext := range []string{"*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG"} {
+	for _, ext := range []string{"*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG", "*.yml", "*.yaml"} {
 		m, _ := filepath.Glob(filepath.Join(dir, "sleep", ext))
 		pics = append(pics, m...)
 	}
@@ -207,6 +208,17 @@ func sleepScreen(dir string, fallback *image.Gray) *image.Gray {
 		return fallback
 	}
 	path := pics[rand.IntN(len(pics))]
+	if e := strings.ToLower(filepath.Ext(path)); e == ".yml" || e == ".yaml" {
+		b, err := os.ReadFile(path)
+		if err == nil && render != nil {
+			var img *image.Gray
+			if img, err = render(b); err == nil && img != nil {
+				return img
+			}
+		}
+		fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(path), err)
+		return fallback
+	}
 	f, err := os.Open(path)
 	if err != nil {
 		return fallback

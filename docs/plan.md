@@ -77,6 +77,12 @@ the Kobo it earned it sooner than planned.)
   word: meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and its
   paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
+- [x] The sleep screen from a small YAML file in `sleep/` (2026-11-05, tried on the Kobo): layouts `couplet` (FarsiEPUB's
+  screensaver: verses, poet, gloss, signature, in Parastoo, each verse on two lines, shrunk until it fits), `title` and `quote`
+  (the opening screen's logo with a text under it), drawn from `ui/templates/sleep.html` at the screen's own size (type and logo scale with the width), so the
+  type is the same everywhere; pictures in `sleep/` still work, one file at random. Later, added to the format as needed
+  (unknown fields are ignored): `image` (a picture beside the file), `cover: true` (the open book's cover); fetching the files
+  over HTTP waits for the download measurement
 
 **7. A library**
 - [x] A book's key from its content, not its file time (2026-11-05): size, first and last 64 KB hashed (`library.Key`),

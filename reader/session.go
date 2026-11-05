@@ -326,12 +326,21 @@ func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()
 	}
-	if !s.dev.Doze(s.rd.dir, s.splash.Gray) {
+	if !s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.drawSleep) {
 		s.asleep = true
 		s.leave()
 		return
 	}
 	s.drain()
+}
+
+// drawSleep is a sleep screen's YAML file (a couplet, a title, a quote: ui.DrawSleep) drawn at the screen's size.
+func (rd *reader) drawSleep(yml []byte) (*image.Gray, error) {
+	f, err := ui.ParseSleep(yml)
+	if err != nil {
+		return nil, err
+	}
+	return ui.DrawSleep(f, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H), nil
 }
 
 // leave keeps the place, waits for the ink, lets go of the touch screen and closes the book.
