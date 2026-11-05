@@ -60,7 +60,8 @@ the Kobo it earned it sooner than planned.)
 - [x] The Kobo's page buttons (2026-11-01): the lower goes forward, the upper back (Kobo's own default), a press acting when it is let go; a hold (about 0.4 s) is the next or previous chapter; "Reverse page buttons" in Settings swaps them. A highlight's hold is 1 s (800 ms started some turning pages)
 - [x] The screen without blinks (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) refreshes with GL16, which is partial; REAGL is a full update on the Kobo's driver and blinked. A flash only where the whole screen changes (wake: white, then the page; Clean screen; Dark mode). Page turns keep REAGL
 - [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
-- [ ] A frozen reader caught (2026-11-02, seen on the Kobo: the reader sat in `epoll_wait` at 0% CPU after a read-aloud failed with `mplay` not found, and the screen did not answer; killed by hand, log kept as `logs/reader-frozen-1443.log`). Cause found (2026-11-02): `narration.go` plays with Amazon's `mplay`, absent on the Kobo; a failed `play()` never counts its part as started, so the next part is never decoded and `speak()` waits on its `done` for ever on the event loop. Mended with stage 8 (the Kobo's player is `gst-launch-1.0` into `mtkbtmwrpcaudiosink`, 13's `play.sh`; the event loop must never wait on a background job). Then a watchdog in `launch.sh`: the touch controller's interrupt count (`elan_ktf` in `/proc/interrupts`) rises for ~10 s while the reader's own count of handled input events (a small file in `/tmp`) does not, then kill the reader and return to Nickel, the reason in the log. A second layer: a timestamp the event loop refreshes every few seconds, stale for ~1 minute. Idle alone is not a freeze (reading is idle)
+- [x] A frozen reader caught, the cause mended 2026-11-05 (the reader plays through `sink.go`, the event loop waits for no
+  sound); the watchdog in `launch.sh` is still to build (2026-11-02, seen on the Kobo: the reader sat in `epoll_wait` at 0% CPU after a read-aloud failed with `mplay` not found, and the screen did not answer; killed by hand, log kept as `logs/reader-frozen-1443.log`). Cause found (2026-11-02): `narration.go` plays with Amazon's `mplay`, absent on the Kobo; a failed `play()` never counts its part as started, so the next part is never decoded and `speak()` waits on its `done` for ever on the event loop. Mended with stage 8 (the Kobo's player is `gst-launch-1.0` into `mtkbtmwrpcaudiosink`, 13's `play.sh`; the event loop must never wait on a background job). Then a watchdog in `launch.sh`: the touch controller's interrupt count (`elan_ktf` in `/proc/interrupts`) rises for ~10 s while the reader's own count of handled input events (a small file in `/tmp`) does not, then kill the reader and return to Nickel, the reason in the log. A second layer: a timestamp the event loop refreshes every few seconds, stale for ~1 minute. Idle alone is not a freeze (reading is idle)
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
   more per book, cause not found)
@@ -78,7 +79,9 @@ the Kobo it earned it sooner than planned.)
   paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
 
-**7. A library** (today the launcher opens the newest or the last book)
+**7. A library**
+- [x] A book's key from its content, not its file time (2026-11-05): size, first and last 64 KB hashed (`library.Key`),
+  after the Kobo's FAT times shifted by 8 hours and every book was new (`devices/kobo/README.md`) (today the launcher opens the newest or the last book)
 - [x] The layout: two options, text rows and rows with covers (2026-10-30; the covers' in `docs/design/unbuilt-screens.md`)
 - [ ] A keyboard layer (English and Farsi) for the library's search; not designed yet
 - [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
@@ -91,7 +94,11 @@ the Kobo it earned it sooner than planned.)
   first beta; measure the downloads' memory and TLS on the device before building
 
 **8. Read-along on the Kobo**
-- [ ] One pipeline kept open a session (13's `PLAN.md`)
+- [x] One pipeline kept open a session (2026-11-05): one `gst-launch-1.0` into `mtkbtmwrpcaudiosink` (`reader/sink.go`), raw
+  48 kHz stereo through a pipe cut to one page, silence between narrations; the narration's clock is what the pipe has
+  taken, so a stalled link stalls the underline; decoding in the background, the event loop never waits on sound.
+  Tried on the Kobo: plays, the voice with the lines (the maintainer); the log has no late part. Still to tune by ear:
+  `lead_ms` (250 by default)
 - [ ] The sleep timer waits while narration plays (today it counts only touches), and the Bluetooth reboot on leaving
   the reader (the launcher reboots when `mtkbtd` runs; a "Restarting" screen first; maybe stop the daemon and its driver before Nickel: not tried, it may panic the kernel)
 - [ ] The hour: drop-outs and drift over an hour, Nickel stopped
@@ -165,6 +172,9 @@ week and remove it)
 - [ ] The tag `v0.1.0-beta` and a GitHub release with the package and its checksum
 
 **After the beta, toward stable, `v1.0`**
+- [ ] Listen controls (2026-11-05): volume (a gain in `sinkFormat`, a slider in the Listen tab; the headphones have their own)
+  and speed (a pitch-preserving time stretch such as WSOLA, pure Go, the cues' times scaled by 1/speed; measure the CPU on
+  the Kobo first)
 - [ ] Read-along made smoother (stage 8's rest): no Bluetooth reboot (stopping the daemon and its driver before Nickel,
   if it can be done without the kernel panic), a wider list of headphones, the player's screens (listening, paused)
 - [ ] The layout (stage 6) built: layers, the dock, components, the word panel, footnotes in place, the sleep screen's

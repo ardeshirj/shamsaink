@@ -41,10 +41,12 @@ with a reboot, and the kernel has no `pstore`.
 /var/tmp/shamsaink/                  the narration's decoded sound (RAM, gone with a reboot)
 ```
 
-A *KEY* is the book's file name, size and **modification time** (`reader/book.go`), so a book moved with `mv`
-between folders keeps its cache, place and highlights; a book touched, copied again without `scp -p`, or replaced starts
-afresh, and its old files stay in `cache/`, `places/`, `highlights/` unused (delete them by hand). The folder is not part
-of it: two books of the same name, size and date in two folders would share them.
+A *KEY* is 12 hex digits of a SHA-256 over the book's size, its first 64 KB and its last 64 KB (the whole file under
+128 KB; `library.Key`, `reader/library/scan.go`), since 2026-11-05. Not the name or the modification time, so a book moved,
+renamed, touched or copied again keeps its cache, place and highlights; a replaced book starts afresh when its end (a
+ZIP's central directory, with every file's CRC) differs, and its old files stay in `cache/`, `places/`, `highlights/`
+unused (delete them by hand). Two copies of one book share them. In a shell: `{ echo SIZE; head -c 65536 F; tail -c 65536
+F; } | sha256sum | cut -c1-12` (a small file: `cat F` for the head and tail). `library.json` lists each book's key.
 
 ## Limits and bugs
 **Nickel started twice in one boot, and Bluetooth, panic the kernel.**
@@ -58,6 +60,23 @@ of it: two books of the same name, size and date in two folders would share them
   fresh boot, before anything else.
 - Upstream: koreader/koreader#12739 (open; Kobo's bug, KOReader's maintainers say). Not reported to Kobo.
 - Found: experiment 13 (`experiments/13-kobo/NOTES.md`), `setup.md` section 2.
+
+**Every book's file time shifted by 8 hours, and every book was new** (2026-11-05).
+- What: after a few reboots in a day, the library listed every book as new and none had its place; the files were in
+  `places/`, `highlights/` and `cache/` under the old keys. Each book's modification time read exactly 28,800 s earlier
+  than before.
+- Probable cause (inferred, not proved): the books are on `vfat`, mounted without `tz=` or `time_offset=`. FAT stores
+  local time and the kernel turns it into UTC with its own timezone value, which is not kept across boots and is set at
+  runtime by something (Nickel, we think). Not a kernel crash: no panic, oops or watchdog line in `kernel.log`. Not
+  known: what sets it, or why the earlier Bluetooth reboots kept the old times.
+- What we do: the key no longer uses the modification time (above); this boot's history was copied to the new keys by hand.
+- Plato's fingerprint is the modification time and the size (`crates/core/src/helpers.rs`), the same weakness; KOReader
+  hashes 1 KiB samples (`util.partialMD5`); Kobo's own library identifies a sideloaded book by its path.
+
+**Wi-Fi is not managed while the reader is open** (2026-11-05, a theory to validate: the same with Plato). Opening the
+reader stops Nickel, which looked after Wi-Fi, and `ssh kobo` stopped answering; it comes back when Nickel does, or
+after waking (the reader brings it back). Nothing is built for it: a Settings switch can come with OPDS (stage 7), and
+KOReader's `dropbear` (`koreader/dropbear -E -R -p 2222`, `/dev/pts` mounted) is what would give SSH, as KOReader starts it.
 
 **Each start of Nickel leaves a stuck Wi-Fi loader** (2026-10-30).
 - What: one more `wmt_launcher` each time Nickel starts after boot, stuck in the kernel (`WMT_open`, state D)
