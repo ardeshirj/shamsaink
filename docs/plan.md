@@ -60,8 +60,7 @@ the Kobo it earned it sooner than planned.)
 - [x] The Kobo's page buttons (2026-11-01): the lower goes forward, the upper back (Kobo's own default), a press acting when it is let go; a hold (about 0.4 s) is the next or previous chapter; "Reverse page buttons" in Settings swaps them. A highlight's hold is 1 s (800 ms started some turning pages)
 - [x] The screen without blinks (2026-11-01): a part of the screen (a panel, a sheet, a menu, a bar icon) refreshes with GL16, which is partial; REAGL is a full update on the Kobo's driver and blinked. A flash only where the whole screen changes (wake: white, then the page; Clean screen; Dark mode). Page turns keep REAGL
 - [x] The light: a setting, and its level kept (the Light panel from the top bar's sun: level and warmth as sliders, kept in settings.json; 2026-10-31)
-- [x] A frozen reader caught, the cause mended 2026-11-05 (the reader plays through `sink.go`, the event loop waits for no
-  sound); the watchdog in `launch.sh` is still to build (2026-11-02, seen on the Kobo: the reader sat in `epoll_wait` at 0% CPU after a read-aloud failed with `mplay` not found, and the screen did not answer; killed by hand, log kept as `logs/reader-frozen-1443.log`). Cause found (2026-11-02): `narration.go` plays with Amazon's `mplay`, absent on the Kobo; a failed `play()` never counts its part as started, so the next part is never decoded and `speak()` waits on its `done` for ever on the event loop. Mended with stage 8 (the Kobo's player is `gst-launch-1.0` into `mtkbtmwrpcaudiosink`, 13's `play.sh`; the event loop must never wait on a background job). Then a watchdog in `launch.sh`: the touch controller's interrupt count (`elan_ktf` in `/proc/interrupts`) rises for ~10 s while the reader's own count of handled input events (a small file in `/tmp`) does not, then kill the reader and return to Nickel, the reason in the log. A second layer: a timestamp the event loop refreshes every few seconds, stale for ~1 minute. Idle alone is not a freeze (reading is idle)
+- [x] A frozen reader caught (2026-11-05). Seen 2026-11-02: the reader sat in `epoll_wait` at 0% CPU after a read-aloud failed with `mplay` not found, and the screen did not answer; killed by hand (`logs/reader-frozen-1443.log`). Cause: `narration.go` played with Amazon's `mplay`, absent on the Kobo, and `speak()` waited for ever on the event loop; mended with stage 8 (`sink.go`, the loop waits for no sound). **The watchdog** (like Kobo's own `sickel`, which pings Nickel and reboots; the launcher stops it with Nickel): both event loops, the library's and the open book's, write a counter to `/tmp/shamsaink-alive` (RAM) every 5 s (`device/heartbeat.go`; the word `sleep` while the sleep screen waits); a loop in `launch.sh` looks every 10 s and, with the same value twice (20 to 30 s), logs why, sends SIGQUIT (Go prints every goroutine's stack to `reader.log`), then SIGKILL, and the launcher's exit brings Nickel back (a reboot when Bluetooth ran); a reader that survives the kill for 5 s makes it `sync` and `reboot`. A missing file counts too (the file is removed before the reader starts); with no reader running the watcher idles; `touch /tmp/shamsaink-nowatch` pauses it for a test. Tried on the Kobo with `kill -STOP`: killed 22 s after the freeze, Nickel back in 25 s. Holding the power button about 5 s is the hardware's own reset (tried: screen dark, full reboot, no trace in our logs; the root partition recovered its journal): the backstop, for the release notes. Not built: a hold to quit in the reader, a Power panel (Back to Kobo, Restart, Power off; after the beta). Still to do: the quiet tests (idle, sleep and wake, a narration, the library list), the reboot fallback tried, a heartbeat call in the library's first scan, the heartbeat's battery cost measured, and remove the test pause before the release
 - [ ] The first page from the cache faster (*Buried Alive*, a 98 MB EPUB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB
   more per book, cause not found)
@@ -99,8 +98,11 @@ the Kobo it earned it sooner than planned.)
   taken, so a stalled link stalls the underline; decoding in the background, the event loop never waits on sound.
   Tried on the Kobo: plays, the voice with the lines (the maintainer); the log has no late part. Still to tune by ear:
   `lead_ms` (250 by default)
-- [ ] The sleep timer waits while narration plays (today it counts only touches), and the Bluetooth reboot on leaving
-  the reader (the launcher reboots when `mtkbtd` runs; a "Restarting" screen first; maybe stop the daemon and its driver before Nickel: not tried, it may panic the kernel)
+- [x] The sleep timer waits while narration plays (2026-11-05: `Device.Active`, refreshed by each word; tried on the Kobo
+  with 5 minutes set, a narration of 8 minutes without a sleep, no headphones)
+- [x] A page the narration turns counts for "Clean every N pages" like one turned by hand (2026-11-05, not yet tried)
+- [ ] The Bluetooth reboot on leaving the reader (the launcher reboots when `mtkbtd` runs; Kobo's bug, no screen built
+  for it; maybe stop the daemon and its driver before Nickel after the beta: not tried, it may panic the kernel)
 - [ ] The hour: drop-outs and drift over an hour, Nickel stopped
 - [ ] Voice timing, a stepper per pair of headphones (below)
 
@@ -151,13 +153,12 @@ week and remove it)
 - [ ] A failsafe: if the reader crashes or hangs, the Kobo gets back to Nickel on its own (checked by killing it in
   every state: a book open, asleep, narrating); includes the watchdog for a reader that is running but not answering touches (stage 5)
 
-*Read-along, what makes it different (in the beta, stage 8's part of it)*
+*Read-along, what makes it different (in the beta as **experimental**, decided 2026-11-05: the beta's release notes and the README say that Kobo's firmware bug restarts the Kobo on leaving after Bluetooth, no "Restarting" screen is built, and the voice-timing stepper is after the beta)*
 - [ ] One pipeline kept open a session, so starting to listen no longer costs today's ~2–2.5 s
 - [ ] The hour: no drop-outs or drift over an hour of narration, Nickel stopped
 - [ ] The sleep timer waits while narration plays, and the screen and the narration stay together across the power button
-- [ ] Leaving the reader after Bluetooth has been on: the reboot is clean, with a "Restarting" screen first, and never
-  loses the place, the highlights or the settings
-- [ ] Voice timing: a stepper in the Listen tab, remembered per pair of headphones
+- [ ] Leaving the reader after Bluetooth has been on: the reboot is clean and never loses the place, the highlights or
+  the settings (`sync` first; no "Restarting" screen: it is Kobo's bug, to go when they fix it)
 - [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL,
   which also gives the end-to-end tests a narrated scenario; FarsiEPUB's narrated books work as well
 - [ ] Headphones tried: a short list of those it worked with, in the release notes
@@ -172,6 +173,7 @@ week and remove it)
 - [ ] The tag `v0.1.0-beta` and a GitHub release with the package and its checksum
 
 **After the beta, toward stable, `v1.0`**
+- [ ] Voice timing: a stepper in the Listen tab, remembered per pair of headphones (after the beta, 2026-11-05)
 - [ ] Listen controls (2026-11-05): volume (a gain in `sinkFormat`, a slider in the Listen tab; the headphones have their own)
   and speed (a pitch-preserving time stretch such as WSOLA, pure Go, the cues' times scaled by 1/speed; measure the CPU on
   the Kobo first)

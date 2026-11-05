@@ -11,7 +11,8 @@ plan, not a promise: nothing here has a date.
   single static binary.
 - Turning pages by touch or by the Kobo's page buttons, contents, highlights, text size, the light and its warmth, a
   dark mode, sleep and wake, a sleep screen from your own pictures, and an interface in English or in Farsi.
-- Reads aloud over Bluetooth headphones, marking each word of a narrated book as it is spoken.
+- Reads aloud over Bluetooth headphones, marking each word of a narrated book as it is spoken. **Experimental:** a bug
+  in Kobo's firmware makes the Kobo restart when you leave the reader after using Bluetooth (see the README).
 - Not yet released: there is no installable version, and only the Libra Colour is tested.
 
 ## First beta
@@ -22,12 +23,15 @@ A version a stranger can install on a Kobo Libra Colour, read with for a week, a
 - [ ] Steady everyday reading: battery life over a night, long sessions, waking after a long sleep
 - [ ] A way to choose the book from a list
 - [ ] The interface in English or Farsi, tried in daily use
-- [ ] Read-along for a full hour without drop-outs or drift, and a setting to match the delay of your headphones
+- [ ] Read-along, marked experimental, with a narrated book to try and a few hours tried without drop-outs or drift; the
+  release notes say why the Kobo restarts after Bluetooth and which headphones worked
 - [ ] If the reader ever crashes, the Kobo returns to its own interface by itself
 - [ ] An installer, an install and uninstall guide, an example narrated book to try, and release notes that say plainly
   what is and is not tested
 
 ## Toward 1.0
+- [ ] Read-along finished: a setting to match the delay of your headphones, volume and speed, a player screen, and no
+  restart on leaving, once Kobo's firmware bug is fixed or we find a safe way around it
 - [ ] A finished interface: a dock of controls on a tap, a panel for a held word (meaning, colours, a note, listen from
   here), footnotes shown in place, two pages in landscape
 - [ ] A library with covers and search, with a keyboard for English and Farsi

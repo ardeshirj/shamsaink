@@ -73,6 +73,11 @@ F; } | sha256sum | cut -c1-12` (a small file: `cat F` for the head and tail). `l
 - Plato's fingerprint is the modification time and the size (`crates/core/src/helpers.rs`), the same weakness; KOReader
   hashes 1 KiB samples (`util.partialMD5`); Kobo's own library identifies a sideloaded book by its path.
 
+**A frozen screen** (2026-11-05). The reader's watchdog (`docs/design.md`, "Keeping the reader alive") kills a reader
+that stops answering after 20 to 30 s and brings Nickel back. If even that does not help, **hold the power button for
+about 5 s**: the hardware cuts the power and the Kobo restarts (tried: screen dark, a full reboot, the system partition
+replayed its journal; nothing of ours is lost but the last page turn). For the release notes.
+
 **Wi-Fi is not managed while the reader is open** (2026-11-05, a theory to validate: the same with Plato). Opening the
 reader stops Nickel, which looked after Wi-Fi, and `ssh kobo` stopped answering; it comes back when Nickel does, or
 after waking (the reader brings it back). Nothing is built for it: a Settings switch can come with OPDS (stage 7), and

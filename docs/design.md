@@ -188,6 +188,61 @@ flowchart LR
 mode), a flash now and then (how often: in use); the read-along mark A2, an underline that never touches the
 letters. Night mode driven by us is not tried yet.
 
+### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
+
+The reader stops Kobo's interface while a book is open, and with it Kobo's own watchdog (`sickel`: Nickel pings it over
+D-Bus, and when the pings stop it reboots the Kobo; `launch.sh` stops it with Nickel, since a paused Nickel made it
+reboot, 13's NOTES.md). A reader that hangs would therefore leave a frozen screen, no home screen and no way out but the
+power button (seen 2026-11-02). So the reader gets a watchdog of the same kind, aimed at the reader only.
+
+```mermaid
+flowchart LR
+  loops["the reader's event loops<br/>library list · open book<br/>(one process, <code>shamsaink</code>)"] -- "every 5 s: a number" --> f["/tmp/shamsaink-alive<br/>(RAM)"]
+  sl["sleep screen"] -- "writes: sleep" --> f
+  w["watcher in launch.sh<br/>(its own process)"] -- "every 10 s: reads" --> f
+  w -- "same value twice (20–30 s):<br/>SIGQUIT, 3 s, SIGKILL" --> loops
+  w -- "still alive 5 s later:<br/>sync, reboot" --> k["the Kobo restarts"]
+  loops -- "ends" --> l["launch.sh's exit:<br/>Nickel back (a reboot if Bluetooth ran)"]
+```
+
+| Part | What it does | Where |
+|---|---|---|
+| heartbeat | each event loop that waits for events also waits for a tick (`Device.Beats`, every 5 s) and answers it with `Device.Beat`: the counter goes up by one in `/tmp/shamsaink-alive`. A loop that is stuck stops answering. A ticker in a goroutine would keep ticking while the loop is stuck, so the loop itself answers | `reader/device/heartbeat.go`; the loops in `session.go` (`next`) and `libraryview.go` |
+| sleep | the sleep screen waits on purpose, so before it starts the file says `sleep`, and the watcher stands down; a beat on waking ends it | `Device.Doze` |
+| watcher | a shell function started in the background before the reader: every 10 s it reads the file; the same value twice in a row, or no file (the launcher removes it before the reader starts), is a freeze; it logs why, sends SIGQUIT (Go prints every goroutine's stack to `reader.log`: what the reader was stuck on), waits 3 s, sends SIGKILL; then waits up to 5 s and, if the reader is still there (a thread stuck in the kernel, such as the screen's driver), runs `sync` and `reboot` | `reader/kobo/launch.sh`, `watch` |
+| the way back | the reader is the launcher's last command: when it dies, the launcher's exit trap starts Nickel again (a reboot instead when Bluetooth has run: 13's NOTES.md) | `launch.sh`, `leave` |
+
+**Why it is outside the reader:** the watcher shares nothing with the reader, so a stopped process, a deadlocked
+engine or a stuck loop cannot stop it, and SIGKILL works on a stopped process. A goroutine inside the reader would
+stop with it, would add little (the stacks come from SIGQUIT, and places and highlights are saved when they change),
+and would be a second thing to keep in step. A self-check for a case the reader can see coming (the screen's driver
+failing again and again) is a different feature, not built.
+
+**Why 20 to 30 s:** the longest stall seen is 4 s (a book's first open or its pagination); a false kill costs a
+session, a late rescue only time. The library's first scan of a large library does not beat yet (to do).
+
+**What it does not watch:** the sleep screen (a Kobo plugged in can sit there for hours), the launcher itself (a shell
+that only sleeps and reads a file), and a reader killed from outside before it started. The backstop for all of them is
+the hardware: **holding the power button for about 5 s cuts the power** and the Kobo restarts (tried 2026-11-05 on the
+Libra Colour: the screen went dark and the Kobo rebooted; no trace in our logs, the system partition replayed its
+journal). It is the release notes' answer to a frozen screen.
+
+**Trying it:** two end-to-end scenarios on a faster clock (`HEARTBEAT_EVERY=1s`, `WATCH_EVERY=4`: a freeze is caught in 8
+to 12 s, not 20 to 30; the scenario's `env` step sets them, the reader and the watcher read them), `make e2e
+SCENARIO=e2e/kobo-watchdog-freeze.txt` (`freeze` stops the reader with SIGSTOP; the watchdog line, the exit with code 137 and
+Kobo's interface back are expected; the first run, 2026-11-05) and `e2e/kobo-watchdog-quiet.txt` (a book idle 30 s, a narration
+40 s without headphones, the book left: no `watchdog:` line at any point). Both need SSH while the reader is open and
+Bluetooth not run in the boot. By hand, at the real clock: `kill -STOP $(pidof shamsaink)` (22 s on the first try) and
+`touch /tmp/shamsaink-nowatch`, a test hook that pauses the watcher (RAM, gone after a reboot). Not covered by a scenario:
+**sleep and wake** (the Kobo suspends and takes Wi-Fi and SSH with it; by hand), the library list left alone, a reader that
+does not die after SIGKILL (the reboot fallback has not been run), and the sound itself.
+
+**Others:** KOReader's launcher (`koreader.sh`) restarts on its exit codes and shows a crash screen, and has no freeze
+detection that we found; Plato's we could not read. Kobo's own `sickel` is the model: a ping from the main loop, a
+supervisor that acts on silence. Not done: the heartbeat's battery cost (a wake every 5 s while idle; measure over a
+night against none), a heartbeat call in the library's first scan, and a Power panel (Back to Kobo, Restart, Power
+off) with a hold to quit, after the beta.
+
 ## 5. Where we stand against crengine
 
 Blitz built with NEON and `parallel` (both cores); crengine as KOReader runs it on the same device.
@@ -257,4 +312,6 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
   target leaves them off unless asked.
 - **cgo:** Go calling C (and so Rust or C++ behind a C interface); it brings a C toolchain into the build.
 - **Static binary:** one file with everything inside, so it runs on any ARM Linux with nothing installed.
+- **Heartbeat, watchdog:** a number the reader's event loops write every 5 s; a watcher in the launcher that kills the
+  reader when the number stops changing (the section on keeping the reader alive).
 - **SMIL, media overlay:** an EPUB's timings of recorded narration, word by word; what read-along plays.
