@@ -449,17 +449,25 @@ impl Book {
         let d = self.docs[doc].as_mut()?.as_mut();
         d.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: 0.0 });
         let node = d.get_element_by_id(id)?;
-        let rects = d.node_client_rects(node);
+        // an inline element (a word, a sentence in a span) has a client rect for each line it covers; a block (a
+        // paragraph, a div of paragraphs) has one for the whole block, which a mark under its bottom edge would put
+        // under the last line only: its lines are taken from the text layouts inside it instead (IDPF's Moby-Dick
+        // narrates by paragraph, 2026-11-05)
+        let mut rects: Vec<(f64, f64, f64, f64)> = vec![];
+        line_rects(d, node, &mut rects);
+        if rects.is_empty() {
+            rects = d.node_client_rects(node).iter().map(|r| (r.x, r.y, r.width, r.height)).collect();
+        }
         let first = rects.first()?;
-        let page = self.page_at(doc, first.y + first.height / 2.0)?;
+        let page = self.page_at(doc, first.1 + first.3 / 2.0)?;
         let p = self.pages[page];
         let m = self.opts.margin as f64;
         let boxes = rects
             .iter()
-            .filter(|r| self.page_at(doc, r.y + r.height / 2.0) == Some(page) && r.width > 0.0)
-            .map(|r| {
-                let y = r.y - p.top + m;
-                [r.x.floor() as i32, y.floor() as i32, (r.x + r.width).ceil() as i32, (y + r.height).ceil() as i32]
+            .filter(|r| self.page_at(doc, r.1 + r.3 / 2.0) == Some(page) && r.2 > 0.0)
+            .map(|&(x, ry, w, h)| {
+                let y = ry - p.top + m;
+                [x.floor() as i32, y.floor() as i32, (x + w).ceil() as i32, (y + h).ceil() as i32]
             })
             .collect();
         Some((page, boxes))
@@ -631,6 +639,30 @@ pub struct Word {
     pub start: u32,
     pub end: u32,
     pub rect: [i32; 4],
+}
+
+/// The lines of the text layouts at or under node `id` (its own, when it is an inline root, a paragraph; those of the
+/// paragraphs in it, when it holds blocks), each as (x, y, width, height) in document pixels. Empty for an inline element
+/// inside a paragraph (a span): it has no layout of its own.
+fn line_rects(doc: &BaseDocument, id: blitz_dom::NodeId, out: &mut Vec<(f64, f64, f64, f64)>) {
+    let Some(node) = doc.get_node(id) else { return };
+    if node.flags.is_inline_root() {
+        if let Some(tl) = node.element_data().and_then(|e| e.inline_layout_data.as_ref()) {
+            let pos = node.absolute_position(0.0, 0.0);
+            let l = node.final_layout();
+            let x0 = (pos.x + l.padding.left + l.border.left) as f64;
+            let y0 = (pos.y + l.padding.top + l.border.top + tl.block_offset) as f64;
+            for line in tl.layout.lines() {
+                let m = line.metrics();
+                let (top, bottom) = (y0 + m.block_min_coord as f64, y0 + m.block_max_coord as f64);
+                out.push((x0 + m.inline_min_coord as f64, top, (m.inline_max_coord - m.inline_min_coord) as f64, bottom - top));
+            }
+        }
+        return;
+    }
+    for &c in node.children.iter() {
+        line_rects(doc, c, out);
+    }
 }
 
 /// Calls f with each inline root that has a text layout, in document order, and its number in that order.
