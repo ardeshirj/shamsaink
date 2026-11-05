@@ -159,6 +159,14 @@ week and remove it)
 - [ ] The sleep timer waits while narration plays, and the screen and the narration stay together across the power button
 - [ ] Leaving the reader after Bluetooth has been on: the reboot is clean and never loses the place, the highlights or
   the settings (`sync` first; no "Restarting" screen: it is Kobo's bug, to go when they fix it)
+- [x] Audio and clips as EPUB 3.3 defines them (2026-11-05, read from the W3C pages: Reading Systems 3.3 requires the audio core
+  media types, `audio/mpeg` MP3, `audio/mp4` AAC LC and `audio/ogg; codecs=opus`, and says to play the clip from `clipBegin` (0 if
+  absent) to `clipEnd` (the end of the file if absent)): MP3 and AAC LC in MP4 decoded (symphonia `mp3`, `aac`, `isomp4`;
+  AAC tried on IDPF's Moby-Dick sample, 40 words, 2026-11-05); the clock values all parse (`reader/spec`, a test); a missing
+  `clipBegin` is 0. **Not done:** Opus (a decoder is needed: symphonia 0.5 has none; young pure-Rust crates exist; 2 to 3
+  days; unsupported in the release notes), and a clip without `clipEnd` or without any clip (needs the audio file's length;
+  those words are left out and counted in the log, half a day), text-to-speech for text without audio (a SHOULD), the speed
+  control the spec says to offer (after the beta)
 - [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL,
   which also gives the end-to-end tests a narrated scenario; FarsiEPUB's narrated books work as well
 - [ ] Headphones tried: a short list of those it worked with, in the release notes

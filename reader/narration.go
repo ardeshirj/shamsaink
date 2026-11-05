@@ -49,12 +49,24 @@ func cues(ctx context.Context, p *pub.Publication) []cue {
 		return nil
 	}
 	var out []cue
+	openEnded := 0
 	var walk func(doc int, objs []guidednavigation.GuidedNavigationObject)
 	walk = func(doc int, objs []guidednavigation.GuidedNavigationObject) {
 		for _, o := range objs {
-			if c := o.AudioClip(); c != nil && c.Begin != nil && c.End != nil && o.TextRef != nil {
-				out = append(out, cue{doc: doc, id: o.TextRef.Fragment(), file: o.AudioFile().String(),
-					begin: c.Begin.Seconds(), end: c.End.Seconds()})
+			// the spec (Reading Systems 3.3, 9.2.2): no clipBegin is 0; no clipEnd, or no clip at all, runs to the end of the
+			// file, which needs the file's length and is not done: those words are left out, and counted
+			if o.TextRef != nil && o.AudioFile().String() != "" {
+				c := o.AudioClip()
+				if c == nil || c.End == nil {
+					openEnded++
+				} else {
+					begin := 0.0
+					if c.Begin != nil {
+						begin = c.Begin.Seconds()
+					}
+					out = append(out, cue{doc: doc, id: o.TextRef.Fragment(), file: o.AudioFile().String(),
+						begin: begin, end: c.End.Seconds()})
+				}
 			}
 			walk(doc, o.Children)
 		}
@@ -71,8 +83,15 @@ func cues(ctx context.Context, p *pub.Publication) []cue {
 			walk(i, g.Guided)
 		}
 	}
+	if openEnded > 0 {
+		fmt.Fprintf(os.Stderr, "shamsaink: narration: %d clips without a clipEnd left out (not supported yet)\n", openEnded)
+	}
 	return out
 }
+
+// maxPart is the longest part, in seconds: a book with one long audio file (IDPF's Moby-Dick: two chapters, 9 MB) would
+// otherwise be decoded whole, ~11 MB of sound a minute in RAM.
+const maxPart = 60
 
 // A part of the narration: a stretch of one audio file, from the first of its words to the last.
 type part struct {
@@ -113,7 +132,7 @@ func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) 
 	var p *part
 	for i := range n.cues {
 		c := &n.cues[i]
-		if p == nil || c.file != p.file || c.begin < p.to-0.01 {
+		if p == nil || c.file != p.file || c.begin < p.to-0.01 || c.end-p.from > maxPart {
 			at := 0.0
 			if p != nil {
 				at = p.at + p.to - p.from

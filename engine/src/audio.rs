@@ -1,4 +1,4 @@
-//! MP3 narration for read-along, decoded in memory with symphonia (pure Rust). The reader (Go) hands over the file's
+//! MP3 and AAC (in an MP4) narration for read-along, decoded in memory with symphonia (pure Rust). The reader (Go) hands over the file's
 //! bytes and takes samples as it plays them; a seek goes to a time and says where it landed.
 
 use std::io::Cursor;
@@ -10,7 +10,7 @@ use symphonia::core::meta::MetadataOptions;
 use symphonia::core::probe::Hint;
 use symphonia::core::units::{Time, TimeBase};
 
-/// A decoded-as-played MP3: its reader and decoder, and the samples decoded but not handed out yet.
+/// A decoded-as-played MP3 or AAC: its reader and decoder, and the samples decoded but not handed out yet.
 pub struct Audio {
     format: Box<dyn FormatReader>,
     dec: Box<dyn Decoder>,
@@ -24,13 +24,11 @@ pub struct Audio {
 }
 
 impl Audio {
-    /// Reads the file's format and its first track; None if it is not an MP3 this can decode.
+    /// Reads the file's format and its first track; None if it is not a format this can decode (found from its content, not its name).
     pub fn open(data: Vec<u8>) -> Option<Audio> {
         let mss = MediaSourceStream::new(Box::new(Cursor::new(data)), Default::default());
-        let mut hint = Hint::new();
-        hint.with_extension("mp3");
         let format = symphonia::default::get_probe()
-            .format(&hint, mss, &FormatOptions::default(), &MetadataOptions::default())
+            .format(&Hint::new(), mss, &FormatOptions::default(), &MetadataOptions::default())
             .ok()?
             .format;
         let track = format.default_track()?.clone();
