@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -12,7 +15,9 @@ import (
 
 // A scenario is a file of steps, one a line (# starts a comment), played on the device by name where it can be:
 //
-//	open                      the reader launched and the library's first row opened: the book read last
+//	open [PATH]               the reader launched and the library's first row opened: the book read last; with a path
+//	                          under the device's folder (books/idpf/moby-dick-mo.epub) the launcher opens that book
+//	                          at once, with no library
 //	close                     the book left by the bar's back arrow, then the reader left from the library's menu
 //	tap SCREEN CONTROL        a control of a screen of the spec, by its kept render: tap dock contents, tap contents e7
 //	                          (a list's row n is the first row's box moved down by n rows), tap topbar topbar-light
@@ -22,11 +27,16 @@ import (
 //	tap X Y                   a tap at the screen's pixels (for what is the book's: a word)
 //	swipe X Y X2 Y2, hold X Y [to X2 Y2]
 //	expect REGEX              waits (10 s at most) for a line of the reader's log after the last one expected
+//	expect-in SECONDS REGEX   the same, with that long to wait (a narration plays in real time)
 //	snap NAME                 the screen copied: e2e/out/SCENARIO/NAME.pgm, compared byte for byte with refs/NAME.pgm
 //	                          (--save keeps it as the reference), the clock's strip aside
 //	wait SECONDS
 //	env KEY=VALUE...          settings the reader is started with, before open: the heartbeat and the watcher on a faster
 //	                          clock, HEARTBEAT_EVERY=1s WATCH_EVERY=4 (a freeze caught in 8 to 12 s, not 20 to 30)
+//	fetch URL PATH SHA256     the file at PATH on the device, downloaded from URL (checked against the SHA256) if it is
+//	                          not there: a public sample book for a scenario, never committed
+//	forget PATH               the book's saved place removed on the device (its key, as library.Key makes it: a shell
+//	                          recipe, for books over 128 KB), so the book opens at its start
 //	freeze                    the reader stopped (SIGSTOP), as a hang that answers nothing
 //	expect-none REGEX SECONDS waits that long and fails if the log has a line like it
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
@@ -135,6 +145,10 @@ func (p *player) step(a []string) (string, error) {
 	}
 	switch a[0] {
 	case "open":
+		d.book = ""
+		if len(a) > 1 {
+			d.book = a[1]
+		}
 		stop, _, err := d.start()
 		p.stop = stop
 		if err != nil {
@@ -160,6 +174,13 @@ func (p *player) step(a []string) (string, error) {
 		}
 		if err := d.tap(p.b.bar, "topbar-start"); err != nil {
 			return "", err
+		}
+		if d.book != "" { // a book opened by name has no library to go back to: the reader ends
+			if _, err := d.expect(`left at document`, 20*time.Second); err != nil {
+				return "", err
+			}
+			p.b, p.stop = nil, nil
+			return p.expectNickel(60)
 		}
 		if _, err := d.expect(`library: \d+ books.*shown in`, 20*time.Second); err != nil {
 			return "", err
@@ -258,6 +279,20 @@ func (p *player) step(a []string) (string, error) {
 			p.hlSeen = true
 		}
 		return line, nil
+	case "fetch":
+		if err := need(3); err != nil {
+			return "", err
+		}
+		return d.fetch(a[1], a[2], a[3])
+	case "forget":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		out, err := d.sh("cd "+d.a.Dir+" && f="+a[1]+" && s=$(stat -c %s $f) && k=$({ echo $s; head -c 65536 $f; tail -c 65536 $f; } | sha256sum | cut -c1-12) && rm -f places/$k.place places/$k.mark && echo $k", nil)
+		if err != nil {
+			return "", err
+		}
+		return "place of " + strings.TrimSpace(string(out)) + " removed", nil
 	case "env":
 		d.env = strings.Join(a[1:], " ")
 		return "", nil
@@ -289,16 +324,17 @@ func (p *player) step(a []string) (string, error) {
 			return "", err
 		}
 		s, _ := strconv.ParseFloat(a[1], 64)
-		end := time.Now().Add(time.Duration(s * float64(time.Second)))
-		for time.Now().Before(end) {
-			out, err := d.sh("pidof nickel >/dev/null && ! pidof shamsaink >/dev/null && echo yes", nil)
-			if err == nil && strings.TrimSpace(string(out)) == "yes" {
-				p.stop, p.b = nil, nil
-				return "Kobo's interface is back, the reader gone", nil
-			}
-			time.Sleep(2 * time.Second)
+		return p.expectNickel(s)
+	case "expect-in":
+		if err := need(2); err != nil {
+			return "", err
 		}
-		return "", fmt.Errorf("Kobo's interface did not come back in %s s", a[1])
+		secs, _ := strconv.ParseFloat(a[1], 64)
+		line, err := d.expect(strings.Join(a[2:], " "), time.Duration(secs*float64(time.Second)))
+		if err != nil {
+			return "", err
+		}
+		return line, nil
 	case "wait":
 		if err := need(1); err != nil {
 			return "", err
@@ -370,4 +406,46 @@ func (p *player) snap(name string) (string, error) {
 		return "", fmt.Errorf("%d pixels differ from the reference, below the clock's strip", diff)
 	}
 	return "identical to the reference", nil
+}
+
+// expectNickel waits for Kobo's interface, the reader gone (SSH may drop and come back meanwhile).
+func (p *player) expectNickel(seconds float64) (string, error) {
+	end := time.Now().Add(time.Duration(seconds * float64(time.Second)))
+	for time.Now().Before(end) {
+		out, err := p.d.sh("pidof nickel >/dev/null && ! pidof shamsaink >/dev/null && echo yes", nil)
+		if err == nil && strings.TrimSpace(string(out)) == "yes" {
+			p.stop, p.b = nil, nil
+			return "Kobo's interface is back, the reader gone", nil
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return "", fmt.Errorf("Kobo's interface did not come back in %.0f s", seconds)
+}
+
+// fetch puts the file at url on the device at path (under the device's folder) unless it is there: downloaded here,
+// checked against its SHA-256, copied over SSH.
+func (d *dev) fetch(url, path, sum string) (string, error) {
+	full := d.a.Dir + "/" + path
+	if out, _ := d.sh("test -f "+full+" && echo yes", nil); strings.TrimSpace(string(out)) == "yes" {
+		return path + " is there", nil
+	}
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("%s: %s", url, resp.Status)
+	}
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256(data)); got != sum {
+		return "", fmt.Errorf("%s: SHA-256 is %s, not %s", url, got, sum)
+	}
+	if _, err := d.sh("mkdir -p $(dirname "+full+") && cat > "+full, data); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s copied (%d bytes)", path, len(data)), nil
 }

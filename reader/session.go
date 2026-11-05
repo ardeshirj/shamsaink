@@ -937,6 +937,9 @@ func (s *session) underline(c cue) {
 		// while the screen is busy are skipped, ~0.4 s)
 		s.turns++
 		if s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery() {
+	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
+		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(boxes))
+	}
 			s.turns = 0
 			s.showPage(device.WfGC16, true)
 		} else {

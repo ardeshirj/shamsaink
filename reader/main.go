@@ -32,7 +32,8 @@ var (
 	fontSize   = env("FONT_SIZE", "50") // px (09: 50 looks right at 300 ppi)
 	lineHeight = env("LINE_HEIGHT", "0")
 	margin     = env("MARGIN", "60")
-	leadMs     = env("LEAD_MS", "250") // experiment 12: by ear, for the maintainer's headphones
+	markLog    = env("MARK_LOG", "") != "" // a log line for each word marked (the end-to-end tests read it)
+	leadMs     = env("LEAD_MS", "250")     // experiment 12: by ear, for the maintainer's headphones
 )
 
 // What stays between books: the screen, the fallback fonts, the three pages' buffers (the engine's pixels only) and

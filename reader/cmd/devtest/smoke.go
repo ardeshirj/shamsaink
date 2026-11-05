@@ -24,6 +24,7 @@ type dev struct {
 	name string
 	mark int
 	env  string // KEY=VALUE settings the reader is started with (a scenario's env step)
+	book string // the book the reader is started on, by its path under the device's folder (open PATH); "" for the library
 }
 
 // load reads the spec's profile and the access facts of a device.
@@ -238,7 +239,7 @@ func (d *dev) start() (stop func(), line string, err error) {
 		return nil, "", fmt.Errorf("the reader is already running on the device: leave it first")
 	}
 	d.mark = d.logLines()
-	if _, err := d.sh("cd "+d.a.Dir+" && nohup env "+d.env+" sh launch.sh >/dev/null 2>&1 </dev/null &", nil); err != nil {
+	if _, err := d.sh("cd "+d.a.Dir+" && nohup env "+d.env+" sh launch.sh "+d.book+" >/dev/null 2>&1 </dev/null &", nil); err != nil {
 		return nil, "", err
 	}
 	stop = func() {
@@ -247,7 +248,11 @@ func (d *dev) start() (stop func(), line string, err error) {
 			d.sh("kill $(pidof shamsaink)", nil)
 		}
 	}
-	line, err = d.expect(`library: \d+ books.*shown in`, 40*time.Second)
+	shown := `library: \d+ books.*shown in`
+	if d.book != "" {
+		shown = `opened \d+ ms` // the book itself, no library
+	}
+	line, err = d.expect(shown, 40*time.Second)
 	if err != nil {
 		return stop, "", err
 	}

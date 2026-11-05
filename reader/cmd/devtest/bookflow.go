@@ -29,11 +29,13 @@ var reOpened = regexp.MustCompile(`document (\d+) page (\d+) shown in .*right to
 // openFirst taps the library's first row (the book read last) and waits for it: its place and its direction.
 func (d *dev) openFirst(lib *boxes) (*book, error) {
 	b := &book{d: d, lib: lib, w: d.prof.Screen.Width}
-	if err := d.tap(lib, "e0"); err != nil {
-		return nil, err
-	}
-	if _, err := d.expect(`opened \d+ ms`, 40*time.Second); err != nil {
-		return nil, err
+	if d.book == "" { // from the library; a book named by the scenario was opened by the launcher already
+		if err := d.tap(lib, "e0"); err != nil {
+			return nil, err
+		}
+		if _, err := d.expect(`opened \d+ ms`, 40*time.Second); err != nil {
+			return nil, err
+		}
 	}
 	line, err := d.expect(`document \d+ page \d+ shown in`, 20*time.Second)
 	if err != nil {
