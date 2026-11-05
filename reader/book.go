@@ -63,10 +63,6 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 	if err != nil {
 		return nil, err
 	}
-	st, err := os.Stat(abs)
-	if err != nil {
-		return nil, err
-	}
 	p, err := openPub(ctx, abs)
 	if err != nil {
 		return nil, err
@@ -86,7 +82,10 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		}
 		return data, nil
 	}
-	key := library.Key(filepath.Base(abs), st.Size(), st.ModTime())
+	key, err := library.Key(abs)
+	if err != nil {
+		return nil, err
+	}
 	r := &reading{
 		pub:     p,
 		spine:   spine,

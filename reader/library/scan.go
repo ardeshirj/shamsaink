@@ -2,6 +2,8 @@ package library
 
 import (
 	"archive/zip"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -21,7 +23,7 @@ import (
 // A book in the library: its file, what its metadata says, and how far it has been read.
 type Book struct {
 	Path     string `json:"path"` // relative to DIR
-	Key      string `json:"key"`  // as openBook's: base name, size, modification time
+	Key      string `json:"key"`  // as openBook's: see Key
 	Title    string `json:"title"`
 	Author   string `json:"author"`
 	Lang     string `json:"lang"`
@@ -34,9 +36,39 @@ type Book struct {
 // metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too.
 const metaVersion = 1
 
-// Key is a book's key from its file's name, size and modification time, as openBook makes it.
-func Key(name string, size int64, mod time.Time) string {
-	return fmt.Sprintf("%s-%d-%d", name, size, mod.Unix())
+// keySample is how much of a book's start and end its key reads.
+const keySample = 64 << 10
+
+// Key is a book's key, 12 hex digits of a SHA-256 over its size, its first 64 KB and its last 64 KB (the whole file
+// when it is under 128 KB), as openBook makes it. Not the name or the modification time: the Kobo's storage is FAT,
+// whose times the kernel turns into UTC with a timezone it may not have been given (every book's time was 8 hours
+// earlier after a reboot on 2026-11-05, and every book was new), and a renamed or moved book keeps its place. An EPUB
+// is a ZIP file whose central directory, at the end, lists the CRC of every file in it, so a changed book changes its
+// last 64 KB. To make it in a shell (docs/devices/kobo/README.md): { echo SIZE; head -c 65536 F; tail -c 65536 F; }
+// | sha256sum | cut -c1-12 (a small file: cat F instead of head and tail).
+func Key(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	st, err := f.Stat()
+	if err != nil {
+		return "", err
+	}
+	h := sha256.New()
+	fmt.Fprintf(h, "%d\n", st.Size())
+	if st.Size() <= 2*keySample {
+		_, err = io.Copy(h, f)
+	} else if _, err = io.CopyN(h, f, keySample); err == nil {
+		if _, err = f.Seek(-keySample, io.SeekEnd); err == nil {
+			_, err = io.CopyN(h, f, keySample)
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(h.Sum(nil))[:12], nil
 }
 
 // readMeta reads an EPUB's metadata; a variable so a test can count the books read.
@@ -75,7 +107,11 @@ func Scan(dir string) []Book {
 			continue
 		}
 		rel = filepath.ToSlash(rel)
-		key := Key(filepath.Base(f), st.Size(), st.ModTime())
+		key, err := Key(f)
+		if err != nil {
+			fmt.Printf("library: %s: %v\n", rel, err)
+			continue
+		}
 		if b, ok := known[rel+"\x00"+key]; ok && b.V == metaVersion {
 			books = append(books, b)
 			continue
