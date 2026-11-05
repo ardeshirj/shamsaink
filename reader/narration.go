@@ -5,11 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"image"
+	"io"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"slices"
-	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -20,11 +18,11 @@ import (
 	blitz "shamsainkengine"
 )
 
-// Read-along (plan, stage 4): the book's narration played to the Bluetooth headphones paired in the Kindle's own
-// settings, each word underlined when the narrator reaches it (experiments 09 and 12). The sound goes through
-// Amazon's mplay, from a raw file (it cannot play from a pipe: experiment 12): each part of the narration is decoded
-// by the engine into RAM while the one before it plays (in the background: a long part takes ~2 s), and its mplay
-// started at its time on the clock.
+// Read-along (plan, stage 8): the book's narration played to the Bluetooth headphones paired in Kobo's own settings,
+// each word underlined when the narrator reaches it (experiments 09, 12 and 13). The sound goes through Kobo's own
+// player, one gst-launch-1.0 into mtkbtmwrpcaudiosink kept open for the session (sink.go), fed raw sound through a
+// pipe: each part of the narration is decoded by the engine into RAM while the one before it plays, and the pipe
+// takes it as the sink plays it, so the narration's clock is what the pipe has taken (see anchor), not a timer of ours.
 
 // A word timed by the book's media overlay: its element in spine document doc, and its clip of an audio file.
 type cue struct {
@@ -76,39 +74,42 @@ func cues(ctx context.Context, p *pub.Publication) []cue {
 	return out
 }
 
-// A part of the narration played by one mplay: a stretch of one audio file, from the first of its words to the last.
+// A part of the narration: a stretch of one audio file, from the first of its words to the last.
 type part struct {
 	file     string
-	from, to float64 // s, in the file
-	at       float64 // s, on the clock
-	raw      string  // decoded, ready to play ("" until then)
-	rate, ch int
+	from, to float64       // s, in the file
+	at       float64       // s, on the narration's clock
+	pcm      []byte        // decoded to the sink's format (once done)
 	done     chan struct{} // closed once decoded (err says if it failed)
 	err      error
 }
 
-// A narration being played from word first: its parts on one clock, started at start (the first mplay's start; the
-// words are underlined lead later, for the headphones' own delay).
+// A narration being played from word first: its parts one after the other on one clock.
 type narrator struct {
-	cues    []cue
-	next    int // the next word to underline
-	parts   []*part
-	started int // parts whose mplay has started
-	start   time.Time
-	lead    time.Duration
-	read    blitz.ReadFunc
-	plays   []*exec.Cmd
-	bars    []image.Rectangle // the underline shown, to erase
-	dir     string
-	playing atomic.Int32  // parts whose mplay has started, for the decoder
-	signal  chan struct{} // a part started
-	quit    chan struct{}
+	cues  []cue
+	next  int // the next word to underline
+	parts []*part
+	lead  time.Duration // the words are underlined this much after the sound is taken, for the headphones' own delay
+	read  blitz.ReadFunc
+	bars  []image.Rectangle // the underline shown, to erase
+
+	// the clock: anchor is when (UnixNano) the narration's second 0 was taken by the sink's pipe, found again after every
+	// chunk written as now minus the narration's seconds written so far, so a stalled link stalls the clock, and a part
+	// decoded late (silence put in its place) moves it. 0 until the first chunk is taken.
+	anchor  atomic.Int64
+	stopped atomic.Bool
+	failed  atomic.Bool
+
+	// the feeder's, used by the sink's goroutine only
+	fp       int   // the part being fed
+	off      int   // bytes of it fed
+	fed      int64 // bytes of narration fed (silence put in not counted)
+	decoding int   // parts whose decoding has started
 }
 
 // newNarrator plans the narration from word first: a new part where the file changes or the clips go back.
 func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) *narrator {
-	n := &narrator{cues: append([]cue(nil), all[first:]...), read: read, lead: lead, dir: "/var/tmp/shamsaink",
-		signal: make(chan struct{}, 1), quit: make(chan struct{})}
+	n := &narrator{cues: append([]cue(nil), all[first:]...), read: read, lead: lead}
 	var p *part
 	for i := range n.cues {
 		c := &n.cues[i]
@@ -126,65 +127,59 @@ func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) 
 	return n
 }
 
-// begin decodes the first parts, until ~4 s of sound is ready (the first may be a title's second), then the rest in
-// the background, each once the part before it has started (so at most two are in RAM, ~14 MB each at most here).
-func (n *narrator) begin() error {
-	k, ready := 0, 0.0
-	for k < len(n.parts) && (k == 0 || ready < 4) {
-		if err := n.decode(k); err != nil {
-			return err
-		}
-		ready += n.parts[k].to - n.parts[k].from
-		k++
-	}
-	go func() {
-		for i := k; i < len(n.parts); i++ {
-			for int(n.playing.Load()) < i {
-				select {
-				case <-n.signal:
-				case <-n.quit:
-					return
-				}
-			}
-			n.decode(i)
-		}
-	}()
-	return nil
+// begin starts decoding the first part in the background (1.5 to 2.8 s on the Kobo: the screen must not wait for it);
+// the sink is given silence until it is done, and a failure ends the narration (feed). The rest are decoded as the
+// feeder comes to them.
+func (n *narrator) begin() {
+	n.decoding = 1
+	go n.decode(0)
 }
 
-// decode makes part i's raw file (16-bit, the file's own rate and channels), and says it is done.
+// prefetch starts decoding the parts after the one being fed, until ~4 s of sound is ahead (a part may be a title's
+// second), so at most a few are in RAM (~11 MB a minute).
+func (n *narrator) prefetch() {
+	ahead := 0.0
+	for i := n.fp; i < len(n.parts) && ahead < 4; i++ {
+		if i >= n.decoding {
+			n.decoding = i + 1
+			go n.decode(i)
+		}
+		ahead += n.parts[i].to - n.parts[i].from
+	}
+}
+
+// decode makes part i's sound, and says it is done.
 func (n *narrator) decode(i int) error {
 	p := n.parts[i]
-	p.err = n.decodeRaw(i)
+	p.pcm, p.err = n.decodeParts(p)
 	close(p.done)
 	return p.err
 }
 
-func (n *narrator) decodeRaw(i int) error {
-	p := n.parts[i]
+func (n *narrator) decodeParts(p *part) ([]byte, error) {
 	data, err := n.read(p.file)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	a := blitz.OpenAudio(data)
 	if a == nil {
-		return fmt.Errorf("%s: not decodable", p.file)
+		return nil, fmt.Errorf("%s: not decodable", p.file)
 	}
 	defer a.Close()
-	p.rate, p.ch = a.Rate(), a.Channels()
+	rate, ch := a.Rate(), a.Channels()
 	// a seek lands on the MP3 frame before the time (up to ~26 ms): the samples up to it dropped
 	skip := 0
 	if p.from > 0 {
 		reached := a.Seek(p.from)
 		if reached < 0 {
-			return fmt.Errorf("%s: cannot seek to %.3f s", p.file, p.from)
+			return nil, fmt.Errorf("%s: cannot seek to %.3f s", p.file, p.from)
 		}
-		skip = int((p.from-reached)*float64(p.rate)) * p.ch
+		skip = int((p.from-reached)*float64(rate)) * ch
 	}
-	want := int((p.to - p.from) * float64(p.rate*p.ch))
+	want := int((p.to - p.from) * float64(rate*ch))
 	buf := make([]int16, 1<<16)
-	out := make([]byte, 0, 2*want)
-	for len(out) < 2*want {
+	in := make([]int16, 0, want)
+	for len(in) < want {
 		k := a.Read(buf)
 		if k == 0 {
 			break
@@ -194,73 +189,97 @@ func (n *narrator) decodeRaw(i int) error {
 			d := min(skip, len(got))
 			got, skip = got[d:], skip-d
 		}
-		for _, s := range got[:min(len(got), want-len(out)/2)] {
-			out = binary.LittleEndian.AppendUint16(out, uint16(s))
-		}
+		in = append(in, got[:min(len(got), want-len(in))]...)
 	}
-	os.MkdirAll(n.dir, 0o755)
-	raw := filepath.Join(n.dir, fmt.Sprintf("sound-%d.raw", i))
-	if err := os.WriteFile(raw, out, 0o644); err != nil {
-		return err
-	}
-	p.raw = raw
-	return nil
+	return sinkFormat(in, rate, ch), nil
 }
 
-// play starts part i's mplay; its file is removed once it has played.
-func (n *narrator) play(i int) {
-	p := n.parts[i]
-	cmd := exec.Command("mplay", "-r", strconv.Itoa(p.rate), "-c", strconv.Itoa(p.ch), p.raw)
-	if err := cmd.Start(); err != nil {
-		fmt.Fprintln(os.Stderr, "shamsaink: mplay:", err)
-		return
+// sinkFormat turns interleaved 16-bit sound of rate and ch channels into the sink's: 48 kHz stereo, little-endian,
+// by linear interpolation (speech: no one hears it; a mono voice is put on both sides).
+func sinkFormat(in []int16, rate, ch int) []byte {
+	frames := len(in) / ch
+	n := int(int64(frames) * sinkRate / int64(rate))
+	out := make([]byte, 0, n*4)
+	for j := 0; j < n; j++ {
+		x := float64(j) * float64(rate) / sinkRate
+		i := int(x)
+		f := x - float64(i)
+		i1 := min(i+1, frames-1)
+		for c := 0; c < 2; c++ {
+			cc := min(c, ch-1)
+			a, b := float64(in[i*ch+cc]), float64(in[i1*ch+cc])
+			out = binary.LittleEndian.AppendUint16(out, uint16(int16(a+(b-a)*f)))
+		}
 	}
-	n.plays = append(n.plays, cmd)
-	go func() { cmd.Wait(); os.Remove(p.raw) }()
-	n.playing.Store(int32(i + 1))
+	return out
+}
+
+// feed writes the next chunk to the sink (a chunk of silence while the part due is not decoded yet), and sets the
+// clock; false once the narration has all been written (or has failed).
+func (n *narrator) feed(w io.Writer) bool {
+	if n.stopped.Load() || n.fp >= len(n.parts) {
+		return false
+	}
+	n.prefetch()
+	p := n.parts[n.fp]
+	chunk, live := silence, false
 	select {
-	case n.signal <- struct{}{}:
-	default:
+	case <-p.done:
+		if p.err != nil {
+			fmt.Fprintln(os.Stderr, "shamsaink: read aloud:", p.err)
+			n.failed.Store(true)
+			return false
+		}
+		chunk, live = p.pcm[n.off:min(n.off+len(silence), len(p.pcm))], true
+	default: // decoded late: silence until it is, the clock waiting
 	}
-}
-
-// wake plays a second of silence, so an idle Bluetooth link is woken (~0.4 s) before the narration's clock starts.
-func (n *narrator) wake() {
-	os.MkdirAll(n.dir, 0o755)
-	raw := filepath.Join(n.dir, "silence.raw")
-	if os.WriteFile(raw, make([]byte, 2*44100), 0o644) == nil {
-		exec.Command("mplay", "-r", "44100", "-c", "1", raw).Run()
-		os.Remove(raw)
+	if _, err := w.Write(chunk); err != nil {
+		fmt.Fprintln(os.Stderr, "shamsaink: read aloud: sound:", err)
+		n.failed.Store(true)
+		return false
 	}
-}
-
-// stop ends the sound and the decoding, and removes what is left of it.
-func (n *narrator) stop() {
-	close(n.quit)
-	for _, c := range n.plays {
-		if c.ProcessState == nil {
-			c.Process.Kill()
+	if live {
+		n.off += len(chunk)
+		n.fed += int64(len(chunk))
+		if n.off >= len(p.pcm) {
+			p.pcm, n.fp, n.off = nil, n.fp+1, 0
 		}
 	}
-	for _, p := range n.parts {
-		if p.raw != "" {
-			os.Remove(p.raw)
-		}
-	}
+	n.anchor.Store(time.Now().Add(-time.Duration(n.fed) * time.Second / sinkBytesPerSecond).UnixNano())
+	return true
 }
 
-// due is when the next thing is to be done: a part started or a word underlined; false when the narration is over.
+// stop ends the narration: the feeder stops taking from it.
+func (n *narrator) stop() { n.stopped.Store(true) }
+
+// at is when narration second s is heard (by the pipe's count, the lead not added); false before the first chunk.
+func (n *narrator) at(s float64) (time.Time, bool) {
+	a := n.anchor.Load()
+	if a == 0 {
+		return time.Time{}, false
+	}
+	return time.Unix(0, a).Add(time.Duration(s * float64(time.Second))), true
+}
+
+// end is the narration's end, on its clock: its last word's end.
+func (n *narrator) end() float64 {
+	c := n.cues[len(n.cues)-1]
+	return c.at + c.end - c.begin
+}
+
+// due is when the next thing is to be done: a word underlined, or the narration's end; false when it is over (or
+// failed). Until the pipe has taken the first chunk (the player starting, ~2 s the first time) it asks again soon.
 func (n *narrator) due() (time.Time, bool) {
-	var t time.Time
-	ok := false
-	at := func(s float64) time.Time { return n.start.Add(time.Duration(s * float64(time.Second))) }
-	if n.started < len(n.parts) {
-		t, ok = at(n.parts[n.started].at), true
+	if n.failed.Load() {
+		return time.Now(), false
 	}
+	s := n.end()
 	if n.next < len(n.cues) {
-		if w := at(n.cues[n.next].at).Add(n.lead); !ok || w.Before(t) {
-			t, ok = w, true
-		}
+		s = n.cues[n.next].at
 	}
-	return t, ok
+	t, ok := n.at(s)
+	if !ok {
+		return time.Now().Add(50 * time.Millisecond), true
+	}
+	return t.Add(n.lead), true
 }

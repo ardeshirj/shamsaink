@@ -56,6 +56,7 @@ type session struct {
 	cued      chan []cue // its words, read after the first page is shown (nil once taken)
 	uncue     func()     // stops their reading
 	nar       *narrator  // the narration, while it plays
+	snd       *sink      // the player, opened by the first reading aloud and kept until the book is left
 
 	sel    *selection // words chosen: while a finger is held, then while the highlight's menu is open
 	unmark int        // the highlight held, the menu's (-1: words chosen)
@@ -169,6 +170,10 @@ func (s *session) close() {
 	s.stop()
 	s.word.Stop()
 	s.uncue()
+	if s.snd != nil {
+		s.snd.close()
+		s.snd = nil
+	}
 	s.r.close()
 }
 
@@ -851,25 +856,29 @@ func (s *session) readAloud(from *blitz.Word) {
 		return
 	}
 	t := time.Now()
-	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
-	nar.wake()
-	w := ms(t)
-	if err := nar.begin(); err != nil {
-		fmt.Fprintln(os.Stderr, "shamsaink: read aloud:", err)
-		return
+	if s.snd == nil || s.snd.dead.Load() {
+		snd, err := openSink()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "shamsaink: read aloud: no player:", err)
+			return
+		}
+		s.snd = snd
 	}
+	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
+	nar.begin()
 	s.nar = nar
-	nar.start = time.Now()
-	nar.play(0)
-	nar.started = 1
-	fmt.Printf("read aloud from word %d (document %d): woken %.0f ms, first parts decoded %.0f ms, %d parts\n",
-		first, s.narration[first].doc, w, ms(t)-w, len(nar.parts))
+	s.snd.play(nar)
+	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",
+		first, s.narration[first].doc, ms(t), len(nar.parts))
 	s.due()
 }
 
 // due sets the word's timer to the next thing the narration has due, or ends it if nothing is.
 func (s *session) due() {
 	at, ok := s.nar.due()
+	if ok && s.nar.next >= len(s.nar.cues) && !time.Now().Before(at) { // the last word has been said
+		ok = false
+	}
 	if !ok {
 		s.silence()
 		return
@@ -882,22 +891,12 @@ func (s *session) due() {
 func (s *session) speak() {
 	nar := s.nar
 	now := time.Now()
-	at := func(t float64) time.Time { return nar.start.Add(time.Duration(t * float64(time.Second))) }
-	if p := nar.parts[min(nar.started, len(nar.parts)-1)]; nar.started < len(nar.parts) && !now.Before(at(p.at)) {
-		<-p.done // decoded in the background while the part before played: late only if that was short
-		if p.err != nil {
-			fmt.Fprintln(os.Stderr, "shamsaink: read aloud:", p.err)
-			s.silence()
-			return
-		}
-		if late := time.Since(at(p.at)); late > 50*time.Millisecond {
-			fmt.Printf("  read aloud: part %d started %.0f ms late\n", nar.started, ms(at(p.at)))
-		}
-		nar.play(nar.started)
-		nar.started++
-	}
 	w := -1
-	for nar.next < len(nar.cues) && !now.Before(at(nar.cues[nar.next].at).Add(nar.lead)) {
+	for nar.next < len(nar.cues) {
+		t, ok := nar.at(nar.cues[nar.next].at)
+		if !ok || now.Before(t.Add(nar.lead)) {
+			break
+		}
 		w, nar.next = nar.next, nar.next+1
 	}
 	if w >= 0 {
