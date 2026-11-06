@@ -129,15 +129,23 @@ func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
 // HasButtons says whether the device has page-turn buttons (the Kobo Libra's, two keys on its side).
 func (d *Device) HasButtons() bool { return d.Kind == Kobo && buttonsDev() != "" }
 
-// Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture or a YAML file from dir/sleep,
-// drawn by draw, else fallback), suspends until the power button is pressed again, and returns true once the Kobo is awake and the
-// screen back. On the Kindle it returns false at once: the book is to be left, for KOReader to show its screensaver.
-func (d *Device) Doze(dir string, fallback *image.Gray, draw func(yml []byte) (*image.Gray, error)) bool {
+// SleepText is how the reader draws the sleep screens written as YAML files (one screen or a set in a file): Count says
+// how many screens a file holds and the errors of those that do not load, Draw draws its screen i.
+type SleepText struct {
+	Count func(yml []byte) (int, []error)
+	Draw  func(yml []byte, i int) (*image.Gray, error)
+}
+
+// Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture or a screen of a YAML file from
+// dir/sleep, drawn by text, else fallback), suspends until the power button is pressed again, and returns true once the
+// Kobo is awake and the screen back. On the Kindle it returns false at once: the book is to be left, for KOReader to show
+// its screensaver.
+func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
 	if d.Kind == Kindle {
 		return false
 	}
 	beatSleeping()
-	d.doze(sleepScreen(dir, fallback, draw))
+	d.doze(sleepScreen(dir, fallback, text))
 	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
 	return true

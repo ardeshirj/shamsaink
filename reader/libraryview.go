@@ -181,7 +181,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:
-			if rd.dev.Doze(rd.dir, splash.Gray, rd.drawSleep) {
+			if rd.dev.Doze(rd.dir, splash.Gray, rd.sleepText()) {
 				for len(events) > 0 { // the touches made while asleep
 					<-events
 				}

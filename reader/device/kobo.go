@@ -196,27 +196,53 @@ func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
 	return func() { once.Do(func() { close(quit) }) }
 }
 
-// sleepScreen is one file from DIR/sleep, chosen at random: a picture (PNG or JPEG) fitted to the screen on white, or a
-// small YAML file (.yml, .yaml) drawn by render at the screen's own size; else fallback.
-func sleepScreen(dir string, fallback *image.Gray, render func(yml []byte) (*image.Gray, error)) *image.Gray {
-	var pics []string
-	for _, ext := range []string{"*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG", "*.yml", "*.yaml"} {
+// sleepScreen is one screen from DIR/sleep, chosen at random among all of them: a picture (PNG or JPEG) fitted to the
+// screen on white, in colour (*image.RGBA: shown as it is in dark mode, not as a negative, and in colour on a colour
+// screen), or one screen of a YAML file (.yml, .yaml; one screen or a set) drawn by text at the screen's own size, grey
+// (*image.Gray: inverted in dark mode, as the page is); else fallback. Each screen counts once, so a set of 30 comes up
+// 30 times as often as one picture.
+func sleepScreen(dir string, fallback *image.Gray, text SleepText) image.Image {
+	type screen struct {
+		path string
+		yml  []byte // a YAML file's text, nil for a picture
+		i    int    // the screen in it
+	}
+	var all []screen
+	for _, ext := range []string{"*.png", "*.jpg", "*.jpeg", "*.PNG", "*.JPG", "*.JPEG", "*.yml", "*.yaml", "*.YML", "*.YAML"} {
 		m, _ := filepath.Glob(filepath.Join(dir, "sleep", ext))
-		pics = append(pics, m...)
-	}
-	if len(pics) == 0 {
-		return fallback
-	}
-	path := pics[rand.IntN(len(pics))]
-	if e := strings.ToLower(filepath.Ext(path)); e == ".yml" || e == ".yaml" {
-		b, err := os.ReadFile(path)
-		if err == nil && render != nil {
-			var img *image.Gray
-			if img, err = render(b); err == nil && img != nil {
-				return img
+		for _, p := range m {
+			if e := strings.ToLower(filepath.Ext(p)); e != ".yml" && e != ".yaml" {
+				all = append(all, screen{path: p})
+				continue
+			}
+			if text.Count == nil || text.Draw == nil {
+				continue
+			}
+			b, err := os.ReadFile(p)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(p), err)
+				continue
+			}
+			n, errs := text.Count(b)
+			for _, err := range errs {
+				fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(p), err)
+			}
+			for i := range n {
+				all = append(all, screen{p, b, i})
 			}
 		}
-		fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(path), err)
+	}
+	if len(all) == 0 {
+		return fallback
+	}
+	s := all[rand.IntN(len(all))]
+	path := s.path
+	if s.yml != nil {
+		img, err := text.Draw(s.yml, s.i)
+		if err == nil && img != nil {
+			return img
+		}
+		fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(path), "screen", s.i+1, err)
 		return fallback
 	}
 	f, err := os.Open(path)
@@ -230,7 +256,7 @@ func sleepScreen(dir string, fallback *image.Gray, render func(yml []byte) (*ima
 		return fallback
 	}
 	r := fallback.Rect
-	img := image.NewGray(r)
+	img := image.NewRGBA(r)
 	draw.Draw(img, r, image.NewUniform(color.White), image.Point{}, draw.Src)
 	// as large as fits, kept in proportion, centred
 	b := src.Bounds()
@@ -264,10 +290,10 @@ func plugged() bool {
 	return err == nil && strings.TrimSpace(string(b)) != "Discharging"
 }
 
-// doze shows pic, takes Wi-Fi down and the light off, and suspends the Kobo until the power button is pressed again,
-// then puts the light and the screen back as they were, and Wi-Fi if it was up (in the background: a few seconds to
-// connect).
-func (d *Device) doze(pic *image.Gray) {
+// doze shows pic (grey, or a picture in colour: sleepScreen), takes Wi-Fi down and the light off, and suspends the Kobo
+// until the power button is pressed again, then puts the light and the screen back as they were, and Wi-Fi if it was up
+// (in the background: a few seconds to connect).
+func (d *Device) doze(pic image.Image) {
 	power := d.wake
 	d.dozing.Store(true)
 	defer d.dozing.Store(false)
@@ -277,7 +303,12 @@ func (d *Device) doze(pic *image.Gray) {
 	back := d.Screen.Save()
 	light, _ := os.ReadFile(lightLevel)
 	lit, _ := strconv.Atoi(strings.TrimSpace(string(light)))
-	d.Screen.Show(pic, WfGC16, true)
+	switch p := pic.(type) {
+	case *image.RGBA:
+		d.Screen.ShowRGBA(p, image.Rect(0, 0, d.Screen.W, d.Screen.H), WfGC16, true)
+	case *image.Gray:
+		d.Screen.Show(p, WfGC16, true)
+	}
 	d.Screen.Wait()
 	time.Sleep(lightDelay)
 	sysfs(lightFile, "0")

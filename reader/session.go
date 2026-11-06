@@ -326,7 +326,7 @@ func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()
 	}
-	if !s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.drawSleep) {
+	if !s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.sleepText()) {
 		s.asleep = true
 		s.leave()
 		return
@@ -334,13 +334,22 @@ func (s *session) sleep() {
 	s.drain()
 }
 
-// drawSleep is a sleep screen's YAML file (a couplet, a title, a quote: ui.DrawSleep) drawn at the screen's size.
-func (rd *reader) drawSleep(yml []byte) (*image.Gray, error) {
-	f, err := ui.ParseSleep(yml)
-	if err != nil {
-		return nil, err
+// sleepText draws the sleep screens of a YAML file (one or a set: ui.ParseSleeps; a couplet, a title, a quote:
+// ui.DrawSleep) at the screen's size.
+func (rd *reader) sleepText() device.SleepText {
+	return device.SleepText{
+		Count: func(yml []byte) (int, []error) {
+			screens, errs := ui.ParseSleeps(yml)
+			return len(screens), errs
+		},
+		Draw: func(yml []byte, i int) (*image.Gray, error) {
+			screens, _ := ui.ParseSleeps(yml)
+			if i >= len(screens) {
+				return nil, fmt.Errorf("no screen %d of %d", i+1, len(screens))
+			}
+			return ui.DrawSleep(screens[i], rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H), nil
+		},
 	}
-	return ui.DrawSleep(f, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H), nil
 }
 
 // leave keeps the place, waits for the ink, lets go of the touch screen and closes the book.

@@ -2,9 +2,10 @@ package ui
 
 import (
 	"fmt"
-	"math"
 	"html/template"
 	"image"
+	"math"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 
@@ -26,7 +27,32 @@ type Sleep struct {
 	Credit string   `yaml:"credit"`
 }
 
-// ParseSleep reads a sleep screen's file.
+// sleepSep is the line between two screens in one file: YAML's document separator, "---" alone on its line.
+var sleepSep = regexp.MustCompile(`(?m)^---[ \t]*(#.*)?\r?$\n?`)
+
+// ParseSleeps reads a sleep screens' file: one screen, or several separated by lines of "---" (a set, as FarsiEPUB serves
+// them). A screen that does not load is left out and its error returned, so a mistake costs that screen, not the set.
+// Parts with nothing in them (before a first "---", comments only) are not screens.
+func ParseSleeps(b []byte) (screens []Sleep, errs []error) {
+	text := string(b)
+	at := 0
+	parts := append(sleepSep.FindAllStringIndex(text, -1), []int{len(text), len(text)})
+	for _, sep := range parts {
+		part := text[at:sep[0]]
+		line := strings.Count(text[:at], "\n") + 1
+		at = sep[1]
+		s, err := ParseSleep([]byte(part))
+		switch {
+		case err != nil:
+			errs = append(errs, fmt.Errorf("the screen from line %d: %w", line, err))
+		case len(s.Verses) > 0 || s.Text != "" || s.Poet != "" || s.Gloss != "" || s.Credit != "":
+			screens = append(screens, s)
+		}
+	}
+	return screens, errs
+}
+
+// ParseSleep reads one sleep screen.
 func ParseSleep(b []byte) (Sleep, error) {
 	var s Sleep
 	err := yaml.Unmarshal(b, &s)
@@ -41,12 +67,12 @@ func ParseSleep(b []byte) (Sleep, error) {
 
 type sleepData struct {
 	Sleep
-	Lines                                                      []template.HTML // the verses, each on two lines
-	Dir                                                        string
-	Size, Top, Side, H, LogoW, LogoH                           int
+	Lines                                                     []template.HTML // the verses, each on two lines
+	Dir                                                       string
+	Size, Top, Side, H, LogoW, LogoH                          int
 	Poem, Gap, PoetSize, PoetGap, RuleW, RuleH, RuleGap       int
 	GlossSize, PadTop, PadSide, PadBottom, SigGap, SigW, SigH int
-	TextLang, CreditLang, PoetLang, GlossLang                  template.HTMLAttr
+	TextLang, CreditLang, PoetLang, GlossLang                 template.HTMLAttr
 }
 
 // sleepSize is the type's size for a text of n letters (title, quote): large for a few words, smaller as it grows, never
@@ -85,7 +111,7 @@ func twoLines(verse string) template.HTML {
 		return template.HTML(template.HTMLEscapeString(verse))
 	}
 	half := float64(utf8.RuneCountInString(verse)) / 2
-	best, run, bestRun := 1, 0, utf8.RuneCountInString(words[0]) + 1
+	best, run, bestRun := 1, 0, utf8.RuneCountInString(words[0])+1
 	for i, w := range words[:len(words)-1] {
 		run += utf8.RuneCountInString(w) + 1
 		if math.Abs(float64(run)-half) < math.Abs(float64(bestRun)-half) {
