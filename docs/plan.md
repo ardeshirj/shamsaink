@@ -142,7 +142,7 @@ the Kobo it earned it sooner than planned.)
     reaches (its `enter:`, the controls' `goto` and `replace`, `when:`, `dismiss:`), from the library and from a book's
     page, opened, held against its kept render and closed; 17 routes, 16 screens (loading and splash are the reader's
     own), 3 of 3 runs on the simulator; a moved button fails naming it; `make check` fails when a built screen has no
-    way the walk can make. Left: the walk on the Kobo; the old walks removed (`flow`, `bookflow`, `smoke`, `page`);
+    way the walk can make. On the Kobo too (2026-11-06): 17 of 17, 275 s, its files and their times as they were. Left: the old walks removed (`flow`, `bookflow`, `smoke`, `page`);
     effects in the spec
   - [x] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
   - [ ] Where the test books are kept (not decided: public URLs for now; *Buried Alive* Kobo-only until FarsiEPUB offers it)
