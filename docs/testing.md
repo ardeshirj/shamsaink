@@ -19,7 +19,7 @@ left: `plan.md`, "Alongside", end-to-end tests.
   opened the way the spec says, held against its kept render, closed; a screen added to the spec is walked the next time.
   Scenarios are written by hand: journeys on a book, pages compared byte for byte with references.
 - **When:** `make check` always (the pre-push hook runs it); `make test` before committing a change to the reader;
-  `make e2e-sim` before committing a change to what it does; `make e2e` when device code changes, and before a release.
+  `make e2e-sim` on CI, every push (locally only to chase a CI failure or keep references); `make e2e` when device code changes, and before a release.
 - **Where a new check goes:** a function's logic, a unit test; what a control opens or does, the spec (the walk tests it,
   section 6); a journey on a book, or over time, a scenario; what only the hardware does, a scenario marked `on: kobo`.
 
