@@ -5,17 +5,23 @@ catches, the simulated device, what makes a run trustworthy, and how a new featu
 (`design-system.md`) is the model: one spec says what the reader is and does, and the tests are drawn from it. Work
 left: `plan.md`, "Alongside", end-to-end tests.
 
-## 1. Three levels
+## 1. The levels
 
-| Level | Runs | Catches | Command |
+| Command | Time | What it runs | Catches |
 |---|---|---|---|
-| **Unit and render** | CI, every push; the Mac | logic, the spec against the code, panels and screens drawn as kept | `make check-all` |
-| **Scenarios on the simulated device** | CI, every push; the Mac in Docker | the reader's behaviour end to end: library, opening, pages, Contents, highlights, settings kept, sleep screen, read-along's clock and marks, refreshes asked for | `make e2e-sim` |
-| **Scenarios on the Kobo** | the Mac, by hand | what only hardware shows: the ink and its waveforms, touch, timing, sound and Bluetooth, memory, Nickel, freezes | `make e2e` |
+| `make check` | seconds | gofmt, vet; tests that need no engine: the design spec, device, devtest (scenarios checked, the walk's plan), library. CI runs the same (`reader/check.sh`) | the design out of step with the code; a scenario naming a control that is not there; logic in those packages |
+| `make test` | ~10 s | all of `make check`, the reader's own and `reader/ui`'s tests, every screen drawn and compared with its kept render. Writes nothing | logic in the reader; a panel or screen drawn differently from its kept render |
+| `make e2e-sim` | minutes | the reader, whole, on the simulated Kobo (section 2): the walk and the scenarios | navigation broken anywhere (the walk); behaviour broken on a real book (the scenarios) |
+| `make e2e` | minutes | the same files on the Kobo, and those `on: kobo` | what only hardware shows: device code, the watchdog, timing |
+| `make design-update` | ~10 s | not a test: after a change to the design made on purpose, writes the generated files and the kept renders | (look at the renders' diff before committing) |
 
-The same scenario files run on the simulator and on the Kobo. A scenario says where it runs in its first lines
-(`# on: sim kobo`, or `# on: kobo` for `freeze`, `expect-nickel` or Bluetooth); a step the simulator cannot do fails the
-scenario rather than being skipped quietly.
+- **`make e2e-sim` runs two kinds of test.** The walk (`e2e/scenarios/walk.txt`) is generated from the spec: every screen
+  opened the way the spec says, held against its kept render, closed; a screen added to the spec is walked the next time.
+  Scenarios are written by hand: journeys on a book, pages compared byte for byte with references.
+- **When:** `make check` always (the pre-push hook runs it); `make test` before committing a change to the reader;
+  `make e2e-sim` before committing a change to what it does; `make e2e` when device code changes, and before a release.
+- **Where a new check goes:** a function's logic, a unit test; what a control opens or does, the spec (the walk tests it,
+  section 6); a journey on a book, or over time, a scenario; what only the hardware does, a scenario marked `on: kobo`.
 
 ## 2. The simulated device
 

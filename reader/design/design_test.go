@@ -105,7 +105,7 @@ func TestValuesAreTheLibrarys(t *testing.T) {
 	}
 }
 
-// docs/design/system.html is the page the spec and the kept renders make now (`make design` writes it).
+// docs/design/system.html is the page the spec and the kept renders make now (`make design-update` writes it).
 func TestSiteUpToDate(t *testing.T) {
 	want, err := Site(load(t), os.DirFS("golden"), "../../reader/design/golden")
 	if err != nil {
@@ -113,11 +113,11 @@ func TestSiteUpToDate(t *testing.T) {
 	}
 	got, err := os.ReadFile("../../docs/design/system.html")
 	if err != nil || !bytes.Equal(got, want) {
-		t.Errorf("docs/design/system.html is not what the spec makes: run `make design` (%v)", err)
+		t.Errorf("docs/design/system.html is not what the spec makes: run `make design-update` (%v)", err)
 	}
 }
 
-// ui.css's variables and the panels' sizes are what tokens.yaml makes (`make design` writes them).
+// ui.css's variables and the panels' sizes are what tokens.yaml makes (`make design-update` writes them).
 func TestGeneratedInStep(t *testing.T) {
 	s := load(t)
 	css, err := os.ReadFile("../ui/templates/ui.css")
@@ -129,10 +129,10 @@ func TestGeneratedInStep(t *testing.T) {
 		t.Fatal(err)
 	}
 	if want != string(css) {
-		t.Error("the variables of ui.css are not what tokens.yaml makes: run `make design`")
+		t.Error("the variables of ui.css are not what tokens.yaml makes: run `make design-update`")
 	}
 	if got, _ := os.ReadFile("../ui/tokens_gen.go"); string(got) != TokensGo(s.Tokens) {
-		t.Error("ui/tokens_gen.go is not what tokens.yaml makes: run `make design`")
+		t.Error("ui/tokens_gen.go is not what tokens.yaml makes: run `make design-update`")
 	}
 }
 

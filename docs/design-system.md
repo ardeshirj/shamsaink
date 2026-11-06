@@ -5,7 +5,7 @@ against the code by checks that need no device. Started with the dock and Light;
 
 | Layer | Files | Says |
 |---|---|---|
-| Tokens | `tokens.yaml` | the CSS variables (`--ink`, `--line`, ...) and the panel font size and margin, **the one place they are set**; `make design` writes them into `ui.css` (between its `generated` markers) and `ui/tokens_gen.go`. Also the layers (page, screen, topbar, dock, panel, overlay) |
+| Tokens | `tokens.yaml` | the CSS variables (`--ink`, `--line`, ...) and the panel font size and margin, **the one place they are set**; `make design-update` writes them into `ui.css` (between its `generated` markers) and `ui/tokens_gen.go`. Also the layers (page, screen, topbar, dock, panel, overlay) |
 | Device | `devices/*.yaml` | resolution, ppi, waveforms, the smallest tap target (mm) and the reader's slack round a button, the fonts |
 | Component | `components/*.yaml` | purpose, its template in `components.html`, the ids it registers, states, right-to-left, size in the CSS, refresh (waveform, region) |
 | Page buttons | `buttons.yaml` | named maps of the four gestures (press and hold, forward and back); a device with `page_buttons: true` needs a map on every screen |
@@ -23,7 +23,7 @@ rows `e0`, `e1`, ...) by its prefix, a box the engine uses (`internal`) apart. N
 component has a `role` (button, slider, tab, menuitem, switch, ...): what a control is to a user or a test, so a test can say
 "the menuitem Contents" and not a position.
 
-**Renders** (`reader/ui/design_render_test.go`, `make design`): every built screen of the spec is drawn for each device
+**Renders** (`reader/ui/design_render_test.go`; compared by `make test`, kept anew by `make design-update`): every built screen of the spec is drawn for each device
 profile and language (the spec's screens each have cases in `designRenders`; a built screen without one fails
 `TestEveryScreen...`) and compared pixel by pixel with the render kept in `reader/design/golden/DEVICE/`. They are drawn
 with the fonts of `reader/out/fonts` (other fonts draw other letters), from invented books, never a real book's text.
@@ -31,17 +31,17 @@ Beside each picture is a `.json` with where every button is (`placement: screen`
 them, under the real bar; `relative`: on a panel hung by a row or by words), compared exactly like the picture. The device tool reads them to
 tap a control by name.
 
-A change to a token, a template or the CSS shows as the screens it changed (`make design` writes the tokens first, so a new value in `tokens.yaml` reaches the drawings); `make design GOLDEN=update` keeps the new ones, and the
+A change to a token, a template or the CSS shows as the screens it changed (`make design-update` writes the tokens first, so a new value in `tokens.yaml` reaches the drawings); `make design-update GOLDEN=update` keeps the new ones, and the
 diff of the PNGs is the review.
 
-**The page** (`docs/design/system.html`, written by `make design` from the spec and the kept renders; `TestSiteUpToDate`
+**The page** (`docs/design/system.html`, written by `make design-update` from the spec and the kept renders; `TestSiteUpToDate`
 fails when it is stale): principles and rules (`spec/principles.yaml`, each with what keeps it), tokens, devices,
 components, the flow, every screen with its controls and renders (at a third of their size), and the page buttons. It
 is the thing to look at (it replaced the first browser sketch of the layouts, which is gone); open it in a browser.
 
 **CI** (`.github/workflows/ci.yml`, on every push): gofmt, vet and `go test ./design/...`: the spec against the templates,
 CSS, words and icons, the flow, and the generated files fresh. The renders need the engine's library (built with Rust)
-and the fonts folder, so `make design` runs on the Mac; a CI job for them needs the engine built and cached first.
+and the fonts folder, so `make test` and `make design-update` run on the Mac; a CI job for them needs the engine built and cached first.
 
 **On a device** (`make kobo-check`, `reader/cmd/devtest`, read-only over `ssh`): the device held against its profile: screen size,
 the framebuffer's stride and depth, the touch screen's node and name, every font by hash against the folder the renders
@@ -73,7 +73,7 @@ for; it is in git, at `e4ba57e` and before, as `docs/design/sketches/`.
 | The page buttons' map | `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Screens that are built (library, reading and the dock, Contents, Text, Light, the bar, menus) | the spec and their renders, on the page |
 | `components.html` (states as drawn) | the components and the renders of each state, on the page |
-| Screens not built (the glance, word panel, footnotes, listening and its player, Sound, landscape, the keyboard, covers) | written down in `docs/design/unbuilt-screens.md`. A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design` says what is out of step |
+| Screens not built (the glance, word panel, footnotes, listening and its player, Sound, landscape, the keyboard, covers) | written down in `docs/design/unbuilt-screens.md`. A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design-update` says what is out of step |
 
 Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 

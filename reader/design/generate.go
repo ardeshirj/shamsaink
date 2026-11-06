@@ -20,7 +20,7 @@ func TokensCSS(css string, t Tokens) (string, error) {
 		return "", fmt.Errorf("ui.css has no %s ... %s", cssBegin, cssEnd)
 	}
 	var b strings.Builder
-	b.WriteString(cssBegin + "\n/* GENERATED from reader/design/spec/tokens.yaml by `make design`: change the values there. */\n:root {\n")
+	b.WriteString(cssBegin + "\n/* GENERATED from reader/design/spec/tokens.yaml by `make design-update`: change the values there. */\n:root {\n")
 	w := 0
 	for _, k := range t.Order {
 		w = max(w, len(k.Name)+len(k.Value))
@@ -38,7 +38,7 @@ func TokensCSS(css string, t Tokens) (string, error) {
 
 // TokensGo is reader/ui/tokens_gen.go: the panels' sizes from the tokens.
 func TokensGo(t Tokens) string {
-	return fmt.Sprintf(`// Code generated from reader/design/spec/tokens.yaml by `+"`make design`"+`; DO NOT EDIT.
+	return fmt.Sprintf(`// Code generated from reader/design/spec/tokens.yaml by `+"`make design-update`"+`; DO NOT EDIT.
 
 package ui
 

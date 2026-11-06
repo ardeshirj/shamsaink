@@ -10,13 +10,16 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #   make engine          the engine and its tools, native (engine/target/release), for checks on the Mac
 #   make bench-armv7     the bench's commands for ARMv7 (bench/bin/armv7)
 #   make fetch-blitz     Blitz at its pinned commit with our patches (engine/blitz)
-#   make check           what CI runs, in Docker: gofmt over reader/, vet and the tests of the design and device packages (a pre-push
-#                        hook runs it: `git config core.hooksPath .githooks`, once per clone)
-#   make design          the design system checked (docs/design-system.md): the spec against reader/ui, and every screen
-#                        drawn and compared with its kept render (needs `make engine`); `make design GOLDEN=update` keeps
-#                        the drawings as the new renders; writes ui.css's variables, ui/tokens_gen.go and docs/design/system.html, the page of it all
+#   make check           seconds, no engine, what CI runs (reader/check.sh): gofmt, vet, and the tests of every package
+#                        that needs no engine: the design spec, the device layer, devtest, the library (a pre-push hook
+#                        runs it: `git config core.hooksPath .githooks`, once per clone)
+#   make test            every Go test with the engine (needs `make engine`): make check's, the reader's own and
+#                        reader/ui's, and every screen drawn and compared with its kept render; writes nothing
+#   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
+#                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
+#                        committing (docs/design-system.md)
 
-.PHONY: reader engine bench-armv7 fetch-blitz design check
+.PHONY: reader engine bench-armv7 fetch-blitz design-update check test
 
 reader:
 	@sh reader/build.sh
@@ -30,14 +33,15 @@ bench-armv7:
 fetch-blitz:
 	@engine/fetch-blitz.sh
 
-design:
-	@$(DOCKER) sh -c 'cd /r/reader && go run ./design/cmd/gen tokens && FONTS=/r/reader/out/fonts GOLDEN=$(GOLDEN) go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders" && go run ./design/cmd/gen page && go test -count=1 ./design'
+test:
+	@$(DOCKER) sh -c 'cd /r/reader && sh check.sh && FONTS=/r/reader/out/fonts go test -count=1 -tags blitz ./...'
 
-# The same steps as .github/workflows/ci.yml, so a push that CI would fail is stopped here.
+design-update:
+	@$(DOCKER) sh -c 'cd /r/reader && go run ./design/cmd/gen tokens && FONTS=/r/reader/out/fonts GOLDEN=update go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders" && go run ./design/cmd/gen page && go test -count=1 ./design'
+
+# The same as .github/workflows/ci.yml (reader/check.sh), so a push that CI would fail is stopped here.
 check:
-	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build eink-go sh -c \
-	  'cd /r/reader && test -z "$$(gofmt -l .)" || { echo "gofmt: these files need it (gofmt -w):"; gofmt -l .; exit 1; }; \
-	   go vet ./design/... ./device/... ./cmd/devtest/ && go test -count=1 ./design/... ./device/... ./cmd/devtest/'
+	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build eink-go sh -c 'cd /r/reader && sh check.sh'
 
 # --- The Kobo ---
 #

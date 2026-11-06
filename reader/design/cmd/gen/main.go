@@ -1,4 +1,4 @@
-// Command gen writes what the design spec makes, from reader/ (`go run ./design/cmd/gen`, or `make design`): the
+// Command gen writes what the design spec makes, from reader/ (`go run ./design/cmd/gen`, or `make design-update`): the
 // variables of ui/templates/ui.css, ui/tokens_gen.go, and the page docs/design/system.html from the spec and the renders
 // kept in design/golden.
 package main

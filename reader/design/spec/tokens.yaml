@@ -1,4 +1,4 @@
-# The look, as values: the one place they are set. `make design` writes the :root of reader/ui/templates/ui.css (each
+# The look, as values: the one place they are set. `make design-update` writes the :root of reader/ui/templates/ui.css (each
 # comment here comes with its variable) and reader/ui/tokens_gen.go (the panels' sizes) from this file; a test fails when
 # either is not what this makes.
 css:

@@ -1,5 +1,5 @@
 # What the design stands on, from the first browser sketch (2026-10-30; git `e4ba57e`, docs/design/sketches). `check` says what enforces it: a check of
-# `go test ./design` or `make design`, or "by eye" when only a person can judge it.
+# `go test ./design` or `make test`, or "by eye" when only a person can judge it.
 principles:
   - name: The page alone
     text: "No clock, no bar, no ticking while reading: the reader sleeps until a touch or a button."

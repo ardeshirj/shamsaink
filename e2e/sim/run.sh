@@ -10,7 +10,7 @@ SAVE=
 [ "$1" = --save ] && { SAVE=--save; shift; }
 [ -d "$BOOKS" ] || { echo "no books folder $BOOKS (the scenarios' books, as books/ on the Kobo)" >&2; exit 2; }
 
-# the engine's library (native, as for make design), then the reader with it and devtest, for Linux
+# the engine's library (native, as for make test), then the reader with it and devtest, for Linux
 (cd engine && cargo build -q --release --features parallel --lib 2>/dev/null)
 mkdir -p reader/out/sim
 (cd reader && CGO_ENABLED=1 go build -tags blitz -o out/sim/shamsaink . && go build -o out/sim/devtest ./cmd/devtest)

@@ -1,8 +1,8 @@
-# What is checked on every push without the Rust engine and without a device: the code formatted (all of reader/), vetted
-# (the design package and the device layer), and the design system's tests (docs/design-system.md): the spec held against the
-# templates, the stylesheet, the words and the icons; the flow; the generated files (ui.css's variables, tokens_gen.go and
-# docs/design/system.html) fresh; the settings' choices the code's. NOT here: the renders (make design), the ui package and
-# the reader itself, which need the engine's library built with Rust; they run on the Mac, and the device walks on the Kobo.
+# Every push, without the Rust engine and without a device: reader/check.sh, the same as make check (docs/testing.md,
+# section 1): gofmt, vet, and the tests of every package that needs no engine: the design spec against the templates, the
+# stylesheet, the words, the icons and the generated files; the device layer; devtest's scenarios and walk plan; the
+# library. Not here yet: make test (the reader's own tests, reader/ui, the renders) and make e2e-sim, which need the
+# engine built with Rust.
 name: CI
 on:
   push:
@@ -16,12 +16,6 @@ jobs:
         with:
           go-version-file: reader/go.mod
           cache-dependency-path: reader/go.sum
-      - name: gofmt
+      - name: gofmt, vet, the tests that need no engine (reader/check.sh, the same as make check)
         working-directory: reader
-        run: test -z "$(gofmt -l .)"
-      - name: vet
-        working-directory: reader
-        run: go vet ./design/... ./device/...
-      - name: spec, generated files, flow
-        working-directory: reader
-        run: go test -count=1 ./design/...
+        run: sh check.sh

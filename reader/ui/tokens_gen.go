@@ -1,4 +1,4 @@
-// Code generated from reader/design/spec/tokens.yaml by `make design`; DO NOT EDIT.
+// Code generated from reader/design/spec/tokens.yaml by `make design-update`; DO NOT EDIT.
 
 package ui
 

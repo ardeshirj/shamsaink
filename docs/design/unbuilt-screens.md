@@ -2,7 +2,7 @@
 
 From the browser sketch that was `docs/layouts/` (2026-10-30; the sketch itself is in git, at `e4ba57e` and before, as
 `docs/design/sketches/`). Each is **specified when it is built**: its spec first (`reader/design/spec/screens/`: purpose, how it is
-entered and left, controls), then its template, then `make design` says what is out of step (`docs/design-system.md`). What is
+entered and left, controls), then its template, then `make test` says what is out of step (`docs/design-system.md`). What is
 built is in `docs/design/system.html`. The sketch's wording, kept here:
 
 ## On the page
