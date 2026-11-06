@@ -66,7 +66,7 @@ func (d *Device) Colour() bool {
 	if d.Kind != Kobo {
 		return false
 	}
-	b, err := os.ReadFile(env("KOBO_VERSION", "/mnt/onboard/.kobo/version"))
+	b, err := os.ReadFile(env("KOBO_VERSION", hw("/mnt/onboard/.kobo/version")))
 	if err != nil {
 		return false
 	}
@@ -105,7 +105,7 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 			}
 		}
 	}()
-	f, err := touches(env("TOUCH", "/dev/input/event1"), d.Screen.touchTurn(), raw)
+	f, err := touches(env("TOUCH", hw("/dev/input/event1")), d.Screen.touchTurn(), raw)
 	if err != nil {
 		close(done)
 		return nil, nil, err
@@ -160,7 +160,7 @@ func (d *Device) Usage(event, extra string) {
 // batteryDetail is " mV=3694 mA=-159" (the voltage and the current, negative while discharging) from the power supply
 // that has them, so a drop in the charge can be told from the gauge's own correcting itself; "" if none says.
 func batteryDetail() string {
-	caps, _ := filepath.Glob("/sys/class/power_supply/*/capacity") // the battery's own supply, not the charger's
+	caps, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity")) // the battery's own supply, not the charger's
 	read := func(name string) (int, bool) {
 		for _, c := range caps {
 			if b, err := os.ReadFile(filepath.Join(filepath.Dir(c), name)); err == nil {
@@ -186,7 +186,7 @@ func (d *Device) Charging() bool { return batteryIs("Charging") }
 func (d *Device) Full() bool     { return batteryIs("Full") }
 
 func batteryIs(status string) bool {
-	files, _ := filepath.Glob("/sys/class/power_supply/*/capacity")
+	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity"))
 	for _, f := range files {
 		if b, err := os.ReadFile(filepath.Join(filepath.Dir(f), "status")); err == nil {
 			return strings.TrimSpace(string(b)) == status
@@ -198,7 +198,7 @@ func batteryIs(status string) bool {
 // Battery is the battery's charge in per cent, from the kernel's power supplies (the first that has one); -1 if none
 // says.
 func (d *Device) Battery() int {
-	files, _ := filepath.Glob("/sys/class/power_supply/*/capacity")
+	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity"))
 	for _, f := range files {
 		if b, err := os.ReadFile(f); err == nil {
 			if n, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil {

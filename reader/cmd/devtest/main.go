@@ -13,8 +13,10 @@
 //	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
 //	                         the device's reader to be the latest build, and no book open)
 //
-// DEVICE is a profile of reader/design/spec/devices and a key of e2e/devices.yaml. Run from the repository's root. It uses
-// the system's ssh (the host named in devices.yaml), changes nothing on the device, and reads no key.
+// DEVICE is a key of e2e/devices.yaml, and a profile of reader/design/spec/devices unless its entry names one (profile:).
+// Run from the repository's root. It uses the system's ssh (the host named in devices.yaml), changes nothing on the
+// device, and reads no key. A device with local: is the simulated one (docs/testing.md): its commands run in a local shell,
+// devtest itself in its container (make e2e-sim).
 package main
 
 import (
@@ -33,6 +35,11 @@ import (
 
 // Access is how to reach and drive a device (e2e/devices.yaml).
 type Access struct {
+	// Profile is the design spec's profile the device is held against, its kept renders' folder; the key itself when
+	// empty. The simulated Kobo has the Kobo's.
+	Profile string `yaml:"profile"`
+	// Local is the simulated device's folder (docs/testing.md, section 2): commands run here, in a shell, not over SSH.
+	Local string `yaml:"local"`
 	SSH   string `yaml:"ssh"`
 	Dir   string `yaml:"dir"`
 	Log   string `yaml:"log"`
@@ -45,8 +52,9 @@ type Access struct {
 		} `yaml:"turn"`
 	} `yaml:"touch"`
 	Framebuffer struct {
-		Stride int `yaml:"stride"`
-		Bits   int `yaml:"bits"`
+		Node   string `yaml:"node"` // /dev/fb0 when empty
+		Stride int    `yaml:"stride"`
+		Bits   int    `yaml:"bits"`
 	} `yaml:"framebuffer"`
 	FontsLocal  string `yaml:"fonts_local"`
 	ReaderLocal string `yaml:"reader_local"`

@@ -121,8 +121,11 @@ the Kobo it earned it sooner than planned.)
   Left (2026-11-05, the maintainer: e2e is what keeps changes from breaking the reader; the design in `testing.md`):
   - [x] Measure: the same pages drawn by the x86, arm64 and ARMv7 builds, byte for byte (2026-11-05, `testing.md`
     section 4: two families, with and without fused multiply-add; the simulator's references and the Kobo's; x86 under Rosetta draws wrong)
-  - [ ] The simulated device (`SHAMSAINK_SIM`: screen, touch, battery, clock, sound and storage as files; refreshes
-    logged) and devtest's local transport; `make e2e-sim`; `kobo-basics` passing on it and on the Kobo, the Kobo's pages unchanged
+  - [x] The simulated device (`SHAMSAINK_SIM`: screen, touch, battery, clock, sound and storage as files; refreshes
+    logged) and devtest's local transport; `make e2e-sim`; `kobo-basics` passing on it and on the Kobo, the Kobo's pages unchanged.
+    Built 2026-11-05 (`reader/device/sim.go`, `e2e/sim/`, `e2e/README.md`): `kobo-basics` passes on the simulator, 5 runs of 5,
+    its 4 pages byte for byte the Kobo's references once started from the Kobo's settings (`e2e/fixtures/default`); a
+    wrong expectation and text 1 px larger both fail it. The same build for the Kobo passes it there, all 33 steps, its pages identical to the references.
   - [ ] Trustworthy runs: fixtures for a known start (and the Kobo's files saved and put back), waits on the screen
     idle, a crash ends the run, a failure folder with the difference, `RUNS=5`
   - [ ] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`)

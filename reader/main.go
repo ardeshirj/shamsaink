@@ -235,6 +235,18 @@ func atoi(s string) int {
 	return n
 }
 
+// shownNow is the time the reader shows (the bar's clock, when a book was added): now, or the fixed time SHAMSAINK_CLOCK
+// gives (2026-01-01T10:00, local time), so the simulated device's screens are the same run after run (docs/testing.md).
+// Durations and timers keep the real clock.
+func shownNow() time.Time {
+	if v := os.Getenv("SHAMSAINK_CLOCK"); v != "" {
+		if t, err := time.ParseInLocation("2006-01-02T15:04", v, time.Local); err == nil {
+			return t
+		}
+	}
+	return time.Now()
+}
+
 func env(k, d string) string {
 	if v := os.Getenv(k); v != "" {
 		return v

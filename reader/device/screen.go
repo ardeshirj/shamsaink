@@ -67,6 +67,9 @@ func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
 }
 
 func openScreen() (*Screen, error) {
+	if Sim() {
+		return openSimScreen()
+	}
 	f, err := os.OpenFile("/dev/fb0", os.O_RDWR, 0)
 	if err != nil {
 		return nil, err
@@ -213,6 +216,10 @@ func (s *Screen) Restore(b Saved) {
 // send refreshes r of the screen with waveform (flashing if flash), returning while the ink moves.
 func (s *Screen) send(r image.Rectangle, waveform uint32, flash bool) {
 	s.marker++
+	if Sim() {
+		simRefresh(r, waveform, flash)
+		return
+	}
 	region := rect{uint32(r.Min.Y), uint32(r.Min.X), uint32(r.Dx()), uint32(r.Dy())}
 	mode := uint32(0)
 	if flash {
@@ -231,7 +238,7 @@ func (s *Screen) send(r image.Rectangle, waveform uint32, flash bool) {
 }
 
 func (s *Screen) Wait() {
-	if s.marker > 0 {
+	if s.marker > 0 && !Sim() { // the simulated screen is written at once: nothing to wait for
 		m := [2]uint32{s.marker, 0}
 		ioctl(s.f.Fd(), waitComplete, unsafe.Pointer(&m))
 	}

@@ -52,7 +52,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	set := loadSettings(rd.dir)
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
-	topBar := ui.TopBar{Time: time.Now().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
+	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
 	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
@@ -73,9 +73,9 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				RTL: persian([]string{library.Lang(b.Book)}, false)}
 			switch library.Filters[filter] {
 			case "new":
-				rows[i].When = ui.AddedWhen(time.Unix(b.Added, 0), time.Now())
+				rows[i].When = ui.AddedWhen(time.Unix(b.Added, 0), shownNow())
 			case "finished":
-				rows[i].When = ui.AddedWhen(b.FinishedAt(), time.Now())
+				rows[i].When = ui.AddedWhen(b.FinishedAt(), shownNow())
 			}
 			if b.Opened && b.Share >= 0 {
 				rows[i].Read = int(b.Share*100 + 0.5)

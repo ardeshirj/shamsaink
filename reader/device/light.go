@@ -22,8 +22,8 @@ func (d *Device) Light() (level, warmth int, ok bool) {
 	if d.Kind != Kobo {
 		return 0, 0, false
 	}
-	level, err1 := readInt(lightLevel)
-	color, err2 := readInt(warmthFile)
+	level, err1 := readInt(hw(lightLevel))
+	color, err2 := readInt(hw(warmthFile))
 	if err1 != nil || err2 != nil {
 		return 0, 0, false
 	}
@@ -36,14 +36,14 @@ const WarmthMax = warmthMax
 // SetLight sets the light's level, 0 to 100.
 func (d *Device) SetLight(level int) {
 	if d.Kind == Kobo {
-		sysfs(lightFile, strconv.Itoa(min(max(level, 0), 100)))
+		setLight(min(max(level, 0), 100))
 	}
 }
 
 // SetWarmth sets the light's warmth, 0 (cool) to WarmthMax (warm).
 func (d *Device) SetWarmth(warmth int) {
 	if d.Kind == Kobo {
-		sysfs(warmthFile, strconv.Itoa(warmthMax-min(max(warmth, 0), warmthMax)))
+		sysfs(hw(warmthFile), strconv.Itoa(warmthMax-min(max(warmth, 0), warmthMax)))
 	}
 }
 

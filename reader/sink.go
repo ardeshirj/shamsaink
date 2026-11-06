@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
+
+	"shamsainkreader/device"
 )
 
 // The Kobo's sound (experiment 13): Kobo's own player, one gst-launch-1.0 into mtkbtmwrpcaudiosink (Bluetooth headphones
@@ -42,6 +45,27 @@ func openSink() (*sink, error) {
 		return nil, err
 	}
 	syscall.Syscall(syscall.SYS_FCNTL, r.Fd(), fSetPipeSz, 4096)
+	if device.Sim() { // no player: the sound read at the sink's pace, 20 ms at a time, so the clock runs as on the Kobo
+		k := &sink{w: w, quit: make(chan struct{})}
+		go func() {
+			defer r.Close()
+			t := time.NewTicker(20 * time.Millisecond)
+			defer t.Stop()
+			buf := make([]byte, len(silence))
+			for {
+				select {
+				case <-k.quit:
+					return
+				case <-t.C:
+				}
+				if _, err := io.ReadFull(r, buf); err != nil {
+					return
+				}
+			}
+		}()
+		go k.run()
+		return k, nil
+	}
 	cmd := exec.Command("gst-launch-1.0", "-q", "fdsrc", "fd=0", "!", "rawaudioparse", "format=pcm", "pcm-format=s16le",
 		fmt.Sprintf("sample-rate=%d", sinkRate), "num-channels=2", "!", "audioconvert", "!", "audioresample", "!",
 		fmt.Sprintf("audio/x-raw,format=S16LE,rate=%d,channels=2", sinkRate), "!", "mtkbtmwrpcaudiosink")
@@ -100,6 +124,8 @@ func (k *sink) close() {
 	k.once.Do(func() {
 		close(k.quit)
 		k.w.Close()
-		time.AfterFunc(time.Second, func() { k.cmd.Process.Kill() })
+		if k.cmd != nil { // nil on the simulated device
+			time.AfterFunc(time.Second, func() { k.cmd.Process.Kill() })
+		}
 	})
 }

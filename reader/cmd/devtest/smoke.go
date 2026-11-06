@@ -42,8 +42,11 @@ func load(name string) (*dev, error) {
 		return nil, err
 	}
 	d := &dev{a: all[name], name: name}
+	if d.a != nil && d.a.Profile != "" {
+		d.name = d.a.Profile
+	}
 	for i := range spec.Devices {
-		if spec.Devices[i].Name == name {
+		if spec.Devices[i].Name == d.name {
 			d.prof = &spec.Devices[i]
 		}
 	}
@@ -55,6 +58,9 @@ func load(name string) (*dev, error) {
 
 func (d *dev) sh(cmd string, in []byte) ([]byte, error) {
 	c := exec.Command("ssh", "-o", "ConnectTimeout=10", "-o", "BatchMode=yes", d.a.SSH, cmd)
+	if d.a.Local != "" {
+		c = exec.Command("sh", "-c", cmd)
+	}
 	if in != nil {
 		c.Stdin = strings.NewReader(string(in))
 	}
@@ -98,7 +104,11 @@ type screen struct {
 }
 
 func (d *dev) screen() (*screen, error) {
-	raw, err := d.sh("cat /dev/fb0", nil)
+	fb := d.a.Framebuffer.Node
+	if fb == "" {
+		fb = "/dev/fb0"
+	}
+	raw, err := d.sh("cat "+fb, nil)
 	if err != nil {
 		return nil, err
 	}

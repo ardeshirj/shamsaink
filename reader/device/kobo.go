@@ -52,7 +52,7 @@ const (
 // presses sends each press of the power button to out, or to the doze while the Kobo dozes (the press that wakes it),
 // until the file is closed (not opened: nothing sent).
 func (d *Device) presses(out chan<- Event) io.Closer {
-	f, err := os.Open(powerDev)
+	f, err := openInput(hw(powerDev))
 	if err != nil {
 		return io.NopCloser(nil)
 	}
@@ -90,11 +90,14 @@ const (
 
 // buttonsDev is the input node of the page buttons, "" if there is none.
 func buttonsDev() string {
-	b, err := os.ReadFile("/proc/bus/input/devices")
+	b, err := os.ReadFile(hw("/proc/bus/input/devices"))
 	if err != nil {
 		return ""
 	}
-	return buttonsNodeIn(string(b))
+	if n := buttonsNodeIn(string(b)); n != "" {
+		return hw(n)
+	}
+	return ""
 }
 
 // buttonsNodeIn is buttonsDev for the text of /proc/bus/input/devices.
@@ -123,7 +126,7 @@ func (d *Device) buttons(out chan<- Event) io.Closer {
 	if path == "" {
 		return io.NopCloser(nil)
 	}
-	f, err := os.Open(path)
+	f, err := openInput(path)
 	if err != nil {
 		return io.NopCloser(nil)
 	}
@@ -280,13 +283,22 @@ func sysfs(path, v string) error {
 	return err
 }
 
+// setLight sets the white light's level (0 to 100). The Kobo reads it back from actual_brightness; the simulated
+// device, whose files are plain ones, has it written there too.
+func setLight(level int) {
+	sysfs(hw(lightFile), strconv.Itoa(level))
+	if Sim() {
+		sysfs(hw(lightLevel), strconv.Itoa(level))
+	}
+}
+
 // lightDelay is how long the light stays on after the sleep screen is shown, so the screen settles before the light
 // goes out.
 const lightDelay = 2 * time.Second
 
 // plugged says whether the Kobo is on a charger (charging or full: anything but discharging, as KOReader reads it).
 func plugged() bool {
-	b, err := os.ReadFile(batteryStatus)
+	b, err := os.ReadFile(hw(batteryStatus))
 	return err == nil && strings.TrimSpace(string(b)) != "Discharging"
 }
 
@@ -301,7 +313,7 @@ func (d *Device) doze(pic image.Image) {
 	slept := t.Round(0) // the wall clock: Go's own stops while the Kobo is suspended
 	d.Usage("sleep", "")
 	back := d.Screen.Save()
-	light, _ := os.ReadFile(lightLevel)
+	light, _ := os.ReadFile(hw(lightLevel))
 	lit, _ := strconv.Atoi(strings.TrimSpace(string(light)))
 	switch p := pic.(type) {
 	case *image.RGBA:
@@ -311,8 +323,8 @@ func (d *Device) doze(pic image.Image) {
 	}
 	d.Screen.Wait()
 	time.Sleep(lightDelay)
-	sysfs(lightFile, "0")
-	wifi, _ := os.ReadFile(wifiState)
+	setLight(0)
+	wifi, _ := os.ReadFile(hw(wifiState))
 	defer func() {
 		if strings.TrimSpace(string(wifi)) != "up" {
 			return
@@ -327,12 +339,19 @@ func (d *Device) doze(pic image.Image) {
 			fmt.Printf("  Wi-Fi back in %.1f s\n", time.Since(s).Seconds())
 		}()
 	}()
-	exec.Command("sh", "-c", wifiOff).Run()
+	if !Sim() {
+		exec.Command("sh", "-c", wifiOff).Run()
+	}
 	fmt.Printf("asleep: sleep screen shown, light and Wi-Fi off in %.0f ms\n", ms(t))
 	for len(power) > 0 {
 		<-power
 	}
 	for wakes, refused := 0, 0; ; {
+		if Sim() { // no suspend: asleep until the power key's pipe has a press
+			fmt.Println("  suspended (simulated): until the power key")
+			<-power
+			break
+		}
 		if plugged() {
 			// awake behind the sleep screen: a press wakes, an unplugged charger lets it suspend
 			select {
@@ -391,7 +410,7 @@ func (d *Device) doze(pic image.Image) {
 	t = time.Now()
 	d.Screen.Clean() // white first: the sleep screen, left for hours, does not stay behind the page
 	d.Screen.Restore(back)
-	sysfs(lightFile, strconv.Itoa(lit))
+	setLight(lit)
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 	d.Usage("wake", fmt.Sprintf(" asleep=%d", int(time.Now().Round(0).Sub(slept).Seconds())))
 }

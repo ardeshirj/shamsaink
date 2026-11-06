@@ -519,7 +519,7 @@ func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnl
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
 // book's title, the time, the battery and ≡, filled while its list is open.
 func (s *session) drawTopBar() {
-	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: time.Now().Format("03:04"),
+	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: shownNow().Format("03:04"),
 		Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())

@@ -61,6 +61,8 @@ check:
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
+#   make e2e-sim         the same scenario on the simulated Kobo (docs/testing.md), in Docker: the reader and devtest built
+#                        for Linux, a fresh device for each scenario; SIM_BOOKS (out/sim-books) is the books/ folder it gets
 #   make e2e             an end-to-end test on the Kobo (reader/cmd/devtest scenario): SCENARIO (e2e/kobo-basics.txt by default), by control
 #                        name, its pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not committed)
 
@@ -76,7 +78,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-flow-book kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e
+.PHONY: kobo-flow-book kobo-flow kobo-smoke kobo-check kobo-reader-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -103,6 +105,10 @@ kobo-usage: devtest
 
 e2e: devtest
 	@reader/out/devtest scenario kobo-libra-colour $(SCENARIO) $(if $(SAVE),--save)
+
+SIM_BOOKS ?= out/sim-books
+e2e-sim:
+	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(SCENARIO)
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \
