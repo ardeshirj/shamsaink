@@ -5,7 +5,7 @@
 # margin 60; the second line, from its start, at the right, to its middle). The book is left where it was: Contents' jump is
 # the only move, and Back, at the end, undoes it (the reader's files are put back after a run in any case).
 on: sim kobo
-book: books/farsiepub/buried-alive-narrated.epub
+fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub/buried-alive-narrated.epub 3f2d4eb0a576ccae8b1e0eae2ebbf1c9b0c7a08144320fddd396c2e049e7819d
 open
 tap page-top                       # the bar and the dock
 expect menu drawn
