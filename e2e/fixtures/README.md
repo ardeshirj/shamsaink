@@ -11,12 +11,12 @@ Change a fixture only with the references it was drawn with: they are drawn from
 
 ### `settings.json`
 
-The Kobo's settings when the references were kept (2026-11-05), copied from it. The pages in `e2e/out/*/refs/` and the
+The Kobo's settings when the references were first kept (2026-11-05), copied from it; the text size 50, the reader's default, since 2026-11-06. The pages in `e2e/out/*/refs/` and the
 pixel places in the scenarios (the words `basics` holds) are drawn at these values; one of them changed moves every line.
 
 | Field | Value | What it is |
 |---|---|---|
-| `font_size` | 46 | text size, px (the reader's default: 50) |
+| `font_size` | 50 | text size, px (the reader's default) |
 | `line_height` | 1.75 | line spacing |
 | `margin` | 60 | page margins, px |
 | `lead_ms` | 250 | read aloud: how early the mark leads the voice |

@@ -1,0 +1,10 @@
+# The e2e snapshots' references as SHA-256 (docs/testing.md, section 4; e2e/README.md): kept by SAVE=1, the
+# changed pages looked at before this file is committed. TARGET/SCENARIO/NAME; the clock's strip left out.
+d7bf60f6398d38f4f14654ca184ab96af9ac75ceaf9bf4656349bc23db28878a  kobo/basics/chapter
+40358f0aab1cdccf0932822c3860f889744ab8f922e487988e8789fb5d01f772  kobo/basics/highlight
+224ce1e6006c34904f30205030c37e7fa231bb6e10e3acd38b4adb561d647570  kobo/basics/next
+d7bf60f6398d38f4f14654ca184ab96af9ac75ceaf9bf4656349bc23db28878a  kobo/basics/removed
+d7bf60f6398d38f4f14654ca184ab96af9ac75ceaf9bf4656349bc23db28878a  sim/basics/chapter
+40358f0aab1cdccf0932822c3860f889744ab8f922e487988e8789fb5d01f772  sim/basics/highlight
+224ce1e6006c34904f30205030c37e7fa231bb6e10e3acd38b4adb561d647570  sim/basics/next
+d7bf60f6398d38f4f14654ca184ab96af9ac75ceaf9bf4656349bc23db28878a  sim/basics/removed

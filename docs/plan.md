@@ -136,8 +136,12 @@ the Kobo it earned it sooner than planned.)
     the screen read compressed; a panic, fatal signal or exit ends the run at its step; `failure/` with the step, the
     log, the screen, the reference and their difference. `basics` 5 of 5 on the simulator, 3 of 3 on the Kobo, its
     files and their times as they were; `light-dark` and `readalong-granularity` pass on the simulator too
-  - [ ] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`)
-  - [ ] CI: the engine built for x86 and cached, every Go test with it, every `sim` scenario, failures attached; `make check-all`
+  - [x] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`). Built
+    2026-11-06 (`reader/cmd/devtest/refs.go`): the simulator's `basics` kept at the fixtures' new text size, 50 (the
+    reader's default; it was 46), and held by hash in CI; the Kobo's kept again at 50, passing (its four hashes the same as
+    the simulator's: the two families' 2 pixels are not on these pages)
+  - [x] CI: the engine built and cached (on arm64, 2026-11-06, not x86), every Go test with it, every `sim` scenario on public
+    books, failures attached. `make check-all` not built: `make check`, `make test` and `make e2e-sim` together are it
   - [ ] Behaviour in the spec: the events' list, controls' effects, coverage checked in `go test ./design`; scenarios moved to it
     Started 2026-11-06: the walk (`reader/cmd/devtest/walk.go`, `e2e/scenarios/walk.txt`): every built screen the spec
     reaches (its `enter:`, the controls' `goto` and `replace`, `when:`, `dismiss:`), from the library and from a book's
@@ -146,7 +150,8 @@ the Kobo it earned it sooner than planned.)
     way the walk can make. On the Kobo too (2026-11-06): 17 of 17, 275 s, its files and their times as they were. Effects (2026-11-06): a control says the log line its press emits, the button pressed and the one that undoes it (`emits:`, `press:`, `undo:`, `closes:`, `walk: never: why`); the walk presses Dark, the chapter buttons, the progress bar and the text steppers and undoes each, on the simulator and the Kobo; `light-dark` gone. It found a bug, fixed: a text setting changed and changed back moved the place a page back each time (kept as a share of the document, rounded down; now the word the place stands for). The old walks removed (`flow`, `bookflow`, `smoke`, `page`: 2026-11-06). Left:
     effects in the spec
   - [x] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
-  - [ ] Where the test books are kept (not decided: public URLs for now; *Buried Alive* Kobo-only until FarsiEPUB offers it)
+  - [x] Where the test books are kept: public URLs, fetched and checked by SHA-256 (Moby-Dick, IDPF's sample; *Buried Alive*,
+    FarsiEPUB's sample address, 2026-11-06)
   - [ ] Scenarios for read aloud and sleep; the Kindle
 - Upstream (any time; the maintainer posts):
   - [ ] go-toolkit's trim, to Readium
@@ -229,7 +234,13 @@ week and remove it)
 - [ ] An upgrade that keeps what the reader made: settings, highlights, places and the cache across versions (the
   cache format versioned, an old one dropped cleanly), tried by upgrading from the beta
 - [ ] A release made by one command or CI: the package built, checksummed and attached, the version in the binary and
-  in Settings
+  in Settings. **Brought ahead of the beta (2026-11-06, the maintainer: tags as rtlbook and FarsiEPUB have them):** `make
+  tag` (`reader/scripts/release.sh`), a pushed `vX.Y.Z` tag builds the package on CI and publishes it as a GitHub
+  pre-release (`CHANGELOG.md`, "How to release"); `v0.0.x` until the beta, `v0.1.0-beta` kept for it. The version in the
+  binary (`shamsaink -version`, the log's first line, the package's `VERSION`). `make kobo-reader-install` installs
+  the same package; `make kobo-release-install V=` a release's (`docs/devices/kobo/install.md`). Still to do: a first
+  tag pushed and its package installed on the Kobo over USB from a clean start and over SSH; the Kobo's own
+  `curl`/`wget` over HTTPS (for an install from the Kobo once public); the version in Settings
 - [ ] Tested on more than ours: several books, Farsi and English, with a picture-heavy one and a scan; an end-to-end
   scenario for each feature
 - [ ] Stable over time: a month of daily use without a crash or a wrong page, memory flat over days

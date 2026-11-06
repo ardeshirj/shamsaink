@@ -68,7 +68,9 @@ as Nickel coming back.
 ## 4. References: hashes committed, pages not
 
 A snapshot is compared with its reference by SHA-256. `e2e/refs.sum` (committed) lists each scenario's snapshots and
-their hashes, for two targets, the simulator and the Kobo (measured below). The pages
+their hashes, for two targets, the simulator and the Kobo (measured below). Built 2026-11-06
+(`reader/cmd/devtest/refs.go`): a line is `SHA256  TARGET/SCENARIO/NAME`, the hash over the page's size and its pixels
+below the clock's strip; the fixtures' text size 50, the reader's default, since then. The pages
 themselves, drawn from books, stay out of git (CLAUDE.md): `make e2e-sim SAVE=1` writes them into `e2e/out/` and updates
 `refs.sum`; the maintainer looks at the changed pages before `refs.sum` is committed. A page that differs in CI is
 attached to the run, so the change can be seen.

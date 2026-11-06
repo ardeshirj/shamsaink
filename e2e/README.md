@@ -12,6 +12,7 @@ and on the **Kobo** itself (by hand, for what only hardware shows). Why it is bu
 | Scenarios | `make e2e-sim` (every one marked `sim`), or `SCENARIO=e2e/scenarios/basics.txt` | `make e2e SCENARIO=e2e/scenarios/basics.txt` (the default) |
 | Five times in a row | `make e2e-sim RUNS=5 SCENARIO=...` | `make e2e RUNS=5 SCENARIO=...` |
 | Keep its snapshots as references | `make e2e-sim SAVE=1 ...` | `make e2e SAVE=1 ...` |
+| References (committed) | `e2e/refs.sum`, `sim/...` lines | `e2e/refs.sum`, `kobo/...` lines |
 | Needs | `make engine` once, `reader/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running |
 | Snapshots, references, failure | `e2e/out/sim/NAME/` | `e2e/out/NAME/` |
 
@@ -20,7 +21,9 @@ control's name or a regular expression mistyped fails there, at its line.
 
 **A failure** stops the scenario at that step and says what it waited for and what the log said. `out/NAME/failure/`
 keeps what is needed to understand it: `step.txt`, the log's last lines (`log.txt`), the screen (`screen.pgm`) and, for a
-snapshot, the reference and `difference.png` (the screen faded, each pixel that differs in red). The reader's crash
+snapshot, the reference and `difference.png` (the screen faded, each pixel that differs in red). A snapshot is held
+against its SHA-256 in `e2e/refs.sum` (committed; the pages stay out of git); the reference and the difference are drawn
+only where the local copy of that reference is (the Mac that kept it), elsewhere (CI) the screen alone. The reader's crash
 (a panic, a fatal signal, an exit other than 0) ends the run at the step it happened in.
 
 **Books** are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo: `basics`
@@ -67,5 +70,6 @@ expect menu drawn
   (the watchdog's scenarios).
 - Before committing a new scenario: five runs in a row pass (`RUNS=5`), and it fails once when broken on purpose (an
   expectation or a setting changed for a moment), so it is known to catch something.
-- References are updated only after the changed pages have been looked at.
+- References are updated only after the changed pages have been looked at: `SAVE=1` rewrites the scenario's lines in
+  `e2e/refs.sum` and its pages in `e2e/out/`; `git diff e2e/refs.sum` shows which changed.
 - Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`) need `on: kobo`; `make check` says so.

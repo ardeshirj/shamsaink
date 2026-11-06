@@ -4,9 +4,11 @@
 #   test   the engine built (cached: rebuilt only when engine/ changes), make test (every Go test, the renders compared
 #          with the kept ones), and the simulated Kobo's scenarios on public books (make e2e-sim's run.sh); a failure's
 #          folder (step, log, screen, reference, difference) attached to the run
+#   release  on a pushed version tag only, after both: the Kobo package built and published as a GitHub release
+#          (CHANGELOG.md, "How to release")
 # On public books, each fetched and checked by its SHA-256: readalong-granularity and the walk on Moby-Dick (IDPF's
-# sample), the walk and basics on Buried Alive (FarsiEPUB's narrated sample, 2026-11-06). basics' pages are compared only
-# where its references are (the Mac): CI has none until they are kept as hashes (docs/testing.md, section 4).
+# sample), the walk and basics on Buried Alive (FarsiEPUB's narrated sample, 2026-11-06). basics' pages are held against
+# their SHA-256 in e2e/refs.sum (docs/testing.md, section 4); a page that differs is attached as failure/screen.pgm.
 name: CI
 on:
   push:
@@ -69,3 +71,62 @@ jobs:
             e2e/out/sim/*/failure/
             /sim/mnt/onboard/.adds/shamsaink/logs/reader.log
           if-no-files-found: ignore
+
+  # A pushed version tag (vX.Y.Z, made with make tag; CHANGELOG.md), once check and test pass: the reader built for the
+  # Kobo as on the Mac (reader/scripts/build-armv7.sh, here without the eink-rust image: the same Rust, zig and Go), packed
+  # (reader/scripts/package.sh) and published as a GitHub release with its checksum. Its notes: the version's section of
+  # CHANGELOG.md, else the tag's message. Before 1.0 and with a suffix (-beta) a pre-release.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [check, test]
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0 # the tags, for the commits since the last one
+      - name: the tag's message, kept (checkout fetches the tag as a plain ref)
+        run: git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: reader/go.mod
+          cache-dependency-path: reader/go.sum
+      - name: Rust 1.95 with the 32-bit ARM target (as the eink-rust image)
+        run: |
+          rustup toolchain install 1.95 --profile minimal --target armv7-unknown-linux-musleabihf
+          rustup default 1.95
+      - name: zig 0.15.2 (as the eink-rust image), the C compiler and linker for ARM
+        run: |
+          curl -fsSL https://ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz | tar -xJ -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/zig-aarch64-linux-0.15.2" >> "$GITHUB_PATH"
+      - name: the engine's ARM build, cached by everything it is built from
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            engine/blitz
+            engine/target
+          key: engine-armv7-${{ hashFiles('engine/Cargo.toml', 'engine/Cargo.lock', 'engine/fetch-blitz.sh', 'engine/patches/**', 'engine/src/**') }}
+          restore-keys: engine-armv7-
+      - name: Blitz at its pinned commit, with our patches
+        run: engine/fetch-blitz.sh
+      - name: go-toolkit, trimmed (reader/go.mod points at it)
+        run: sh experiments/02-crengine-go/trim-gotoolkit.sh
+      - name: the reader, static ARMv7 (reader/scripts/build-armv7.sh)
+        run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
+      - name: the Kobo package and its checksum (reader/scripts/package.sh)
+        run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh
+      - name: the release, on GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v=${GITHUB_REF_NAME#v}
+          awk -v v="$v" '$0 ~ "^## "v" " {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
+          [ -s notes.md ] || git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
+          case "$v" in 0.*|*-*) pre=--prerelease ;; *) pre= ;; esac
+          gh release create "$GITHUB_REF_NAME" out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz \
+            out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz.sha256 \
+            --title "ShamsaInk $v" --notes-file notes.md $pre --verify-tag

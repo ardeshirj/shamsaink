@@ -50,7 +50,7 @@ import (
 //	                          book left open. word: where a word is on that page, for the highlight's menu
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //
-// The references are drawn from a book: never committed (e2e/out/ is ignored).
+// The references are drawn from a book: never committed (e2e/out/ is ignored); their hashes are, in e2e/refs.sum (refs.go).
 
 // topRows are the rows of the clock's strip, left out of a comparison.
 const topRows = 60
@@ -60,6 +60,8 @@ type player struct {
 	lib, menu  *boxes
 	b          *book
 	out, refs  string
+	target     string // refs.sum's TARGET: sim or kobo
+	scenario   string // and its SCENARIO
 	failure    string // out/failure: what a failed step left (explain)
 	save       bool
 	hlX, hlY   int // where the highlight's menu was put, from the reader's log
@@ -99,7 +101,7 @@ func scenario(name, path string, save bool) bool {
 	}
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save}
+	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base}
 	if place == "sim" { // the simulator's snapshots and references apart from the Kobo's (docs/testing.md, section 4)
 		p.out = filepath.Join("e2e", "out", "sim", base)
 	}
@@ -455,16 +457,32 @@ func (p *player) snap(name string) (string, error) {
 		return "", err
 	}
 	ref := filepath.Join(p.refs, name+".pgm")
-	switch {
-	case p.save:
-		return "kept as the reference", os.WriteFile(ref, data, 0o644)
+	key := p.target + "/" + p.scenario + "/" + name
+	hash := pageHash(s.w, s.h, s.pix)
+	if p.save {
+		if err := os.WriteFile(ref, data, 0o644); err != nil {
+			return "", err
+		}
+		return "kept as the reference (" + refsSum + ")", keepRef(key, hash)
 	}
-	old, err := os.ReadFile(ref)
+	refs, err := readRefs()
 	if err != nil {
-		return "no reference (run with --save)", nil
+		return "", err
 	}
-	if len(old) != len(data) {
-		return "", fmt.Errorf("the reference is another size")
+	want, ok := refs[key]
+	switch {
+	case !ok:
+		return "no reference in " + refsSum + " (run with --save)", nil
+	case hash == want:
+		return "identical to the reference", nil
+	}
+	// different: the local copy of the reference, if it is the one refs.sum names, shows where
+	os.MkdirAll(p.failure, 0o755)
+	os.WriteFile(filepath.Join(p.failure, "screen.pgm"), data, 0o644)
+	old, err := os.ReadFile(ref)
+	if err != nil || len(old) != len(data) || pageHash(s.w, s.h, old[len(data)-len(s.pix):]) != want {
+		return "", fmt.Errorf("the page differs from its reference in %s (no local copy of that reference to compare with: "+
+			"failure/screen.pgm is the page now)", refsSum)
 	}
 	head := len(data) - len(s.pix)
 	refPix := old[head:]
@@ -476,8 +494,6 @@ func (p *player) snap(name string) (string, error) {
 		}
 	}
 	if diff > 0 {
-		os.MkdirAll(p.failure, 0o755)
-		os.WriteFile(filepath.Join(p.failure, "screen.pgm"), data, 0o644)
 		os.WriteFile(filepath.Join(p.failure, "reference.pgm"), old, 0o644)
 		if f, err := os.Create(filepath.Join(p.failure, "difference.png")); err == nil {
 			png.Encode(f, difference(s, refPix))
@@ -486,7 +502,7 @@ func (p *player) snap(name string) (string, error) {
 		return "", fmt.Errorf("%d pixels differ from the reference, below the clock's strip, within %d,%d–%d,%d (failure/difference.png)",
 			diff, box.Min.X, box.Min.Y, box.Max.X, box.Max.Y)
 	}
-	return "identical to the reference", nil
+	return "", fmt.Errorf("the page differs from its reference in %s", refsSum) // not reached: the local copy has that hash
 }
 
 // difference is the screen faded, with each pixel that differs from the reference in red: where to look.
