@@ -19,10 +19,25 @@ It never has what the reader makes or reads (`settings.json`, places, highlights
 **Needs NickelMenu** (`setup.md`, section 2): without it the menu line does nothing.
 
 ## Over USB (anyone)
+**One command** (`install.sh`, at the repository's root; tried 2026-11-06), on a Mac or Linux with the Kobo plugged in
+and Connect tapped:
+```sh
+curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh          # the newest release
+curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh -s v0.0.1 # a given one
+```
+It finds the Kobo's drive, checks NickelMenu is there and no other update is waiting, downloads the release's package
+and its `.sha256` (the newest one, pre-releases included), checks it, copies it as `.kobo/KoboRoot.tgz` and, on a Mac,
+ejects the Kobo. **While the repository is private** the download goes through `gh` (logged in), and the script itself
+is run from a clone (`sh install.sh`): curl reaches neither until it is public. With no Kobo connected it stops before
+downloading anything.
+
+**By hand,** the same steps:
 1. Check the download: `shasum -a 256 -c shamsaink-vX.Y.Z-kobo.tgz.sha256` (macOS, Linux: `sha256sum -c`).
 2. Plug the Kobo in and tap Connect. Copy the package into the hidden `.kobo` folder as **`KoboRoot.tgz`** (that name
    exactly).
-3. Eject and unplug. Kobo unpacks it and restarts (about a minute; the same as installing NickelMenu).
+3. Eject. Kobo unpacks it and restarts at once, before it is unplugged (seen 2026-11-06: "Updating", then a restart, about a
+   minute; the same as installing NickelMenu). Its files carry the release commit's time; `settings.json`, places
+   and books are left as they were.
 4. NickelMenu (bottom right of the home screen) → ShamsaInk. Books go in `.adds/shamsaink/books/` (`setup.md`, section 7).
 
 ## Over SSH (our devices)
@@ -38,12 +53,8 @@ cache cleared, an open reader restarted on the new build; nothing done while the
 (leaving it would reboot the Kobo). Which version is installed: `ssh kobo cat /mnt/onboard/.adds/shamsaink/VERSION`,
 and the first line the reader writes to `logs/reader.log` at each start.
 
-**Once public, from the Kobo itself** (to try: whether the Kobo's `curl` or `wget` reaches GitHub over HTTPS):
-```sh
-cd /tmp && curl -fLO https://github.com/ardeshirj/shamsaink/releases/download/vX.Y.Z/shamsaink-vX.Y.Z-kobo.tgz
-mv shamsaink-vX.Y.Z-kobo.tgz /mnt/onboard/.kobo/KoboRoot.tgz && reboot
-```
-(Kobo then installs it as over USB, the reader stopped first by the reboot.)
+**From the Kobo itself:** not provided. A stock Kobo has no terminal, so only those with SSH could use it, and they have
+the `make` targets above. (Its shell has `wget`, which reaches GitHub over HTTPS, and no `curl`.)
 
 ## Uninstall
 Delete the folder `.adds/shamsaink` (with the books, settings and highlights in it) and the file `.adds/nm/shamsaink`,
