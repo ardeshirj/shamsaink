@@ -16,6 +16,7 @@ import (
 	"github.com/readium/go-toolkit/pkg/pub"
 
 	blitz "shamsainkengine"
+	"shamsainkreader/device"
 	"shamsainkreader/spec"
 )
 
@@ -297,4 +298,143 @@ func (n *narrator) due() (time.Time, bool) {
 		return time.Now().Add(50 * time.Millisecond), true
 	}
 	return t.Add(n.lead), true
+}
+
+// readAloud starts the narration from the first narrated word on the page shown, or from the word from on it (the
+// narrated word whose box meets its; the page's first if none does).
+func (s *session) readAloud(from *blitz.Word) {
+	r := s.r
+	if s.cued != nil { // still being read: waited for
+		s.narration = <-s.cued
+		s.cued = nil
+	}
+	first := -1
+	for i, c := range s.narration {
+		if c.doc < r.doc {
+			continue
+		}
+		p, rs := r.book.Find(c.doc, c.id)
+		if c.doc > r.doc || p > r.page() {
+			if first < 0 {
+				first = i
+			}
+			break
+		}
+		if p < r.page() {
+			continue
+		}
+		if first < 0 {
+			first = i // the page's first
+		}
+		if from == nil {
+			break
+		}
+		if slices.ContainsFunc(rs, from.Box.Overlaps) {
+			first = i
+			break
+		}
+	}
+	if first < 0 {
+		return
+	}
+	t := time.Now()
+	if s.snd == nil || s.snd.dead.Load() {
+		snd, err := openSink()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "shamsaink: read aloud: no player:", err)
+			return
+		}
+		s.snd = snd
+	}
+	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
+	nar.begin()
+	s.nar = nar
+	s.dev.Active()
+	s.snd.play(nar)
+	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",
+		first, s.narration[first].doc, ms(t), len(nar.parts))
+	s.due()
+}
+
+// due sets the word's timer to the next thing the narration has due, or ends it if nothing is.
+func (s *session) due() {
+	at, ok := s.nar.due()
+	if ok && s.nar.next >= len(s.nar.cues) && !time.Now().Before(at) { // the last word has been said
+		ok = false
+	}
+	if !ok {
+		s.silence()
+		return
+	}
+	s.word.Reset(time.Until(at))
+}
+
+// speak does what the narration has due, in time: the next part played once its time comes, and the word now
+// spoken underlined (words due together: the last one).
+func (s *session) speak() {
+	nar := s.nar
+	now := time.Now()
+	s.dev.Active() // the narration is not idle time: the Kobo does not sleep in the middle of it
+	w := -1
+	for nar.next < len(nar.cues) {
+		t, ok := nar.at(nar.cues[nar.next].at)
+		if !ok || now.Before(t.Add(nar.lead)) {
+			break
+		}
+		w, nar.next = nar.next, nar.next+1
+	}
+	if w >= 0 {
+		s.underline(nar.cues[w])
+	}
+	s.due()
+}
+
+// underline marks word c: a bar under each of its boxes, the last one erased, refreshed together with A2; the page
+// turned first if the narration has crossed to another.
+func (s *session) underline(c cue) {
+	r, nar := s.r, s.nar
+	page, boxes := r.book.FindLines(c.doc, c.id) // a paragraph in its lines, not as one box
+	if page < 0 || len(boxes) == 0 {
+		return
+	}
+	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
+		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(boxes))
+	}
+	if first, _ := r.book.Layout(c.doc); c.doc != r.doc || page != first+r.at {
+		r.doc, r.at = c.doc, page-first
+		s.shown = s.rd.pages.get(r, r.doc, r.at, page)
+		s.rd.pages.touch(s.shown)
+		nar.bars = nil
+		// a page the narration turns counts like one turned by hand: every Nth is cleaned with a flash (the words due
+		// while the screen is busy are skipped, ~0.4 s)
+		s.turns++
+		if s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery() {
+			s.turns = 0
+			s.showPage(device.WfGC16, true)
+		} else {
+			s.showPage(device.WfREAGL, false)
+		}
+		r.keep(s.rest)
+	}
+	region := union(nar.bars)
+	nar.bars = nar.bars[:0]
+	for _, b := range boxes {
+		bar := image.Rect(b.Min.X, b.Max.Y+3, b.Max.X, min(b.Max.Y+9, s.scr.H))
+		nar.bars = append(nar.bars, bar)
+		region = region.Union(bar)
+	}
+	s.refresh(region, device.WfA2)
+}
+
+// silence ends the narration, the underline erased.
+func (s *session) silence() {
+	nar := s.nar
+	nar.stop()
+	s.word.Stop()
+	region := union(nar.bars)
+	nar.bars = nil
+	s.refresh(region, device.WfA2)
+	fmt.Printf("read aloud: stopped at word %d of %d\n", nar.next, len(nar.cues))
+	s.nar = nil
+	s.ahead = true
 }

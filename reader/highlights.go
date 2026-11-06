@@ -9,9 +9,10 @@ import (
 	"slices"
 	"time"
 
-	"shamsainkreader/files"
-
 	blitz "shamsainkengine"
+	"shamsainkreader/device"
+	"shamsainkreader/files"
+	"shamsainkreader/ui"
 )
 
 // A highlight: a span of one spine document's text, from the start of one word to the end of another, each as the
@@ -186,4 +187,90 @@ func union(rs []image.Rectangle) image.Rectangle {
 		u = u.Union(r)
 	}
 	return u
+}
+
+// held handles a finger held on a word: on a highlight, its menu (Remove highlight); else the words from that one to
+// the one under the finger are chosen, underlined, and once the finger is lifted the menu by them (Highlight).
+func (s *session) held(g device.Gesture) {
+	r := s.r
+	switch {
+	case s.mn != nil || s.nav != nil || s.sheet != nil:
+	case g.Hold == device.Held:
+		words := r.book.Words(r.page())
+		i := wordAt(words, g.X, g.Y)
+		if i < 0 {
+			break
+		}
+		if s.unmark = r.marks.at(r.doc, words[i]); s.unmark >= 0 {
+			hl := r.marks.list[s.unmark]
+			s.from = words[i]
+			s.openMark(union(bands(words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })), true)
+			break
+		}
+		s.sel = &selection{words: words, from: i, to: i}
+		s.showSel()
+	case s.sel != nil:
+		sel := s.sel
+		j := wordAt(sel.words, g.X, g.Y)
+		if g.Hold == device.Dragged {
+			if j >= 0 && j != sel.to {
+				sel.to = j
+				s.showSel()
+			}
+			break
+		}
+		if j >= 0 && j != sel.to {
+			sel.to = j
+			s.showSel()
+		}
+		s.from, _ = sel.span()
+		s.openMark(union(bands(sel.words, sel.in)), false)
+	}
+}
+
+// openMark opens the highlight's menu by the words in box (made: a highlight's, else words chosen).
+func (s *session) openMark(box image.Rectangle, made bool) {
+	s.mn = ui.DrawHighlightMenu(made, s.narrated, s.rd.fonts, s.scr.W)
+	s.mn.Hang(box, 0, s.scr.H)
+	s.mn.Centre(box, s.scr.W)
+	s.refresh(s.mn.Rect(), device.WfREAGL)
+	r := s.mn.Rect() // where it is, for a test that taps its entries by name (devtest scenario)
+	fmt.Printf("highlight menu: %s at %d,%d\n", map[bool]string{true: "a highlight", false: "words chosen"}[made], r.Min.X, r.Min.Y)
+}
+
+// closeMark closes the highlight's menu, and the words chosen if any (their bars rubbed out).
+func (s *session) closeMark() {
+	rect := s.mn.Rect()
+	if s.sel != nil {
+		rect = rect.Union(union(s.sel.bars))
+	}
+	s.mn, s.sel, s.unmark = nil, nil, -1
+	s.refresh(rect, device.WfREAGL)
+}
+
+// mark makes a highlight of the words chosen.
+func (s *session) mark() {
+	r, sel := s.r, s.sel
+	t := time.Now()
+	a, b := sel.span()
+	hl := r.marks.add(highlight{Doc: r.doc, From: [2]int{a.Block, a.Start}, To: [2]int{b.Block, b.End}, Made: time.Now()}, r.text)
+	r.marks.save()
+	// its bands (and any it took in) over the page, the bars and the menu gone
+	rect := s.mn.Rect().Union(union(sel.bars))
+	s.mn, s.sel = nil, nil
+	s.relayer()
+	bs := bands(sel.words, func(w blitz.Word) bool { return hl.covers(r.doc, w) })
+	s.refresh(rect.Union(union(bs)), device.WfREAGL)
+	fmt.Printf("highlight %d made: %d lines, %d bytes, %.0f ms\n", len(r.marks.list), len(bs), len(hl.Text), ms(t))
+}
+
+// showSel underlines the selection's words (with A2, as the narration's), the bars it had erased.
+func (s *session) showSel() {
+	sel := s.sel
+	old := union(sel.bars)
+	sel.bars = sel.bars[:0]
+	for _, b := range bands(sel.words, sel.in) {
+		sel.bars = append(sel.bars, image.Rect(b.Min.X, b.Max.Y-8, b.Max.X, b.Max.Y-2))
+	}
+	s.refresh(old.Union(union(sel.bars)), device.WfA2)
 }
