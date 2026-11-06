@@ -189,6 +189,10 @@ func (s *script) check(d *dev) error {
 					fail(l, "env KEY=VALUE...: %q", kv)
 				}
 			}
+		case "walk":
+			if !(args == 0 || args == 5 && a[1] == "word" && isInt(a[2]) && isInt(a[3]) && isInt(a[4]) && isInt(a[5])) {
+				fail(l, "walk [word X Y X2 Y2]")
+			}
 		case "snap":
 			if args != 1 || !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(a[1]) {
 				fail(l, "snap NAME (a-z, 0-9, -)")

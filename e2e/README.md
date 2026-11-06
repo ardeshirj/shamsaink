@@ -39,7 +39,8 @@ watchdog and no Nickel: those scenarios are `on: kobo`.
 
 Before the first step devtest saves the reader's own files on the device (`settings.json`, the library's, `places/`,
 `highlights/`, with their times: the library orders the books being read by them) into `.e2e-saved/`, and lays the
-fixture's files over them (`fixtures/default/`: the `settings.json` the references were drawn with). After the last
+fixture's files over them (`fixtures/default/`: the `settings.json` the references were drawn with, and where
+*Buried Alive* opens; each file and what depends on it: `fixtures/README.md`). After the last
 step, or a failure, it puts them back. A copy left by a run that never finished is put back at the next run's start.
 With the same settings the simulator draws the Kobo's pages byte for byte (2026-11-05, `basics`).
 

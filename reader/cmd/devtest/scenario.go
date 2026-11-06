@@ -45,6 +45,9 @@ import (
 //	                          recipe, for books over 128 KB), so the book opens at its start
 //	freeze                    the reader stopped (SIGSTOP), as a hang that answers nothing
 //	expect-none REGEX SECONDS waits that long and fails if the log has a line like it
+//	walk [word X Y X2 Y2]     the reader launched, and every screen the design spec reaches walked from the library and
+//	                          from the first book's page (walk.go): opened, held against its kept render, closed; the
+//	                          book left open. word: where a word is on that page, for the highlight's menu
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored).
@@ -411,6 +414,8 @@ func (p *player) step(a []string) (string, error) {
 			return "", err
 		}
 		return p.snap(a[1])
+	case "walk":
+		return p.walk(a[1:])
 	}
 	return "", fmt.Errorf("unknown step %q", a[0])
 }

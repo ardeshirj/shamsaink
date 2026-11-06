@@ -138,7 +138,13 @@ the Kobo it earned it sooner than planned.)
   - [ ] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`)
   - [ ] CI: the engine built for x86 and cached, every Go test with it, every `sim` scenario, failures attached; `make check-all`
   - [ ] Behaviour in the spec: the events' list, controls' effects, coverage checked in `go test ./design`; scenarios moved to it
-  - [ ] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
+    Started 2026-11-06: the walk (`reader/cmd/devtest/walk.go`, `e2e/scenarios/walk.txt`): every built screen the spec
+    reaches (its `enter:`, the controls' `goto` and `replace`, `when:`, `dismiss:`), from the library and from a book's
+    page, opened, held against its kept render and closed; 17 routes, 16 screens (loading and splash are the reader's
+    own), 3 of 3 runs on the simulator; a moved button fails naming it; `make check` fails when a built screen has no
+    way the walk can make. Left: the walk on the Kobo; the old walks removed (`flow`, `bookflow`, `smoke`, `page`);
+    effects in the spec
+  - [x] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
   - [ ] Where the test books are kept (not decided: public URLs for now; *Buried Alive* Kobo-only until FarsiEPUB offers it)
   - [ ] Scenarios for read aloud and sleep; the Kindle
 - Upstream (any time; the maintainer posts):

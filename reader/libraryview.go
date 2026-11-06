@@ -142,6 +142,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			r = panel.Rect()
 		}
 		p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
+		fmt.Printf("library: book %s at %d,%d\n", kind, p.Rect().Min.X, p.Rect().Min.Y) // where it hangs: devtest's walk finds its buttons
 		panel, bookPanel = p, kind
 		v.Draw(rd.over)
 		panel.Over(rd.over)
