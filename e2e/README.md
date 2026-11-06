@@ -12,7 +12,7 @@ and on the **Kobo** itself (by hand, for what only hardware shows). Why it is bu
 | Scenarios | `make e2e-sim` (every one marked `sim`), or `SCENARIO=e2e/scenarios/basics.txt` | `make e2e SCENARIO=e2e/scenarios/basics.txt` (the default) |
 | Five times in a row | `make e2e-sim RUNS=5 SCENARIO=...` | `make e2e RUNS=5 SCENARIO=...` |
 | Keep its snapshots as references | `make e2e-sim SAVE=1 ...` | `make e2e SAVE=1 ...` |
-| Needs | `make engine` once, `reader/out/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running |
+| Needs | `make engine` once, `reader/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running |
 | Snapshots, references, failure | `e2e/out/sim/NAME/` | `e2e/out/NAME/` |
 
 `make check` holds every scenario against the design spec without a device (`go test ./cmd/devtest`): a step, a

@@ -34,10 +34,10 @@ fetch-blitz:
 	@engine/fetch-blitz.sh
 
 test:
-	@$(DOCKER) sh -c 'cd /r/reader && sh scripts/check.sh && FONTS=/r/reader/out/fonts go test -count=1 -tags blitz ./...'
+	@$(DOCKER) sh -c 'cd /r/reader && sh scripts/check.sh && FONTS=/r/reader/fonts go test -count=1 -tags blitz ./...'
 
 design-update:
-	@$(DOCKER) sh -c 'cd /r/reader && go run ./design/cmd/gen tokens && FONTS=/r/reader/out/fonts GOLDEN=update go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders" && go run ./design/cmd/gen page && go test -count=1 ./design'
+	@$(DOCKER) sh -c 'cd /r/reader && go run ./design/cmd/gen tokens && FONTS=/r/reader/fonts GOLDEN=update go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders" && go run ./design/cmd/gen page && go test -count=1 ./design'
 
 # The same as .github/workflows/ci.yml (reader/scripts/check.sh), so a push that CI would fail is stopped here.
 check:

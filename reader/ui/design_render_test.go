@@ -250,12 +250,12 @@ func TestEveryScreenIsRendered(t *testing.T) {
 }
 
 // Every render, per device profile and language, drawn and compared with the one kept in reader/design/golden/. They are
-// compared only with FONTS set (the fonts of reader/out/fonts: other fonts draw other letters); GOLDEN=update keeps
+// compared only with FONTS set (the fonts of reader/fonts: other fonts draw other letters); GOLDEN=update keeps
 // the drawings as the new ones; DESIGN_OUT: a folder for the pictures that differ.
 func TestScreenRenders(t *testing.T) {
 	dir := os.Getenv("FONTS")
 	if dir == "" {
-		t.Skip("FONTS not set: renders are compared with the fonts of reader/out/fonts")
+		t.Skip("FONTS not set: renders are compared with the fonts of reader/fonts")
 	}
 	fonts := blitz.LoadFonts(dir)
 	s, err := design.Load()

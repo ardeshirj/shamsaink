@@ -19,7 +19,7 @@ failed=0
 for s in "$@"; do
   grep -q '^on:.*\bsim\b' "$s" || { echo "== $s: on the Kobo only, skipped"; continue; }
   echo "== $s (simulated Kobo)"
-  sh e2e/sim/setup.sh /sim reader/out/sim/shamsaink reader/out/fonts "$BOOKS"
+  sh e2e/sim/setup.sh /sim reader/out/sim/shamsaink reader/fonts "$BOOKS"
   if ! reader/out/sim/devtest scenario sim-kobo-libra-colour "$s" $SAVE; then
     failed=$((failed + 1))
     echo "-- the reader's log, last lines:"

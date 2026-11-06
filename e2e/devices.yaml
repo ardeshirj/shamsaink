@@ -9,7 +9,7 @@ kobo-libra-colour:
   # size), as in reader/device/screen.go, touchTurn
   touch: {node: /dev/input/event1, name: Elan Touchscreen, turn: {x: h-y, y: x}}
   framebuffer: {stride: 5056, bits: 32}       # /sys/class/graphics/fb0
-  fonts_local: reader/out/fonts               # the folder the renders are drawn with; the device's must be the same files
+  fonts_local: reader/fonts               # the folder the renders are drawn with; the device's must be the same files
   reader_local: reader/out/shamsaink          # the latest local build (make reader); the device's may be an older one
 # The simulated Kobo (docs/testing.md, section 2): the reader built for Linux, run in Docker with SHAMSAINK_SIM=/sim, its
 # hardware files under /sim (made fresh for each scenario by e2e/sim/setup.sh); held against the Kobo's profile and kept
@@ -21,5 +21,5 @@ sim-kobo-libra-colour:
   log: /sim/mnt/onboard/.adds/shamsaink/logs/reader.log
   touch: {node: /sim/dev/input/event1, name: Elan Touchscreen, turn: {x: h-y, y: x}}
   framebuffer: {node: /sim/dev/fb0, stride: 5056, bits: 32}
-  fonts_local: reader/out/fonts
+  fonts_local: reader/fonts
   reader_local: reader/out/sim/shamsaink
