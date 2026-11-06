@@ -84,7 +84,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`).
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
   and FarsiEPUB and their marks, in `reader/ui/templates/brand/` and the opening screen). So code from KOReader, Plato
-  (AGPL-3.0) or FBInk (GPL) is read, never copied. The plan's "Licence and brand" has what a first release needs.
+  (AGPL-3.0) or FBInk (GPL) is read, never copied. The plan's "Releases" has what a first release needs (the notices, the fonts' licences).
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
@@ -167,7 +167,7 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
-  renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
+  renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: `docs/design.md`, "The reader's panels".
 - **Testing a change** (2026-11-05): a new or changed control's effect goes in the design spec; a journey on a book, or
   over time, gets a scenario (`docs/testing.md` section 6, `e2e/README.md`). Before committing, `make check` and `make test`; a
   change to device code also `make e2e` on the Kobo. `make e2e-sim` runs on CI (every push); locally only to

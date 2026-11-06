@@ -143,7 +143,17 @@ flowchart LR
   text, between the edges most of the page's lines share, measured on the page's ink (the book's own margins count;
   0.2 ms a page on the Mac). Drawing it in each book's own font was tried: ~70 ms more a book opened on the Kindle.
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
-  API or moved, for no measured cost today. An idea for later (the plan, "The reader's panels").
+  API or moved, for no measured cost today. `dioxus-native-dom` was tried (14: identical drawings, 1.3–1.7 ms either
+  way, +0.7 MB), so the panels stay Go templates, and their HTML and CSS carry over if the reader ever moves to Rust.
+- **Interface language** (built 2026-10-31): **one switch, no list**, "Follow book language", on by default. On: the
+  menus and panels are in the book's language when there is a table for it (`ui/words/en.json`, `fa.json`), else
+  English; the library is always English (the language is for reading a book; a Farsi title among English ones keeps
+  its own direction). Off: English everywhere. Global, never per book: `settings.json`'s `english_only` (absent:
+  following, so an old file stays valid). In the library's menu only (≡ › Settings, a small panel in the menu's place,
+  the switch at the row's end; a tap applies it at once, everything shown drawn again in the new language and
+  direction). Strings are a table per language (`{{t "contents"}}`, whole sentences with `%d`/`%s` slots; a test
+  checks the tables have the same keys); Farsi digits; `dir` and `lang` on each panel; pointing icons mirrored
+  (`.flip`). To check on the Kobo: the menu font (Parastoo), the Farsi wording, the opening screen at launch.
 
 ## 3. The engines
 
@@ -180,7 +190,7 @@ flowchart LR
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
 | sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |
-| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: its own GStreamer sink (13, to try) | works on the Kindle, around the device (12's NOTES.md); read-along on the Kobo to come (plan, stage 8) |
+| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into Kobo's `mtkbtmwrpcaudiosink` kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
 | launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | the Kobo's (NickelMenu, `launch.sh`); the Kindle's later |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
 
