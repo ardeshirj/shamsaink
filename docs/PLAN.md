@@ -110,7 +110,9 @@ and remove it)
 
 *The repository, public (first, untagged: the audit, then the flip)*
 - [ ] History audit: no book, book text, drawn page, key, IP or hostname anywhere in git history
-- [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
+- [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out.
+  Then this plan and `ROADMAP.md` become one `docs/ROADMAP.md`, as rtlbook has (2026-11-06): the public summary on
+  top, the stages below, the private parts trimmed; the top-level one goes or links to it
 - [ ] The README: the mark (SVG copies of FarsiEPUB's `mark.svg`, `mark-dark.svg` in `docs/brand/`), what it is, honest
   status, a screenshot from our own test EPUB, a map of the repository, the link to FarsiEPUB's page, licence and brand
 - [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, DejaVu)
@@ -138,8 +140,8 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
   the Kobo over USB from a clean start and over SSH; the version in Settings
 - [ ] Our test EPUB's scenarios committed, `make e2e` passing
-- [ ] Release notes: the known limits (one device and firmware, read-along's headphones and reboot, the Kobo's bugs in
-  `devices/kobo/README.md`) and how to report a problem
+- [ ] Release notes: the known limits (one device and firmware, read-along's headphones and reboot, the Kobo's bugs) from
+  `devices/README.md` and `devices/kobo/README.md` and how to report a problem
 - [ ] The tag `v0.1.0-beta`, a GitHub release with the package and its checksum
 
 **After the beta, toward `v1.0`**

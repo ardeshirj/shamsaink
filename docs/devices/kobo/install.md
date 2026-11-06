@@ -1,7 +1,7 @@
 # Installing ShamsaInk on the Kobo (2026-11-06)
 
-The technical install notes: what a release is, the two ways it goes on, and how it comes off. The readers' guide on
-FarsiEPUB's ShamsaInk page follows these. Tried on the Kobo Libra Colour, firmware 4.46, only.
+The Kobo's own steps; what every device shares (the one command, releases, checksums, what an install keeps) is in
+[`../install.md`](../install.md). Tried on the Kobo Libra Colour, firmware 4.46, only.
 
 ## The package
 Each release on GitHub (`CHANGELOG.md`, "How to release") has `shamsaink-vX.Y.Z-kobo.tgz` and its `.sha256`. Its paths
@@ -19,17 +19,9 @@ It never has what the reader makes or reads (`settings.json`, places, highlights
 **Needs NickelMenu** (`setup.md`, section 2): without it the menu line does nothing.
 
 ## Over USB (anyone)
-**One command** (`install.sh`, at the repository's root; tried 2026-11-06), on a Mac or Linux with the Kobo plugged in
-and Connect tapped:
-```sh
-curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh          # the newest release
-curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh -s v0.0.1 # a given one
-```
-It finds the Kobo's drive, checks NickelMenu is there and no other update is waiting, downloads the release's package
-and its `.sha256` (the newest one, pre-releases included), checks it, copies it as `.kobo/KoboRoot.tgz` and, on a Mac,
-ejects the Kobo. **While the repository is private** the download goes through `gh` (logged in), and the script itself
-is run from a clone (`sh install.sh`): curl reaches neither until it is public. With no Kobo connected it stops before
-downloading anything.
+**One command** (`../install.md`; tried 2026-11-06), with the Kobo plugged in and Connect tapped. For the Kobo it finds
+the drive (`KOBOeReader`; `KOBO=/path` if mounted elsewhere), checks NickelMenu is there and no other update is
+waiting, copies the package as `.kobo/KoboRoot.tgz` and, on a Mac, ejects the Kobo.
 
 **By hand,** the same steps:
 1. Check the download: `shasum -a 256 -c shamsaink-vX.Y.Z-kobo.tgz.sha256` (macOS, Linux: `sha256sum -c`).

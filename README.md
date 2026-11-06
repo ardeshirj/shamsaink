@@ -131,7 +131,7 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 | [`reader/`](reader/) | The reader: Go, the screen, touch, sleep, sound and the panels (HTML templates drawn by Blitz) |
 | [`engine/`](engine/) | The page engine: Rust, Blitz with our layout, glyph drawing and the cache |
 | [`bench/`](bench/) | One interface over the engines, to compare them on the same books |
-| [`docs/`](docs/) | [Design](docs/DESIGN.md), the [design system](docs/DESIGN-SYSTEM.md), the devices ([Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/PLAN.md) |
+| [`docs/`](docs/) | [Design](docs/DESIGN.md), the [design system](docs/DESIGN-SYSTEM.md), the [devices](docs/devices/README.md) (what runs where, known limits; [Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/PLAN.md) |
 | [`e2e/`](e2e/) | End-to-end scenarios run on a device |
 
 ## About the name
