@@ -3,9 +3,9 @@
 # and both cores, then Go through cgo with zig, stripped) in the eink-rust image: reader/out/shamsaink.
 # `make kindle-reader-install` and `make kobo-reader-install` copy it to the devices.
 #
-#     sh reader/build.sh
+#     sh reader/scripts/build.sh
 set -e
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 docker run --rm -v "$PWD":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build \
   -w /r eink-rust sh -c '
   set -e

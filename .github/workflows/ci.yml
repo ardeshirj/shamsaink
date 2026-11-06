@@ -1,4 +1,4 @@
-# Every push, without the Rust engine and without a device: reader/check.sh, the same as make check (docs/testing.md,
+# Every push, without the Rust engine and without a device: reader/scripts/check.sh, the same as make check (docs/testing.md,
 # section 1): gofmt, vet, and the tests of every package that needs no engine: the design spec against the templates, the
 # stylesheet, the words, the icons and the generated files; the device layer; devtest's scenarios and walk plan; the
 # library. Not here yet: make test (the reader's own tests, reader/ui, the renders) and make e2e-sim, which need the
@@ -16,6 +16,5 @@ jobs:
         with:
           go-version-file: reader/go.mod
           cache-dependency-path: reader/go.sum
-      - name: gofmt, vet, the tests that need no engine (reader/check.sh, the same as make check)
-        working-directory: reader
-        run: sh check.sh
+      - name: gofmt, vet, the tests that need no engine (reader/scripts/check.sh, the same as make check)
+        run: sh reader/scripts/check.sh

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Stops a push that CI would fail (make check: reader/check.sh, in Docker). Enabled once per
+# Stops a push that CI would fail (make check: reader/scripts/check.sh, in Docker). Enabled once per
 # clone with: git config core.hooksPath .githooks. Skipped, with a note, where Docker is not running; a push can still
 # skip it with `git push --no-verify`.
 if ! docker info >/dev/null 2>&1; then

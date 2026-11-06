@@ -10,7 +10,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #   make engine          the engine and its tools, native (engine/target/release), for checks on the Mac
 #   make bench-armv7     the bench's commands for ARMv7 (bench/bin/armv7)
 #   make fetch-blitz     Blitz at its pinned commit with our patches (engine/blitz)
-#   make check           seconds, no engine, what CI runs (reader/check.sh): gofmt, vet, and the tests of every package
+#   make check           seconds, no engine, what CI runs (reader/scripts/check.sh): gofmt, vet, and the tests of every package
 #                        that needs no engine: the design spec, the device layer, devtest, the library (a pre-push hook
 #                        runs it: `git config core.hooksPath .githooks`, once per clone)
 #   make test            every Go test with the engine (needs `make engine`): make check's, the reader's own and
@@ -22,7 +22,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 .PHONY: reader engine bench-armv7 fetch-blitz design-update check test
 
 reader:
-	@sh reader/build.sh
+	@sh reader/scripts/build.sh
 
 engine:
 	@$(DOCKER) sh -c 'cd /r/engine && cargo build --release --features parallel --lib --bins'
@@ -34,14 +34,14 @@ fetch-blitz:
 	@engine/fetch-blitz.sh
 
 test:
-	@$(DOCKER) sh -c 'cd /r/reader && sh check.sh && FONTS=/r/reader/out/fonts go test -count=1 -tags blitz ./...'
+	@$(DOCKER) sh -c 'cd /r/reader && sh scripts/check.sh && FONTS=/r/reader/out/fonts go test -count=1 -tags blitz ./...'
 
 design-update:
 	@$(DOCKER) sh -c 'cd /r/reader && go run ./design/cmd/gen tokens && FONTS=/r/reader/out/fonts GOLDEN=update go test -count=1 -tags blitz ./ui -run "TestEveryScreen|TestScreenRenders" && go run ./design/cmd/gen page && go test -count=1 ./design'
 
-# The same as .github/workflows/ci.yml (reader/check.sh), so a push that CI would fail is stopped here.
+# The same as .github/workflows/ci.yml (reader/scripts/check.sh), so a push that CI would fail is stopped here.
 check:
-	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build eink-go sh -c 'cd /r/reader && sh check.sh'
+	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build eink-go sh -c 'sh /r/reader/scripts/check.sh'
 
 # --- The Kobo ---
 #
