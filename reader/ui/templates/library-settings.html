@@ -1,8 +1,13 @@
 {{/* The settings panel under the bar (library.go), opened from the library menu's Settings: no title, a setting a row in one
 grid (div.set), each row as tall as the tallest, so the rows are evenly spaced whatever their control (2026-11-06, the
 maintainer: a switch's row was lower than a stepper's); the setting's name at the start, a switch at the far end (the
-right in English, the left in Farsi: the page's direction is the interface's), a stepper's minus, value and plus before it. */ -}}
-{{template "head" ""}}</head><body>
+right in English, the left in Farsi: the page's direction is the interface's), a stepper's minus, value and plus before it. Under the rows, small and grey,
+the version of the reader running. */ -}}
+{{template "head" ""}}<style>
+/* the build running (main's version), quiet: for us to tell which one is installed */
+p.ver { margin: 0.6em 0 0; font-size: 0.75em; color: #444; }
+</style></head><body>
 <div class="set">{{template "switch" pick "lang-follow" (t "follow-book") .Follow}}
 {{if .HasButtons}}{{template "switch" pick "buttons-reverse" (t "reverse-buttons") .ReverseButtons}}{{end}}
-{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div></body></html>
+{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div>
+{{with .Version}}<p class="ver" id="panel-end">{{t "version"}} <span dir="ltr">{{.}}</span></p>{{end}}</body></html>

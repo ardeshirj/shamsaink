@@ -177,7 +177,7 @@ func TestPanels(t *testing.T) {
 			for _, follow := range []bool{true, false} {
 				img := image.NewGray(image.Rect(0, 0, w, h))
 				lib.Draw(img)
-				p := DrawLibrarySettings(LibrarySettings{Follow: follow, SleepMin: 10, HasButtons: true}, lib.TopBarHeight(), fonts, w)
+				p := DrawLibrarySettings(LibrarySettings{Follow: follow, SleepMin: 10, HasButtons: true, Version: "v0.0.1"}, lib.TopBarHeight(), fonts, w)
 				p.Over(img)
 				save(fmt.Sprintf("library-settings-%s-follow%v", code, follow), img)
 				save(fmt.Sprintf("library-settings-%s-follow%v-panel", code, follow), p.img)

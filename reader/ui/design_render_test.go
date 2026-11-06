@@ -199,10 +199,10 @@ var designRenders = map[string][]renderCase{
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
 	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true}, barHeight(f, w), f, w))
+		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
-			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 0, HasButtons: true, ReverseButtons: true}, barHeight(f, w), f, w))
+			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 0, HasButtons: true, ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))

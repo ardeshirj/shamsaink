@@ -162,12 +162,13 @@ type LibrarySettings struct {
 	SleepMin       int
 	HasButtons     bool
 	ReverseButtons bool
+	Version        string // the reader's build, a small grey line at the end (none when empty)
 }
 
 // DrawLibrarySettings draws the Settings panel, directly under the bar (under px from the top), in place of the menu it
 // was opened from: no title, rows with the setting's name at the start and its switch or stepper at the far end:
 // "Follow book language" (the button lang-follow), "Sleep after" (sleep-dec and sleep-inc), and on a device with page
-// buttons "Reverse page buttons" (buttons-reverse).
+// buttons "Reverse page buttons" (buttons-reverse); under them the version, small and grey.
 func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
 	sleep := word("never")
 	if st.SleepMin > 0 {

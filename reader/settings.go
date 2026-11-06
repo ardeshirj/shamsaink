@@ -158,5 +158,5 @@ func (s *settings) stepClean(id string) bool {
 
 // settingsView is what the settings panel shows for set on dev.
 func settingsView(set *settings, dev *device.Device) ui.LibrarySettings {
-	return ui.LibrarySettings{Follow: !set.EnglishOnly, SleepMin: set.SleepMin, HasButtons: dev.HasButtons(), ReverseButtons: set.ReverseButtons}
+	return ui.LibrarySettings{Follow: !set.EnglishOnly, SleepMin: set.SleepMin, HasButtons: dev.HasButtons(), ReverseButtons: set.ReverseButtons, Version: version}
 }

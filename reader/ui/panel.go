@@ -85,6 +85,11 @@ func drawPanelIn(html string, ids []string, box string, fonts *blitz.Fonts, w, h
 			bottom = max(bottom, m.buttons[id].Max.Y)
 		}
 	}
+	// text under the last button (Settings' version) is kept by marking it id="panel-end": not a button, but the panel
+	// reaches down to it
+	if p, rs := b.Find(0, "panel-end"); p == 0 && len(rs) > 0 {
+		bottom = max(bottom, union(rs).Max.Y)
+	}
 	whole := image.NewGray(image.Rect(0, 0, w, h))
 	b.Draw(0, whole)
 	if box != "" {
