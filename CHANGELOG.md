@@ -4,6 +4,18 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.0.1 (2026-11-06)
+The first tagged build, before the beta: for the maintainer's Kobo Libra Colour (firmware 4.46) only. Not for anyone
+else yet: the beta (`v0.1.0-beta`) is when a stranger can install it and read for a week (`docs/plan.md`, "Releases").
+- **What it is:** an EPUB reader for the Kobo, started from NickelMenu, with Kobo's own interface stopped while it
+  runs. The library (text rows), the book's pages drawn by our engine (Blitz), Farsi and right-to-left books done
+  properly, Contents, highlights, Light (level, warmth, dark mode), Text, Reading settings, the sleep screen, the
+  page buttons, sleep after idle minutes, and read-along (experimental: narrated EPUBs over Bluetooth headphones;
+  leaving the reader after Bluetooth reboots the Kobo, Kobo's own bug).
+- **The version** shows at the end of Settings, small and grey, and as the first line of `logs/reader.log`.
+- **Installing:** the package goes on as `.kobo/KoboRoot.tgz` over USB, or over SSH (`docs/devices/kobo/install.md`).
+  NickelMenu is needed. An install over an older one keeps the settings, places, highlights and books.
+
 ## Versions and releases
 
 The same pattern as rtlbook's and FarsiEPUB's: a version is a git tag `vX.Y.Z`. Like FarsiEPUB's, the number lives only
