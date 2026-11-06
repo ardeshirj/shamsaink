@@ -88,7 +88,8 @@ the Kobo it earned it sooner than planned.)
 - [x] A book's key from its content, not its file time (2026-11-05): size, first and last 64 KB hashed (`library.Key`),
   after the Kobo's FAT times shifted by 8 hours and every book was new (`devices/kobo/README.md`) (today the launcher opens the newest or the last book)
 - [x] The layout: two options, text rows and rows with covers (2026-10-30; the covers' in `docs/design/unbuilt-screens.md`)
-- [ ] A keyboard layer (English and Farsi) for the library's search; not designed yet
+- [ ] A keyboard layer (English and Farsi) for the library's search; not designed yet (how its taps could go through
+  Blitz's own events: `docs/design/unbuilt-screens.md`, "The keyboard")
 - [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
   from stage 6's list component; covers after, with a cache of them
 - [ ] Books over the air, **OPDS** (idea, 2026-11-02, the maintainer): browse a catalogue and download an EPUB into the
