@@ -167,7 +167,7 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
-  renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
+  renders `make design`, the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
 - **Testing a change** (2026-11-05): a new or changed control's effect goes in the design spec; a journey on a book, or
   over time, gets a scenario (`docs/testing.md` section 6, `e2e/README.md`). Before committing, `make check` and
   `make e2e-sim`; a change to device code also `make e2e` on the Kobo.

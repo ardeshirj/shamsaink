@@ -95,8 +95,8 @@ copy of the books is not decided yet.
 
 ## 6. The spec says what the reader does
 
-The design spec already says where each control goes (`action: goto, to: contents`), and `make kobo-flow` walks it. It
-grows to behaviour:
+The design spec already says where each control goes (`action: goto, to: contents`) and how each screen is reached and
+closed (`enter:`, `dismiss:`); the walk (`e2e/scenarios/walk.txt`) is generated from it. It grows to behaviour:
 
 - **Events:** one list of the reader's events (`reader/spec/events.yaml`: `highlight-made`, `went-to`, `dark-mode`, ...,
   each with its fields). The reader logs them through one function; devtest waits for them by name

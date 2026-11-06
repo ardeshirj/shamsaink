@@ -1,17 +1,10 @@
 // Command devtest holds a device against the design spec's profile of it, over SSH (docs/design-system.md).
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
-//	devtest flow DEVICE [book]   launches the reader and walks the spec's flow from the library: each control that opens a
-//	                         panel is tapped by name, the panel held against its kept render, dismissed, the library as it was;
-//	                         with book, then inside the first book (bar, dock, Contents, Text, panels, the highlight's menu),
-//	                         with no page turned
-//	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go)
-//	devtest page DEVICE back|forward   opens the first book, turns one page by the book's own direction and leaves it: puts
-//	                         right a place a run moved
+//	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go); the
+//	                         walk of every screen the spec reaches is one of its steps (walk.go, e2e/scenarios/walk.txt)
 //	devtest usage DEVICE     the reader's usage lines from its log: each stretch awake and asleep, the battery it used, the rate
 //	                         per hour (read-only)
-//	devtest smoke DEVICE     launches the reader on the device, reads its screen, taps by control name, leaves it (needs
-//	                         the device's reader to be the latest build, and no book open)
 //
 // DEVICE is a key of e2e/devices.yaml, and a profile of reader/design/spec/devices unless its entry names one (profile:).
 // Run from the repository's root. It uses the system's ssh (the host named in devices.yaml), changes nothing on the
@@ -61,8 +54,8 @@ type Access struct {
 }
 
 func main() {
-	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "smoke" && os.Args[1] != "flow" && os.Args[1] != "page" && os.Args[1] != "scenario" && os.Args[1] != "usage") {
-		fmt.Fprintln(os.Stderr, "usage: devtest check|smoke|flow DEVICE")
+	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "scenario" && os.Args[1] != "usage") {
+		fmt.Fprintln(os.Stderr, "usage: devtest check|usage DEVICE, devtest scenario DEVICE FILE [--save]")
 		os.Exit(2)
 	}
 	if os.Args[1] == "scenario" { // devtest scenario DEVICE FILE [--save]
@@ -80,17 +73,7 @@ func main() {
 		}
 		return
 	}
-	if os.Args[1] == "page" { // devtest page DEVICE back|forward
-		if len(os.Args) != 4 || os.Args[3] != "back" && os.Args[3] != "forward" {
-			fmt.Fprintln(os.Stderr, "usage: devtest page DEVICE back|forward")
-			os.Exit(2)
-		}
-		if !turnPage(os.Args[2], os.Args[3]) {
-			os.Exit(1)
-		}
-		return
-	}
-	run := map[string]func(string) bool{"check": check, "smoke": smoke, "flow": flow, "usage": usage}[os.Args[1]]
+	run := map[string]func(string) bool{"check": check, "usage": usage}[os.Args[1]]
 	if !run(os.Args[2]) {
 		os.Exit(1)
 	}

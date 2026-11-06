@@ -50,16 +50,14 @@ are drawn with, the reader installed (and whether it is the latest local build).
 must be, the tool how to reach it. First run on the Kobo Libra Colour (2026-10-31): all agree, and the fonts on it are the
 renders' files.
 
-**`make kobo-smoke`** is the first run of the design against the device: the reader launched from the Mac as NickelMenu launches it, the
-library's screen read from the framebuffer, every button the kept render has checked to have ink where the render says it is
-(the headphones and the pager may be absent), then the menu and Leave **tapped by name** (the centre of the control's kept box,
-written into the touch screen turned as `devices.yaml` says), and Nickel waited for. A reader left running by a failed step
-is stopped. First run (2026-11-01, Kobo Libra Colour): all 14 checks pass; the design's coordinates are the device's.
-
-**In a book** (`make kobo-flow-book`): from the library's first row the bar and the dock are opened by a tap in the page's top tenth
-(the spec's gesture `tap-top-tenth`), Contents (and a jump to an entry, the dock's Back after it, and the place the same as before), the Text sheet, Light, the battery and the menu by name, the highlight's menu by
-a hold on a word, each held against its kept render and closed, then the bar's back arrow to the library. The direction of the
-book (English or Farsi renders) is read from the reader's own log line, not guessed from the screen (both layouts have ink in many of the same boxes: a first run guessed wrong, tapped the mirrored read-aloud button and a later tap turned a page; `devtest page DEVICE back` puts a place right, and the walk now stops at the first screen that is not as expected and taps the page only with the bar and dock verified open). No tap turns a page, so the place the reader keeps does not move.
+**The walk** (`e2e/scenarios/walk.txt`, `reader/cmd/devtest/walk.go`; 2026-11-06) holds the device against the design
+from the spec itself: every built screen the spec reaches (its `enter:` gestures, the controls' `goto` and `replace`,
+`when:`, `dismiss:`), from the library and from a book's page, opened, its kept render's buttons checked for ink where
+the render says they are, closed the way the spec says, and the screen as it was. Nothing in it names a screen: one added
+to the spec is walked the next time, and `make check` fails if the walk has no way to it. It runs on the simulated Kobo
+(`make e2e-sim`) and on the Kobo (`make e2e SCENARIO=e2e/scenarios/walk.txt`): 17 routes, 16 screens. Before it (2026-11-01
+to 11-05) a smoke test and a flow walked by hand-written Go did the same in part (`make kobo-smoke`, `kobo-flow`,
+`kobo-flow-book`, removed 2026-11-06). How it fits with the scenarios: `docs/testing.md`, section 6.
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 
