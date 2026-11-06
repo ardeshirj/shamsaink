@@ -37,7 +37,7 @@ jobs:
       - name: Rust 1.95 (as the eink-rust image)
         run: rustup toolchain install 1.95 --profile minimal && rustup default 1.95
       - name: the engine's build, cached by everything it is built from
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -64,7 +64,7 @@ jobs:
             e2e/scenarios/walk.txt e2e/scenarios/basics.txt
       - name: a failed scenario's folder
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: e2e-failure
           path: |
@@ -102,7 +102,7 @@ jobs:
           curl -fsSL https://ziglang.org/download/0.15.2/zig-aarch64-linux-0.15.2.tar.xz | tar -xJ -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/zig-aarch64-linux-0.15.2" >> "$GITHUB_PATH"
       - name: the engine's ARM build, cached by everything it is built from
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
