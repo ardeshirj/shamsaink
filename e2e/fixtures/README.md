@@ -49,6 +49,16 @@ Where *Buried Alive* (FarsiEPUB's narrated copy, `books/farsiepub/buried-alive-n
   { echo $s; head -c 65536 $f; tail -c 65536 $f; } | sha256sum | cut -c1-12
   ```
 
+## `moby-dick/`
+
+For the walk in CI on a public book (`scenarios/walk-moby-dick.txt`): IDPF's Moby-Dick sample, which the scenario fetches
+and checks by its SHA-256 (CC-BY-SA 3.0, never committed).
+
+- `settings.json`: the default fixture's, the same text size and spacing.
+- `places/bd9f02217356.place`, `5 1 0.0100`: the book opens at document 5 (its first chapter, Loomings), page 1, a page of
+  text, where the walk holds a word for the highlight's menu (at 884,700, dragged to 505,700). The key is that file's
+  (`library.Key`, as above).
+
 ## A new fixture
 
 A folder beside `default/`, with only the files the scenario needs different (the rest is the device's own, or the

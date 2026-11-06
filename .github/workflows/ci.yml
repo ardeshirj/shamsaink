@@ -4,8 +4,8 @@
 #   test   the engine built (cached: rebuilt only when engine/ changes), make test (every Go test, the renders compared
 #          with the kept ones), and the simulated Kobo's scenarios on public books (make e2e-sim's run.sh); a failure's
 #          folder (step, log, screen, reference, difference) attached to the run
-# Not here yet: the scenarios on FarsiEPUB's Buried Alive (walk, basics), which is not public; they run on the Mac and
-# the Kobo.
+# On public books: readalong-granularity and the walk on Moby-Dick (IDPF's sample, fetched and checked). Not here yet:
+# the scenarios on FarsiEPUB's Buried Alive (walk, basics), until it is served at a fixed address; the Mac and the Kobo.
 name: CI
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
         run: |
           sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
           mkdir -p out/sim-books
-          sh e2e/sim/run.sh out/sim-books e2e/scenarios/readalong-granularity.txt
+          sh e2e/sim/run.sh out/sim-books e2e/scenarios/readalong-granularity.txt e2e/scenarios/walk-moby-dick.txt
       - name: a failed scenario's folder
         if: failure()
         uses: actions/upload-artifact@v4
