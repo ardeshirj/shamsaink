@@ -55,19 +55,19 @@ ShamsaInk
 <td valign="top"><img src="docs/images/compare-koreader.png" alt="KOReader: the paragraph right to left"></td>
 <td valign="top"><img src="docs/images/compare-shamsaink.png" alt="ShamsaInk: the paragraph right to left"></td>
 </tr>
-<tr><th colspan="3">Right to left</th></tr>
+<tr><th colspan="3" align="left">Right to left</th></tr>
 <tr>
 <td align="center">❌</td>
 <td align="center">✅</td>
 <td align="center">✅</td>
 </tr>
-<tr><th colspan="3">Lines broken where a browser breaks them¹</th></tr>
+<tr><th colspan="3" align="left">Lines broken where a browser breaks them¹</th></tr>
 <tr>
 <td align="center">not measured</td>
 <td align="center">42–67%</td>
 <td align="center">88–99%</td>
 </tr>
-<tr><th colspan="3">🎧 Reads along: each narrated word underlined as it is spoken</th></tr>
+<tr><th colspan="3" align="left">🎧 Reads along: each narrated word underlined as it is spoken</th></tr>
 <tr>
 <td align="center">❌</td>
 <td align="center">❌ (<a href="https://github.com/koreader/koreader/issues/9548">declined</a>)</td>
