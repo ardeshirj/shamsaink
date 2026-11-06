@@ -117,8 +117,20 @@ the Kobo it earned it sooner than planned.)
   scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
   with references, the clock's strip aside. Built for the Kobo in Go (`reader/cmd/devtest`, `make e2e`; 2026-11-01; the controls by
   name from the design system's renders, the highlight's menu found where the reader logs it; `e2e/kobo-basics.txt`:
-  a jump, pages, a highlight made and removed, Back, the book left; pages identical run to run, the place and the highlights as they were). Left: a test EPUB of our own text, so its
-  scenarios and pictures can be committed; a scenario with each new feature; read aloud and sleep; the Kindle
+  a jump, pages, a highlight made and removed, Back, the book left; pages identical run to run, the place and the highlights as they were).
+  Left (2026-11-05, the maintainer: e2e is what keeps changes from breaking the reader; the design in `testing.md`):
+  - [x] Measure: the same pages drawn by the x86, arm64 and ARMv7 builds, byte for byte (2026-11-05, `testing.md`
+    section 4: two families, with and without fused multiply-add; the simulator's references and the Kobo's; x86 under Rosetta draws wrong)
+  - [ ] The simulated device (`SHAMSAINK_SIM`: screen, touch, battery, clock, sound and storage as files; refreshes
+    logged) and devtest's local transport; `make e2e-sim`; `kobo-basics` passing on it and on the Kobo, the Kobo's pages unchanged
+  - [ ] Trustworthy runs: fixtures for a known start (and the Kobo's files saved and put back), waits on the screen
+    idle, a crash ends the run, a failure folder with the difference, `RUNS=5`
+  - [ ] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`)
+  - [ ] CI: the engine built for x86 and cached, every Go test with it, every `sim` scenario, failures attached; `make check-all`
+  - [ ] Behaviour in the spec: the events' list, controls' effects, coverage checked in `go test ./design`; scenarios moved to it
+  - [ ] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
+  - [ ] Where the test books are kept (not decided: public URLs for now; *Buried Alive* Kobo-only until FarsiEPUB offers it)
+  - [ ] Scenarios for read aloud and sleep; the Kindle
 - Upstream (any time; the maintainer posts):
   - [ ] go-toolkit's trim, to Readium
   - [ ] go-text's justification fix

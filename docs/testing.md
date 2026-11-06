@@ -1,0 +1,113 @@
+# Testing: from the spec to the device (2026-11-05)
+
+How ShamsaInk is tested, so a change that breaks the reader is caught before it reaches a device: what each level
+catches, the simulated device, what makes a run trustworthy, and how a new feature gets its tests. The design system
+(`design-system.md`) is the model: one spec says what the reader is and does, and the tests are drawn from it. Work
+left: `plan.md`, "Alongside", end-to-end tests.
+
+## 1. Three levels
+
+| Level | Runs | Catches | Command |
+|---|---|---|---|
+| **Unit and render** | CI, every push; the Mac | logic, the spec against the code, panels and screens drawn as kept | `make check-all` |
+| **Scenarios on the simulated device** | CI, every push; the Mac in Docker | the reader's behaviour end to end: library, opening, pages, Contents, highlights, settings kept, sleep screen, read-along's clock and marks, refreshes asked for | `make e2e-sim` |
+| **Scenarios on the Kobo** | the Mac, by hand | what only hardware shows: the ink and its waveforms, touch, timing, sound and Bluetooth, memory, Nickel, freezes | `make e2e` |
+
+The same scenario files run on the simulator and on the Kobo. A scenario says where it runs in its first lines
+(`# on: sim kobo`, or `# on: kobo` for `freeze`, `expect-nickel` or Bluetooth); a step the simulator cannot do fails the
+scenario rather than being skipped quietly.
+
+## 2. The simulated device
+
+The reader built for Linux (x86 in CI, arm64 in Docker on the Mac), started with `SHAMSAINK_SIM=DIR`. Only
+`reader/device` changes; nothing above it knows. Everything the device layer reads or writes becomes a file in `DIR`:
+
+- **Screen:** `DIR/fb`, a plain file in the Kobo's framebuffer layout (1264 × 1680, 32 bits, its stride), mapped as
+  `/dev/fb0` is. The refresh ioctls are not sent; each refresh is logged instead, its region, waveform and flash, so a
+  scenario can check that only what changed was refreshed, with the waveform the spec gives that layer.
+- **Touch:** `DIR/touch`, a pipe read in the same input-event format devtest writes into `/dev/input/event1` on the
+  Kobo, turned the same way; the grab is skipped.
+- **Battery, charging, light, power button:** small files a scenario can write (`DIR/battery` = `14`), so low battery,
+  charging and sleep are testable.
+- **Clock:** `SHAMSAINK_CLOCK=2026-01-01T10:00` fixes the bar's clock, so no strip of the screen is left out of a
+  comparison on the simulator.
+- **Sound:** a silent sink that consumes the audio at real speed, so read-along's clock and marks run as on the Kobo.
+- **Storage:** the reader's folder (books, settings, places, highlights, cache) is `DIR/onboard`, made fresh for each
+  scenario.
+
+devtest gets a second transport beside SSH: a device of `e2e/devices.yaml` with `local: DIR` runs its commands locally,
+reads `DIR/fb`, writes `DIR/touch`, starts the reader itself instead of through NickelMenu, and takes the reader's exit
+as Nickel coming back.
+
+## 3. What makes a run trustworthy
+
+- **A known start:** each scenario begins from a fixture: the reader's folder made from `e2e/fixtures/NAME/`
+  (settings, a place, highlights) and the scenario's books. On the Kobo, devtest saves the reader's own files before a run
+  and puts them back after, instead of each scenario undoing its own moves.
+- **No sleeps:** a step waits for something, never for a time: a log event, or the screen idle (the last refresh asked
+  for is done) before a snapshot, so a half-drawn screen is never compared. `wait` stays only for the watchdog's
+  scenarios, which test time itself.
+- **No retries:** a scenario that passes only sometimes is a bug, in the reader or in the scenario. A new scenario runs
+  five times on the simulator (`RUNS=5`) before it is committed.
+- **The test is tested:** a new scenario is shown to fail once on purpose (its expectation, or the code, changed for a
+  moment), so it is known to catch something.
+- **A crash ends the run at once:** the reader's exit or panic, with its last log lines, not a time-out ten steps later.
+- **A failure explains itself:** `e2e/out/SCENARIO/failure/` holds the step, the log's last lines, the screen, the
+  reference and a picture of their difference; CI attaches the folder to the run.
+- **Fast:** each scenario on the simulator has its own `DIR`, so they run side by side; the whole suite in a few minutes.
+
+## 4. References: hashes committed, pages not
+
+A snapshot is compared with its reference by SHA-256. `e2e/refs.sum` (committed) lists each scenario's snapshots and
+their hashes, for two targets, the simulator and the Kobo (measured below). The pages
+themselves, drawn from books, stay out of git (CLAUDE.md): `make e2e-sim SAVE=1` writes them into `e2e/out/` and updates
+`refs.sum`; the maintainer looks at the changed pages before `refs.sum` is committed. A page that differs in CI is
+attached to the run, so the change can be seen.
+
+**Measured (2026-11-05): who draws the same bytes.** `blitz-pages` (the engine with `parallel`, the reader's fonts) drew
+all 119 pages of *Buried Alive* on each target, compared pixel by pixel with the Kobo's own:
+
+| Built for, run on | Against the Kobo |
+|---|---|
+| ARMv7 + NEON, the Kobo | (the reference) |
+| ARMv7 + NEON, QEMU in Docker on the Mac | identical |
+| x86_64, QEMU with a baseline (SSE2) or SSE4.2 CPU | identical |
+| x86_64, QEMU with an AVX2 CPU (Haswell) | 2 pixels of one page, by one grey of 255 |
+| arm64, natively in Docker on the Mac | the same 2 pixels; identical to x86 with AVX2 |
+| x86_64, **Rosetta** in Docker on the Mac | **wrong**: glyphs drawn as bars on every page (page breaks right) |
+
+So there are two families. vello_cpu chooses its SIMD code at run time: with fused multiply-add (arm64, x86 with AVX2)
+or without (ARMv7, older x86). Within a family pages are identical byte for byte. Hence two sets of references: the
+**simulator**'s (Docker on the Mac and CI's x86 runners, which have AVX2) and the **Kobo**'s. Forcing vello_cpu to its
+non-FMA code on the simulator (a small patch, like Blitz's) would make one set; worth it only if keeping two costs too
+much. **Never check pages with x86 under Rosetta** on the Mac: its AVX2 is wrong for this code (QEMU's is right). One
+Farsi book measured; an English one with pictures to add when the scenarios move to public books.
+
+## 5. Books
+
+Public books, downloaded by the scenario's `fetch` step (URL and SHA-256), cached in CI: Moby-Dick with media overlays
+(IDPF's epub3-samples: English, read-along), a Standard Ebooks book (real CSS, pictures), a public Farsi EPUB (right to
+left). FarsiEPUB's narrated *Buried Alive* runs on the Kobo only until it can be downloaded publicly. Where to keep a
+copy of the books is not decided yet.
+
+## 6. The spec says what the reader does
+
+The design spec already says where each control goes (`action: goto, to: contents`), and `make kobo-flow` walks it. It
+grows to behaviour:
+
+- **Events:** one list of the reader's events (`reader/spec/events.yaml`: `highlight-made`, `went-to`, `dark-mode`, ...,
+  each with its fields). The reader logs them through one function; devtest waits for them by name
+  (`expect highlight-made`), with regexes still allowed for what is not an event.
+- **Effects:** a control names what it does and the event that says so (`hl-make: {does: make-highlight, emits:
+  highlight-made}`).
+- **Coverage, in `go test ./design`:** every event in the list is logged by the code and every event logged is in the
+  list; every control of a built screen is reached by the flow walk or by a scenario; every `does` has an event.
+
+## 7. A feature, from spec to device
+
+1. The spec first: the screen, its controls and what they do, with `status: planned`.
+2. Its scenario (or steps added to one), in the spec's names; it fails, as nothing is built.
+3. Built, until `make check-all` and `make e2e-sim` pass; `status: built`.
+4. On the Kobo (`make e2e`) when the change touches the device layer, refresh, timing or sound; and before a release,
+   every scenario.
+5. References updated only after the maintainer has seen the changed pages.
