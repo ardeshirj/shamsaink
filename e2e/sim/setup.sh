@@ -7,7 +7,7 @@
 set -e
 DIR=$1 READER=$2 FONTS=$3 BOOKS=$4
 [ -d "$BOOKS" ] || { echo "usage: setup.sh DIR READER FONTS BOOKS" >&2; exit 2; }
-rm -rf "$DIR"
+mkdir -p "$DIR" && find "$DIR" -mindepth 1 -delete # emptied, not removed: CI makes /sim once, as root, for its user
 mkdir -p "$DIR"/dev/input "$DIR"/proc/bus/input "$DIR"/tmp "$DIR"/mnt/onboard/.kobo \
   "$DIR"/sys/class/power_supply/bd71827_bat "$DIR"/sys/class/backlight/mxc_msp430.0 "$DIR"/sys/class/backlight/lm3630a_led
 

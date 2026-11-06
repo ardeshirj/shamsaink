@@ -1,15 +1,18 @@
-# Every push, without the Rust engine and without a device: reader/scripts/check.sh, the same as make check (docs/testing.md,
-# section 1): gofmt, vet, and the tests of every package that needs no engine: the design spec against the templates, the
-# stylesheet, the words, the icons and the generated files; the device layer; devtest's scenarios and walk plan; the
-# library. Not here yet: make test (the reader's own tests, reader/ui, the renders) and make e2e-sim, which need the
-# engine built with Rust.
+# Every push (docs/testing.md, section 1), on arm64 runners: the same architecture as the Mac the simulator's references
+# are drawn on (2026-11-06: ubuntu-24.04-arm starts for this private repository, an Arm Neoverse-N2).
+#   check  make check (reader/scripts/check.sh): gofmt, vet, the tests that need no engine; a minute
+#   test   the engine built (cached: rebuilt only when engine/ changes), make test (every Go test, the renders compared
+#          with the kept ones), and the simulated Kobo's scenarios on public books (make e2e-sim's run.sh); a failure's
+#          folder (step, log, screen, reference, difference) attached to the run
+# Not here yet: the scenarios on FarsiEPUB's Buried Alive (walk, basics), which is not public; they run on the Mac and
+# the Kobo.
 name: CI
 on:
   push:
   pull_request:
 jobs:
-  spec:
-    runs-on: ubuntu-24.04
+  check:
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -18,3 +21,49 @@ jobs:
           cache-dependency-path: reader/go.sum
       - name: gofmt, vet, the tests that need no engine (reader/scripts/check.sh, the same as make check)
         run: sh reader/scripts/check.sh
+
+  test:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: reader/go.mod
+          cache-dependency-path: reader/go.sum
+      - name: Rust 1.95 (as the eink-rust image)
+        run: rustup toolchain install 1.95 --profile minimal && rustup default 1.95
+      - name: the engine's build, cached by everything it is built from
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            engine/blitz
+            engine/target
+          key: engine-arm64-${{ hashFiles('engine/Cargo.toml', 'engine/Cargo.lock', 'engine/fetch-blitz.sh', 'engine/patches/**', 'engine/src/**') }}
+          restore-keys: engine-arm64-
+      - name: Blitz at its pinned commit, with our patches
+        run: engine/fetch-blitz.sh
+      - name: go-toolkit, trimmed (reader/go.mod points at it)
+        run: sh experiments/02-crengine-go/trim-gotoolkit.sh
+      - name: the engine
+        working-directory: engine
+        run: cargo build --release --features parallel --lib
+      - name: make test (every Go test with the engine, the renders compared with the kept ones)
+        working-directory: reader
+        run: FONTS=$PWD/fonts go test -count=1 -tags blitz ./...
+      - name: the simulated Kobo, the scenarios on public books
+        run: |
+          sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
+          mkdir -p out/sim-books
+          sh e2e/sim/run.sh out/sim-books e2e/scenarios/readalong-granularity.txt
+      - name: a failed scenario's folder
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure
+          path: |
+            e2e/out/sim/*/failure/
+            /sim/mnt/onboard/.adds/shamsaink/logs/reader.log
+          if-no-files-found: ignore
