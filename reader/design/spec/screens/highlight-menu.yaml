@@ -6,7 +6,7 @@ status: built
 purpose: "By the words chosen (a finger held on a word, dragged and lifted) or a highlight held: Highlight or Remove highlight, and Listen from here in a narrated book. Hangs under the words, over them when there is no room."
 enter: [{gesture: hold-word, from: reading}]
 controls:
-  - {id: hl-make, component: menu-item, action: act, does: highlights the words chosen, when: "words are chosen"}
-  - {id: hl-remove, component: menu-item, action: act, does: removes the highlight held, when: "a highlight is held"}
-  - {id: hl-listen, component: menu-item, action: act, does: starts the narration from the word, when: "the book is narrated"}
+  - {id: hl-make, component: menu-item, action: act, does: highlights the words chosen, when: "words are chosen", emits: "highlight \\d+ made", walk: "never: a highlight is removed by holding it again (scenarios/basics.txt)"}
+  - {id: hl-remove, component: menu-item, action: act, does: removes the highlight held, when: "a highlight is held", emits: "highlight \\d+ removed", walk: "never: needs a highlight held (scenarios/basics.txt)"}
+  - {id: hl-listen, component: menu-item, action: act, does: starts the narration from the word, when: "the book is narrated", emits: "read aloud from word", walk: "never: the narration plays on (scenarios/readalong-granularity.txt)"}
 dismiss: tap-outside

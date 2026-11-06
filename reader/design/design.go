@@ -126,6 +126,15 @@ type Control struct {
 	Requires  []string `yaml:"requires"` // what the device must have (Capabilities), or the control is not on it
 	Dynamic   bool     `yaml:"dynamic"`  // made per item (a list's rows): its id is a pattern the template does not spell out
 	Values    []string `yaml:"values"`   // for a dynamic control, the names after its id (filter-reading, ...)
+	// What it does, for the walk to press it (docs/testing.md, section 6): Emits is the reader's log line that says it was
+	// done (a regular expression); Press the button pressed, when not the control's own id (a stepper's size-inc); Undo
+	// the button that puts it back (the same one for a switch); Closes, that pressing it closes its screen (a jump closes
+	// the dock), so the undo opens it again first; Walk "never: why" for what the walk must not press (a book deleted).
+	Emits  string `yaml:"emits"`
+	Press  string `yaml:"press"`
+	Undo   string `yaml:"undo"`
+	Closes bool   `yaml:"closes"`
+	Walk   string `yaml:"walk"`
 }
 
 // Enter is how a screen is reached: a gesture on another screen, or a tap on one of its controls.

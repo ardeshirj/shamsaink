@@ -8,12 +8,12 @@ enter: [{gesture: tap, control: text, from: dock}]
 controls:
   - {id: tab-text, component: tabs, action: act, does: shows the Text tab}
   - {id: tab-page, component: tabs, action: act, does: shows the Page tab}
-  - {id: size, component: stepper, action: act, does: "text size, smaller or larger", when: "Text tab"}
-  - {id: lines, component: stepper, action: act, does: "line spacing", when: "Text tab"}
-  - {id: margin, component: stepper, action: act, does: "margins", when: "Text tab"}
+  - {id: size, component: stepper, action: act, does: "text size, smaller or larger", when: "Text tab", emits: "size-(inc|dec): text", press: size-inc, undo: size-dec}
+  - {id: lines, component: stepper, action: act, does: "line spacing", when: "Text tab", emits: "lines-(inc|dec): text", press: lines-inc, undo: lines-dec}
+  - {id: margin, component: stepper, action: act, does: "margins", when: "Text tab", emits: "margin-(inc|dec): text", press: margin-inc, undo: margin-dec}
   - {id: dir-, component: segments, action: act, does: "page turns follow the book's direction", when: "Page tab"}
   - {id: dir-rtl, component: segments, action: act, does: "page turns right to left", when: "Page tab"}
   - {id: dir-ltr, component: segments, action: act, does: "page turns left to right", when: "Page tab"}
-  - {id: reset, component: button, action: act, does: the book's text settings back to the defaults}
+  - {id: reset, component: button, action: act, does: the book's text settings back to the defaults, walk: "never: the book's text settings back to the defaults, with no button to undo it"}
 dismiss: tap-outside
 words: [line-spacing, line-spacing-book]

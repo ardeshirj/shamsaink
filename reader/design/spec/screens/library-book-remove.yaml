@@ -6,6 +6,6 @@ status: built
 purpose: "Asks before a book is removed: what is removed, then Remove and Keep. Removing deletes the file and all the reader keeps for it."
 enter: [{gesture: tap, control: book-remove, from: library-book-menu}]
 controls:
-  - {id: book-remove-yes, component: button, action: act, does: "deletes the book's file and what the reader keeps for it"}
+  - {id: book-remove-yes, component: button, action: act, does: "deletes the book's file and what the reader keeps for it", emits: "library: .* removed", walk: "never: deletes the book"}
   - {id: book-remove-no, component: button, action: act, does: keeps the book}
 dismiss: tap-outside

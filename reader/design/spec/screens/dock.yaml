@@ -6,12 +6,12 @@ status: built
 purpose: Where the reader is, a bar to go anywhere in the book, the way back after a jump, and the tools.
 enter: [{gesture: tap-top-tenth, from: reading}]
 controls:
-  - {id: chapter-prev, component: icon-button, action: act, does: the previous chapter}
-  - {id: progress, component: bar, action: act, does: go to the share tapped}
-  - {id: chapter-next, component: icon-button, action: act, does: the next chapter}
-  - {id: back, component: button, action: act, does: "back to where the jump started", when: "after a jump"}
+  - {id: chapter-prev, component: icon-button, action: act, does: the previous chapter, emits: "went to document", undo: back, closes: true}
+  - {id: progress, component: bar, action: act, does: go to the share tapped, emits: "went to document", undo: back, closes: true}
+  - {id: chapter-next, component: icon-button, action: act, does: the next chapter, emits: "went to document", undo: back, closes: true}
+  - {id: back, component: button, action: act, does: "back to where the jump started", when: "after a jump", emits: "went to document", walk: "never: the undo of a jump: the walk presses it after each"}
   - {id: contents, component: icon-button, action: goto, to: contents}
   - {id: text, component: icon-button, action: goto, to: text}
-  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated", requires: [sound]}
+  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated", requires: [sound], emits: "read aloud from word", walk: "never: the narration plays on (scenarios/readalong-granularity.txt)"}
 internal: [where-title, where-title-text]
 dismiss: tap-outside

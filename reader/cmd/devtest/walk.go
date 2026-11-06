@@ -186,6 +186,7 @@ type walker struct {
 	baseShot  *screen
 	placed    map[string][2]int // where a screen hung by something was put, from the reader's log
 	shown     map[string]string // the kept render each screen of the route matched (its case: the book menu of a new book)
+	told      map[string]string // the case the reader said it drew, which a match by ink cannot tell (a menu's labels)
 	hold      [4]int            // the word held for the highlight's menu: from x, y to x2, y2
 	report    func(good bool, what, detail string)
 	checked   map[string]bool
@@ -193,7 +194,7 @@ type walker struct {
 	entry, pg string
 }
 
-var reBookPanel = regexp.MustCompile(`library: book (\w+) at (\d+),(\d+)`)
+var reBookPanel = regexp.MustCompile(`library: book (\w+) \((\w+)\) at (\d+),(\d+)`)
 
 // walk plays every route of the plan: the library's from the library, then a book opened by its first row and the page's,
 // then the library again, and the reader left. Its failures are listed together at the end: one screen drawn wrong does not
@@ -205,7 +206,7 @@ func (p *player) walk(args []string) (string, error) {
 	}
 	routes, left := plan(spec)
 	d := p.d
-	w := &walker{p: p, spec: spec, lang: "en", placed: map[string][2]int{}, shown: map[string]string{}, checked: map[string]bool{},
+	w := &walker{p: p, spec: spec, lang: "en", placed: map[string][2]int{}, shown: map[string]string{}, told: map[string]string{}, checked: map[string]bool{},
 		hold: [4]int{d.prof.Screen.Width * 7 / 10, 700, d.prof.Screen.Width * 4 / 10, 700}}
 	w.entry, w.pg = bases(spec)
 	if len(args) == 5 && args[0] == "word" { // walk word X Y X2 Y2: where a word is on the page the book opens at
@@ -297,7 +298,120 @@ func (w *walker) play(r route) {
 			w.check(what, e.to, shot)
 		}
 	}
+	w.effects(r)
 	w.dismiss(r)
+}
+
+// effects presses each control of the route's screen that says what it does (the spec's emits:) and the walk may press:
+// its log line waited for, then its undo pressed (the screen opened again first when pressing closed it) and the line
+// waited for again. The base as it was is checked when the screen is closed (dismiss): an undo that does not put things
+// back fails there.
+func (w *walker) effects(r route) {
+	screen := r.target()
+	sc := w.spec.Screens[screen]
+	if sc == nil {
+		return
+	}
+	for _, c := range sc.Controls {
+		if c.Emits == "" || c.Walk != "" || c.Dynamic {
+			continue
+		}
+		what := "  " + screen + " ›" + c.ID + "›"
+		press := c.ID
+		if c.Press != "" {
+			press = c.Press
+		}
+		shot, err := w.settled("")
+		if err != nil {
+			w.report(false, what, err.Error())
+			return
+		}
+		if !w.inked(screen, press, shot) {
+			fmt.Printf("       note %s not on the screen (%s), not pressed\n", what, c.When)
+			continue
+		}
+		did, err := w.pressAndWait(screen, press, c.Emits)
+		if err != nil {
+			w.report(false, what, err.Error())
+			w.home()
+			w.replay(r)
+			continue
+		}
+		if c.Undo == "" {
+			w.report(true, what, did+" (no undo)")
+			continue
+		}
+		if c.Closes {
+			if err := w.replay(r); err != nil {
+				w.report(false, what, did+"; opened again for the undo: "+err.Error())
+				continue
+			}
+		}
+		undid, err := w.pressAndWait(screen, c.Undo, c.Emits)
+		if err != nil {
+			w.report(false, what, did+"; undo "+c.Undo+": "+err.Error())
+			w.home()
+			w.replay(r)
+			continue
+		}
+		w.report(true, what, did+"; undone by "+c.Undo+": "+undid)
+		if c.Closes {
+			w.replay(r) // the screen again, for the next control
+		}
+	}
+}
+
+// inked says whether a button of a screen has ink where the screen's kept render puts it.
+func (w *walker) inked(screen, id string, shot *screen) bool {
+	rr, _ := w.render(screen)
+	if rr == nil {
+		return false
+	}
+	b, ok := box(rr, id)
+	at := w.placed[screen]
+	return ok && shot.dark([4]int{at[0] + b[0], at[1] + b[1], at[0] + b[2], at[1] + b[3]}) >= 20
+}
+
+// pressAndWait taps a button of a screen by its kept render and waits for the line that says it was done.
+func (w *walker) pressAndWait(screen, id, emits string) (string, error) {
+	rr, name := w.render(screen)
+	if rr == nil {
+		return "", fmt.Errorf("no kept render of %s", screen)
+	}
+	b, ok := box(rr, id)
+	if !ok {
+		return "", fmt.Errorf("no button %s in %s", id, name)
+	}
+	at := w.placed[screen]
+	before := w.p.d.fbHash()
+	if err := w.p.d.tapAt(at[0]+(b[0]+b[2])/2, at[1]+(b[1]+b[3])/2); err != nil {
+		return "", err
+	}
+	line, err := w.p.d.expect(emits, 15*time.Second)
+	if err != nil {
+		return "", err
+	}
+	if err := w.p.d.settle(before); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
+}
+
+// replay opens the route's screens again from where the screen is (its base, after a press that closed them), without
+// holding them against their renders: they were, a moment ago.
+func (w *walker) replay(r route) error {
+	for _, e := range r.edges {
+		before := w.p.d.fbHash()
+		if err := w.gesture(e); err != nil {
+			return err
+		}
+		shot, err := w.settled(before)
+		if err != nil {
+			return fmt.Errorf("%s: %v", e, err)
+		}
+		w.shown[e.to] = w.match(e.to, shot)
+	}
+	return nil
 }
 
 // gesture makes one edge's gesture on the device.
@@ -353,14 +467,15 @@ func (w *walker) gesture(e edge) error {
 
 // expectPlaced waits for the reader's line saying where a hung panel was put.
 func (w *walker) expectPlaced(screen string) error {
-	line, err := w.p.d.expect(`library: book \w+ at \d+,\d+`, 8*time.Second)
+	line, err := w.p.d.expect(reBookPanel.String(), 8*time.Second)
 	if err != nil {
 		return err
 	}
 	m := reBookPanel.FindStringSubmatch(line)
-	x, _ := strconv.Atoi(m[2])
-	y, _ := strconv.Atoi(m[3])
+	x, _ := strconv.Atoi(m[3])
+	y, _ := strconv.Atoi(m[4])
 	w.placed[screen] = [2]int{x, y}
+	w.told[screen] = screen + "-" + m[2] + "-" + w.lang // the case the reader drew: its labels differ, not its ink
 	return nil
 }
 
@@ -394,6 +509,11 @@ func (w *walker) render(screen string) (*boxes, string) {
 // book; Text's tabs), the one with ink at every button and the most buttons; the walk's own choice (render) when it fits
 // as well. Its taps are then at that case's places.
 func (w *walker) match(screen string, shot *screen) string {
+	if name := w.told[screen]; name != "" {
+		if _, err := w.p.d.boxes(name); err == nil {
+			return name
+		}
+	}
 	ctx := map[bool]string{true: "library", false: "book"}[w.base == w.entry]
 	if name := screen + "-" + ctx + "-" + w.lang; screen != w.entry {
 		if _, err := w.p.d.boxes(name); err == nil {

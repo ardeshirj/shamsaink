@@ -230,6 +230,17 @@ func Validate(s *Spec, src Sources) []string {
 				if c.Does == "" {
 					f("screen %s, control %s: acts, but does not say what", n, c.ID)
 				}
+				if c.Emits != "" {
+					if _, err := regexp.Compile(c.Emits); err != nil {
+						f("screen %s, control %s: emits is not a regular expression: %v", n, c.ID, err)
+					}
+				}
+				if (c.Undo != "" || c.Press != "" || c.Closes) && c.Emits == "" {
+					f("screen %s, control %s: press, undo or closes without emits (the line that says it was done)", n, c.ID)
+				}
+				if c.Walk != "" && !strings.HasPrefix(c.Walk, "never: ") {
+					f("screen %s, control %s: walk is \"never: why\" or nothing, not %q", n, c.ID, c.Walk)
+				}
 			default:
 				f("screen %s, control %s: action %q (goto, replace or act)", n, c.ID, c.Action)
 			}

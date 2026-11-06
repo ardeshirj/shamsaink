@@ -8,6 +8,6 @@ enter: [{gesture: tap, control: topbar-menu, from: topbar}, {gesture: tap, contr
 controls:
   - {id: settings, component: menu-item, action: replace, to: library-settings, when: "in the library"}
   - {id: reading-settings, component: menu-item, action: replace, to: reading-settings, when: "in a book"}
-  - {id: leave, component: menu-item, action: act, does: "leaves to Kobo's interface"}
+  - {id: leave, component: menu-item, action: act, does: "leaves to Kobo's interface", emits: "library: left", walk: "never: ends the reader"}
 dismiss: tap-outside
 words: [device-settings, reading-settings, leave]

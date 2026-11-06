@@ -55,6 +55,11 @@ type reading struct {
 	restored bool
 	saved    bool
 	marks    *highlights
+	// anchor is the word the place stands for across relayouts, {block, byte}, while the place is still where the last
+	// relayout put it (anchorAt): kept, the page holding it is found again each time, and a setting changed and changed
+	// back comes back to the page it left; a page turned moves the place, and the next relayout takes that page's first word
+	anchor   [2]int
+	anchorAt [2]int // {doc, at} the last relayout left the place at; {-1, -1} for none
 }
 
 // openBook opens a book at its place; direction is the way set for it by its key ("rtl", "ltr", else the book's).
@@ -87,15 +92,16 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		return nil, err
 	}
 	r := &reading{
-		pub:     p,
-		spine:   spine,
-		read:    read,
-		fonts:   fonts,
-		key:     key,
-		bookRTL: p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
-		cache:   filepath.Join(dir, "cache", key+".cache"),
-		place:   filepath.Join(dir, "places", key+".place"),
-		marks:   loadHighlights(dir, key),
+		pub:      p,
+		spine:    spine,
+		read:     read,
+		fonts:    fonts,
+		key:      key,
+		anchorAt: [2]int{-1, -1},
+		bookRTL:  p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
+		cache:    filepath.Join(dir, "cache", key+".cache"),
+		place:    filepath.Join(dir, "places", key+".place"),
+		marks:    loadHighlights(dir, key),
 	}
 	r.direct(direction(key))
 	r.make(o)
@@ -130,14 +136,52 @@ func (r *reading) make(o blitz.Options) {
 	}
 }
 
-// relayout makes the book again for new page settings; the place stays in its document, as the same share of it.
+// relayout makes the book again for new page settings. The place stays on the page that holds the word it stands for
+// (a word's place in its document's text stays when the book is laid out again): the page's first word, or the word
+// kept by the relayout before when the place has not moved since (anchor). So a setting changed and changed back comes
+// back to the same page (2026-11-06: kept as the same share of the document, rounded down, each change moved it a page
+// back; the walk found it). A page with no words (a picture) keeps the same share of its document.
 func (r *reading) relayout(o blitz.Options) {
 	first, last := r.book.Layout(r.doc)
 	share := float64(r.at) / float64(max(last-first, 1))
+	word, hasWord := r.anchor, r.anchorAt == [2]int{r.doc, r.at}
+	if !hasWord {
+		word, hasWord = firstWord(r.book.Words(first + r.at))
+	}
 	r.book.Close()
 	r.make(o)
 	first, last = r.book.Layout(r.doc)
-	r.seek(r.doc, int(share*float64(last-first)))
+	at := int(share * float64(last-first))
+	if hasWord {
+		for p := 0; p < last-first; p++ { // the last page whose first word is not past the place's word
+			if w, ok := firstWord(r.book.Words(first + p)); ok {
+				if before(word, w) { // highlights.go's: {block, byte} in document order
+					break
+				}
+				at = p
+			}
+		}
+	}
+	r.seek(r.doc, at)
+	r.anchorAt = [2]int{-1, -1}
+	if hasWord {
+		r.anchor, r.anchorAt = word, [2]int{r.doc, r.at}
+	}
+}
+
+// firstWord is where the first of a page's words is in its document's text, {block, byte} (Words gives them line by
+// line, in visual order).
+func firstWord(ws []blitz.Word) ([2]int, bool) {
+	if len(ws) == 0 {
+		return [2]int{}, false
+	}
+	f := [2]int{ws[0].Block, ws[0].Start}
+	for _, w := range ws[1:] {
+		if p := [2]int{w.Block, w.Start}; before(p, f) {
+			f = p
+		}
+	}
+	return f, true
 }
 
 // seek goes to page at of document doc (its last page if at is past it); false if the document has no pages.

@@ -136,13 +136,14 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	}
 	// a book's menu, its details or the question before it is removed, by the row held (library/changes.go)
 	held, bookPanel := -1, "" // the row, and which of them ("menu", "details", "remove")
-	showBook := func(p *ui.Panel, kind string) {
+	showBook := func(p *ui.Panel, kind, variant string) {
 		r := image.Rectangle{}
 		if panel != nil {
 			r = panel.Rect()
 		}
 		p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
-		fmt.Printf("library: book %s at %d,%d\n", kind, p.Rect().Min.X, p.Rect().Min.Y) // where it hangs: devtest's walk finds its buttons
+		// where it hangs and which of its cases (the kept renders' names): devtest's walk finds its buttons
+		fmt.Printf("library: book %s (%s) at %d,%d\n", kind, variant, p.Rect().Min.X, p.Rect().Min.Y)
 		panel, bookPanel = p, kind
 		v.Draw(rd.over)
 		panel.Over(rd.over)
@@ -202,7 +203,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case e.Hold == device.Held && panel == nil && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
 			held = v.EntryAt(e.X, e.Y)
 			b := items[held]
-			showBook(ui.DrawBookMenu(b.Finished(), b.Opened, rd.fonts, scr.W), "menu")
+			showBook(ui.DrawBookMenu(b.Finished(), b.Opened, rd.fonts, scr.W), "menu", bookCase(b.Finished(), b.Opened))
 			fmt.Printf("library: %s held: its menu\n", b.Path)
 		case e.Hold != device.NotHeld:
 		case panel != nil:
@@ -236,11 +237,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 						d.Read = int(b.Share*100 + 0.5)
 					}
 				}
-				showBook(ui.DrawBookDetails(d, rd.fonts, scr.W), "details")
+				showBook(ui.DrawBookDetails(d, rd.fonts, scr.W), "details", bookCase(false, b.Opened))
 				fmt.Printf("library: %s details\n", b.Path)
 			case bookPanel == "menu" && id == "book-remove":
 				b := items[held]
-				showBook(ui.DrawBookRemove(b.Title, persian([]string{library.Lang(b.Book)}, false), rd.fonts, scr.W), "remove")
+				showBook(ui.DrawBookRemove(b.Title, persian([]string{library.Lang(b.Book)}, false), rd.fonts, scr.W), "remove", "ask")
 				fmt.Printf("library: %s: remove?\n", b.Path)
 			case bookPanel == "remove" && id == "book-remove-yes":
 				b := items[held]
@@ -373,4 +374,16 @@ func tintBattery(scr *device.Screen, box image.Rectangle, level int, onCharger b
 	} else {
 		scr.SetTint(image.Rectangle{})
 	}
+}
+
+// bookCase is which of its cases a book's menu or details is drawn in, as the kept renders name them: finished, opened
+// or new.
+func bookCase(finished, opened bool) string {
+	switch {
+	case finished:
+		return "finished"
+	case opened:
+		return "opened"
+	}
+	return "new"
 }

@@ -142,7 +142,7 @@ the Kobo it earned it sooner than planned.)
     reaches (its `enter:`, the controls' `goto` and `replace`, `when:`, `dismiss:`), from the library and from a book's
     page, opened, held against its kept render and closed; 17 routes, 16 screens (loading and splash are the reader's
     own), 3 of 3 runs on the simulator; a moved button fails naming it; `make check` fails when a built screen has no
-    way the walk can make. On the Kobo too (2026-11-06): 17 of 17, 275 s, its files and their times as they were. The old walks removed (`flow`, `bookflow`, `smoke`, `page`: 2026-11-06). Left:
+    way the walk can make. On the Kobo too (2026-11-06): 17 of 17, 275 s, its files and their times as they were. Effects (2026-11-06): a control says the log line its press emits, the button pressed and the one that undoes it (`emits:`, `press:`, `undo:`, `closes:`, `walk: never: why`); the walk presses Dark, the chapter buttons, the progress bar and the text steppers and undoes each, on the simulator and the Kobo; `light-dark` gone. It found a bug, fixed: a text setting changed and changed back moved the place a page back each time (kept as a share of the document, rounded down; now the word the place stands for). The old walks removed (`flow`, `bookflow`, `smoke`, `page`: 2026-11-06). Left:
     effects in the spec
   - [x] The working rule in CLAUDE.md (a feature: spec, scenario, build, `e2e-sim`; the Kobo for device changes)
   - [ ] Where the test books are kept (not decided: public URLs for now; *Buried Alive* Kobo-only until FarsiEPUB offers it)
