@@ -5,7 +5,7 @@
 
 <p align="center">
   A light EPUB reader for e-ink, built on open source tools such as
-  <a href="https://github.com/readium/go-toolkit">Readium</a> and <a href="https://github.com/DioxusLabs/blitz">Blitz</a>.<br>
+  <a href="https://github.com/DioxusLabs/blitz">Blitz</a> and <a href="https://github.com/readium/go-toolkit">Readium</a>.<br>
   Right-to-left books done properly, Farsi first.
 </p>
 
@@ -38,7 +38,7 @@ overlooked on these devices: Plato sets its paragraphs reversed, and KOReader br
 browser and has declined narrated books.
 
 ShamsaInk is the reader built for it. It sets right-to-left books the way a browser sets them, and reads a narrated book
-along with you\*, underlining each word as it is spoken. Blitz, a CSS engine written in Rust, draws the pages, so books and
+along with you², underlining each word as it is spoken. Blitz, a CSS engine written in Rust, draws the pages, so books and
 the reader's own panels are ordinary HTML and CSS, and each device sits behind one small interface, which makes it easy
 to adapt to new devices. Here is the same page of *Buried Alive*, chapter 2, in all three:
 
@@ -52,24 +52,20 @@ ShamsaInk
 </th>
 </tr>
 <tr>
-<td valign="top">
-<img src="docs/images/compare-plato.png" alt="Plato: the last line of the paragraph sits at the left edge">
-<br>Although the book declares its direction, right to left, it sets Farsi paragraphs reversed, left to right: the last
-line sits at the left.
-</td>
-<td valign="top">
-<img src="docs/images/compare-koreader.png" alt="KOReader: the paragraph is right to left, with lines broken differently from a browser">
-<br>Gets the direction right, but breaks lines differently from a browser: on rtlbook's books its line starts match
-Chromium's in 42–67% of lines. It has declined narrated books
-(<a href="https://github.com/koreader/koreader/issues/9548">#9548</a>).
-</td>
-<td valign="top">
-<img src="docs/images/compare-shamsaink.png" alt="ShamsaInk: the paragraph is right to left, with the last line at the right edge">
-<br>Sets Farsi right to left, matches Chromium's line starts in 88–99% of lines on the same books, and reads along*,
-with each narrated word underlined as it is spoken (see the video below).
-</td>
+<td valign="top"><img src="docs/images/compare-plato.png" alt="Plato: the Farsi paragraph set left to right, its last line at the left edge"></td>
+<td valign="top"><img src="docs/images/compare-koreader.png" alt="KOReader: the paragraph right to left"></td>
+<td valign="top"><img src="docs/images/compare-shamsaink.png" alt="ShamsaInk: the paragraph right to left"></td>
 </tr>
 </table>
+
+| | Plato | KOReader | ShamsaInk |
+|---|:---:|:---:|:---:|
+| Farsi set right to left | ❌ | ✅ | ✅ |
+| Lines broken where a browser breaks them¹ | not measured | 42–67% | 88–99% |
+| 🎧 Reads along: each narrated word underlined as it is spoken | ❌ | ❌ ([declined](https://github.com/koreader/koreader/issues/9548)) | ✅² |
+
+<sub>¹ Line starts that match Chromium's, on four of rtlbook's Farsi books.<br>
+² Kindle: the underlining works, but sound is unofficial and unreliable. Kobo is the first target.</sub>
 
 Narration can change how a book is read: a classic made easier to follow, a language learned by ear and eye together.
 We want Farsi and other right-to-left books done properly, and books that read along.
@@ -84,8 +80,6 @@ We want Farsi and other right-to-left books done properly, and books that read a
   <sub><b>Read-along, with sound</b> (YouTube; emulated in the browser, the same pages and timings as on the Kobo)</sub>
 </p>
 -->
-
-<sub>\* Kindle: the underlining works, but sound is unofficial and unreliable. Kobo is the first target.</sub>
 
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
 books are what it was made to read well, but it opens any EPUB.
