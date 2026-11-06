@@ -523,12 +523,22 @@ func (p *player) expectNickel(seconds float64) (string, error) {
 	return "", fmt.Errorf("Kobo's interface did not come back in %.0f s", seconds)
 }
 
-// fetch puts the file at url on the device at path (under the device's folder) unless it is there: downloaded here,
-// checked against its SHA-256, copied over SSH.
+// fetch puts the file at url on the device at path (under the device's folder), checked by its SHA-256 either way: a
+// copy already there is hashed on the device and used only if it is that file (one left from before a book was
+// republished, or a reader's own copy, is not used and not overwritten); else it is downloaded here, checked, and copied.
+// A different file says so: the scenario's references, fixture and word places were made from the one it names.
 func (d *dev) fetch(url, path, sum string) (string, error) {
 	full := d.a.Dir + "/" + path
-	if out, _ := d.sh("test -f "+full+" && echo yes", nil); strings.TrimSpace(string(out)) == "yes" {
-		return path + " is there", nil
+	changed := func(where, got string) error {
+		return fmt.Errorf("%s is not the file the scenario was made from (SHA-256 %s, want %s): if the book was "+
+			"republished on purpose, look at its pages, keep its references again (SAVE=1), and put the new SHA-256 in the "+
+			"scenario's fetch line and its fixture's place (e2e/fixtures/README.md)", where, got[:16], sum[:16])
+	}
+	if out, _ := d.sh("test -f "+full+" && sha256sum "+full+" | cut -c1-64", nil); len(strings.TrimSpace(string(out))) == 64 {
+		if got := strings.TrimSpace(string(out)); got != sum {
+			return "", changed(path+" on the device", got)
+		}
+		return path + " is there, the file expected", nil
 	}
 	resp, err := http.Get(url)
 	if err != nil {
@@ -543,7 +553,7 @@ func (d *dev) fetch(url, path, sum string) (string, error) {
 		return "", err
 	}
 	if got := fmt.Sprintf("%x", sha256.Sum256(data)); got != sum {
-		return "", fmt.Errorf("%s: SHA-256 is %s, not %s", url, got, sum)
+		return "", changed(url, got)
 	}
 	if _, err := d.sh("mkdir -p $(dirname "+full+") && cat > "+full, data); err != nil {
 		return "", err
