@@ -46,8 +46,8 @@ credit: ...
 ```
 
 - **Sizes are not in the file.** The template sets them for a 1236 px wide page and scales them with the screen's width
-  (FarsiEPUB's `screensavers/design.toml`: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40). A couplet shrinks, down to half
-  its size, until each verse is on two lines.
+  (FarsiEPUB's `screensavers/design.toml`: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40). A couplet is always drawn at its full
+  size unless a verse, measured, would go onto a third line; only then it shrinks, step by step, down to half its size.
 - **Dark mode.** The screens are drawn grey and follow the reader's dark mode (the Light panel's switch): inverted with
   the page, white on black, the logo and signature too. Pictures are shown as they are in dark mode, never as a negative,
   and in colour on a colour screen (`Screen.ShowRGBA`).

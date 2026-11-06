@@ -89,21 +89,6 @@ func sleepSize(n int) int {
 	return 40
 }
 
-// FarsiEPUB's screensaver sizes (screensavers/design.toml: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40), for a
-// 1236 px wide page, scaled with the width. The couplet shrinks until each verse fits on two lines, not below 70%.
-func coupletFit(verses []string, w int) (poem int) {
-	u := float64(w) / 1236
-	full := 96 * 1.15 * u
-	longest := 1
-	for _, v := range verses {
-		longest = max(longest, utf8.RuneCountInString(v))
-	}
-	// a verse on two lines: half its letters a line, about 0.62 em a letter (Parastoo Bold), in the width left by the margins
-	room := float64(w) - 2*140*u
-	fit := room * 2 / (0.62 * float64(longest))
-	return int(max(min(full, fit), 0.5*full))
-}
-
 // twoLines is a verse on two lines, broken at the word nearest its middle (FarsiEPUB's screensaver, render.py two_lines).
 func twoLines(verse string) template.HTML {
 	words := strings.Split(verse, " ")
@@ -144,7 +129,7 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 		for _, v := range s.Verses {
 			d.Lines = append(d.Lines, twoLines(v))
 		}
-		d.Poem = coupletFit(s.Verses, w)
+		d.Poem = px(96 * 1.15)
 		d.Gap, d.PoetSize, d.PoetGap = px(70), px(40*1.15), px(40)
 		d.RuleW, d.RuleH, d.RuleGap = px(120), max(px(2), 2), px(50)
 		d.GlossSize = px(42 * 1.15)
@@ -156,9 +141,11 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	if s.Layout != "couplet" {
 		return drawSleepOnce(d, fonts, w, h)
 	}
-	// FarsiEPUB's fit (render.py): the couplet shrinks, 2 px at a width of 1236 a step, until each verse is on two lines at
-	// most. FarsiEPUB stops at 70% and rejects the poem; a reader keeps going, to 50%, rather than show a third line.
-	// The estimate above only starts it near. A verse on a third line, or more, is too big.
+	// FarsiEPUB's sizes (screensavers/design.toml: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40), for a 1236 px wide
+	// page, scaled with the width. The couplet starts at its full size and shrinks only when a verse is measured on a third
+	// line, 2 px at a width of 1236 a step (FarsiEPUB's fit, render.py). FarsiEPUB stops at 70% and rejects the poem; a
+	// reader keeps going, to 50%, rather than show a third line. No estimate from the letters: it counted the vowel marks
+	// and shrank couplets that fit at full size (Hafez's 71 px of 112).
 	floor := int(0.5 * 96 * 1.15 * u)
 	for {
 		img, tall := drawSleepOnce(d, fonts, w, h)
