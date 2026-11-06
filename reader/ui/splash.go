@@ -50,6 +50,10 @@ func Loading(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
 // (the mark, the name and "by FarsiEPUB") from brand/shamsaink/logo-stack.svg (rsvg-convert -w 400 -b white), for the
 // opening screen. A grey screen shows them in grey, as the engine draws them; a colour screen has each put
 // over the box of the image with its id in the page, in its colours.
+// Build is the reader's version (main sets it), part of the opening screens' cache key: a new build may draw them
+// differently (an engine or font change), and a package installed over USB cannot clear the cache as an SSH install does.
+var Build string
+
 var colourLogos = []struct{ id, file string }{{"mark", "templates/brand/shamsaink.png"}, {"logo", "templates/brand/shamsaink-stack.png"}}
 
 func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
@@ -58,6 +62,7 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Openi
 	stack, _ := files.ReadFile("templates/brand/shamsaink-stack.png")
 	html, _ := render(name+".html", splashData{Top: h * 3 / 10})
 	sum := fnv.New32a()
+	sum.Write([]byte(Build))
 	sum.Write([]byte(html))
 	sum.Write(mark)
 	sum.Write(stack)
@@ -95,6 +100,11 @@ func opening(name, dir string, fonts *blitz.Fonts, w, h int, colour bool) *Openi
 	b.Layout(0)
 	b.Draw(0, img)
 	os.MkdirAll(filepath.Dir(grey), 0o755)
+	// an older build's or design's copies go (2 MB grey and 8 MB colour each on the Kobo)
+	old, _ := filepath.Glob(filepath.Join(dir, "cache", fmt.Sprintf("%s-%dx%d-*", name, w, h)))
+	for _, f := range old {
+		os.Remove(f)
+	}
 	if err := os.WriteFile(grey, img.Pix, 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "shamsaink: the opening screen not kept:", err)
 	}

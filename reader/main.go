@@ -36,6 +36,10 @@ var (
 	leadMs     = env("LEAD_MS", "250")     // experiment 12: by ear, for the maintainer's headphones
 )
 
+// version is set by the build (reader/scripts/build-armv7.sh): the release's tag (v0.0.1), or git's description of the
+// commit built on the Mac (v0.0.1-3-gabc1234-dirty). `shamsaink -version` prints it; the log's start names it.
+var version = "dev"
+
 // What stays between books: the screen, the fallback fonts, the three pages' buffers (the engine's pixels only) and
 // one for the screen put together, a page and what is over it (layers.go).
 type reader struct {
@@ -51,6 +55,10 @@ type reader struct {
 }
 
 func main() {
+	if len(os.Args) == 2 && os.Args[1] == "-version" {
+		fmt.Println(version)
+		return
+	}
 	serve := len(os.Args) > 2 && os.Args[1] == "-serve"
 	if len(os.Args) < 2 || os.Args[1] == "-serve" && !serve {
 		fmt.Fprintln(os.Stderr, "shamsaink BOOK.epub [FONTS_DIR|-]\nshamsaink -library [FONTS_DIR|-]\nshamsaink -serve PIPES [FONTS_DIR|-]")
@@ -58,6 +66,8 @@ func main() {
 	}
 	t := time.Now()
 	started := sinceStart()
+	fmt.Printf("shamsaink %s\n", version)
+	ui.Build = version
 	exe, _ := os.Executable()
 	rd := &reader{dir: env("SHAMSAINK_DIR", filepath.Dir(exe))}
 	var err error

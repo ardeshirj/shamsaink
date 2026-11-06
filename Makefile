@@ -15,14 +15,27 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        runs it: `git config core.hooksPath .githooks`, once per clone)
 #   make test            every Go test with the engine (needs `make engine`): make check's, the reader's own and
 #                        reader/ui's, and every screen drawn and compared with its kept render; writes nothing
+#   make kobo-package    the reader built and packed for the Kobo (reader/scripts/package.sh): out/release/shamsaink-VERSION-kobo.tgz
+#                        and its .sha256, VERSION git's description of this commit; the same package a release has
+#   make tag V=0.0.1 NOTE="…"  tag a release on a clean main (reader/scripts/release.sh); push it yourself, and CI
+#                        builds and publishes it (CHANGELOG.md, "How to release")
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
 #                        committing (docs/design-system.md)
 
-.PHONY: reader engine bench-armv7 fetch-blitz design-update check test
+.PHONY: reader engine bench-armv7 fetch-blitz design-update check test kobo-package tag
 
 reader:
 	@sh reader/scripts/build.sh
+
+# the version as build.sh writes it into the binary
+VERSION = $(shell git describe --tags --match 'v[0-9]*' --dirty --always)
+
+kobo-package: reader
+	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) sh reader/scripts/package.sh'
+
+tag:
+	@sh reader/scripts/release.sh "$(V)" "$(NOTE)"
 
 engine:
 	@$(DOCKER) sh -c 'cd /r/engine && cargo build --release --features parallel --lib --bins'
@@ -47,9 +60,13 @@ check:
 #
 #   make kobo-check      the Kobo held against the design spec's profile of it (reader/cmd/devtest, read-only: screen,
 #                        touch, fonts by hash, the reader installed); the tool is built for the Mac with Docker
-#   make kobo-reader-install  build the reader, copy it and its launcher to .adds/shamsaink (files moved in
-#                        whole, so an open reader is not hurt); if the reader was open it is restarted on the new build, unless
-#                        Bluetooth is on (leaving would reboot the Kobo: then nothing is copied and it says so)
+#   make kobo-reader-install  build the reader, pack it (make kobo-package) and install that package over SSH
+#                        (reader/kobo/install.sh: files moved in whole, so an open reader is not hurt); if the reader was
+#                        open it is restarted on the new build, unless Bluetooth is on (leaving would reboot the Kobo: then
+#                        nothing is copied and it says so)
+#   make kobo-package-install PKG=file  a package file installed the same way (its .sha256 beside it checked)
+#   make kobo-release-install V=0.0.1  a release's package downloaded from GitHub (into out/download; with `gh` while the
+#                        repository is private, curl once public), checked and installed the same way
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
 #   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
 #                        and the battery's use per hour
@@ -77,7 +94,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kobo-reader-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
+.PHONY: kobo-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -86,8 +103,23 @@ devtest:
 kobo-check: devtest
 	@reader/out/devtest check kobo-libra-colour
 
-kobo-reader-install: reader
-	@sh reader/kobo/install.sh $(KOBO) $(KOBO_DIR)
+kobo-reader-install: kobo-package
+	@sh reader/kobo/install.sh $(KOBO) out/release/shamsaink-$(VERSION)-kobo.tgz
+
+kobo-package-install:
+	@[ -n "$(PKG)" ] || { echo "make kobo-package-install PKG=out/release/shamsaink-…-kobo.tgz"; exit 1; }
+	@sh reader/kobo/install.sh $(KOBO) $(PKG)
+
+REPO = ardeshirj/shamsaink
+kobo-release-install:
+	@[ -n "$(V)" ] || { echo "make kobo-release-install V=0.0.1"; exit 1; }
+	@f=shamsaink-v$(V:v%=%)-kobo.tgz; mkdir -p out/download; \
+	  if [ ! -f out/download/$$f ]; then \
+	    if command -v gh >/dev/null; then gh release download v$(V:v%=%) -R $(REPO) -p "$$f*" -D out/download; \
+	    else for x in $$f $$f.sha256; do curl -fsSL -o out/download/$$x \
+	      https://github.com/$(REPO)/releases/download/v$(V:v%=%)/$$x || { rm -f out/download/$$f*; \
+	      echo "not downloaded: while the repository is private, install gh (brew install gh; gh auth login)"; exit 1; }; done; fi; \
+	  fi; sh reader/kobo/install.sh $(KOBO) out/download/$$f
 
 kobo-usage: devtest
 	@reader/out/devtest usage kobo-libra-colour
