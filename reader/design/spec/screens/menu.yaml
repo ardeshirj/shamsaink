@@ -1,7 +1,7 @@
 name: menu
 layer: panel
 templates: [library-menu.html]
-buttons: ring
+buttons: panel
 status: built
 purpose: "A narrow list hanging from the bar's menu button: Leave to Kobo's interface, with Settings above it in the library and Reading settings above it in a book."
 enter: [{gesture: tap, control: topbar-menu, from: topbar}, {gesture: tap, control: topbar-menu, from: library}]

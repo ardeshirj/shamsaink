@@ -1,7 +1,7 @@
 name: battery
 layer: overlay
 templates: [battery.html]
-buttons: ring
+buttons: panel
 status: built
 purpose: The battery's level, and below it charging, fully charged or low when it is, in a small box hanging from the bar under its battery; any tap closes it.
 enter: [{gesture: tap, control: topbar-battery, from: topbar}, {gesture: tap, control: topbar-battery, from: library}]

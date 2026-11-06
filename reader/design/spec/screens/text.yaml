@@ -1,7 +1,7 @@
 name: text
 layer: dock
 templates: [text.html]
-buttons: ring
+buttons: panel
 status: built
 purpose: The text's size, line spacing and margins, and the page turns' direction, with the page showing between the bar and the sheet.
 enter: [{gesture: tap, control: text, from: dock}]

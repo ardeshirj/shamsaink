@@ -1,7 +1,7 @@
 name: reading-settings
 layer: panel
 templates: [reading-settings.html]
-buttons: ring
+buttons: panel
 status: built
 purpose: "Reading settings, in a book, in the menu's place: what acts on reading and does not need the page showing behind it (the Text sheet in the dock does). Now: the screen cleaned on its own (the automatic Clean screen: a full refresh, with its flash) every N page turns, light mode and dark apart. A tap applies it at once."
 enter: [{gesture: tap, control: reading-settings, from: menu}]

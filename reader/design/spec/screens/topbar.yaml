@@ -1,7 +1,7 @@
 name: topbar
 layer: topbar
 templates: [topbar.html]
-buttons: ring
+buttons: panel
 status: built
 order: [battery-full, book, battery-medium, battery-low, battery-warning, battery-charging, battery-open]
 purpose: Over the page's top, the same in the library and a book.

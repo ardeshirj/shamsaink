@@ -1,7 +1,7 @@
 name: dock
 layer: dock
 templates: [dock.html]
-buttons: ring
+buttons: panel
 status: built
 purpose: Where the reader is, a bar to go anywhere in the book, the way back after a jump, and the tools.
 enter: [{gesture: tap-top-tenth, from: reading}]

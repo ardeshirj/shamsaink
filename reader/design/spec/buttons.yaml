@@ -12,6 +12,11 @@ maps:
     back: Ring to the previous control
     hold_forward: Choose it (on a slider or stepper, one step up)
     hold_back: Back out a level (on a slider, one step down)
+  panel:       # the book's bar, dock and panels (daily use, 2026-11-06: a press reads on; their ring of controls, not built, would go behind a hold)
+    forward: Close everything and turn to the next page, one refresh
+    back: Close everything and turn to the previous page, one refresh
+    hold_forward: Nothing yet
+    hold_back: Nothing yet
   list:        # Contents
     forward: Ring down the list (past the end, the next page of it)
     back: Ring up the list

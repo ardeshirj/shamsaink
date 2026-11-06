@@ -271,8 +271,9 @@ func (s *session) input(e device.Event) {
 }
 
 // button answers a page button: forward (1) or back (-1) turns the page by the same code a tap does (the book's direction
-// kept: a tap on the start edge goes back, anywhere else forward), the contents' pages when they are shown; with a panel
-// open it does nothing.
+// kept: a tap on the start edge goes back, anywhere else forward), the contents' pages when they are shown. With the bar,
+// the dock, the sheet or a panel open, a press closes them and turns the page, in the one refresh the page needs anyway
+// (daily use, 2026-11-06: a reader pressing Next wants to read on); with the highlight's menu open it does nothing.
 func (s *session) button(b int, held bool) {
 	if held { // a hold on the page: the next or the previous chapter, with the way back the dock offers
 		if s.cv == nil && s.mn == nil && s.nav == nil && s.sheet == nil && s.list == nil && s.nar == nil {
@@ -293,8 +294,11 @@ func (s *session) button(b int, held bool) {
 			dx = 100
 		}
 		s.inContents(device.Gesture{Swipe: true, DX: dx})
-	case s.mn != nil || s.nav != nil || s.sheet != nil || s.list != nil:
+	case s.mn != nil:
 	default:
+		closing := s.nav != nil || s.sheet != nil || s.list != nil
+		s.nav, s.sheet, s.list = nil, nil, nil
+		d, a := s.r.doc, s.r.at
 		g := device.Gesture{X: s.scr.W / 2, Y: s.scr.H / 2}
 		if b < 0 { // the quarter by the book's start edge
 			g.X = s.scr.W / 8
@@ -303,6 +307,9 @@ func (s *session) button(b int, held bool) {
 			}
 		}
 		s.turn(g)
+		if closing && s.r.doc == d && s.r.at == a { // no page to turn to (the book's first or last): the panels closed alone
+			s.showPage(device.WfREAGL, false)
+		}
 	}
 }
 
