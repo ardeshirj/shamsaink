@@ -35,6 +35,13 @@ func (m *Panel) Hang(row image.Rectangle, top, bottom int) {
 	}
 }
 
+// Centre puts a panel narrower than the screen (w px wide) centred under or over box, never past the page's margins:
+// by a word held near an edge, flush with that margin.
+func (m *Panel) Centre(box image.Rectangle, w int) {
+	pw := m.img.Rect.Dx()
+	m.x0 = min(max((box.Min.X+box.Max.X-pw)/2, panelMarginPx), max(w-panelMarginPx-pw, 0))
+}
+
 // Over draws the panel over the page in img.
 func (m *Panel) Over(img *image.Gray) {
 	for y := range m.img.Rect.Dy() {
