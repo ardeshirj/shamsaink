@@ -79,7 +79,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
   driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
   Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
-  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8512, two Cortex-A53 cores at up to 2 GHz, the second off unless
+  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8110, of the MT8512 family, two Cortex-A53 cores at up to 2 GHz, the second off unless
   switched on (Kobo's interface does it itself), 965 MB, firmware 4.46; reached with `ssh kobo`), for experiment 13
   (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`).
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk

@@ -140,6 +140,8 @@ kobo-reader-log:
 
 kobo-status:
 	@$(KOBO_SSH) 'B=/sys/class/power_supply/bd71827_bat; \
+	  echo "firmware: $$(cut -d, -f3 /mnt/onboard/.kobo/version)"; \
+	  echo "shamsaink: $$(cat /mnt/onboard/.adds/shamsaink/VERSION 2>/dev/null || echo not installed)"; \
 	  echo "sleeps after: $$(sed -n "s/^AutoSleepMinutes=//p" $(KOBO_CONF)) minutes (0: never)"; \
 	  echo "battery: $$(cat $$B/capacity 2>/dev/null)%, $$(cat $$B/status 2>/dev/null)"; \
 	  echo "wi-fi: $$(ip -4 addr show wlan0 2>/dev/null | sed -n "s/.*inet \([0-9.]*\).*/\1/p")"; \

@@ -1,6 +1,6 @@
 # Kobo Libra Colour
 
-MediaTek MT8113 (two Cortex-A53 cores; the second off unless switched on, Kobo's interface does it itself), 965 MB,
+MediaTek MT8110 (MT8512 family, read from its device tree; two Cortex-A53 cores; the second off unless switched on, Kobo's interface does it itself), 965 MB,
 firmware 4.46, 1264 × 1680. The primary target. Reached with `ssh kobo` (KOReader's SSH server on port 2222, when
 KOReader is in front; Kobo's interface answers nothing). Set up as in `setup.md`; experiment 13
 (`experiments/13-kobo/`). One file per device in `docs/devices/`: what is on it, what it does that we work around,
