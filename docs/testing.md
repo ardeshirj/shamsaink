@@ -41,12 +41,15 @@ as Nickel coming back.
 
 ## 3. What makes a run trustworthy
 
-- **A known start:** each scenario begins from a fixture: the reader's folder made from `e2e/fixtures/NAME/`
-  (settings, a place, highlights) and the scenario's books. On the Kobo, devtest saves the reader's own files before a run
-  and puts them back after, instead of each scenario undoing its own moves.
-- **No sleeps:** a step waits for something, never for a time: a log event, or the screen idle (the last refresh asked
-  for is done) before a snapshot, so a half-drawn screen is never compared. `wait` stays only for the watchdog's
-  scenarios, which test time itself.
+- **A known start:** each scenario begins from a fixture (`fixture:` in its header): `e2e/fixtures/NAME/`'s files laid
+  over the reader's folder, and the scenario's books (`book:`, checked first). devtest saves the reader's own files
+  before a run, with their times (the library orders the books being read by them), and puts them back after, whatever
+  the scenario did or where it failed.
+- **No sleeps:** a step waits for something, never for a time: a log event, or the screen settled (the framebuffer
+  unchanged over three looks 0.2 s apart; with a hash taken before a tap, changed first) before a snapshot, so a
+  half-drawn screen is never compared. `wait` stays only for the watchdog's scenarios, which test time itself.
+- **Checked before it runs:** `make check` parses every scenario and holds its steps, regular expressions and controls'
+  names against the spec's kept renders, so a typo fails in a second, not ten steps into a run on the Kobo.
 - **No retries:** a scenario that passes only sometimes is a bug, in the reader or in the scenario. A new scenario runs
   five times on the simulator (`RUNS=5`) before it is committed.
 - **The test is tested:** a new scenario is shown to fail once on purpose (its expectation, or the code, changed for a

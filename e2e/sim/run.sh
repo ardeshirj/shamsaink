@@ -17,12 +17,13 @@ mkdir -p reader/out/sim
 
 failed=0
 for s in "$@"; do
+  grep -q '^on:.*\bsim\b' "$s" || { echo "== $s: on the Kobo only, skipped"; continue; }
   echo "== $s (simulated Kobo)"
-  sh e2e/sim/setup.sh /sim reader/out/sim/shamsaink reader/out/fonts "$BOOKS" e2e/fixtures/default
+  sh e2e/sim/setup.sh /sim reader/out/sim/shamsaink reader/out/fonts "$BOOKS"
   if ! reader/out/sim/devtest scenario sim-kobo-libra-colour "$s" $SAVE; then
     failed=$((failed + 1))
     echo "-- the reader's log, last lines:"
     tail -n 25 /sim/mnt/onboard/.adds/shamsaink/logs/reader.log
   fi
 done
-[ $failed -eq 0 ] || { echo "$failed of $# scenarios failed"; exit 1; }
+[ $failed -eq 0 ] || { echo "$failed of $# runs failed"; exit 1; }

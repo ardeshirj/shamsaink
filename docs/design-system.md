@@ -81,7 +81,7 @@ Actions are `goto` (another screen, a new level), `replace` (a panel swapped in 
 
 **Scenarios** (`make e2e`, `reader/cmd/devtest`, `scenario.go`; the Python `run.py` is gone): a file of steps by control name (`tap dock
 contents`, `tap contents e7`, `turn forward`, `tap-menu hl-make`, `hold`, `expect`, `snap`, `close`), for the paths that are a book's, not the
-spec's. `e2e/kobo-basics.txt`: a jump, pages, a highlight made and removed through its menu, Back, the book left. The highlight menu's entries
+spec's. `e2e/scenarios/basics.txt`: a jump, pages, a highlight made and removed through its menu, Back, the book left. The highlight menu's entries
 are found by the position the reader logs (`highlight menu: ... at X,Y`) plus the kept relative boxes. Snapshots are compared byte for byte
 (the clock's strip aside) with references a run with `SAVE=1` keeps in `e2e/out/` (drawn from a book: not committed).
 

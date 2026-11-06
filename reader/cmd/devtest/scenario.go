@@ -3,6 +3,9 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"io"
 	"net/http"
 	"os"
@@ -13,7 +16,10 @@ import (
 	"time"
 )
 
-// A scenario is a file of steps, one a line (# starts a comment), played on the device by name where it can be:
+// A scenario is a file of steps, one a line (# starts a comment), after its header (script.go), played on the device by
+// name where it can be. Before the first step the reader's own files are saved and the fixture's laid over them; after
+// the last, put back (knownStart). A snapshot waits for the screen to settle, not for a time; the reader's crash ends the
+// run at the step it happened in; a failure leaves its step, log, screen and difference in out/failure/.
 //
 //	open [PATH]               the reader launched and the library's first row opened: the book read last; with a path
 //	                          under the device's folder (books/idpf/moby-dick-mo.epub) the launcher opens that book
@@ -51,6 +57,7 @@ type player struct {
 	lib, menu  *boxes
 	b          *book
 	out, refs  string
+	failure    string // out/failure: what a failed step left (explain)
 	save       bool
 	hlX, hlY   int // where the highlight's menu was put, from the reader's log
 	hlSeen     bool
@@ -66,10 +73,21 @@ func scenario(name, path string, save bool) bool {
 		fmt.Fprintln(os.Stderr, err)
 		return false
 	}
-	data, err := os.ReadFile(path)
+	s, err := parseScenario(path)
+	if err == nil {
+		err = s.check(d)
+	}
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Println("FAIL the scenario does not check:\n" + err.Error())
 		return false
+	}
+	place := "kobo"
+	if d.a.Local != "" {
+		place = "sim"
+	}
+	if !s.runsOn(place) {
+		fmt.Printf("skip %s: on %s only\n", path, strings.Join(s.on, " "))
+		return true
 	}
 	lib, err := d.boxes("library-reading-en")
 	if err != nil {
@@ -79,31 +97,71 @@ func scenario(name, path string, save bool) bool {
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save}
-	if d.a.Local != "" { // the simulator's snapshots and references apart from the Kobo's (docs/testing.md, section 4)
+	if place == "sim" { // the simulator's snapshots and references apart from the Kobo's (docs/testing.md, section 4)
 		p.out = filepath.Join("e2e", "out", "sim", base)
 	}
 	p.refs = filepath.Join(p.out, "refs")
+	p.failure = filepath.Join(p.out, "failure")
+	os.RemoveAll(p.failure)
 	os.MkdirAll(p.refs, 0o755)
+
+	for _, b := range s.books {
+		if out, _ := d.sh("test -f "+d.a.Dir+"/"+b+" && echo yes", nil); strings.TrimSpace(string(out)) != "yes" {
+			fmt.Printf("FAIL the scenario's book %s is not on the device (e2e/README.md, Books)\n", b)
+			return false
+		}
+	}
+	if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
+		fmt.Println("FAIL the reader is already running on the device: leave it first")
+		return false
+	}
+	said, err := d.knownStart(s.fixture)
+	if err != nil {
+		fmt.Println("FAIL the known start:", err)
+		return false
+	}
+	fmt.Printf("ok       %-50.50s %7s  %s\n", "fixture: "+s.fixture, "", truncate(said, 70))
 	defer func() {
 		if p.stop != nil {
 			p.stop()
 		}
-	}()
-	for n, line := range strings.Split(string(data), "\n") {
-		text := strings.TrimSpace(strings.SplitN(line, " #", 2)[0])
-		if strings.HasPrefix(text, "#") || text == "" {
-			continue
+		if said, err := d.putBack(); err != nil {
+			fmt.Println("FAIL the reader's own files put back:", err)
+		} else {
+			fmt.Println("ok   " + said)
 		}
+	}()
+	for _, l := range s.steps {
 		t := time.Now()
-		said, err := p.step(strings.Fields(text))
+		said, err := p.step(l.words)
+		if err == nil && !d.crashOK {
+			err = d.crashed()
+		}
 		if err != nil {
-			fmt.Printf("FAIL %3d %s\n         %v\n", n+1, text, err)
-			fmt.Println("stopped at the first failure: the reader may still be running on the device (it is stopped now, and its own interface started again)")
+			fmt.Printf("FAIL %3d %s\n         %v\n", l.n, l.text, err)
+			p.explain(l, err)
+			fmt.Println("stopped at the first failure; what was seen is in " + p.failure)
 			return false
 		}
-		fmt.Printf("ok   %3d %-50.50s %5.1f s  %s\n", n+1, text, time.Since(t).Seconds(), truncate(said, 70))
+		fmt.Printf("ok   %3d %-50.50s %5.1f s  %s\n", l.n, l.text, time.Since(t).Seconds(), truncate(said, 70))
 	}
 	return true
+}
+
+// explain keeps what a failure needs to be understood without the device: the step and its error, the log's last lines and
+// the screen (a failed snap has also put its reference and their difference there).
+func (p *player) explain(l line, err error) {
+	os.MkdirAll(p.failure, 0o755)
+	os.WriteFile(filepath.Join(p.failure, "step.txt"), []byte(fmt.Sprintf("line %d: %s\n%v\n", l.n, l.text, err)), 0o644)
+	if out, e := p.d.sh("tail -n 80 "+p.d.a.Log, nil); e == nil {
+		os.WriteFile(filepath.Join(p.failure, "log.txt"), out, 0o644)
+	}
+	if _, e := os.Stat(filepath.Join(p.failure, "screen.pgm")); e == nil {
+		return // the snap's own
+	}
+	if s, e := p.d.screen(); e == nil {
+		os.WriteFile(filepath.Join(p.failure, "screen.pgm"), pgm(s.w, s.h, s.pix), 0o644)
+	}
 }
 
 func truncate(s string, n int) string {
@@ -188,7 +246,9 @@ func (p *player) step(a []string) (string, error) {
 		if _, err := d.expect(`library: \d+ books.*shown in`, 20*time.Second); err != nil {
 			return "", err
 		}
-		pause()
+		if err := d.settle(""); err != nil {
+			return "", err
+		}
 		p.b = nil
 		if err := d.leave(p.lib, p.menu); err != nil {
 			return "", err
@@ -304,6 +364,7 @@ func (p *player) step(a []string) (string, error) {
 		if err != nil {
 			return "", err
 		}
+		d.crashOK = true // the watchdog ends the reader from here on: its exit is what is tested
 		return "reader " + strings.TrimSpace(string(out)) + " stopped", nil
 	case "expect-none":
 		if err := need(2); err != nil {
@@ -377,7 +438,9 @@ func pgm(w, h int, pix []byte) []byte {
 }
 
 func (p *player) snap(name string) (string, error) {
-	pause()
+	if err := p.d.settle(""); err != nil {
+		return "", err
+	}
 	s, err := p.d.screen()
 	if err != nil {
 		return "", err
@@ -398,21 +461,51 @@ func (p *player) snap(name string) (string, error) {
 	if len(old) != len(data) {
 		return "", fmt.Errorf("the reference is another size")
 	}
-	skip := len(data) - len(s.pix) + topRows*s.w
-	diff := 0
-	for i := skip; i < len(data); i++ {
-		if data[i] != old[i] {
+	head := len(data) - len(s.pix)
+	refPix := old[head:]
+	diff, box := 0, image.Rectangle{}
+	for i := topRows * s.w; i < len(s.pix); i++ {
+		if s.pix[i] != refPix[i] {
 			diff++
+			box = box.Union(image.Rect(i%s.w, i/s.w, i%s.w+1, i/s.w+1))
 		}
 	}
 	if diff > 0 {
-		return "", fmt.Errorf("%d pixels differ from the reference, below the clock's strip", diff)
+		os.MkdirAll(p.failure, 0o755)
+		os.WriteFile(filepath.Join(p.failure, "screen.pgm"), data, 0o644)
+		os.WriteFile(filepath.Join(p.failure, "reference.pgm"), old, 0o644)
+		if f, err := os.Create(filepath.Join(p.failure, "difference.png")); err == nil {
+			png.Encode(f, difference(s, refPix))
+			f.Close()
+		}
+		return "", fmt.Errorf("%d pixels differ from the reference, below the clock's strip, within %d,%d–%d,%d (failure/difference.png)",
+			diff, box.Min.X, box.Min.Y, box.Max.X, box.Max.Y)
 	}
 	return "identical to the reference", nil
 }
 
+// difference is the screen faded, with each pixel that differs from the reference in red: where to look.
+func difference(s *screen, ref []byte) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+	for i, g := range s.pix {
+		c := color.RGBA{255 - (255-g)/4, 255 - (255-g)/4, 255 - (255-g)/4, 255}
+		if g != ref[i] && i >= topRows*s.w {
+			c = color.RGBA{220, 30, 30, 255}
+		}
+		img.SetRGBA(i%s.w, i/s.w, c)
+	}
+	return img
+}
+
 // expectNickel waits for Kobo's interface, the reader gone (SSH may drop and come back meanwhile).
 func (p *player) expectNickel(seconds float64) (string, error) {
+	if p.d.a.Local != "" { // the simulator has no Nickel: its launcher's line stands for it
+		if _, err := p.d.expect(`Nickel started again`, time.Duration(seconds*float64(time.Second))); err != nil {
+			return "", err
+		}
+		p.stop, p.b = nil, nil
+		return "the simulated launcher ended, the reader gone", nil
+	}
 	end := time.Now().Add(time.Duration(seconds * float64(time.Second)))
 	for time.Now().Before(end) {
 		out, err := p.d.sh("pidof nickel >/dev/null && ! pidof shamsaink >/dev/null && echo yes", nil)

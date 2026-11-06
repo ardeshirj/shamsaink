@@ -37,7 +37,7 @@ design:
 check:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build eink-go sh -c \
 	  'cd /r/reader && test -z "$$(gofmt -l .)" || { echo "gofmt: these files need it (gofmt -w):"; gofmt -l .; exit 1; }; \
-	   go vet ./design/... ./device/... && go test -count=1 ./design/... ./device/...'
+	   go vet ./design/... ./device/... ./cmd/devtest/ && go test -count=1 ./design/... ./device/... ./cmd/devtest/'
 
 # --- The Kobo ---
 #
@@ -61,10 +61,11 @@ check:
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
-#   make e2e-sim         the same scenario on the simulated Kobo (docs/testing.md), in Docker: the reader and devtest built
-#                        for Linux, a fresh device for each scenario; SIM_BOOKS (out/sim-books) is the books/ folder it gets
-#   make e2e             an end-to-end test on the Kobo (reader/cmd/devtest scenario): SCENARIO (e2e/kobo-basics.txt by default), by control
-#                        name, its pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not committed)
+#   make e2e-sim         the scenarios on the simulated Kobo (e2e/README.md), in Docker: SCENARIO (every one marked on: sim by
+#                        default), each on a fresh device; SIM_BOOKS (out/sim-books) is the books/ folder it gets
+#   make e2e             a scenario on the Kobo (e2e/README.md): SCENARIO (e2e/scenarios/basics.txt by default), by
+#                        control name, its pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not
+#                        committed). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
@@ -99,16 +100,18 @@ kobo-smoke: devtest
 kobo-reader-install: reader
 	@sh reader/kobo/install.sh $(KOBO) $(KOBO_DIR)
 
-SCENARIO ?= e2e/kobo-basics.txt
 kobo-usage: devtest
 	@reader/out/devtest usage kobo-libra-colour
 
+RUNS ?= 1
+runs = $(foreach i,$(shell seq $(RUNS)),$(1))
 e2e: devtest
-	@reader/out/devtest scenario kobo-libra-colour $(SCENARIO) $(if $(SAVE),--save)
+	@for s in $(call runs,$(or $(SCENARIO),e2e/scenarios/basics.txt)); do \
+	  echo "== $$s (Kobo)"; reader/out/devtest scenario kobo-libra-colour $$s $(if $(SAVE),--save) || exit 1; done
 
 SIM_BOOKS ?= out/sim-books
 e2e-sim:
-	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(SCENARIO)
+	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/*.txt)))
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \

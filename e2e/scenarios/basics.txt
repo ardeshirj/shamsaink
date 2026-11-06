@@ -1,8 +1,11 @@
 # The reader's main paths on the Kobo, with Buried Alive (FarsiEPUB's narrated copy) as the last book read, played by
 # `make e2e` (reader/cmd/devtest, scenario.go): the bar and the dock, Contents (to its eighth entry), pages turned, a highlight
 # made and removed, the book left. Controls by name, from the design system's kept renders (reader/design/golden); only what is
-# the book's is in pixels: the words' places, this book's at text 50 px, margin 60 (the second line, from its start, at the right,
-# to its middle). The book is left where it was: Contents' jump is the only move, and Back, at the end, undoes it.
+# the book's is in pixels: the words' places, this book's with e2e/fixtures/default's settings (text 46 px, line height 1.75,
+# margin 60; the second line, from its start, at the right, to its middle). The book is left where it was: Contents' jump is
+# the only move, and Back, at the end, undoes it (the reader's files are put back after a run in any case).
+on: sim kobo
+book: books/farsiepub/buried-alive-narrated.epub
 open
 tap page-top                       # the bar and the dock
 expect menu drawn

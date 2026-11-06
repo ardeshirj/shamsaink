@@ -116,18 +116,25 @@ the Kobo it earned it sooner than planned.)
 - [ ] End-to-end tests on the devices (2026-10-30, the maintainer): a script from the Mac starts a book, writes a
   scenario's taps, holds and swipes into the touch screen, waits for the log's lines and compares the screen's pages
   with references, the clock's strip aside. Built for the Kobo in Go (`reader/cmd/devtest`, `make e2e`; 2026-11-01; the controls by
-  name from the design system's renders, the highlight's menu found where the reader logs it; `e2e/kobo-basics.txt`:
+  name from the design system's renders, the highlight's menu found where the reader logs it; `e2e/scenarios/basics.txt`:
   a jump, pages, a highlight made and removed, Back, the book left; pages identical run to run, the place and the highlights as they were).
   Left (2026-11-05, the maintainer: e2e is what keeps changes from breaking the reader; the design in `testing.md`):
   - [x] Measure: the same pages drawn by the x86, arm64 and ARMv7 builds, byte for byte (2026-11-05, `testing.md`
     section 4: two families, with and without fused multiply-add; the simulator's references and the Kobo's; x86 under Rosetta draws wrong)
   - [x] The simulated device (`SHAMSAINK_SIM`: screen, touch, battery, clock, sound and storage as files; refreshes
-    logged) and devtest's local transport; `make e2e-sim`; `kobo-basics` passing on it and on the Kobo, the Kobo's pages unchanged.
-    Built 2026-11-05 (`reader/device/sim.go`, `e2e/sim/`, `e2e/README.md`): `kobo-basics` passes on the simulator, 5 runs of 5,
+    logged) and devtest's local transport; `make e2e-sim`; `basics` passing on it and on the Kobo, the Kobo's pages unchanged.
+    Built 2026-11-05 (`reader/device/sim.go`, `e2e/sim/`, `e2e/README.md`): `basics` passes on the simulator, 5 runs of 5,
     its 4 pages byte for byte the Kobo's references once started from the Kobo's settings (`e2e/fixtures/default`); a
     wrong expectation and text 1 px larger both fail it. The same build for the Kobo passes it there, all 33 steps, its pages identical to the references.
-  - [ ] Trustworthy runs: fixtures for a known start (and the Kobo's files saved and put back), waits on the screen
-    idle, a crash ends the run, a failure folder with the difference, `RUNS=5`
+  - [x] Trustworthy runs: fixtures for a known start (and the Kobo's files saved and put back), waits on the screen
+    idle, a crash ends the run, a failure folder with the difference, `RUNS=5`. Built 2026-11-05 (`e2e/README.md`):
+    scenarios in `e2e/scenarios/`, a header (`on:`, `book:`, `fixture:`), every one checked in `make check` against the
+    spec's kept renders (a control mistyped fails at its line); the reader's files saved with their times and put back
+    (the library orders the books being read by them: a first version without the times lost the Kobo's order, put back
+    from the log); a snapshot waits for the framebuffer to settle (0.8 s on the simulator, 3.1–3.4 on the Kobo, from 4.6),
+    the screen read compressed; a panic, fatal signal or exit ends the run at its step; `failure/` with the step, the
+    log, the screen, the reference and their difference. `basics` 5 of 5 on the simulator, 3 of 3 on the Kobo, its
+    files and their times as they were; `light-dark` and `readalong-granularity` pass on the simulator too
   - [ ] References as hashes (`e2e/refs.sum`), the pages out of git; the scenarios on public books (`fetch`)
   - [ ] CI: the engine built for x86 and cached, every Go test with it, every `sim` scenario, failures attached; `make check-all`
   - [ ] Behaviour in the spec: the events' list, controls' effects, coverage checked in `go test ./design`; scenarios moved to it

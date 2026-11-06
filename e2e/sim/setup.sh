@@ -1,12 +1,12 @@
 #!/bin/sh
 # Makes a fresh simulated Kobo in DIR (docs/testing.md, section 2): its hardware files, as the reader reads them under
 # SHAMSAINK_SIM, and the reader's folder as reader/kobo/install.sh leaves it on the Kobo, with BOOKS (a folder: copied
-# as the reader's books/, its files dated 2026-01-01 so the library's "added" is the same every run) and FIXTURE's files
-# (e2e/fixtures/NAME: settings.json and whatever else the reader keeps, copied into its folder: a known start).
-#     sh e2e/sim/setup.sh DIR READER FONTS BOOKS FIXTURE
+# as the reader's books/, its files dated 2026-01-01 so the library's "added" is the same every run). The scenario's
+# fixture is laid by devtest, as on the Kobo.
+#     sh e2e/sim/setup.sh DIR READER FONTS BOOKS
 set -e
-DIR=$1 READER=$2 FONTS=$3 BOOKS=$4 FIXTURE=$5
-[ -d "$FIXTURE" ] || { echo "usage: setup.sh DIR READER FONTS BOOKS FIXTURE" >&2; exit 2; }
+DIR=$1 READER=$2 FONTS=$3 BOOKS=$4
+[ -d "$BOOKS" ] || { echo "usage: setup.sh DIR READER FONTS BOOKS" >&2; exit 2; }
 rm -rf "$DIR"
 mkdir -p "$DIR"/dev/input "$DIR"/proc/bus/input "$DIR"/tmp "$DIR"/mnt/onboard/.kobo \
   "$DIR"/sys/class/power_supply/bd71827_bat "$DIR"/sys/class/backlight/mxc_msp430.0 "$DIR"/sys/class/backlight/lm3630a_led
@@ -37,4 +37,3 @@ cp "$(dirname "$0")"/launch.sh "$R"/launch.sh
 cp "$FONTS"/*.ttf "$R"/fonts/
 cp -R "$BOOKS" "$R"/books
 find "$R"/books -exec touch -d "2026-01-01 09:00:00" {} +
-cp -R "$FIXTURE"/. "$R"/

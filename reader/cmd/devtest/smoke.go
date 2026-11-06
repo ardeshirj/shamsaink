@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,8 +26,129 @@ type dev struct {
 	prof *design.Device
 	name string
 	mark int
-	env  string // KEY=VALUE settings the reader is started with (a scenario's env step)
-	book string // the book the reader is started on, by its path under the device's folder (open PATH); "" for the library
+	// start0 is the log's length when the reader was started: a crash is looked for after it
+	start0 int
+	watch  bool   // a scenario's run: a crash in the log ends it
+	env    string // KEY=VALUE settings the reader is started with (a scenario's env step)
+	book   string // the book the reader is started on, by its path under the device's folder (open PATH); "" for the library
+	// crashOK: the reader's end is expected (a scenario's freeze: the watchdog ends it), not a crash
+	crashOK bool
+}
+
+// reCrash is a reader that ended badly: Go's panic, fatal error or fatal signal, or the launcher's line for an exit other than 0.
+var reCrash = regexp.MustCompile(`^panic: |^fatal error: |^SIG[A-Z]+: |launch: reader exited \([1-9]\d*\)`)
+
+// crashed says whether the log has the reader's crash since the run started: the run ends there, not ten steps later
+// at a time-out. The lines from the crash on are in the error.
+func (d *dev) crashed() error {
+	out, _ := d.sh(fmt.Sprintf("tail -n +%d %s", d.start0+1, d.a.Log), nil)
+	lines := strings.Split(strings.TrimRight(string(out), "\n"), "\n")
+	for i, l := range lines {
+		if reCrash.MatchString(l) {
+			end := min(i+6, len(lines))
+			if !strings.Contains(l, "launch: ") {
+				return fmt.Errorf("the reader crashed: %q", lines[i:end])
+			}
+			return fmt.Errorf("the reader ended: %q, the lines before it: %q", l, lines[max(i-6, 0):i])
+		}
+	}
+	return nil
+}
+
+// fb is the framebuffer's node on the device; fbHash its hash, taken there.
+func (d *dev) fb() string {
+	if d.a.Framebuffer.Node != "" {
+		return d.a.Framebuffer.Node
+	}
+	return "/dev/fb0"
+}
+
+func (d *dev) fbHash() string {
+	out, _ := d.sh("md5sum < "+d.fb()+" | cut -c1-32", nil)
+	return strings.TrimSpace(string(out))
+}
+
+// settle waits for the screen to settle: the framebuffer the same over three looks 0.2 s apart (what the reader draws
+// is written at once; between two of its draws there is no such pause). With from, it first waits for the screen to
+// change from that hash (a tap whose answer has no log line). A wait on something, not a sleep: under a second
+// when nothing moves; 15 s at most.
+func (d *dev) settle(from string) error {
+	script := `fb=` + d.fb() + `; from=` + from + `; p=; n=0; i=0
+while [ $i -lt 75 ]; do
+  h=$(md5sum < $fb | cut -c1-32); i=$((i+1))
+  if [ -n "$from" ]; then [ "$h" != "$from" ] && from=; p=$h; sleep 0.2; continue; fi
+  if [ "$h" = "$p" ]; then n=$((n+1)); else n=0; fi
+  [ $n -ge 3 ] && { echo settled; exit 0; }
+  p=$h; sleep 0.2
+done
+[ -n "$from" ] && echo unchanged || echo moving`
+	out, err := d.sh(script, nil)
+	switch s := strings.TrimSpace(string(out)); {
+	case err != nil:
+		return err
+	case s == "unchanged":
+		return fmt.Errorf("the screen did not change in 15 s")
+	case s != "settled":
+		return fmt.Errorf("the screen did not settle in 15 s")
+	}
+	return nil
+}
+
+// The reader's own files (its place in each book, highlights, settings, library): saved before a scenario and put back
+// after, so a run starts known and leaves the device as it found it, whatever the scenario did or where it failed. A
+// copy left by a run that never put it back (devtest killed, the device restarted) is put back first.
+const (
+	stateFiles = "settings.json library.json library-view.json places highlights"
+	savedDir   = ".e2e-saved"
+)
+
+func (d *dev) knownStart(fixture string) (string, error) {
+	said := ""
+	d.start0, d.watch = d.logLines(), true
+	if out, _ := d.sh("test -d "+d.a.Dir+"/"+savedDir+" && echo yes", nil); strings.TrimSpace(string(out)) == "yes" {
+		if _, err := d.putBack(); err != nil {
+			return "", err
+		}
+		said = "a copy left by an earlier run put back first; "
+	}
+	if _, err := d.sh("cd "+d.a.Dir+" && mkdir "+savedDir+" && for f in "+stateFiles+"; do [ ! -e $f ] || cp -Rp $f "+savedDir+"/; done", nil); err != nil {
+		return "", fmt.Errorf("saving the reader's files: %v", err)
+	}
+	dir := filepath.Join("e2e", "fixtures", fixture)
+	var laid []string
+	err := filepath.WalkDir(dir, func(path string, e os.DirEntry, err error) error {
+		if err != nil || e.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rel, _ := filepath.Rel(dir, path)
+		laid = append(laid, rel)
+		_, err = d.sh("cd "+d.a.Dir+" && mkdir -p $(dirname "+rel+") && cat > "+rel, data)
+		return err
+	})
+	if err != nil {
+		return "", fmt.Errorf("laying the fixture: %v", err)
+	}
+	return said + "the reader's files saved, " + strings.Join(laid, ", ") + " laid from e2e/fixtures/" + fixture, nil
+}
+
+// putBack waits for the reader to be gone (it writes its place as it leaves), then puts its saved files back.
+func (d *dev) putBack() (string, error) {
+	for i := 0; i < 50; i++ {
+		if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) == "none" {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	_, err := d.sh("cd "+d.a.Dir+" && test -d "+savedDir+" && ! pidof shamsaink >/dev/null && rm -rf "+stateFiles+
+		" && cp -Rp "+savedDir+"/. . && rm -rf "+savedDir, nil)
+	if err != nil {
+		return "", fmt.Errorf("the reader still running, or no saved copy: %v", err)
+	}
+	return "the reader's own files put back", nil
 }
 
 // load reads the spec's profile and the access facts of a device.
@@ -80,11 +204,16 @@ func (d *dev) expect(pattern string, within time.Duration) (string, error) {
 	for {
 		out, _ := d.sh(fmt.Sprintf("tail -n +%d %s", d.mark+1, d.a.Log), nil)
 		lines := strings.Split(strings.TrimRight(string(out), "\n"), "\n")
+		crash := false
 		for i, l := range lines {
 			if re.MatchString(l) {
 				d.mark += i + 1
 				return l, nil
 			}
+			crash = crash || reCrash.MatchString(l)
+		}
+		if crash && !d.crashOK && d.watch { // not waited out: the reader is gone
+			return "", d.crashed()
 		}
 		if time.Now().After(end) {
 			tail := lines
@@ -104,22 +233,26 @@ type screen struct {
 }
 
 func (d *dev) screen() (*screen, error) {
-	fb := d.a.Framebuffer.Node
-	if fb == "" {
-		fb = "/dev/fb0"
-	}
-	raw, err := d.sh("cat "+fb, nil)
+	zipped, err := d.sh("gzip -1 -c "+d.fb(), nil) // 8.5 MB, mostly paper: a third of a megabyte over Wi-Fi
 	if err != nil {
 		return nil, err
 	}
-	w, h, stride, bytes := d.prof.Screen.Width, d.prof.Screen.Height, d.a.Framebuffer.Stride, d.a.Framebuffer.Bits/8
+	z, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, err
+	}
+	raw, err := io.ReadAll(z)
+	if err != nil {
+		return nil, err
+	}
+	w, h, stride, bpp := d.prof.Screen.Width, d.prof.Screen.Height, d.a.Framebuffer.Stride, d.a.Framebuffer.Bits/8
 	if len(raw) < h*stride {
 		return nil, fmt.Errorf("the framebuffer gave %d bytes, want %d", len(raw), h*stride)
 	}
 	s := &screen{w, h, make([]byte, w*h)}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			s.pix[y*w+x] = raw[y*stride+x*bytes+1]
+			s.pix[y*w+x] = raw[y*stride+x*bpp+1]
 		}
 	}
 	return s, nil
@@ -266,16 +399,18 @@ func (d *dev) start() (stop func(), line string, err error) {
 	if err != nil {
 		return stop, "", err
 	}
-	time.Sleep(2 * time.Second) // the screen's refresh
-	return stop, line, nil
+	return stop, line, d.settle("")
 }
 
 // leave taps the library's menu and Leave by name, and waits for the device's own interface.
 func (d *dev) leave(lib, menu *boxes) error {
+	before := d.fbHash()
 	if err := d.tap(lib, "topbar-menu"); err != nil {
 		return err
 	}
-	time.Sleep(2500 * time.Millisecond)
+	if err := d.settle(before); err != nil { // the menu has no log line: its drawing is waited for on the screen
+		return err
+	}
 	if err := d.tap(menu, "leave"); err != nil {
 		return err
 	}

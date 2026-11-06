@@ -229,8 +229,8 @@ journal). It is the release notes' answer to a frozen screen.
 
 **Trying it:** two end-to-end scenarios on a faster clock (`HEARTBEAT_EVERY=1s`, `WATCH_EVERY=4`: a freeze is caught in 8
 to 12 s, not 20 to 30; the scenario's `env` step sets them, the reader and the watcher read them), `make e2e
-SCENARIO=e2e/kobo-watchdog-freeze.txt` (`freeze` stops the reader with SIGSTOP; the watchdog line, the exit with code 137 and
-Kobo's interface back are expected; the first run, 2026-11-05) and `e2e/kobo-watchdog-quiet.txt` (a book idle 30 s, a narration
+SCENARIO=e2e/scenarios/watchdog-freeze.txt` (`freeze` stops the reader with SIGSTOP; the watchdog line, the exit with code 137 and
+Kobo's interface back are expected; the first run, 2026-11-05) and `e2e/scenarios/watchdog-quiet.txt` (a book idle 30 s, a narration
 40 s without headphones, the book left: no `watchdog:` line at any point). Both need SSH while the reader is open and
 Bluetooth not run in the boot. By hand, at the real clock: `kill -STOP $(pidof shamsaink)` (22 s on the first try) and
 `touch /tmp/shamsaink-nowatch`, a test hook that pauses the watcher (RAM, gone after a reboot). Not covered by a scenario:

@@ -5,7 +5,8 @@
 # a paragraph in several. The paragraph's single box was the bug of 2026-11-05 (a bar only under its last line: the
 # engine's find gave a block one box). The reader logs each mark when MARK_LOG is set. No headphones needed. The first
 # paragraph is read about 76 s after the sentence before it: the scenario takes about two minutes.
-#     make e2e SCENARIO=e2e/kobo-readalong-granularity.txt
+#     make e2e SCENARIO=e2e/scenarios/readalong-granularity.txt
+on: sim kobo
 fetch https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub books/idpf/moby-dick-mo.epub 749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c
 forget books/idpf/moby-dick-mo.epub
 env MARK_LOG=1
