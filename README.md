@@ -9,6 +9,11 @@
   Right-to-left books done properly, Farsi first.
 </p>
 
+<p align="center">
+  <a href="https://github.com/ardeshirj/shamsaink/actions/workflows/ci.yml"><img src="https://github.com/ardeshirj/shamsaink/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-blue" alt="Licence: Apache-2.0"></a>
+</p>
+
 ## Why it exists
 An e-ink device is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
 overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently from a
