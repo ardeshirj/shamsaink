@@ -184,6 +184,8 @@ week and remove it)
   `docs/brand/`, light and dark), what it is, honest status, a screenshot from our own test EPUB, a map of the
   repository, a link to ShamsaInk's page on FarsiEPUB for everything about using it, licence and brand
 - [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, DejaVu)
+- [ ] The read-along video (https://youtu.be/jwZjB0vJuRs, linked from the README) made public or unlisted on YouTube,
+  at the same time as the repository
 
 *The reader, steady enough*
 - [ ] Stage 5 done: the night on battery, the crash on opening after a long sleep, sleep while plugged in, the first

@@ -82,15 +82,10 @@ Narration can change how a book is read: a classic made easier to follow, a lang
 We want Farsi and other right-to-left books done properly, and books that read along.
 
 <p align="center">
-  <b>Read-along, with sound:</b> a short video is coming.
-</p>
-<!-- TODO, once the video is on YouTube (docs/images/readalong-thumbnail.png is made): replace the paragraph above with
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=VIDEO_ID"><img src="docs/images/readalong-thumbnail.png" width="360"
+  <a href="https://youtu.be/jwZjB0vJuRs"><img src="docs/images/readalong-thumbnail.png" width="360"
      alt="Watch the read-along, with sound (an emulation in the browser)"></a><br>
   <sub><b>Read-along, with sound</b> (YouTube; emulated in the browser, the same pages and timings as on the Kobo)</sub>
 </p>
--->
 
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
 books are what it was made to read well, but it opens any EPUB.
