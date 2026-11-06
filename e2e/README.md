@@ -45,6 +45,10 @@ With the same settings the simulator draws the Kobo's pages byte for byte (2026-
 
 ## Writing a scenario
 
+First, whether it is a scenario at all: what one control does, on any book, belongs in the design spec, whose walk tests
+it; a scenario is for what needs a given book, steps in order, or time (`docs/testing.md`, section 6, "The spec or a
+scenario").
+
 A header, then the steps (listed at the top of `reader/cmd/devtest/scenario.go`):
 
 ```

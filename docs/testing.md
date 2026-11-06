@@ -106,6 +106,26 @@ grows to behaviour:
 - **Coverage, in `go test ./design`:** every event in the list is logged by the code and every event logged is in the
   list; every control of a built screen is reached by the flow walk or by a scenario; every `does` has an event.
 
+**The spec or a scenario** (2026-11-05). The spec is the reader's interface: its screens, controls and what each control
+does; the walk generated from it presses each one and waits for its event. A scenario is a use of the reader: steps on a
+given book, or over time, and what they prove together. The question for a check: *does it hold on any book, as one
+action with one result?* Yes: the spec. No (it needs a book's content, steps in order, or time passing): a scenario.
+
+| Check | Where | Why |
+|---|---|---|
+| Light opens the Light panel; Dark turns dark mode on and off | spec | one control, any book |
+| A Contents row goes to its chapter | spec | one control (which chapter is the book's) |
+| The page after the jump is the reference, byte for byte | scenario | a book's pages |
+| A highlight made on these words, then removed by holding them | scenario | a book's words, two steps in order |
+| Back returns where the jump left; a reopen to the same page | scenario | state carried across steps, or a restart |
+| Read aloud marks a paragraph 76 s in; the watchdog restarts a frozen reader | scenario | a book's overlay, time, the device |
+
+A spec entry is written when a control is designed, before it is built; a scenario when a journey needs it, often after
+a bug. The spec's checks grow with the interface, one a control; scenarios stay few. `make check` keeps them apart: scenarios
+name controls only through the spec (built); with the effects in the spec (to build), a scenario whose steps are only
+taps and the events the spec gives them is the spec repeated, and is reported, and a control with no effect is reported
+as untested.
+
 ## 7. A feature, from spec to device
 
 1. The spec first: the screen, its controls and what they do, with `status: planned`.

@@ -168,6 +168,9 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/design-system.md` (spec in `reader/design/spec`, checks `go test ./design`,
   renders and device walks `make design`, `make kobo-flow-book`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: the plan, "The reader's panels".
+- **Testing a change** (2026-11-05): a new or changed control's effect goes in the design spec; a journey on a book, or
+  over time, gets a scenario (`docs/testing.md` section 6, `e2e/README.md`). Before committing, `make check` and
+  `make e2e-sim`; a change to device code also `make e2e` on the Kobo.
 - **The experiments' full code is behind the `experiments-archive` tag** (2026-11-02, pushed), for when main is trimmed
   to their notes: never move a pushed tag, tag each later experiment as `experiment/NN-name` just before trimming it, rerun old
   experiments from the tag, not main (`experiments/README.md`).
