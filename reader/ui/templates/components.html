@@ -22,8 +22,8 @@ direction of its own. */}}
 {{/* A setting's row (in a div.set): a name, a minus, the value, a plus. */}}
 {{define "stepper"}}<span class="name">{{.Name}}</span>{{template "button" .Dec}}<span class="v">{{.Value}}</span>{{template "button" .Inc}}{{end}}
 
-{{/* A setting's row with a switch for its value. */}}
-{{define "switch"}}<span class="name">{{.Label}}</span><span class="v">{{template "toggle" .}}</span>{{end}}
+{{/* A setting's row (in a div.set) with a switch for its value, at the row's far end, where a stepper's plus ends. */}}
+{{define "switch"}}<span class="name">{{.Label}}</span><span class="sw">{{template "toggle" .}}</span>{{end}}
 
 {{/* A button that is an icon alone (from ibtn), no border; drawn filled when on. The arrows that point are mirrored
 in right to left. */}}

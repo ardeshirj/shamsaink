@@ -5,6 +5,11 @@ From the browser sketch that was `docs/layouts/` (2026-10-30; the sketch itself 
 entered and left, controls), then its template, then `make test` says what is out of step (`docs/design-system.md`). What is
 built is in `docs/design/system.html`. The sketch's wording, kept here:
 
+## The library
+- **Search** (2026-11-06, the maintainer: the bar's magnifying glass taken off until it does something): a magnifying glass at
+  the start of the library's bar, opening a search over titles and authors; it needs a keyboard first. The icon stays in
+  `reader/ui/icons/` (`magnifying-glass`).
+
 ## On the page
 - **The glance** (a hold on a margin): where you are and the time, for as long as the finger stays on the margin. Lifting it puts
   the page back: nothing to dismiss. One refresh in, one out (REAGL); placed beside the finger, away from the line being read.
@@ -54,4 +59,12 @@ Contents is built with its list of chapters; the sketch had tabs, each a list of
 - **The library with covers** (an option after the text rows): the same rows and segments with a cover on the start side, read
   once into a cache and drawn at the size shown, made at first sight of a book; a missing one is a plain frame. Taller rows:
   about half as many to a page.
-- **The keyboard** (English and Farsi layer, for the library's search): not designed.
+- **The keyboard** (English and Farsi layer, for the library's search): not designed. **How taps could reach it**
+  (2026-11-06, looked into, not decided): panels today are drawn once by Blitz and closed, their buttons' boxes kept in Go
+  (`Panel.At`: the nearest within 16 px). A search field with a cursor and text typed into it changes inside the page, so it
+  may be the time for Blitz's own events instead (at commit `21edc92`: `element_from_point` and `hit` in
+  `blitz-dom/src/document.rs`, `EventDriver` and an `EventHandler` written in Rust in `blitz-dom/src/events/`, hover, focus and
+  clicks, the chain from the element up; what Dioxus Native is built on; none of it used by `engine/src` yet). To weigh then:
+  the document kept open behind the panel (memory, a way to it from Go), taps taken back from the screen to the document's
+  coordinates, no room for a finger (exact hits: the keys themselves would need to be big enough), its `z-index` not yet in
+  hit testing; against keeping `Panel.At` for the keys and drawing the field again from Go at each key.

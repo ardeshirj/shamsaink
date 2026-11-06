@@ -75,7 +75,7 @@ func rel(p *Panel) rendered {
 }
 
 // libraryTopBar is the bar of the library's renders.
-var libraryTopBar = TopBar{Start: "magnifying-glass", Time: "20:48", Phones: true, Battery: 82, Menu: true}
+var libraryTopBar = TopBar{Time: "20:48", Phones: true, Battery: 82, Menu: true}
 
 func libraryHead(f *blitz.Fonts, w int) *Panel {
 	return LibraryHead(libraryTopBar, LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)

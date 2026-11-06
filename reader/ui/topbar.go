@@ -13,7 +13,7 @@ import (
 
 // The bar: the same at the top of the library and over a book (docs/design/system.html).
 type TopBar struct {
-	Start             string // the icon at the start, its button "topbar-start": "arrow-left" (back to the library) or "magnifying-glass" (search); "" for none
+	Start             string // the icon at the start, its button "topbar-start": "arrow-left" (back to the library); "" for none (the library: search, its magnifying-glass, comes with a keyboard)
 	Title             string
 	Time              string // "03:04" (12 hours, with its leading zero now that it stands apart in the middle), drawn in the interface's digits; "" hides it
 	Phones            bool   // headphones connected: their button "topbar-phones"

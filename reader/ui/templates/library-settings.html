@@ -1,9 +1,8 @@
-{{/* The settings panel under the bar (library.go), opened from the library menu's Settings: no title, one row, the
-setting's name at the start and its switch at the far end (the right in English, the left in Farsi: the page's
-direction is the interface's). */ -}}
-{{template "head" ""}}<style>
-.lang { justify-content: space-between; }
-</style></head><body>
-<div class="row lang"><span>{{t "follow-book"}}</span>{{template "toggle" pick "lang-follow" "" .Follow}}</div>
-{{if .HasButtons}}<div class="row lang"><span>{{t "reverse-buttons"}}</span>{{template "toggle" pick "buttons-reverse" "" .ReverseButtons}}</div>{{end}}
-<div class="set">{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div></body></html>
+{{/* The settings panel under the bar (library.go), opened from the library menu's Settings: no title, a setting a row in one
+grid (div.set), each row as tall as the tallest, so the rows are evenly spaced whatever their control (2026-11-06, the
+maintainer: a switch's row was lower than a stepper's); the setting's name at the start, a switch at the far end (the
+right in English, the left in Farsi: the page's direction is the interface's), a stepper's minus, value and plus before it. */ -}}
+{{template "head" ""}}</head><body>
+<div class="set">{{template "switch" pick "lang-follow" (t "follow-book") .Follow}}
+{{if .HasButtons}}{{template "switch" pick "buttons-reverse" (t "reverse-buttons") .ReverseButtons}}{{end}}
+{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}</div></body></html>

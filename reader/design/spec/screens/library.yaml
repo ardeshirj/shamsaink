@@ -8,7 +8,6 @@ purpose: "The books, a row each, under the bar and the filters (Reading, New, Fi
 enter: [{gesture: tap, control: topbar-start, from: topbar}]
 internal: [topbar-title, topbar-title-text]
 controls:
-  - {id: topbar-start, component: icon-button, action: act, does: "search (no action until there is a keyboard)"}
   - {id: topbar-phones, component: icon-button, action: act, does: Bluetooth sound}
   - {id: topbar-light, component: icon-button, action: goto, to: light}
   - {id: topbar-battery, component: button, action: goto, to: battery}

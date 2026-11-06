@@ -266,7 +266,7 @@ func TestPanels(t *testing.T) {
 		save(fmt.Sprintf("dock-long-at%d", at), DrawDock(p, fonts, w, h).img)
 	}
 	book := TopBar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
-	save("topbar-library", DrawTopBar(TopBar{Start: "magnifying-glass", Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
+	save("topbar-library", DrawTopBar(TopBar{Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
 	save("topbar-book-ltr", DrawTopBar(book, fonts, w).img)
 	rtl := book
 	rtl.RTL, rtl.Title = true, "رود کم‌آب"

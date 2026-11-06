@@ -48,7 +48,7 @@ type LibraryView struct {
 // filter-finished and filter-all, and list-sort.
 func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
 	topBar.Title = word("library")
-	topBar.Start, topBar.MenuOn = "magnifying-glass", v.MenuOn // search: no action until there is a keyboard
+	topBar.MenuOn = v.MenuOn // no start icon: search comes back with a keyboard (docs/design/unbuilt-screens.md)
 	var fs []button
 	for i, name := range library.Filters {
 		fs = append(fs, button{ID: "filter-" + name, Label: word(filterWords[i]), Count: num(v.Counts[i]), On: i == v.Filter})

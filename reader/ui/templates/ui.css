@@ -45,6 +45,10 @@ div.g span.on { background: var(--ink); color: var(--paper); }
 div.set { display: grid; grid-template-columns: 1fr 2.4em 6em 2.4em; align-items: center; justify-items: center; row-gap: 0.6em; margin: 0.6em 0; }
 div.set > .name { grid-column: 1; justify-self: start; }
 div.set > .v { grid-column: 3; }
+/* every row as tall as the tallest (a stepper's buttons), so rows of switches and of steppers are evenly spaced */
+div.set { grid-auto-rows: 1fr; }
+/* a switch at the row's far end, across the stepper's columns */
+div.set > .sw { grid-column: 2 / 5; justify-self: end; display: flex; }
 
 /* The icons: two fonts with the same glyphs, the outline one and the filled one (a control that is on). Outline in
    Phosphor's regular (2026-10-31, the maintainer, on the Kobo: the bold looked too heavy beside the text; the bold
