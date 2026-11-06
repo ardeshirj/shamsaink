@@ -77,6 +77,10 @@ the Kobo it earned it sooner than planned.)
   word: meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and its
   paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
+- [ ] A page button with a panel open (daily use, 2026-11-06): today it does nothing (`session.button`); the spec's `ring`
+  map (move between the controls) is not built. To decide: a press closes everything and turns the page in the one refresh
+  the page needs anyway (recommended: a reader pressing Next wants to read on), or only closes. Either way the ring moves
+  behind a hold, and Contents keeps its own list map
 - [x] The sleep screen from a small YAML file in `sleep/` (2026-11-05, tried on the Kobo): layouts `couplet` (FarsiEPUB's
   screensaver: verses, poet, gloss, signature, in Parastoo, each verse on two lines, shrunk until it fits), `title` and `quote`
   (the opening screen's logo with a text under it), drawn from `ui/templates/sleep.html` at the screen's own size (type and logo scale with the width), so the
@@ -97,7 +101,9 @@ the Kobo it earned it sooner than planned.)
   maintainer's call), any OPDS catalogue after (Standard Ebooks, Gutenberg). OPDS 2.0 is JSON from the Readium family and
   go-toolkit has an OPDS package: check it first. Needs: the catalogue and download screens (list, progress, no
   network), Wi-Fi up while a book is open (today it is Nickel's and we only bring it back after waking). After the
-  first beta; measure the downloads' memory and TLS on the device before building
+  first beta; measure the downloads' memory and TLS on the device before building. Where it lives (daily use,
+  2026-11-06): the library switches between the books on the Kobo and the catalogue, a two-part choice in the library's
+  header (On this Kobo | FarsiEPUB), not a setting
 
 **8. Read-along on the Kobo**
 - [x] One pipeline kept open a session (2026-11-05): one `gst-launch-1.0` into `mtkbtmwrpcaudiosink` (`reader/sink.go`), raw
@@ -233,6 +239,14 @@ week and remove it)
   choice
 - [ ] The library finished (stage 7): covers, the keyboard and search
 - [ ] Books over the air, OPDS (stage 7): with ShamsaInk part of FarsiEPUB, its library's feed is the first catalogue
+- [ ] A dictionary on a single word held (daily use, 2026-11-06), Farsi and English: the word panel's meaning (stage 6).
+  The dictionaries in StarDict format, as KOReader reads them, dropped in a folder by the reader (no licence of ours to
+  find); an English one (WordNet's licence is permissive) and a gloss of old Farsi words perhaps offered on FarsiEPUB's page
+- [ ] Updates over the air from FarsiEPUB (daily use, 2026-11-06): the reader asks FarsiEPUB's site (or the GitHub
+  releases) for the latest version, downloads the package, checks a signature (ed25519, in Go's standard library; a
+  checksum alone is not enough from the network) and installs it on the next start, the old one kept to fall back to.
+  Needs Wi-Fi from the reader (as OPDS), an endpoint on FarsiEPUB (its repo, the maintainer's), and the upgrade that keeps
+  what the reader made (below)
 - [ ] An upgrade that keeps what the reader made: settings, highlights, places and the cache across versions (the
   cache format versioned, an old one dropped cleanly), tried by upgrading from the beta
 - [ ] A release made by one command or CI: the package built, checksummed and attached, the version in the binary and
