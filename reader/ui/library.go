@@ -267,23 +267,3 @@ func DrawBookRemove(title string, rtl bool, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-book-remove.html", d)
 	return drawPanelIn(html, ids, "book-remove-box", fonts, w, 900)
 }
-
-// ReadingSettings is what the Reading settings panel shows: how many page turns come between cleanings of the screen
-// (a flash), in light mode and in dark (0: off).
-type ReadingSettings struct{ CleanLight, CleanDark int }
-
-// DrawReadingSettings draws the Reading settings panel, directly under the bar (under px from the top), in place of the
-// menu it was opened from, inside a book: the screen cleaned every so many pages, light mode and dark apart, each a stepper
-// (clean-light-dec, clean-light-inc, clean-dark-dec, clean-dark-inc).
-func DrawReadingSettings(st ReadingSettings, under int, fonts *blitz.Fonts, w int) *Panel {
-	every := func(n int) string {
-		if n <= 0 {
-			return word("never")
-		}
-		return word("every-pages", num(n))
-	}
-	html, ids := render("reading-settings.html", struct{ Light, Dark string }{every(st.CleanLight), every(st.CleanDark)})
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
-	m.y0 = under
-	return m
-}
