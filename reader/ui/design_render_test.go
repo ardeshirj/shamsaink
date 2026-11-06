@@ -152,6 +152,8 @@ var designRenders = map[string][]renderCase{
 			Ticks: []float64{0.2, 0.5}, Narrated: true, RTL: RTL()}, f, w, h))
 	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
+	}}, {"jumped", enFa, func(f *blitz.Fonts, w, h int) rendered { // a book with no narration after a jump: Back, where to tap it
+		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, Back: 7, RTL: RTL()}, f, w, h))
 	}}},
 	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLight(40, 7, 10, false, barHeight(f, w), f, w))

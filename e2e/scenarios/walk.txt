@@ -4,6 +4,6 @@
 # as it was. Nothing here names a screen: one added to the spec is walked the next time. What the controls do is not
 # tested here (the scenarios and, later, the spec's effects).
 on: sim kobo
-fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub/buried-alive-narrated.epub 3f2d4eb0a576ccae8b1e0eae2ebbf1c9b0c7a08144320fddd396c2e049e7819d
+fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub-sample/buried-alive.epub ac3608ec09e11c29d21e17554ada66a9b0190b433540822ff5a9d720cc1a9475
 walk
 close

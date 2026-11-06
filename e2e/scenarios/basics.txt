@@ -1,11 +1,11 @@
-# The reader's main paths on the Kobo, with Buried Alive (FarsiEPUB's narrated copy) as the last book read, played by
+# The reader's main paths on the Kobo, with Buried Alive (FarsiEPUB's sample, fetched) as the last book read, played by
 # `make e2e` (reader/cmd/devtest, scenario.go): the bar and the dock, Contents (to its eighth entry), pages turned, a highlight
 # made and removed, the book left. Controls by name, from the design system's kept renders (reader/design/golden); only what is
 # the book's is in pixels: the words' places, this book's with e2e/fixtures/default's settings (text 46 px, line height 1.75,
 # margin 60; the second line, from its start, at the right, to its middle). The book is left where it was: Contents' jump is
 # the only move, and Back, at the end, undoes it (the reader's files are put back after a run in any case).
 on: sim kobo
-fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub/buried-alive-narrated.epub 3f2d4eb0a576ccae8b1e0eae2ebbf1c9b0c7a08144320fddd396c2e049e7819d
+fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub-sample/buried-alive.epub ac3608ec09e11c29d21e17554ada66a9b0190b433540822ff5a9d720cc1a9475
 open
 tap page-top                       # the bar and the dock
 expect menu drawn

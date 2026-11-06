@@ -24,9 +24,10 @@ pixel places in the scenarios (the words `basics` holds) are drawn at these valu
 | `clean_light`, `clean_dark` | 3, 5 | page turns between full cleanings of the screen, day and night |
 | `light`, `warmth` | 30, 7 | the light's level and warmth |
 
-### `places/3310ce1ef78d.place`
+### `places/c71646d6a630.place`
 
-Where *Buried Alive* (FarsiEPUB's narrated copy, `books/farsiepub/buried-alive-narrated.epub`) opens: one line,
+Where *Buried Alive* opens (FarsiEPUB's sample, as `farsiepub.org/api/v1/samples/buried-alive/download` serves it,
+without narration; the scenarios fetch it to `books/farsiepub-sample/buried-alive.epub`): one line,
 `DOCUMENT PAGE SHARE` (`reader/book.go`, `keep`).
 
 ```
@@ -36,8 +37,8 @@ Where *Buried Alive* (FarsiEPUB's narrated copy, `books/farsiepub/buried-alive-n
 - **The page:** document 4 (the spine's fifth file), page 3 of it, at `settings.json`'s text size. It is the Kobo's own
   place for the book when the references were kept; the walk (`scenarios/walk.txt`) holds a word on it to open the
   highlight's menu (at 884,700, dragged to 505,700: `walk.go`, `hold`), and `basics` starts and ends there.
-- **The share:** how much of the book is read (40%), shown in the library's progress bar: the Kobo's, read from it
-  2026-11-06.
+- **The share:** how much of the book is read (40%), shown in the library's progress bar: the Kobo's for its narrated
+  copy, read from it 2026-11-06 (the pages are the same).
 - **The name** is the book's key, as the reader makes it (`library.Key`, `reader/library/scan.go`): the first 12 hex
   digits of the SHA-256 of the file's size in bytes, a newline, its first 64 KB and its last 64 KB (a book of 128 KB or
   less: the whole file). It belongs to that one file: another copy of
@@ -45,7 +46,7 @@ Where *Buried Alive* (FarsiEPUB's narrated copy, `books/farsiepub/buried-alive-n
   at its start, and the walk's hold finds no word there. The key of a book on the device:
 
   ```
-  f=books/farsiepub/buried-alive-narrated.epub; s=$(stat -c %s $f)
+  f=books/farsiepub-sample/buried-alive.epub; s=$(stat -c %s $f)
   { echo $s; head -c 65536 $f; tail -c 65536 $f; } | sha256sum | cut -c1-12
   ```
 
