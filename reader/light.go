@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math"
 
 	"shamsainkreader/device"
@@ -27,6 +28,7 @@ func (rd *reader) lightTap(set *settings, p *ui.Panel, id string, x int) (change
 		set.Dark = !set.Dark
 		rd.dev.Screen.SetInvert(set.Dark)
 		set.save(rd.dir)
+		fmt.Printf("dark mode %s\n", map[bool]string{true: "on", false: "off"}[set.Dark])
 		return false, true
 	}
 	level, warmth, ok := rd.dev.Light()

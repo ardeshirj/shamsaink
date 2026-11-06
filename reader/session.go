@@ -933,9 +933,12 @@ func (s *session) speak() {
 // turned first if the narration has crossed to another.
 func (s *session) underline(c cue) {
 	r, nar := s.r, s.nar
-	page, boxes := r.book.Find(c.doc, c.id)
+	page, boxes := r.book.FindLines(c.doc, c.id) // a paragraph in its lines, not as one box
 	if page < 0 || len(boxes) == 0 {
 		return
+	}
+	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
+		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(boxes))
 	}
 	if first, _ := r.book.Layout(c.doc); c.doc != r.doc || page != first+r.at {
 		r.doc, r.at = c.doc, page-first
@@ -946,9 +949,6 @@ func (s *session) underline(c cue) {
 		// while the screen is busy are skipped, ~0.4 s)
 		s.turns++
 		if s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery() {
-	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
-		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(boxes))
-	}
 			s.turns = 0
 			s.showPage(device.WfGC16, true)
 		} else {

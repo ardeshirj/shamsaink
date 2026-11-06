@@ -249,6 +249,34 @@ pub unsafe extern "C" fn be_find(
     page as i64
 }
 
+/// As be_find, but a paragraph gives its text's line boxes, one a line (Book::find_lines): what read-along marks.
+///
+/// # Safety
+/// As be_find.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_find_lines(
+    b: *mut Book,
+    doc: usize,
+    id: *const u8,
+    id_len: usize,
+    rects: *mut i32,
+    max: usize,
+    n: *mut usize,
+) -> i64 {
+    let b = unsafe { &mut *b };
+    let id = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(id, id_len) }).into_owned();
+    unsafe { *n = 0 };
+    let Some((page, boxes)) = b.find_lines(doc, &id) else { return -1 };
+    let k = boxes.len().min(max);
+    for (i, r) in boxes.iter().take(k).enumerate() {
+        for j in 0..4 {
+            unsafe { *rects.add(4 * i + j) = r[j] };
+        }
+    }
+    unsafe { *n = k };
+    page as i64
+}
+
 /// The words on a page (Book::words): block, start, end, left, top, right, bottom for each, seven ints, into
 /// `words` (room for `max`). Returns how many there are, which may be more than `max`.
 ///

@@ -440,8 +440,22 @@ impl Book {
     }
 
     /// Where the element with this id in spine document `doc` is: its page (None if not found) and its boxes on that
-    /// page, one per line, in page pixels. Lays the document out if it is not.
+    /// page, one per line, in page pixels. Lays the document out if it is not. For a block element (a panel's button, a
+    /// list's row) the box is its own: what a tap is tested against.
     pub fn find(&mut self, doc: usize, id: &str) -> Option<(usize, Vec<[i32; 4]>)> {
+        self.find_boxes(doc, id, false)
+    }
+
+    /// As `find`, but a paragraph (or a div of paragraphs) gives the line boxes of its text, one a line, where `find` gives
+    /// its one block box: what read-along marks, a bar under each box, so a narrated paragraph is marked in every line
+    /// and not under the last only (IDPF's Moby-Dick narrates by paragraph). An inline element (a word, a sentence in a
+    /// span) is the same as in `find`: one client rect a line. Only the narration asks for it: the panels find their
+    /// buttons by `find`, and a button's text lines are not its box (found 2026-11-05: taps missed).
+    pub fn find_lines(&mut self, doc: usize, id: &str) -> Option<(usize, Vec<[i32; 4]>)> {
+        self.find_boxes(doc, id, true)
+    }
+
+    fn find_boxes(&mut self, doc: usize, id: &str, lines: bool) -> Option<(usize, Vec<[i32; 4]>)> {
         if doc >= self.docs.len() {
             return None;
         }
@@ -449,12 +463,10 @@ impl Book {
         let d = self.docs[doc].as_mut()?.as_mut();
         d.set_viewport_scroll(blitz_dom::Point { x: 0.0, y: 0.0 });
         let node = d.get_element_by_id(id)?;
-        // an inline element (a word, a sentence in a span) has a client rect for each line it covers; a block (a
-        // paragraph, a div of paragraphs) has one for the whole block, which a mark under its bottom edge would put
-        // under the last line only: its lines are taken from the text layouts inside it instead (IDPF's Moby-Dick
-        // narrates by paragraph, 2026-11-05)
         let mut rects: Vec<(f64, f64, f64, f64)> = vec![];
-        line_rects(d, node, &mut rects);
+        if lines {
+            line_rects(d, node, &mut rects);
+        }
         if rects.is_empty() {
             rects = d.node_client_rects(node).iter().map(|r| (r.x, r.y, r.width, r.height)).collect();
         }

@@ -1,0 +1,13 @@
+# A tap on a button of a panel reaches it: the Light panel's Dark mode switched on and off, in a book. A panel finds its
+# buttons' boxes by the engine's find; when find returned a button's text lines and not its box (2026-11-05), taps missed
+# and Dark mode did nothing. The reader logs the switch. Leaves the device as it found it (dark mode off). It ends
+# without closing the book: the runner stops the reader when a scenario ends.
+#     make e2e SCENARIO=e2e/kobo-light-dark.txt
+open books/farsiepub/buried-alive-narrated.epub
+tap page-top
+expect menu drawn
+tap topbar topbar-light
+tap light dark
+expect dark mode on
+tap light dark
+expect dark mode off

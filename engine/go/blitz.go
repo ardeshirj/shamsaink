@@ -172,12 +172,23 @@ func (d *doc) Draw(n int, img *image.Gray) {
 	C.be_draw(d.b, C.size_t(n), (*C.uint8_t)(unsafe.Pointer(&img.Pix[0])))
 }
 
-func (d *doc) Find(spine int, id string) (int, []image.Rectangle) {
-	var buf [64]C.int32_t
+func (d *doc) Find(spine int, id string) (int, []image.Rectangle) { return d.find(spine, id, false) }
+
+// FindLines is Find, but a paragraph (or a div of paragraphs) gives the line boxes of its text, one a line, up to 256:
+// what read-along marks. Find gives it one box, its own, which is what a tap is tested against.
+func (d *doc) FindLines(spine int, id string) (int, []image.Rectangle) { return d.find(spine, id, true) }
+
+func (d *doc) find(spine int, id string, lines bool) (int, []image.Rectangle) {
+	var buf [4 * 256]C.int32_t
 	var n C.size_t
 	cid := C.CBytes([]byte(id))
 	defer C.free(cid)
-	p := int(C.be_find(d.b, C.size_t(spine), (*C.uint8_t)(cid), C.size_t(len(id)), &buf[0], 16, &n))
+	var p int
+	if lines {
+		p = int(C.be_find_lines(d.b, C.size_t(spine), (*C.uint8_t)(cid), C.size_t(len(id)), &buf[0], 256, &n))
+	} else {
+		p = int(C.be_find(d.b, C.size_t(spine), (*C.uint8_t)(cid), C.size_t(len(id)), &buf[0], 16, &n))
+	}
 	if p < 0 {
 		return -1, nil
 	}
