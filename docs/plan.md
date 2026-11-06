@@ -77,10 +77,11 @@ the Kobo it earned it sooner than planned.)
   word: meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and its
   paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen: the book's cover or the page, a choice in the menu
-- [ ] A page button with a panel open (daily use, 2026-11-06): today it does nothing (`session.button`); the spec's `ring`
-  map (move between the controls) is not built. To decide: a press closes everything and turns the page in the one refresh
-  the page needs anyway (recommended: a reader pressing Next wants to read on), or only closes. Either way the ring moves
-  behind a hold, and Contents keeps its own list map
+- [x] A page button with a panel open (daily use, 2026-11-06, tried on the Kobo): a press closes the bar, the dock, the
+  sheet and any panel and turns the page, in the one refresh the page needs anyway (a reader pressing Next wants to read
+  on); on the book's first or last page they only close (`session.button`). The spec's `panel` map; the library keeps
+  `ring` (move between the controls, not built), Contents its list map, the highlight's menu `word-held`. The ring of
+  controls in the book, if built, goes behind a hold
 - [x] The sleep screen from a small YAML file in `sleep/` (2026-11-05, tried on the Kobo): layouts `couplet` (FarsiEPUB's
   screensaver: verses, poet, gloss, signature, in Parastoo, each verse on two lines, shrunk until it fits), `title` and `quote`
   (the opening screen's logo with a text under it), drawn from `ui/templates/sleep.html` at the screen's own size (type and logo scale with the width), so the
