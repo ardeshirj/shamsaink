@@ -14,6 +14,24 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-blue" alt="Licence: Apache-2.0"></a>
 </p>
 
+## Install
+On a Kobo with [NickelMenu](https://pgaskin.net/NickelMenu/), plugged into a Mac or Linux computer over USB with Connect
+tapped:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh
+```
+
+It downloads the newest [release](https://github.com/ardeshirj/shamsaink/releases), checks it, copies it onto the Kobo
+and ejects it; the Kobo installs it and restarts. Then NickelMenu → ShamsaInk. Installing over an older version keeps
+the settings, places, highlights and books. Installing by hand and removing it:
+[`docs/devices/kobo/install.md`](docs/devices/kobo/install.md); building it yourself:
+[`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md).
+
+**Not for everyone yet:** until the beta the releases are pre-releases, tried on a **Kobo Libra Colour** (firmware
+4.46) only, and the reader stops Kobo's own interface while a book is open. A guide for readers comes with the beta
+([`ROADMAP.md`](ROADMAP.md)).
+
 ## Why it exists
 An e-ink device is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
 overlooked on these devices: Plato sets its paragraphs reversed, and KOReader breaks its lines differently from a
@@ -115,15 +133,6 @@ library and the read-along. [`docs/design.md`](docs/design.md) has how the parts
 | [`bench/`](bench/) | One interface over the engines, to compare them on the same books |
 | [`docs/`](docs/) | [Design](docs/design.md), the [design system](docs/design-system.md), the devices ([Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/plan.md) |
 | [`e2e/`](e2e/) | End-to-end scenarios run on a device |
-
-## Trying it
-Not for everyone yet. Putting it on a Kobo means building it, installing NickelMenu and a launcher, and the reader
-stops Kobo's own interface while a book is open. [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md) is the
-developer's guide, written for the maintainer's device. An installer and a guide for readers are part of the first
-beta ([`ROADMAP.md`](ROADMAP.md)).
-
-Tried so far on a **Kobo Libra Colour** (firmware 4.46) and a jailbroken Kindle Paperwhite (11th generation) inside
-KOReader; nothing else yet.
 
 ## About the name
 A *shamsa* (شمسه, "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript,
