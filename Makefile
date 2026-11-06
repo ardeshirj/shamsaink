@@ -21,7 +21,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        builds and publishes it (CHANGELOG.md, "How to release")
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
-#                        committing (docs/design-system.md)
+#                        committing (docs/DESIGN-SYSTEM.md)
 
 .PHONY: reader engine bench-armv7 fetch-blitz design-update check test kobo-package tag
 

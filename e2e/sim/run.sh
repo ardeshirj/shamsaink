@@ -1,5 +1,5 @@
 #!/bin/sh
-# Builds the reader and devtest for the simulated Kobo and plays scenarios on it (docs/testing.md, section 2): each on a
+# Builds the reader and devtest for the simulated Kobo and plays scenarios on it (docs/TESTING.md, section 2): each on a
 # fresh device (setup.sh), from the repository's root, inside the eink-rust container (`make e2e-sim`).
 #     sh e2e/sim/run.sh BOOKS [--save] SCENARIO...
 set -e

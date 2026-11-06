@@ -15,7 +15,7 @@ import (
 )
 
 // The walk: every screen the design spec says can be reached, opened the way the spec says, held against its kept render
-// and closed the way the spec says, generated from the spec (docs/testing.md, section 6). Nobody lists its steps: a screen
+// and closed the way the spec says, generated from the spec (docs/TESTING.md, section 6). Nobody lists its steps: a screen
 // added to the spec, with its kept render, is walked the next time. It is a scenario's step (walk), so it has the
 // scenario's known start, crash check and failure folder.
 //

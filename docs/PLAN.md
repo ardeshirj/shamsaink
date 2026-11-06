@@ -4,7 +4,7 @@ Experiments 01–14 showed it can be done: an EPUB reader for Linux e-ink device
 word by word, one static ARM binary at crengine's speed. It runs on the **Kobo Libra Colour**, the primary device, as its
 own host, and on the Kindle inside KOReader. This is the **working plan** (the public one: `ROADMAP.md`). An item is
 checked once done and tried on a device and stays in its stage; new work goes where it belongs as it is decided; nothing
-is built before the maintainer says yes. How things work lives in `design.md`, `design-system.md`, `testing.md` and
+is built before the maintainer says yes. How things work lives in `DESIGN.md`, `DESIGN-SYSTEM.md`, `TESTING.md` and
 `devices/`; here only what is left and why.
 
 **Next: daily use on the Kobo** (stage 5), done when it is the reader picked for Farsi books.
@@ -45,7 +45,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [ ] The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
   per book, cause not found)
-- [ ] The watchdog's rest (`design.md`, "Keeping the reader alive"): the quiet tests (idle, sleep and wake, a narration,
+- [ ] The watchdog's rest (`DESIGN.md`, "Keeping the reader alive"): the quiet tests (idle, sleep and wake, a narration,
   the library list), the reboot fallback tried, a heartbeat in the library's first scan, its battery cost, the test
   pause removed before the release. After the beta: a hold to quit, a Power panel (Back to Kobo, Restart, Power off)
 - [x] Done (2026-10-31 to 11-05): sleep after idle minutes; dark mode (to judge in use); the page buttons (a hold for the
@@ -54,14 +54,14 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 
 **6. The layout** (`design/system.html`; `design/unbuilt-screens.md` for what is not built)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
-- [ ] Interface language, "Follow book language" (built 2026-10-31, `design.md` "The reader's panels"): tried on the
+- [ ] Interface language, "Follow book language" (built 2026-10-31, `DESIGN.md` "The reader's panels"): tried on the
   Kobo, the Farsi wording reviewed by the maintainer
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [ ] The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
   meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and
   its paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
-- [ ] The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `sleep-screen-format.md`)
+- [ ] The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
 - [x] Done: the design system as YAML with renders, a generated page and CI (2026-11-01); the page-button maps, Light,
   Text, Contents, the bar's panels, the highlight's menu; a page button with a panel open closes it and turns the page
   (2026-11-06; the spec's `panel` map); the sleep screen from a YAML file in `sleep/` (2026-11-05)
@@ -77,7 +77,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   the reader (today it is Nickel's); measure the downloads' memory and TLS on the device first
 - [x] Done: a book's key from its content (`library.Key`, 2026-11-05); the two layouts decided (text rows, covers)
 
-**8. Read-along on the Kobo** (how it plays: `design.md`, section 4, sound)
+**8. Read-along on the Kobo** (how it plays: `DESIGN.md`, section 4, sound)
 - [ ] The hour: no drop-outs or drift over an hour, Nickel stopped
 - [ ] The screen and the narration together across the power button
 - [ ] Leaving after Bluetooth: the launcher reboots (Kobo's bug); clean, never losing the place, highlights or
@@ -87,7 +87,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   clips as EPUB 3.3 defines them
 
 **Alongside**
-- End-to-end tests (`testing.md`, `e2e/README.md`): built and on CI: the simulator, references as hashes, the walk of
+- End-to-end tests (`TESTING.md`, `e2e/README.md`): built and on CI: the simulator, references as hashes, the walk of
   every screen (simulator and Kobo). Left:
   - [ ] Controls' effects in the spec (`emits:`, `press:`, `undo:` started 2026-11-06), scenarios moved to it
   - [ ] Scenarios for read aloud and sleep; page-button presses in the harness; the Kindle

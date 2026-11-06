@@ -102,7 +102,7 @@ func scenario(name, path string, save bool) bool {
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base}
-	if place == "sim" { // the simulator's snapshots and references apart from the Kobo's (docs/testing.md, section 4)
+	if place == "sim" { // the simulator's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4)
 		p.out = filepath.Join("e2e", "out", "sim", base)
 	}
 	p.refs = filepath.Join(p.out, "refs")

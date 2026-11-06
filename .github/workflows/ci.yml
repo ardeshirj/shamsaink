@@ -1,4 +1,4 @@
-# Every push (docs/testing.md, section 1), on arm64 runners: the same architecture as the Mac the simulator's references
+# Every push (docs/TESTING.md, section 1), on arm64 runners: the same architecture as the Mac the simulator's references
 # are drawn on (2026-11-06: ubuntu-24.04-arm starts for this private repository, an Arm Neoverse-N2).
 #   check  make check (reader/scripts/check.sh): gofmt, vet, the tests that need no engine; a minute
 #   test   the engine built (cached: rebuilt only when engine/ changes), make test (every Go test, the renders compared
@@ -8,7 +8,7 @@
 #          (CHANGELOG.md, "How to release")
 # On public books, each fetched and checked by its SHA-256: readalong-granularity and the walk on Moby-Dick (IDPF's
 # sample), the walk and basics on Buried Alive (FarsiEPUB's narrated sample, 2026-11-06). basics' pages are held against
-# their SHA-256 in e2e/refs.sum (docs/testing.md, section 4); a page that differs is attached as failure/screen.pgm.
+# their SHA-256 in e2e/refs.sum (docs/TESTING.md, section 4); a page that differs is attached as failure/screen.pgm.
 name: CI
 on:
   push:

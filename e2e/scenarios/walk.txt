@@ -1,4 +1,4 @@
-# Every screen the design spec reaches, walked from the spec itself (reader/cmd/devtest/walk.go; docs/testing.md, section 6):
+# Every screen the design spec reaches, walked from the spec itself (reader/cmd/devtest/walk.go; docs/TESTING.md, section 6):
 # from the library, then from the page of its first book, each screen opened the way the spec says (a tap by name, a hold on
 # a row or a word, a tap in the page's top tenth), held against its kept render, closed the way the spec says, and the base
 # as it was. Nothing here names a screen: one added to the spec is walked the next time. What the controls do is not

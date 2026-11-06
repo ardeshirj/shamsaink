@@ -1,5 +1,5 @@
 // Package spec holds tests of what the EPUB specification defines for narration, which our dependencies and our code must
-// do (EPUB 3.3, media overlays, and Reading Systems 3.3, section 9; see docs/design.md).
+// do (EPUB 3.3, media overlays, and Reading Systems 3.3, section 9; see docs/DESIGN.md).
 package spec
 
 import (

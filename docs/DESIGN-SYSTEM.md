@@ -57,7 +57,7 @@ the render says they are, closed the way the spec says, and the screen as it was
 to the spec is walked the next time, and `make check` fails if the walk has no way to it. It runs on the simulated Kobo
 (`make e2e-sim`) and on the Kobo (`make e2e SCENARIO=e2e/scenarios/walk.txt`): 17 routes, 16 screens. Before it (2026-11-01
 to 11-05) a smoke test and a flow walked by hand-written Go did the same in part (`make kobo-smoke`, `kobo-flow`,
-`kobo-flow-book`, removed 2026-11-06). How it fits with the scenarios: `docs/testing.md`, section 6.
+`kobo-flow-book`, removed 2026-11-06). How it fits with the scenarios: `docs/TESTING.md`, section 6.
 
 To change the interface: change the spec first, then the template; the test says what is out of step.
 

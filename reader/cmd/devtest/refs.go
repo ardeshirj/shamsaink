@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// The references as hashes (docs/testing.md, section 4): e2e/refs.sum, committed, has a line for each snapshot,
+// The references as hashes (docs/TESTING.md, section 4): e2e/refs.sum, committed, has a line for each snapshot,
 // "SHA256  TARGET/SCENARIO/NAME" (TARGET: sim or kobo, two families of pages). The pages themselves are drawn from
 // books and stay out of git (e2e/out/); a local copy of a reference only draws the difference when a snapshot fails.
 const refsSum = "e2e/refs.sum"
@@ -58,7 +58,7 @@ func keepRef(key, hash string) error {
 	}
 	sort.Strings(keys)
 	var b strings.Builder
-	b.WriteString("# The e2e snapshots' references as SHA-256 (docs/testing.md, section 4; e2e/README.md): kept by SAVE=1, the\n")
+	b.WriteString("# The e2e snapshots' references as SHA-256 (docs/TESTING.md, section 4; e2e/README.md): kept by SAVE=1, the\n")
 	b.WriteString("# changed pages looked at before this file is committed. TARGET/SCENARIO/NAME; the clock's strip left out.\n")
 	for _, k := range keys {
 		fmt.Fprintf(&b, "%s  %s\n", refs[k], k)

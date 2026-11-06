@@ -1,4 +1,4 @@
-// Command devtest holds a device against the design spec's profile of it, over SSH (docs/design-system.md).
+// Command devtest holds a device against the design spec's profile of it, over SSH (docs/DESIGN-SYSTEM.md).
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
 //	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go); the
@@ -8,7 +8,7 @@
 //
 // DEVICE is a key of e2e/devices.yaml, and a profile of reader/design/spec/devices unless its entry names one (profile:).
 // Run from the repository's root. It uses the system's ssh (the host named in devices.yaml), changes nothing on the
-// device, and reads no key. A device with local: is the simulated one (docs/testing.md): its commands run in a local shell,
+// device, and reads no key. A device with local: is the simulated one (docs/TESTING.md): its commands run in a local shell,
 // devtest itself in its container (make e2e-sim).
 package main
 
@@ -31,7 +31,7 @@ type Access struct {
 	// Profile is the design spec's profile the device is held against, its kept renders' folder; the key itself when
 	// empty. The simulated Kobo has the Kobo's.
 	Profile string `yaml:"profile"`
-	// Local is the simulated device's folder (docs/testing.md, section 2): commands run here, in a shell, not over SSH.
+	// Local is the simulated device's folder (docs/TESTING.md, section 2): commands run here, in a shell, not over SSH.
 	Local string `yaml:"local"`
 	SSH   string `yaml:"ssh"`
 	Dir   string `yaml:"dir"`

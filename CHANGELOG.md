@@ -6,7 +6,7 @@ is at the end, under "Versions and releases".
 
 ## 0.0.1 (2026-11-06)
 The first tagged build, before the beta: for the maintainer's Kobo Libra Colour (firmware 4.46) only. Not for anyone
-else yet: the beta (`v0.1.0-beta`) is when a stranger can install it and read for a week (`docs/plan.md`, "Releases").
+else yet: the beta (`v0.1.0-beta`) is when a stranger can install it and read for a week (`docs/PLAN.md`, "Releases").
 - **What it is:** an EPUB reader for the Kobo, started from NickelMenu, with Kobo's own interface stopped while it
   runs. The library (text rows), the book's pages drawn by our engine (Blitz), Farsi and right-to-left books done
   properly, Contents, highlights, Light (level, warmth, dark mode), Text, Reading settings, the sleep screen, the
@@ -26,7 +26,7 @@ in the tag; the build writes it into the binary (`shamsaink -version`, the first
 
 - **Before the beta, `v0.0.x`:** a build worth keeping or installing from a release (on the maintainer's devices).
   Every one is a pre-release on GitHub.
-- **`v0.1.0-beta`** is reserved for the public beta (`docs/plan.md`, "Releases"); fixes to it `v0.1.0-beta.2`, ...
+- **`v0.1.0-beta`** is reserved for the public beta (`docs/PLAN.md`, "Releases"); fixes to it `v0.1.0-beta.2`, ...
 - **After it**, a new middle number (0.1.0 → 0.2.0) for something a reader notices: a feature, a screen, a setting, a
   device; a new last number (0.1.0 → 0.1.1) for a fix that changes none of that. **No release** for docs and tidying.
 - **`v1.0.0`** is the stable release (the plan's "After the beta, toward stable").

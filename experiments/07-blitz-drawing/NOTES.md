@@ -2,7 +2,7 @@
 
 On the reMarkable 2 Blitz draws a page in 206–257 ms (NEON on), KOReader's crengine in 17–19 ms (06's NOTES.md).
 06 split Blitz's time: glyphs turned into outlines and strips on every page (127 ms), vello_cpu rendering even a
-blank RGBA page (34 ms), our conversion to grey (23 ms). `docs/design.md` (section 4) listed three levers to try, in
+blank RGBA page (34 ms), our conversion to grey (23 ms). `docs/DESIGN.md` (section 4) listed three levers to try, in
 order; this is them, measured on the Mac first (`../04-rust-engine/bench.sh`, the books as they are, medians of
 three runs) and pages checked with `pagediff.sh`. The changes are in `../04-rust-engine/blitz-engine/src/` (`lib.rs`, `glyphs.rs`).
 

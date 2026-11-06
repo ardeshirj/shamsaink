@@ -3,7 +3,7 @@
 A scenario is a file of steps (`scenarios/basics.txt`): open a book, tap controls by name, wait for the reader's log
 lines, compare the screen with a kept reference. The same file plays on the **simulated Kobo** (Docker, every change)
 and on the **Kobo** itself (by hand, for what only hardware shows). Why it is built this way, and what is left to build:
-`docs/testing.md`.
+`docs/TESTING.md`.
 
 ## Running
 
@@ -50,7 +50,7 @@ With the same settings the simulator draws the Kobo's pages byte for byte (2026-
 ## Writing a scenario
 
 First, whether it is a scenario at all: what one control does, on any book, belongs in the design spec, whose walk tests
-it; a scenario is for what needs a given book, steps in order, or time (`docs/testing.md`, section 6, "The spec or a
+it; a scenario is for what needs a given book, steps in order, or time (`docs/TESTING.md`, section 6, "The spec or a
 scenario").
 
 A header, then the steps (listed at the top of `reader/cmd/devtest/scenario.go`):

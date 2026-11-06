@@ -1,7 +1,7 @@
 # ShamsaInk's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
 What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
-the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `plan.md`; the details and every
+the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `PLAN.md`; the details and every
 measurement in the experiments' NOTES.md files (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
 
 ## 1. The layers

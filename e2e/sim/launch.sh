@@ -1,5 +1,5 @@
 #!/bin/sh
-# The simulated Kobo's launcher (docs/testing.md, section 2), in place of reader/kobo/launch.sh: the same log lines
+# The simulated Kobo's launcher (docs/TESTING.md, section 2), in place of reader/kobo/launch.sh: the same log lines
 # (devtest waits for them), the reader started the same way, with the simulator's settings; no Nickel to stop or start,
 # no system logs. Not yet: the watchdog (its scenarios run on the Kobo only).
 #     sh launch.sh [BOOK]        sh launch.sh nickel

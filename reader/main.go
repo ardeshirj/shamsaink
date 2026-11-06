@@ -1,4 +1,4 @@
-// shamsaink: the minimal reader (experiment 11; docs/plan.md, stage 2). Opens an EPUB at its place, turns pages by
+// shamsaink: the minimal reader (experiment 11; docs/PLAN.md, stage 2). Opens an EPUB at its place, turns pages by
 // tap or swipe (in the book's direction: a right-to-left book turns forward on the left), keeps its place and the
 // book's cache in DIR/places and DIR/cache, and lays the rest of the book out between touches. A tap on the top tenth
 // of the screen opens the menu: the settings (DIR/settings.json) and a way back. Run by KOReader's plugin
@@ -246,7 +246,7 @@ func atoi(s string) int {
 }
 
 // shownNow is the time the reader shows (the bar's clock, when a book was added): now, or the fixed time SHAMSAINK_CLOCK
-// gives (2026-01-01T10:00, local time), so the simulated device's screens are the same run after run (docs/testing.md).
+// gives (2026-01-01T10:00, local time), so the simulated device's screens are the same run after run (docs/TESTING.md).
 // Durations and timers keep the real clock.
 func shownNow() time.Time {
 	if v := os.Getenv("SHAMSAINK_CLOCK"); v != "" {

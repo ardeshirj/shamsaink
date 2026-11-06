@@ -27,4 +27,4 @@ Builds land in `engine/target/` (plain) and `engine/out/target-*` (NEON; both ig
 The measuring tools are `src/bin/`: `blitz-pages` (draw every page, times), `blitz-open` (open a book, cache, page
 hashes), `blitz-books`, `blitz-demo`, `blitz-profile`, `blitz-show` and `blitz-follow` (a page on the e-ink screen, a
 narration followed). History and numbers: `experiments/04-rust-engine/NOTES.md` and 06 to 10's; the whole design:
-`docs/design.md`.
+`docs/DESIGN.md`.

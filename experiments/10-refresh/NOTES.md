@@ -1,6 +1,6 @@
 # Experiment 10: refreshing the screen, FBInk or our own (2026-10-25)
 
-How the reader should tell the Kindle's e-ink controller to refresh, before the reader is built (`docs/plan.md`,
+How the reader should tell the Kindle's e-ink controller to refresh, before the reader is built (`docs/PLAN.md`,
 stage 1). 09 ran KOReader's `fbink` once for each refresh and planned to link FBInk's library into the reader. The
 choices, and what was found:
 

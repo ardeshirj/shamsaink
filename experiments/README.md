@@ -1,7 +1,7 @@
 # Experiments
 
 Each folder is one experiment, numbered in the order they were done; its `NOTES.md` has what was tried, measured and
-decided. The decisions are summed up in `CLAUDE.md` and `docs/plan.md`.
+decided. The decisions are summed up in `CLAUDE.md` and `docs/PLAN.md`.
 
 ## The code behind the notes: the `experiments-archive` tag
 

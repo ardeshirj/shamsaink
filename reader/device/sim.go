@@ -7,7 +7,7 @@ import (
 	"syscall"
 )
 
-// The simulated device (docs/testing.md, section 2): with SHAMSAINK_SIM=DIR the reader runs as a plain Linux program
+// The simulated device (docs/TESTING.md, section 2): with SHAMSAINK_SIM=DIR the reader runs as a plain Linux program
 // and every path of the hardware is looked up under DIR: the screen DIR/dev/fb0 (a plain file in the Kobo's framebuffer
 // layout), the touch screen and the keys DIR/dev/input/eventN (named pipes, in the Kobo's input-event format), the
 // battery and the light DIR/sys/class/... (plain files), the Kobo's version file. What a file cannot do is done here:

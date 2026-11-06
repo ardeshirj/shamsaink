@@ -1,6 +1,6 @@
 // Package design is the reader's design system as data: tokens, device profiles, components and screens with their
 // flow, in spec/*.yaml, and the checks that keep the spec, the templates in reader/ui and a device in step
-// (validate.go). docs/design-system.md says how it is used.
+// (validate.go). docs/DESIGN-SYSTEM.md says how it is used.
 package design
 
 import (
@@ -126,7 +126,7 @@ type Control struct {
 	Requires  []string `yaml:"requires"` // what the device must have (Capabilities), or the control is not on it
 	Dynamic   bool     `yaml:"dynamic"`  // made per item (a list's rows): its id is a pattern the template does not spell out
 	Values    []string `yaml:"values"`   // for a dynamic control, the names after its id (filter-reading, ...)
-	// What it does, for the walk to press it (docs/testing.md, section 6): Emits is the reader's log line that says it was
+	// What it does, for the walk to press it (docs/TESTING.md, section 6): Emits is the reader's log line that says it was
 	// done (a regular expression); Press the button pressed, when not the control's own id (a stepper's size-inc); Undo
 	// the button that puts it back (the same one for a switch); Closes, that pressing it closes its screen (a jump closes
 	// the dock), so the undo opens it again first; Walk "never: why" for what the walk must not press (a book deleted).

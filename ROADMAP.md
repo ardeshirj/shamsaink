@@ -55,4 +55,4 @@ A version a stranger can install on a Kobo Libra Colour, read with for a week, a
 Some of the work is useful beyond this project and goes to the projects it stands on, among them Readium's Go toolkit,
 go-text and Blitz: smaller dependencies, a justification fix, and faster drawing of long pages and pictures.
 
-The working plan, with the experiments and measurements behind these choices, is in `docs/plan.md`.
+The working plan, with the experiments and measurements behind these choices, is in `docs/PLAN.md`.

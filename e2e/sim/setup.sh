@@ -1,5 +1,5 @@
 #!/bin/sh
-# Makes a fresh simulated Kobo in DIR (docs/testing.md, section 2): its hardware files, as the reader reads them under
+# Makes a fresh simulated Kobo in DIR (docs/TESTING.md, section 2): its hardware files, as the reader reads them under
 # SHAMSAINK_SIM, and the reader's folder as reader/kobo/install.sh leaves it on the Kobo, with BOOKS (a folder: copied
 # as the reader's books/, its files dated 2026-01-01 so the library's "added" is the same every run). The scenario's
 # fixture is laid by devtest, as on the Kobo.

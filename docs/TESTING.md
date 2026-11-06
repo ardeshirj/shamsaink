@@ -2,8 +2,8 @@
 
 How ShamsaInk is tested, so a change that breaks the reader is caught before it reaches a device: what each level
 catches, the simulated device, what makes a run trustworthy, and how a new feature gets its tests. The design system
-(`design-system.md`) is the model: one spec says what the reader is and does, and the tests are drawn from it. Work
-left: `plan.md`, "Alongside", end-to-end tests.
+(`DESIGN-SYSTEM.md`) is the model: one spec says what the reader is and does, and the tests are drawn from it. Work
+left: `PLAN.md`, "Alongside", end-to-end tests.
 
 ## 1. The levels
 
