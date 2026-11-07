@@ -52,6 +52,8 @@
   "new-books": "New",
   "finished": "Finished",
   "all": "All",
+  "no-books": "No books here",
+  "no-books-hint": "EPUB books go in the folder %s on the device: copy them over USB, then open ShamsaInk again.",
   "sort-by": "Sort by",
   "recent": "Recent",
   "title": "Title",

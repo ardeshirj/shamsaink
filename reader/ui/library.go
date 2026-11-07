@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"image"
+	"strings"
 	"time"
 
 	blitz "shamsainkengine"
@@ -83,9 +84,15 @@ func stack(top, bottom *Panel) *Panel {
 	return m
 }
 
+// emptyWords are what a library with no books in its filter says, for templates/library.html: a title, and when the
+// library has no books at all a line around the folder they go in (Hint, Folder, After).
+type emptyWords struct{ Title, Hint, Folder, After string }
+
 // NewLibrary lays out the library (docs/design/system.html): the head (LibraryHead), a row a book (each
-// in its title's direction, all as high as each other), and a pager at the bottom. A tap on a row is EntryAt.
-func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
+// in its title's direction, all as high as each other), and a pager at the bottom. A tap on a row is EntryAt. With
+// no books in the filter chosen, one placeholder in their place: "No books here"; and with folder (as the device's drive
+// shows it; "" when other filters have books) that EPUB books go in it.
+func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []libraryRow
 	for i, b := range books {
 		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, New: b.New, Narrated: b.Narrated, When: b.When, Dir: "ltr"}
@@ -103,7 +110,19 @@ func NewLibrary(books []Book, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 		}
 		rows = append(rows, r)
 	}
-	html, _ := render("library.html", struct{ Rows []libraryRow }{rows})
+	var none *emptyWords
+	if len(rows) == 0 {
+		none = &emptyWords{Title: word("no-books")}
+		if folder != "" {
+			// the sentence around the folder, which the template keeps left to right in a Farsi one
+			none.Folder = folder
+			none.Hint, none.After, _ = strings.Cut(word("no-books-hint", "\x00"), "\x00")
+		}
+	}
+	html, _ := render("library.html", struct {
+		Rows  []libraryRow
+		Empty *emptyWords
+	}{rows, none})
 	return NewList(head, html, len(books), -1, true, false, fonts, w, h)
 }
 

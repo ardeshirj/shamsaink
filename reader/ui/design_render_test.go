@@ -200,7 +200,15 @@ var designRenders = map[string][]renderCase{
 	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "reading", f, w)) }},
 		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "device", f, w)) }}},
 	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
-		lib := NewLibrary(designBooks(), libraryHead(f, w), f, w, h)
+		lib := NewLibrary(designBooks(), "shamsaink/books", libraryHead(f, w), f, w, h)
+		defer lib.Close()
+		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
+	}}, {"empty", en, func(f *blitz.Fonts, w, h int) rendered { // no books at all
+		lib := NewLibrary(nil, ".adds/shamsaink/books", libraryHead(f, w), f, w, h)
+		defer lib.Close()
+		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
+	}}, {"empty-filter", en, func(f *blitz.Fonts, w, h int) rendered { // none in this filter, some in others
+		lib := NewLibrary(nil, "", libraryHead(f, w), f, w, h)
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},

@@ -146,6 +146,17 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	return out, func() { once.Do(func() { f.Close(); stopSleeps(); power.Close(); clock.Close(); close(done) }) }, nil
 }
 
+// OnDrive is path as the device's drive shows it on a computer over USB (the Kobo's /mnt/onboard and the Kindle's
+// /mnt/us are its root): .adds/shamsaink/books, shamsaink/books. A path elsewhere is as it is.
+func OnDrive(path string) string {
+	for _, root := range []string{"/mnt/onboard/", "/mnt/us/"} {
+		if rel, ok := strings.CutPrefix(path, root); ok {
+			return rel
+		}
+	}
+	return path
+}
+
 // SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
 func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
 

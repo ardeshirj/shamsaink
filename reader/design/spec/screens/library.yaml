@@ -4,9 +4,10 @@ templates: [topbar.html, library.html, library-head.html, pager.html]
 buttons: list
 status: built
 entry: true          # where the app starts
-purpose: "The books, a row each, under the bar and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row in its title's direction."
+purpose: "The books, a row each, under the bar and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row in its title's direction. With no books in the filter chosen, one placeholder: No books here; when there are no books at all, also the folder on the device's drive that EPUB books go in."
 enter: [{gesture: tap, control: topbar-start, from: topbar}]
 internal: [topbar-title, topbar-title-text]
+words: [no-books, no-books-hint]
 controls:
   - {id: topbar-phones, component: icon-button, action: act, does: Bluetooth sound}
   - {id: topbar-light, component: icon-button, action: goto, to: light}

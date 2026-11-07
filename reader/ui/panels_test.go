@@ -101,7 +101,7 @@ func TestPanels(t *testing.T) {
 				shown = append(shown, b)
 			}
 		}
-		lib := NewLibrary(shown, LibraryHead(topBar, v, fonts, w), fonts, w, h)
+		lib := NewLibrary(shown, ".adds/shamsaink/books", LibraryHead(topBar, v, fonts, w), fonts, w, h)
 		for page := range min(lib.Pages(), 2) {
 			lib.SetPage(page)
 			img := image.NewGray(image.Rect(0, 0, w, h))
@@ -114,7 +114,7 @@ func TestPanels(t *testing.T) {
 	for _, name := range []string{"library-menu-open", "library-sort-open"} {
 		v := view
 		v.MenuOn, v.SortOn = name == "library-menu-open", name != "library-menu-open"
-		lib := NewLibrary(books, LibraryHead(topBar, v, fonts, w), fonts, w, h)
+		lib := NewLibrary(books, ".adds/shamsaink/books", LibraryHead(topBar, v, fonts, w), fonts, w, h)
 		img := image.NewGray(image.Rect(0, 0, w, h))
 		lib.Draw(img)
 		p, under := DrawMenu(lib.TopBarHeight(), "device", fonts, w), lib.TopBarHeight()
@@ -132,7 +132,7 @@ func TestPanels(t *testing.T) {
 	}
 	// a book's menu, details and the question before removing it, by a row held: under it, or over the last row
 	for _, row := range []int{2, -1} {
-		lib := NewLibrary(books, LibraryHead(topBar, view, fonts, w), fonts, w, h)
+		lib := NewLibrary(books, ".adds/shamsaink/books", LibraryHead(topBar, view, fonts, w), fonts, w, h)
 		if row < 0 { // the last row of the first page
 			for i := range books {
 				if lib.on[i] == 0 {
@@ -173,7 +173,7 @@ func TestPanels(t *testing.T) {
 			v := view
 			v.MenuOn = true
 			topBar := TopBar{Time: "20:48", Battery: 82, Menu: true}
-			lib := NewLibrary(books, LibraryHead(topBar, v, fonts, w), fonts, w, h)
+			lib := NewLibrary(books, ".adds/shamsaink/books", LibraryHead(topBar, v, fonts, w), fonts, w, h)
 			for _, follow := range []bool{true, false} {
 				img := image.NewGray(image.Rect(0, 0, w, h))
 				lib.Draw(img)
@@ -242,7 +242,7 @@ func TestPanels(t *testing.T) {
 	}
 	SetLanguage("en")
 	// no books: an empty list
-	lib := NewLibrary(nil, LibraryHead(topBar, view, fonts, w), fonts, w, h)
+	lib := NewLibrary(nil, ".adds/shamsaink/books", LibraryHead(topBar, view, fonts, w), fonts, w, h)
 	img := image.NewGray(image.Rect(0, 0, w, h))
 	lib.Draw(img)
 	save("library-empty", img)

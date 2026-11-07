@@ -85,7 +85,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		if v != nil {
 			v.Close()
 		}
-		v = ui.NewLibrary(rows, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
+		folder := "" // where books go, said only when there are none at all
+		if len(all) == 0 {
+			folder = device.OnDrive(filepath.Join(rd.dir, "books"))
+		}
+		v = ui.NewLibrary(rows, folder, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 		setHead = func() {
 			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
