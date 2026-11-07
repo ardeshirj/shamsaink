@@ -138,6 +138,10 @@ and remove it)
 - [ ] The interface language tried on the Kobo (stage 6)
 - [ ] A failsafe: a crash or hang gets the Kobo back to Nickel on its own, checked by killing it in every state (a book
   open, asleep, narrating); the watchdog covers the hang (stage 5)
+- [ ] Words chosen by accident (2026-11-07: three of four holds in a day on the left edge, while going back): the holds
+  and long taps logged since (`touch: hold|long tap at X,Y, N ms down`, `held at X,Y: word ..., N px from it`) read
+  after a few days of use on both devices, then decided: holds selecting only on the text, not in the margins, or not
+  (`holdTime` stays 1000 ms)
 
 *Read-along, **experimental** in the beta* (decided 2026-11-05: the notes say the Kobo restarts on leaving after
 Bluetooth, no "Restarting" screen, voice timing after the beta)

@@ -199,8 +199,13 @@ func (s *session) held(g device.Gesture) {
 		words := r.book.Words(r.page())
 		i := wordAt(words, g.X, g.Y)
 		if i < 0 {
+			fmt.Printf("held at %d,%d: no word\n", g.X, g.Y)
 			break
 		}
+		// on the word, or reached from beside it (wordAt's reach): to tell holds in the margins from those on the text
+		b := words[i].Box
+		fmt.Printf("held at %d,%d: word %d at %d,%d-%d,%d, %d px from it\n", g.X, g.Y, i, b.Min.X, b.Min.Y, b.Max.X, b.Max.Y,
+			max(b.Min.X-g.X, g.X-b.Max.X+1, 0))
 		if s.unmark = r.marks.at(r.doc, words[i]); s.unmark >= 0 {
 			hl := r.marks.list[s.unmark]
 			s.from = words[i]

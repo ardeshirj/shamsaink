@@ -2,6 +2,7 @@ package device
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -22,6 +23,7 @@ const (
 	absMTTrackingID = 0x39
 	swipeMin        = 80                      // px a finger moves for a swipe, not a tap
 	holdTime        = 1000 * time.Millisecond // a finger held this long is a hold (500 ms made holds by accident, 800 still some while turning pages)
+	longTap         = 500                     // ms: a tap this long is logged, to see how near holds come by accident
 	holdStill       = 30                      // px it may move meanwhile and still be held
 )
 
@@ -77,7 +79,8 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event) {
 	slot, x, y, tx, ty := int32(0), 0, 0, 0, 0
 	var down, started bool
 	var x0, y0 int
-	var mu sync.Mutex // the timer's goroutine sends the hold
+	var t0 time.Duration // the kernel's time of the finger's first report: how long it was down, read on lifting
+	var mu sync.Mutex    // the timer's goroutine sends the hold
 	var holding bool
 	var timer *time.Timer
 	for {
@@ -85,6 +88,7 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event) {
 			return
 		}
 		typ, code := binary.LittleEndian.Uint16(ev[8:]), binary.LittleEndian.Uint16(ev[10:])
+		at := time.Duration(binary.LittleEndian.Uint32(ev[0:]))*time.Second + time.Duration(binary.LittleEndian.Uint32(ev[4:]))*time.Microsecond
 		val := int32(binary.LittleEndian.Uint32(ev[12:]))
 		switch {
 		case typ == evAbs && code == absMTSlot:
@@ -108,6 +112,11 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event) {
 				h := holding
 				holding = false
 				mu.Unlock()
+				// how long the finger was down (the kernel's times, not when we read them), for holds and the taps near
+				// one: to tell holds made by accident (a grip, a slow press) from those meant
+				if ms := (at - t0).Milliseconds(); h || ms >= longTap {
+					fmt.Printf("touch: %s at %d,%d, %d ms down\n", map[bool]string{true: "hold", false: "long tap"}[h], x0, y0, ms)
+				}
 				if h {
 					out <- Event{Gesture: Gesture{X: x, Y: y, Hold: Dropped}}
 					continue
@@ -120,7 +129,7 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event) {
 			mu.Lock()
 			switch {
 			case down && !started:
-				started, x0, y0 = true, x, y
+				started, x0, y0, t0 = true, x, y, at
 				// held still until then: a hold (a finger that moved first is a swipe, and stops it)
 				timer = time.AfterFunc(holdTime, func() {
 					mu.Lock()
