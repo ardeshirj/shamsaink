@@ -98,8 +98,9 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 
 **9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
 - [x] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them (2026-11-07)
-- [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
-  (built 2026-11-07: `make kindle-package`, the release's second package; to try over USB from a clean start)
+- [x] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
+  (2026-11-07: `make kindle-package`, the release's second package; tried over USB on the Kindle, over an install and
+  from a clean start after `install.sh uninstall`; `install.ps1` for Windows to come, once it can be tried there)
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
   player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
 - [ ] End-to-end tests on the Kindle (2026-11-06; after the other work on `devtest` is committed): its design profile
@@ -147,7 +148,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Not in the beta, said in its notes: Opus, clips without `clipEnd`, text-to-speech, speed
 
 *The Kindle* (2026-11-07; read-along on it is not in the beta: its notes say Listen is not there yet)
-- [ ] Stage 9's open items but Listen: its end-to-end tests, its install package and `install.sh`'s branch
+- [ ] Stage 9's open items but Listen: its end-to-end tests
 - [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
   Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
 - [ ] Its notes in `devices/kindle/`: the jailbreak and KOReader's SSH it needs (not ours to give), the firmware tried,
