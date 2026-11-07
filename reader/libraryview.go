@@ -174,6 +174,20 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
 	}
+	// the header again, and only it refreshed, if its battery or clock changed (a charger, a new minute, a wake)
+	headChanged := func() {
+		now := ui.TopBar{Time: shownNow().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
+		if now.Time == topBar.Time && now.Battery == topBar.Battery && now.Charging == topBar.Charging && now.Full == topBar.Full {
+			return
+		}
+		topBar.Time, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Battery, now.Charging, now.Full
+		setHead()
+		v.Draw(rd.over)
+		if panel != nil {
+			panel.Over(rd.over)
+		}
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, v.TopBarHeight()), device.WfREAGL, false)
+	}
 	beats := rd.dev.Beats()
 	for {
 		var e device.Event
@@ -187,17 +201,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			rd.dev.Beat()
 			continue
 		}
-		if e.Power { // a charger plugged or unplugged: the header again if its battery or clock changed
-			now := ui.TopBar{Time: shownNow().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
-			if now.Time != topBar.Time || now.Battery != topBar.Battery || now.Charging != topBar.Charging || now.Full != topBar.Full {
-				topBar.Time, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Battery, now.Charging, now.Full
-				setHead()
-				v.Draw(rd.over)
-				if panel != nil {
-					panel.Over(rd.over)
-				}
-				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, v.TopBarHeight()), device.WfREAGL, false)
-			}
+		if e.Power || e.Clock { // a charger plugged or unplugged, a new minute
+			headChanged()
 			continue
 		}
 		head := v.HeadAt(e.X, e.Y)
@@ -207,6 +212,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				for len(events) > 0 { // the touches made while asleep
 					<-events
 				}
+				headChanged() // the screen put back as it was: its time from before the sleep
 			}
 		case e.Button != 0: // a page button turns the list's pages, unless a panel is open (a hold does nothing)
 			if panel == nil && !e.Held {

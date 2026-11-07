@@ -248,8 +248,8 @@ func (s *session) input(e device.Event) {
 	switch {
 	case e.Sleep:
 		s.sleep()
-	case e.Power:
-		s.powerChanged()
+	case e.Power || e.Clock:
+		s.barChanged()
 	case s.nar != nil:
 		// reading aloud: a touch stops it
 		s.silence()
@@ -339,6 +339,7 @@ func (s *session) sleep() {
 		return
 	}
 	s.drain()
+	s.barChanged() // the screen put back as it was: the bar's time, if it shows, from before the sleep
 }
 
 // sleepText draws the sleep screens of a YAML file (one or a set: ui.ParseSleeps; a couplet, a title, a quote:
@@ -418,7 +419,7 @@ func (s *session) turn(g device.Gesture) {
 			s.pending = &e
 			break
 		}
-		if e.Power { // no touch: the bar is not open while pages turn
+		if e.Power || e.Clock { // no touch: the bar is not open while pages turn
 			continue
 		}
 		tn, m := apply(s.r, e.Gesture, s.scr.W, s.scr.H)

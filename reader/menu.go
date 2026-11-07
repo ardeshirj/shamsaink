@@ -104,9 +104,10 @@ func (s *session) drawTopBar() {
 	s.barShown = barState(s.dev)
 }
 
-// powerChanged answers a power supply's change (a charger plugged or unplugged): with the bar on the page, it is drawn
-// again when its battery or clock would change, and only it is refreshed. While reading, nothing.
-func (s *session) powerChanged() {
+// barChanged answers what may have changed what the bar shows (a charger plugged or unplugged, a new minute, a wake):
+// with the bar on the page, it is drawn again when its battery or clock would change, and only it is refreshed. While
+// reading, nothing.
+func (s *session) barChanged() {
 	if s.nav == nil && s.sheet == nil {
 		return
 	}

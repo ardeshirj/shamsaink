@@ -33,6 +33,7 @@ type Device struct {
 	poked      atomic.Int64  // the Kindle: when powerd was last told of a touch (kindleTouched)
 	lightOnce  sync.Once     // the Kindle's light, read from powerd once (light.go)
 	kindle     *kindleLight
+	clockKick  chan struct{} // Doze, once awake: the clock's wait worked out again (clock.go)
 
 	// Hosted: the Kindle's reader runs inside KOReader (its plugin, -serve), which shows the screensaver itself
 	Hosted bool
@@ -84,11 +85,14 @@ func (d *Device) Colour() bool {
 }
 
 // An Event: a gesture on the touch screen, the device wanting to sleep (Sleep: on the Kindle, powerd going to the
-// screensaver; on the Kobo, a press of the power button), or its power changing (Power). Only a gesture has a place.
+// screensaver; on the Kobo, a press of the power button), its power changing (Power) or a new minute (Clock). Only a
+// gesture has a place. Power and Clock both say only that what the bar shows may have changed: a screen showing it
+// reads the battery and the time again and redraws it if they differ.
 type Event struct {
 	Gesture
 	Sleep  bool
 	Power  bool // a power supply changed (a charger plugged or unplugged, power.go): the battery to read again
+	Clock  bool // a new minute started (clock.go): the time to read again
 	Button int  // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
 	Held   bool // with Button: the button was held (about 0.4 s), not pressed; sent once, while it is still down, and no press follows
 }
@@ -133,8 +137,10 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 		stopSleeps = func() { power.Close(); idle(); keys.Close() }
 	}
 	power := powerChanges(out)
+	d.clockKick = make(chan struct{}, 1)
+	clock := clockChanges(out, d.clockKick)
 	var once sync.Once
-	return out, func() { once.Do(func() { f.Close(); stopSleeps(); power.Close(); close(done) }) }, nil
+	return out, func() { once.Do(func() { f.Close(); stopSleeps(); power.Close(); clock.Close(); close(done) }) }, nil
 }
 
 // SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
@@ -176,6 +182,10 @@ func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
 	}
 	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
+	select {
+	case d.clockKick <- struct{}{}: // the next minute from the wall clock: Go's timers stopped while asleep
+	default:
+	}
 	return true
 }
 
