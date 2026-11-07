@@ -168,31 +168,49 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 
 ## 4. On the device
 
-What the reader stands on on an e-ink device: the minimal reader, opened from KOReader's file manager, built and in use
-on the Kindle Paperwhite 11th gen (2026-10-29). Screen and touch are still the Kindle's alone (`reader/screen.go`,
-`touch.go`); a table per device comes with the second device (experiment 13, a Kobo).
+What the reader stands on on an e-ink device. Two devices so far (`devices/README.md`): the Kobo Libra Colour, started
+from NickelMenu with Kobo's interface stopped while reading, and the Kindle Paperwhite 11th gen, started from a scriptlet
+in its library with Amazon's framework paused (2026-11-06; before, inside KOReader through our plugin, which goes).
 
 ```mermaid
 flowchart LR
-  ko["KOReader (the host)<br/>file manager, SSH, Wi-Fi,<br/>its screensaver"] -- "our plugin: Open with ShamsaInk<br/>(the book's path, through a pipe)" --> app["ShamsaInk reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
-  app -- "left · asleep" --> ko
+  ko["the launcher (the host)<br/>Kobo: NickelMenu → launch.sh, Nickel stopped<br/>Kindle: a scriptlet → launch.sh, the framework paused"] -- "runs, watches (the watchdog)" --> app["ShamsaInk reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
+  app -- "exits: the host's interface back" --> ko
   app --> scr["screen: /dev/fb0, mapped;<br/>refresh ioctls, a file<br/>per controller family"]
   app --> inp["touch and buttons:<br/>/dev/input/eventN, grabbed<br/>while the reader runs"]
-  app --> pw["sleep: the Kindle's powerd (lipc),<br/>watched; Kobo: KOReader, later ours"]
-  app --> snd["sound: Amazon's mplay<br/>(12; around the device)"]
+  app --> pw["sleep: Kobo ours (suspend, Wi-Fi);<br/>Kindle powerd's, its events answered;<br/>power: the kernel's uevents"]
+  app --> snd["sound: Kobo's Bluetooth sink<br/>(GStreamer); the Kindle not yet"]
   scr --> panel["e-ink controller<br/>Kindle PW5: MediaTek hwtcon_v2"]
 ```
 
 | Part | What it does | Whose | State |
 |---|---|---|---|
-| KOReader | the host: its file manager starts the reader; it keeps SSH, Wi-Fi, its screensaver and (on Kobo) sleep | KOReader, AGPL-3 | on the Kindle (v2026.07.1) |
-| the plugin | "Open with ShamsaInk" in KOReader's file manager. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/shamsaink`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/shamsaink.koplugin`) | in use on the Kindle |
+| the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by NickelMenu (Kobo) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06) |
+| the plugin (going) | "Open with ShamsaInk" in KOReader's file manager, the Kindle's host until its launcher. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/shamsaink`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/shamsaink.koplugin`) | in use on the Kindle |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
-| sleep | the Kindle's `powerd` sleeps on its own (its timeout, the power button). The reader watches for `goingToScreenSaver` (`lipc-wait-event`, `sleep.go`) and leaves the book in 50–100 ms, so KOReader shows its screensaver; the book is back 280 ms after waking. The experiments held sleep off with `preventScreenSaver` | Amazon's firmware | in use on the Kindle |
+| sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`); inside KOReader (`-serve`) it leaves the book for KOReader's screensaver | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
+| power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
 | sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into Kobo's `mtkbtmwrpcaudiosink` kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
-| launcher | KUAL (Kindle), NickelMenu (Kobo), a PocketBook app | others' | the Kobo's (NickelMenu, `launch.sh`); the Kindle's later |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
+
+### Where the device-specific code lives (2026-11-06)
+**Nothing outside `reader/device/` asks which device it is on:** the book, the library, the panels and the settings are
+the same everywhere, and the reader asks a `Device` (`device.Open()`, which knows it by the screen: a byte a pixel on
+the Kindle, four on the Kobo). In `reader/device/` (about 1,770 lines of Go):
+
+| File | Lines | What |
+|---|---|---|
+| `device.go`, `screen.go`, `touch.go`, `power.go`, `sleep.go`, `heartbeat.go`, most of `light.go` | ~1,020 | shared: events, the screen and its refreshes (each controller's ioctl), touches, power events, the sleep screen, the watchdog's heartbeat, the light panel's values |
+| `kobo.go` | ~340 | the Kobo: the power and page buttons, sleeping after idle minutes, suspend and Wi-Fi around it, not suspending on a charger |
+| `kindle.go` | ~110 | the Kindle: `powerd`'s events answered, its idle timer kept going, the screen's own inversion |
+| `sim.go` | ~130 | the simulated device (`docs/TESTING.md`) |
+
+The Kobo has three times the Kindle's code because Kobo's interface is stopped while we run: sleep, suspend, Wi-Fi and
+the buttons are ours. On the Kindle Amazon's `powerd` keeps them, and the reader only answers its events. Around the
+reader, per host and in shell: each launcher (`reader/kobo/launch.sh` ~180 lines, with Nickel's restart and its Wi-Fi
+loaders; `reader/kindle/launch.sh` ~90), the Kobo's `install.sh`, the Kindle's scriptlet. A new device is a file in
+`reader/device/`, a launcher of its own, and a folder in `docs/devices/`.
 
 **Waveforms** (10, by eye): page turns REAGL without a flash (they look alike in day mode; a flash shows most in night
 mode), a flash now and then (how often: in use); the read-along mark A2, an underline that never touches the
