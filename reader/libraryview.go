@@ -180,6 +180,19 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			rd.dev.Beat()
 			continue
 		}
+		if e.Power { // a charger plugged or unplugged: the header again if its battery or clock changed
+			now := ui.TopBar{Time: shownNow().Format("03:04"), Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
+			if now.Time != topBar.Time || now.Battery != topBar.Battery || now.Charging != topBar.Charging || now.Full != topBar.Full {
+				topBar.Time, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Battery, now.Charging, now.Full
+				setHead()
+				v.Draw(rd.over)
+				if panel != nil {
+					panel.Over(rd.over)
+				}
+				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, v.TopBarHeight()), device.WfREAGL, false)
+			}
+			continue
+		}
 		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:

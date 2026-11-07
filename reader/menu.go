@@ -101,6 +101,24 @@ func (s *session) drawTopBar() {
 		Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())
+	s.barShown = barState(s.dev)
+}
+
+// powerChanged answers a power supply's change (a charger plugged or unplugged): with the bar on the page, it is drawn
+// again when its battery or clock would change, and only it is refreshed. While reading, nothing.
+func (s *session) powerChanged() {
+	if s.nav == nil && s.sheet == nil {
+		return
+	}
+	if now := barState(s.dev); now != s.barShown {
+		s.drawTopBar()
+		s.refresh(s.topBar.Rect(), device.WfREAGL)
+	}
+}
+
+// barState is what the bar's battery and clock show: they are drawn again when it changes.
+func barState(d *device.Device) string {
+	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"))
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.

@@ -83,11 +83,12 @@ func (d *Device) Colour() bool {
 	return strings.HasSuffix(id, "-000000000390") || strings.HasSuffix(id, "-000000000690")
 }
 
-// An Event: a gesture on the touch screen, or the device wanting to sleep (Sleep): on the Kindle, powerd going to the
-// screensaver; on the Kobo, a press of the power button.
+// An Event: a gesture on the touch screen, the device wanting to sleep (Sleep: on the Kindle, powerd going to the
+// screensaver; on the Kobo, a press of the power button), or its power changing (Power). Only a gesture has a place.
 type Event struct {
 	Gesture
 	Sleep  bool
+	Power  bool // a power supply changed (a charger plugged or unplugged, power.go): the battery to read again
 	Button int  // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
 	Held   bool // with Button: the button was held (about 0.4 s), not pressed; sent once, while it is still down, and no press follows
 }
@@ -131,8 +132,9 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 		keys := d.buttons(out)
 		stopSleeps = func() { power.Close(); idle(); keys.Close() }
 	}
+	power := powerChanges(out)
 	var once sync.Once
-	return out, func() { once.Do(func() { f.Close(); stopSleeps(); close(done) }) }, nil
+	return out, func() { once.Do(func() { f.Close(); stopSleeps(); power.Close(); close(done) }) }, nil
 }
 
 // SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
@@ -203,9 +205,31 @@ func batteryDetail() string {
 	return out
 }
 
-// Charging says whether the battery is charging; Full whether it is on the charger and full.
-func (d *Device) Charging() bool { return batteryIs("Charging") }
-func (d *Device) Full() bool     { return batteryIs("Full") }
+// Charging says whether the battery is charging, or a charger is plugged in and the battery not yet full; Full whether it
+// is on the charger and full. A charger counts at once: the Kindle's battery says Charging only ~5 s after the cable
+// goes in (its chip settling first), while its charger supply (bd71827_ac, Mains) is online at once, as Amazon's own
+// interface shows it (2026-11-06). The Kobo's battery says Charging at once; its Mains supply stays offline.
+func (d *Device) Charging() bool {
+	return batteryIs("Charging") || chargerOnline() && !batteryIs("Full")
+}
+
+// chargerOnline says whether a power supply that charges (Mains, USB, Wireless: not the battery itself, which reads
+// online all the time) is online.
+func chargerOnline() bool {
+	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/online"))
+	for _, f := range files {
+		dir := filepath.Dir(f)
+		t, _ := os.ReadFile(filepath.Join(dir, "type"))
+		switch strings.TrimSpace(string(t)) {
+		case "Mains", "USB", "Wireless":
+			if b, err := os.ReadFile(f); err == nil && strings.TrimSpace(string(b)) == "1" {
+				return true
+			}
+		}
+	}
+	return false
+}
+func (d *Device) Full() bool { return batteryIs("Full") }
 
 func batteryIs(status string) bool {
 	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity"))

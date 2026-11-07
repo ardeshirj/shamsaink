@@ -42,6 +42,7 @@ type session struct {
 	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
 	tab                       string       // the sheet's tab: "text" or "page"
 	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
+	barShown                  string       // the bar's battery and clock as last drawn (barState)
 	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's) or "light"
 	slide                     string       // the Light panel's slider a held finger moves ("light", "warmth"), "" for none
 	cv                        *ui.Contents // the table of contents, while shown
@@ -247,6 +248,8 @@ func (s *session) input(e device.Event) {
 	switch {
 	case e.Sleep:
 		s.sleep()
+	case e.Power:
+		s.powerChanged()
 	case s.nar != nil:
 		// reading aloud: a touch stops it
 		s.silence()
@@ -414,6 +417,9 @@ func (s *session) turn(g device.Gesture) {
 		if e.Sleep {
 			s.pending = &e
 			break
+		}
+		if e.Power { // no touch: the bar is not open while pages turn
+			continue
 		}
 		tn, m := apply(s.r, e.Gesture, s.scr.W, s.scr.H)
 		turned, open = turned || tn, m
