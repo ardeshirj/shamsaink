@@ -147,7 +147,7 @@ Its **Progress** list (near the top) is one checklist, kept current: stages 0 to
 (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
 rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers,
 interface language, components, the dock); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
-and upstream (the maintainer posts from their GitHub account); (9) the Kindle, later. An item is checked once done
+and upstream (the maintainer posts from their GitHub account); (9) the Kindle, in the beta since 2026-11-07 (read-along on it after). An item is checked once done
 and tried on a device and stays in its stage; new work goes where it belongs as it is decided.
 
 ## Working with the maintainer

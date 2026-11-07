@@ -2,7 +2,7 @@
 
 Experiments 01–14 showed it can be done: an EPUB reader for Linux e-ink devices, Farsi done properly, narration followed
 word by word, one static ARM binary at crengine's speed. It runs on the **Kobo Libra Colour**, the primary device, as its
-own host, and on the Kindle inside KOReader. This is the **working plan** (the public one: `ROADMAP.md`). An item is
+own host, and on a jailbroken Kindle Paperwhite as its own too (a launcher of ours, Amazon's framework paused). This is the **working plan** (the public one: `ROADMAP.md`). An item is
 checked once done and tried on a device and stays in its stage; new work goes where it belongs as it is decided; nothing
 is built before the maintainer says yes. How things work lives in `DESIGN.md`, `DESIGN-SYSTEM.md`, `TESTING.md` and
 `devices/`; here only what is left and why.
@@ -96,7 +96,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn
   - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
 
-**9. The Kindle** (later)
+**9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
 - [ ] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them
 - [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
@@ -115,7 +115,8 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 ## Releases (2026-11-02)
 What must be true for each release; the stages say how. Checked once done and tried on a device.
 
-**Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46: a stranger can install it, choose a book, read for a week
+**Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46, and the jailbroken Kindle Paperwhite 11th gen, firmware
+5.19.2, added 2026-11-07 (the maintainer: it is looking good): a stranger can install it, choose a book, read for a week
 and remove it)
 
 *The repository, public (first, untagged: the audit, then the flip)*
@@ -144,15 +145,24 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Headphones tried: a short list, in the release notes
 - [ ] Not in the beta, said in its notes: Opus, clips without `clipEnd`, text-to-speech, speed
 
+*The Kindle* (2026-11-07; read-along on it is not in the beta: its notes say Listen is not there yet)
+- [ ] Stage 9's open items but Listen: its end-to-end tests, KOReader's plugin and `-serve` removed, its install
+  package and `install.sh`'s branch
+- [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
+  Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
+- [ ] Its notes in `devices/kindle/`: the jailbreak and KOReader's SSH it needs (not ours to give), the firmware tried,
+  its limits (no page buttons, no Listen, its own Dark Mode kept apart)
+
 *The release*
 - [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line), its notes in `devices/kobo/`, the readers'
-  guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start
+  guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start. The Kindle's the same
+  (its package, `devices/kindle/install.md`)
 - [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
   the Kobo over USB from a clean start and over SSH; the version in Settings
 - [ ] Our test EPUB's scenarios committed, `make e2e` passing
-- [ ] Release notes: the known limits (one device and firmware, read-along's headphones and reboot, the Kobo's bugs) from
-  `devices/README.md` and `devices/kobo/README.md` and how to report a problem
-- [ ] The tag `v0.1.0-beta`, a GitHub release with the package and its checksum
+- [ ] Release notes: the known limits (two devices and their firmware, read-along's headphones and reboot, the Kobo's
+  bugs, no Listen on the Kindle) from `devices/README.md` and each device's README, and how to report a problem
+- [ ] The tag `v0.1.0-beta`, a GitHub release with both packages and their checksums
 
 **After the beta, toward `v1.0`**
 - [ ] Voice timing: every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) nothing on our side can measure;
@@ -173,7 +183,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
   cleanly), tried by upgrading from the beta
 - [ ] Tested on more than ours: Farsi and English, a picture-heavy book and a scan; a scenario for each feature
 - [ ] A month of daily use without a crash or a wrong page, memory flat over days
-- [ ] More devices: another Kobo model or firmware, then the Kindle (stage 9); each a tested line in the notes
+- [ ] More devices: another Kobo model or firmware, read-along on the Kindle; each a tested line in the notes
 - [ ] A user guide on FarsiEPUB's ShamsaInk page
 - [ ] Upstream posted (Alongside)
 - [ ] The tag `v1.0`
@@ -207,8 +217,8 @@ Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259
 ## Why this order
 Daily use decides what the reader needs before more is designed, so what blocks a week of reading comes first. The
 layout comes before the library because every new screen is built from its layers and components. Read-along waits
-for steady daily reading, its sound running through the same session. The Kindle reads well enough inside KOReader
-meanwhile.
+for steady daily reading, its sound running through the same session. The Kindle joined the beta
+(2026-11-07) once its launcher made it the same reader as the Kobo's; read-along on it waits for its own player.
 
 ## Not decided
 - **All Rust, without go-toolkit** (raised 2026-10-26). For: the Go reader starts in ~480 ms cold, 110 warm, against
