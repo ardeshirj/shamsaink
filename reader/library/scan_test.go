@@ -44,6 +44,10 @@ func libDir(t *testing.T) string {
 	makeEPUB(t, filepath.Join(books, "haji-agha_ocr.epub"), `<dc:creator>Someone</dc:creator>`)
 	os.WriteFile(filepath.Join(books, "broken.epub"), []byte("not a zip"), 0o644)
 	makeEPUB(t, filepath.Join(books, "farsiepub", "c.epub"), `<dc:title>In a folder</dc:title>`)
+	// what a Mac leaves on a FAT drive: never listed
+	os.WriteFile(filepath.Join(books, "._a.epub"), []byte("AppleDouble"), 0o644)
+	os.WriteFile(filepath.Join(books, "farsiepub", "._c.epub"), []byte("AppleDouble"), 0o644)
+	makeEPUB(t, filepath.Join(books, ".Trashes", "e.epub"), `<dc:title>Deleted</dc:title>`)
 	return dir
 }
 

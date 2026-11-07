@@ -74,7 +74,7 @@ func Key(path string) (string, error) {
 // readMeta reads an EPUB's metadata; a variable so a test can count the books read.
 var readMeta = epubMeta
 
-// Scan lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub with their metadata: from DIR/library.json
+// Scan lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub (hidden ones left out: see hidden) with their metadata: from DIR/library.json
 // when the book's key is there, else read from the EPUB. Books whose file is gone are dropped, and library.json is
 // written again only if anything changed.
 func Scan(dir string) []Book {
@@ -107,6 +107,9 @@ func Scan(dir string) []Book {
 			continue
 		}
 		rel = filepath.ToSlash(rel)
+		if hidden(rel) {
+			continue
+		}
 		key, err := Key(f)
 		if err != nil {
 			fmt.Printf("library: %s: %v\n", rel, err)
@@ -278,4 +281,15 @@ func progress(dir string, b Book) float64 {
 		return share
 	}
 	return 0
+}
+
+// hidden says whether a book's path (relative to DIR, with slashes) has a part starting with a dot: macOS's `._name`
+// beside each file a Mac copies onto the devices' FAT drives (Finder metadata, not an EPUB), `.Trashes` and the like.
+func hidden(rel string) bool {
+	for _, part := range strings.Split(rel, "/") {
+		if strings.HasPrefix(part, ".") {
+			return true
+		}
+	}
+	return false
 }
