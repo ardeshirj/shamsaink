@@ -10,7 +10,8 @@ The jailbreak (WinterBreak with the Kindle Modding Community's tools, `/var/loca
 `documents/` as a book and runs it when opened (a "scriptlet"; KOReader starts the same way, through `kpm`, KMC's package
 manager). Ours, `documents/ShamsaInk.sh` (`reader/kindle/ShamsaInk.sh`, its cover `cover.png` put in by
 `scriptlet.sh`), runs `/mnt/us/shamsaink/launch.sh` (`reader/kindle/launch.sh`), which pauses Amazon's framework as
-KOReader does by default (the status bar off, `awesome` and `volumd` stopped), runs the reader on the library, and
+KOReader does by default (the status bar off, `awesome` and `volumd` stopped; and the status bar's own program,
+`JunoStatusBarDriver`, below), runs the reader on the library, and
 resumes it all when the reader ends. KUAL is not needed (not installed here). `make kindle-reader-install` puts it all
 in place: the reader, `launch.sh`, the fonts, the scriptlet (and KOReader's plugin, until it goes).
 
@@ -36,6 +37,21 @@ SSH while reading: KOReader's dropbear (port 2222) keeps running when KOReader e
 **The window manager answers nothing while paused.**
 - What: `lipc` to `com.lab126.winmgr` (that is `awesome`, which the launcher stops) waits 10 s and fails.
 - What we do: the launcher asks it what it needs (`epdcMode`) before pausing it, and passes the answer on.
+
+**The status bar is a program of its own, which `pillow` does not turn off** (2026-11-06).
+- What: on firmware 5.19 the bar at the top (the time, the battery, Wi-Fi) is `/app/bin/JunoStatusBarDriver`
+  (`/etc/upstart/statusbar.conf`, when `isKPPChromeEnabled=true`), an X window 1236×101 at the top. Turning `pillow`
+  off and stopping `awesome` leave it running: each minute it repainted its clock (24-hour, as the Kindle is set) over
+  the top-left of our header.
+- What we do: the launcher pauses it with `awesome` and `volumd` (`killall -STOP`) and resumes it on leaving.
+  Paused, upstart does not restart it (it restarts it only when it exits). Tried: the header clean over minutes, a
+  sleep and wake as fast as before (858 ms back), and the bar running again once the reader has left.
+- KOReader (its `koreader.sh`, v2026.07.1) leaves it running: it pauses `awesome`, which is what puts Amazon's clock on
+  the ink, and redraws from its own copy of the screen. We cannot leave it: the reader puts back the screen's memory
+  after a sleep and on leaving (`Screen.Save`), and the bar's clock painted there would come back with it. KOReader
+  once shrank the bar's window (5.7.2 to 5.12.3) and dropped that because it froze Amazon's interface on exit
+  (koreader/koreader#6117): if leaving ever hangs, this pause is the first suspect; the other way is to redraw after a
+  sleep from our own image instead of the screen's memory, and not pause it.
 
 **The Kindle's own Dark Mode inverts every pixel, ours too.**
 - What: it sets the window manager's `epdcMode` to `Y8INV`, and the screen's driver inverts whatever is drawn.

@@ -4,7 +4,9 @@
 # ignores the power button, and the framework takes 52 s to start again (2026-11-06, docs/devices/kindle/README.md).
 # Paused as KOReader pauses it by default (its koreader.sh read, not copied): the status bar off (pillow), the window
 # manager (awesome) stopped so the clock does not draw over us, and volumd stopped so a USB cable does not take
-# /mnt/us away mid-book. powerd stays in charge of sleep: the reader shows its sleep screen when powerd goes to the
+# /mnt/us away mid-book. And one KOReader leaves: on firmware 5.19 the status bar is its own program,
+# JunoStatusBarDriver (/etc/upstart/statusbar.conf), which pillow does not turn off and which repainted its clock over
+# our header every minute (2026-11-06): stopped too (paused, upstart does not restart it). powerd stays in charge of sleep: the reader shows its sleep screen when powerd goes to the
 # screensaver and puts the page back when it comes out (reader/device/kindle.go). Everything resumed on leaving,
 # however the reader ends.
 #
@@ -40,11 +42,11 @@ done
 export KINDLE_EPDC="$(lipc-get-prop -s com.lab126.winmgr epdcMode 2>/dev/null)"
 # the framework paused
 lipc-set-prop com.lab126.pillow disableEnablePillow disable 2>/dev/null
-killall -STOP awesome volumd 2>/dev/null
-log "framework paused (status bar off, awesome and volumd stopped; screen $KINDLE_EPDC); ${BOOK:+reading $BOOK}${BOOK:-the library}"
+killall -STOP awesome volumd JunoStatusBarDriver 2>/dev/null
+log "framework paused (status bar off, awesome, volumd and the status bar's program stopped; screen $KINDLE_EPDC); ${BOOK:+reading $BOOK}${BOOK:-the library}"
 leave() {
   kill "$W" 2>/dev/null
-  killall -CONT awesome volumd 2>/dev/null
+  killall -CONT awesome volumd JunoStatusBarDriver 2>/dev/null
   lipc-set-prop com.lab126.pillow disableEnablePillow enable 2>/dev/null
   # the reader puts back the screen it found when it leaves (RESTORE_SCREEN); if it did not (killed), the home screen
   [ "$CODE" = 0 ] || lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home 2>/dev/null
