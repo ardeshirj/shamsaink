@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unsafe"
 )
 
 // The touch screen, read directly (multi-touch type B; experiment 11, step 1): its coordinates are the screen's
@@ -53,7 +54,7 @@ func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os
 		return nil, err
 	}
 	if Sim() { // a named pipe: nothing to grab
-		go readTouches(f, turn, out)
+		go readTouches(f, turn, out, 0, 0)
 		return f, nil
 	}
 	// the grab through the file's raw fd, not Fd(): Fd() would make reads blocking, and Close could not end the read
@@ -69,14 +70,33 @@ func touches(path string, turn func(x, y int) (int, int), out chan<- Event) (*os
 		f.Close()
 		return nil, e
 	}
-	go readTouches(f, turn, out)
+	// where the last finger was: the kernel sends a coordinate only when it changes, so a tap at the same x or y as the
+	// last one before this open (the book's back arrow, then the library's menu in the same place) would have none
+	tx, ty := lastAt(c, absMTPositionX), lastAt(c, absMTPositionY)
+	go readTouches(f, turn, out, tx, ty)
 	return f, nil
 }
 
-// readTouches is touches' reading, until f is closed.
-func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event) {
+// lastAt is the touch screen's last value of an axis in the first slot (EVIOCGMTSLOTS), 0 if it cannot say.
+func lastAt(c syscall.RawConn, code uint32) int {
+	var buf [1 + 16]int32 // the code, then a value for each of up to 16 slots
+	buf[0] = int32(code)
+	req := uintptr(2<<30 | uint32(len(buf)*4)<<16 | 'E'<<8 | 0x0a) // _IOC(_IOC_READ, 'E', 0x0a, size)
+	var e syscall.Errno
+	c.Control(func(fd uintptr) {
+		_, _, e = syscall.Syscall(syscall.SYS_IOCTL, fd, req, uintptr(unsafe.Pointer(&buf[0])))
+	})
+	if e != 0 {
+		return 0
+	}
+	return int(buf[1])
+}
+
+// readTouches is touches' reading, until f is closed, the finger last at (tx, ty) in the touch's coordinates.
+func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event, tx, ty int) {
 	var ev [16]byte // struct input_event on 32-bit ARM: timeval (8), type, code (2 each), value (4)
-	slot, x, y, tx, ty := int32(0), 0, 0, 0, 0
+	slot := int32(0)
+	x, y := turn(tx, ty)
 	var down, started bool
 	var x0, y0 int
 	var t0 time.Duration // the kernel's time of the finger's first report: how long it was down, read on lifting

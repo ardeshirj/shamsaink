@@ -95,4 +95,8 @@ What we do: `make kindle-reader-install` stops an open reader first.
 ## Findings log
 Newest last; each a dated entry. The bugs above are the settled ones.
 
-- None yet.
+- 2026-11-07, found by the first end-to-end run here: **a tap could land at 0,0 after the reader moved between the library
+  and a book.** Each opens the touch screen afresh, and the kernel sends a coordinate only when it changes: a tap at
+  the same x or y as the last one before (in a Farsi book the back arrow is where the library's menu is) arrived
+  without it, read as 0. The reader now asks the kernel where the finger last was when it opens the touch screen
+  (`EVIOCGMTSLOTS`, `reader/device/touch.go`). The same code on the Kobo; seen here first.
