@@ -6,7 +6,7 @@ is at the end, under "Versions and releases".
 
 ## 0.0.1 (2026-11-06)
 The first tagged build, before the beta: for the maintainer's Kobo Libra Colour (firmware 4.46) only. Not for anyone
-else yet: the beta (`v0.1.0-beta`) is when a stranger can install it and read for a week (`docs/PLAN.md`, "Releases").
+else yet: the beta (`v0.1.0-beta`) is when a user can install it and read for a week (`docs/PLAN.md`, "Releases").
 - **What it is:** an EPUB reader for the Kobo, started from NickelMenu, with Kobo's own interface stopped while it
   runs. The library (text rows), the book's pages drawn by our engine (Blitz), Farsi and right-to-left books done
   properly, Contents, highlights, Light (level, warmth, dark mode), Text, Reading settings, the sleep screen, the

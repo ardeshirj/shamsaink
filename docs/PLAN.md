@@ -116,7 +116,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 What must be true for each release; the stages say how. Checked once done and tried on a device.
 
 **Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46, and the jailbroken Kindle Paperwhite 11th gen, firmware
-5.19.2, added 2026-11-07 (the maintainer: it is looking good): a stranger can install it, choose a book, read for a week
+5.19.2, added 2026-11-07 (the maintainer: it is looking good): a user can install it, choose a book, read for a week
 and remove it)
 
 *The repository, public (first, untagged: the audit, then the flip)*

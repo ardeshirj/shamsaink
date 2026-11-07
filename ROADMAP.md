@@ -17,7 +17,7 @@ plan, not a promise: nothing here has a date.
 - Not yet released: there is no installable version yet.
 
 ## First beta
-A version a stranger can install on a Kobo Libra Colour or a jailbroken Kindle Paperwhite, read with for a week, and
+A version a user can install on a Kobo Libra Colour or a jailbroken Kindle Paperwhite, read with for a week, and
 remove again.
 - [x] Reading on the Libra Colour: touch and page buttons, contents, highlights, text size, the light, dark mode, sleep
   and wake
