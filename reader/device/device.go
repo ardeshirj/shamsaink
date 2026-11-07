@@ -34,9 +34,6 @@ type Device struct {
 	lightOnce  sync.Once     // the Kindle's light, read from powerd once (light.go)
 	kindle     *kindleLight
 	clockKick  chan struct{} // Doze, once awake: the clock's wait worked out again (clock.go)
-
-	// Hosted: the Kindle's reader runs inside KOReader (its plugin, -serve), which shows the screensaver itself
-	Hosted bool
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
@@ -163,14 +160,10 @@ type SleepText struct {
 }
 
 // Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a screen of a YAML file from dir/sleep,
-// drawn by text or a picture it names, else fallback), suspends until the power button is pressed again, and returns true once the
+// drawn by text or a picture it names, else fallback), suspends until the power button is pressed again, and returns once the
 // Kobo is awake and the screen back. On the Kindle powerd sleeps and wakes it (kindle.go): the same screen, until powerd
-// comes out of the screensaver. Hosted (inside KOReader) it returns false at once: the book is to be left, for KOReader
-// to show its screensaver.
-func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
-	if d.Kind == Kindle && d.Hosted {
-		return false
-	}
+// comes out of the screensaver.
+func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) {
 	beatSleeping()
 	t := time.Now()
 	pic := sleepScreen(dir, fallback, text)
@@ -186,7 +179,6 @@ func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
 	case d.clockKick <- struct{}{}: // the next minute from the wall clock: Go's timers stopped while asleep
 	default:
 	}
-	return true
 }
 
 // Usage writes one line to the log for the usage table (`make kobo-usage`): the event (start, stop, sleep, wake), the time

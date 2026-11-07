@@ -170,7 +170,7 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 
 What the reader stands on on an e-ink device. Two devices so far (`devices/README.md`): the Kobo Libra Colour, started
 from NickelMenu with Kobo's interface stopped while reading, and the Kindle Paperwhite 11th gen, started from a scriptlet
-in its library with Amazon's framework paused (2026-11-06; before, inside KOReader through our plugin, which goes).
+in its library with Amazon's framework paused (2026-11-06; before, inside KOReader through our plugin, removed 2026-11-07).
 
 ```mermaid
 flowchart LR
@@ -186,10 +186,9 @@ flowchart LR
 | Part | What it does | Whose | State |
 |---|---|---|---|
 | the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by NickelMenu (Kobo) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06) |
-| the plugin (going) | "Open with ShamsaInk" in KOReader's file manager, the Kindle's host until its launcher. Starts the reader once and keeps it running (`-serve`: a book a message on a pipe, "left" or "asleep" back, its pid in `/var/tmp/shamsaink`); redraws KOReader's screen when a book is left; on "asleep", KOReader's screensaver at once, and the book opened again on waking | ours, Lua inside KOReader (`reader/shamsaink.koplugin`) | in use on the Kindle |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
-| input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so KOReader does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
-| sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`); inside KOReader (`-serve`) it leaves the book for KOReader's screensaver | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
+| input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so the device's own interface does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
+| sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
 | power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
 | sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into Kobo's `mtkbtmwrpcaudiosink` kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
@@ -319,7 +318,7 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | rayon | both cores | MIT / Apache-2.0 | yes |
 | Linux's framebuffer, mxcfb/MediaTek and input interfaces | screen and touch | the kernel's interface (numbers and struct layouts, no code) | called |
 | go-text | the Go engine | BSD-3 / Unlicense | only if the Go engine stays (the reference) |
-| KOReader | the Kindle's host | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) read as a reference, nothing copied. The plugin runs inside it: its licence to check |
+| KOReader | its SSH server, on both devices while developing (the Kindle's host until 2026-11-07) | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) and `koreader.sh` read as a reference, nothing copied |
 | FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
 | crengine | the bar to measure against | GPL-2.0 | no |
 | the Kindle's `powerd`, `lipc`, `mplay` | sleep watched; sound | Amazon's | no: run as commands |

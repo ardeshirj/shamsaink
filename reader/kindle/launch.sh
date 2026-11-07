@@ -25,16 +25,8 @@ log() { echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') launch: $*" >> "$D"/logs/reade
 log "started, uptime $(cut -d' ' -f1 /proc/uptime) s"
 BOOK=$1
 [ -z "$BOOK" ] || [ -f "$BOOK" ] || { log "no book $BOOK"; exit 1; }
-# one reader: one started by KOReader's plugin (-serve, kept running between books) is stopped; a launcher already
-# reading wins
-for p in $(pidof shamsaink); do
-  if tr '\0' ' ' < /proc/"$p"/cmdline | grep -q -- -serve; then
-    kill "$p" && log "KOReader's reader ($p) stopped"
-  else
-    log "a reader ($p) is already running: not started"
-    exit 1
-  fi
-done
+# one reader: a launcher already reading wins
+P=$(pidof shamsaink) && { log "a reader ($P) is already running: not started"; exit 1; }
 
 # the Kindle's own Dark Mode (epdcMode Y8INV: the screen inverts every pixel, ours too), for the reader to draw the
 # other way so its own dark mode looks the same either way (reader/device/kindle.go). Asked before awesome, which

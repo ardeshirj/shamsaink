@@ -2,8 +2,9 @@
 
 MediaTek MT8113 (two Cortex-A53 cores at up to 1 GHz under a 32-bit kernel), 485 MB, 1236 × 1648 at 300 ppi,
 firmware 5.19.2, jailbroken, KOReader v2026.07.1. Reached with `ssh kindle` (KOReader's SSH server). Set up as in
-`setup.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi and SSH with it:
-`make kindle-awake`, `kindle-sleep`, `kindle-status`, `kindle-wait`. A later target than the Kobo (plan, stage 9).
+`setup.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi and SSH with it (the reader
+open keeps it awake while it is touched, as any reading does): `make kindle-status`, `kindle-wait` once woken by hand.
+In the beta beside the Kobo since 2026-11-07, read-along on it after (plan, stage 9).
 
 ## The launcher (2026-11-06)
 The jailbreak (WinterBreak with the Kindle Modding Community's tools, `/var/local/kmc`) lists a `.sh` file in
@@ -13,7 +14,7 @@ manager). Ours, `documents/ShamsaInk.sh` (`reader/kindle/ShamsaInk.sh`, its cove
 KOReader does by default (the status bar off, `awesome` and `volumd` stopped; and the status bar's own program,
 `JunoStatusBarDriver`, below), runs the reader on the library, and
 resumes it all when the reader ends. KUAL is not needed (not installed here). `make kindle-reader-install` puts it all
-in place: the reader, `launch.sh`, the fonts, the scriptlet (and KOReader's plugin, until it goes).
+in place: the reader, `launch.sh`, the fonts, the scriptlet (and removes KOReader's plugin, the host until 2026-11-07).
 
 ```
 /mnt/us/documents/ShamsaInk.sh        the scriptlet: ShamsaInk in the Kindle's library, with its cover
@@ -83,7 +84,8 @@ What we do: `make kindle-reader-install` stops an open reader first.
 
 **`/mnt/us` is slow (FUSE).**
 - What: books and the program live there; reading the 13 MB program page by page costs ~640 ms of a cold start.
-- What we do: the reader stays running (`-serve`) and pays it once.
+- What we do: the library and every book read from it in one process (the launcher's), so it is paid once, on opening
+  ShamsaInk (until 2026-11-07, KOReader's plugin kept the reader running between books, `-serve`).
 - Found: experiment 09 (`experiments/09-kindle/NOTES.md`, step 4).
 
 ## Findings log

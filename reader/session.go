@@ -60,21 +60,21 @@ type session struct {
 	unmark int        // the highlight held, the menu's (-1: words chosen)
 	from   blitz.Word // the first word chosen, or the word held on a highlight: where Listen from here starts
 
-	left, asleep bool // the book left (asleep: as the Kindle went to sleep)
+	left bool // the book left
 
 	langCode string // the book's language (lang.go), for the interface's
 }
 
 // read opens a book (m: "book", see main) at its place and turns its pages until it is left; the touch screen is let
 // go of and the book closed before it returns.
-func (rd *reader) read(m map[string]string, t time.Time) (asleep bool, err error) {
+func (rd *reader) read(m map[string]string, t time.Time) error {
 	s, err := rd.open(m["book"], t)
 	if err != nil {
-		return false, err
+		return err
 	}
 	defer s.close()
 	s.run()
-	return s.asleep, nil
+	return nil
 }
 
 // open opens the book at path and shows its page: the book opened, its narration and contents read and its page drawn
@@ -327,17 +327,12 @@ func (s *session) drain() {
 }
 
 // sleep answers the device wanting to sleep, the narration stopped. The device sleeps here behind the sleep screen,
-// until woken (the Kobo: the power button pressed again; the Kindle: powerd out of the screensaver); inside KOReader on
-// the Kindle the book is left instead, for KOReader to show its screensaver (the plugin opens it again on waking).
+// until woken (the Kobo: the power button pressed again; the Kindle: powerd out of the screensaver).
 func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()
 	}
-	if !s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.sleepText()) {
-		s.asleep = true
-		s.leave()
-		return
-	}
+	s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.sleepText())
 	s.drain()
 	s.barChanged() // the screen put back as it was: the bar's time, if it shows, from before the sleep
 }
@@ -379,8 +374,7 @@ func (s *session) leave() {
 	s.stop()
 	s.uncue()
 	s.r.close()
-	fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms%s\n", s.r.doc, s.r.at, k, w,
-		ms(t)-k-w, map[bool]string{true: " (going to sleep)"}[s.asleep])
+	fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms\n", s.r.doc, s.r.at, k, w, ms(t)-k-w)
 	s.left = true
 }
 

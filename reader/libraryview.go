@@ -28,7 +28,7 @@ func (rd *reader) browse(t time.Time) error {
 		if err != nil || path == "" {
 			return err
 		}
-		if _, err := rd.read(map[string]string{"book": path}, time.Now()); err != nil {
+		if err := rd.read(map[string]string{"book": path}, time.Now()); err != nil {
 			fmt.Fprintln(os.Stderr, "shamsaink:", err)
 		}
 		if rd.quit {
@@ -208,12 +208,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		head := v.HeadAt(e.X, e.Y)
 		switch {
 		case e.Sleep:
-			if rd.dev.Doze(rd.dir, splash.Gray, rd.sleepText()) {
-				for len(events) > 0 { // the touches made while asleep
-					<-events
-				}
-				headChanged() // the screen put back as it was: its time from before the sleep
+			rd.dev.Doze(rd.dir, splash.Gray, rd.sleepText())
+			for len(events) > 0 { // the touches made while asleep
+				<-events
 			}
+			headChanged() // the screen put back as it was: its time from before the sleep
 		case e.Button != 0: // a page button turns the list's pages, unless a panel is open (a hold does nothing)
 			if panel == nil && !e.Held {
 				turn(e.Button)

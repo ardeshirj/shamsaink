@@ -14,5 +14,6 @@ It uses, and does not change:
   SIL Open Font License 1.1, and DejaVu (copyright 2003 Bitstream, Inc., and the DejaVu changes in the public domain),
   the Bitstream Vera licence: in reader/fonts, each with its licence.
 
-On a Kindle it runs inside KOReader (https://github.com/koreader/koreader, AGPL-3.0) through a small plugin of ours
-(reader/shamsaink.koplugin). KOReader is a separate program and none of its code is copied here.
+On a Kindle it is started by a launcher of ours from the Kindle's own library; KOReader
+(https://github.com/koreader/koreader, AGPL-3.0) is used only for its SSH server while developing. KOReader is a
+separate program and none of its code is copied here.

@@ -175,11 +175,9 @@ $(NM_TGZ):
 # --- The Kindle ---
 #
 # docs/devices/kindle/setup.md; KINDLE is its SSH host (~/.ssh/config).
-#   make kindle-reader-install  build the reader, copy it and the KOReader plugin to the Kindle (restart KOReader for
-#                        the plugin; reader-install until 2026-10-30)
+#   make kindle-reader-install  build the reader, copy it, its fonts, the launcher and the scriptlet to the Kindle
+#                        (KOReader's plugin, which hosted it until 2026-11-07, removed; reader-install until 2026-10-30)
 #   make kindle-reader-log  the end of the reader's log on the Kindle (reader-log until 2026-10-30)
-#   make kindle-awake    keep it awake: no sleep, so Wi-Fi and SSH stay up (drains the battery: undo when done)
-#   make kindle-sleep    let it sleep again (its own power manager, as normal)
 #   make kindle-status   awake or not, battery, Wi-Fi, free memory and storage
 #   make kindle-wait     wait until it answers over SSH (after waking it by hand)
 #   make kindle-ssh      a shell on it
@@ -187,40 +185,31 @@ $(NM_TGZ):
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 
-.PHONY: kindle-reader-install kindle-reader-log kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
+.PHONY: kindle-reader-install kindle-reader-log kindle-status kindle-wait kindle-ssh
 
 kindle-reader-install: reader
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/sleep /mnt/us/shamsaink/books'
 	@# a reader running from the launcher is stopped first (its launcher resumes the framework): its program, replaced on
 	@# /mnt/us (FUSE) under it, would die of SIGBUS at its next page of code
-	@$(SSH) 'for p in $$(pidof shamsaink); do tr "\0" " " < /proc/$$p/cmdline | grep -q -- -serve || { kill $$p; echo "the open reader ($$p) stopped"; }; done; true'
+	@$(SSH) 'for p in $$(pidof shamsaink); do kill $$p; echo "the open reader ($$p) stopped"; done; true'
 	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
 	@scp -q reader/out/shamsaink $(KINDLE):/mnt/us/shamsaink/shamsaink.new
 	@$(SSH) 'mv /mnt/us/shamsaink/shamsaink.new /mnt/us/shamsaink/shamsaink'
-	@# a reader kept running is stopped, so the next book starts the new one
-	@$(SSH) 'kill $$(cat /var/tmp/shamsaink/pid 2>/dev/null) 2>/dev/null; true'
-	@scp -qr reader/shamsaink.koplugin $(KINDLE):/mnt/us/koreader/plugins/
+	@# KOReader's plugin, which hosted the reader until the launcher (2026-11-07), and its pipes
+	@$(SSH) 'rm -rf /mnt/us/koreader/plugins/shamsaink.koplugin /var/tmp/shamsaink'
 	@# the launcher, and the scriptlet that lists it in the Kindle's library (reader/kindle)
 	@scp -q reader/kindle/launch.sh $(KINDLE):/mnt/us/shamsaink/launch.sh
 	@sh reader/kindle/scriptlet.sh | $(SSH) 'cat > /mnt/us/documents/ShamsaInk.sh'
 	@# the fonts as the package has them: those no longer in it removed
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/fonts && cd /mnt/us/shamsaink/fonts && for f in *.ttf; do case " $(notdir $(wildcard reader/fonts/*.ttf)) " in *" $$f "*) ;; *) rm -f "$$f";; esac; done'
 	@scp -q reader/fonts/*.ttf $(KINDLE):/mnt/us/shamsaink/fonts/
-	@echo "reader, fonts, launcher, scriptlet and plugin copied to $(KINDLE)"
+	@echo "reader, fonts, launcher and scriptlet copied to $(KINDLE)"
 
 kindle-reader-log:
-	@$(SSH) 'tail -n 40 /mnt/us/shamsaink/log.txt'
-
-kindle-awake:
-	@$(SSH) 'lipc-set-prop com.lab126.powerd preventScreenSaver 1 && lipc-get-prop com.lab126.powerd preventScreenSaver' \
-	  | sed 's/^1$$/kept awake (preventScreenSaver 1): run make kindle-sleep when done/'
-
-kindle-sleep:
-	@$(SSH) 'lipc-set-prop com.lab126.powerd preventScreenSaver 0 && lipc-get-prop com.lab126.powerd preventScreenSaver' \
-	  | sed 's/^0$$/sleeps on its own again (preventScreenSaver 0)/'
+	@$(SSH) 'tail -n 40 /mnt/us/shamsaink/logs/reader.log'
 
 kindle-status:
-	@$(SSH) 'echo "kept awake: $$(lipc-get-prop com.lab126.powerd preventScreenSaver) (1 yes, 0 no)"; \
+	@$(SSH) 'echo "kept awake: $$(lipc-get-prop com.lab126.powerd preventScreenSaver) (1 yes, by KOReader'"'"'s Keep alive or a script; 0 no)"; \
 	  echo "power: $$(lipc-get-prop com.lab126.powerd status | head -1)"; \
 	  echo "battery: $$(lipc-get-prop com.lab126.powerd battLevel)%, $$(lipc-get-prop com.lab126.powerd isCharging | sed "s/1/charging/;s/0/not charging/")"; \
 	  echo "wi-fi: $$(lipc-get-prop com.lab126.wifid cmState), $$(ip -4 addr show wlan0 | sed -n "s/.*inet \([0-9.]*\).*/\1/p")"; \

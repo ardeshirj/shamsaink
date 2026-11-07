@@ -18,8 +18,7 @@ import (
 // running, paused under us, as KOReader does by default, so powerd keeps doing this.
 //
 // The reader answers it as on the Kobo, the book kept open: goingToScreenSaver shows the sleep screen, and
-// outOfScreenSaver puts the page back (kindleDoze). Inside KOReader (Hosted: the plugin and -serve, until the launcher
-// replaces them) the book is left instead, for KOReader to show its screensaver; the plugin opens it again on waking.
+// outOfScreenSaver puts the page back (kindleDoze).
 
 // kindleSleeps sends to out when powerd goes to the screensaver, and wakes a doze when it comes out, until stop is
 // called.

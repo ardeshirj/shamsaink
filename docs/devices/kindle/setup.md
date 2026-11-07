@@ -60,10 +60,10 @@ Everything in the repo uses the host name `kindle`; for another one, `make KINDL
 **When the Kindle sleeps, its Wi-Fi goes off, and SSH with it:** a run in progress over SSH is cut, and nothing
 reaches it until it is woken by hand. Its power manager (powerd) puts it to sleep after a few minutes without a
 touch, whatever KOReader's own settings say. One switch holds it off, the one KOReader's "Keep alive" uses
-(`lipc-set-prop com.lab126.powerd preventScreenSaver`):
+(`lipc-set-prop com.lab126.powerd preventScreenSaver`). Its make targets (`kindle-awake`, `kindle-sleep`) went on
+2026-11-07: the reader, once open, keeps the Kindle awake while it is touched and lets powerd sleep it after its
+timeout, as it should; a switch left on kept the reader's own sleep from ever coming. Now:
 ```sh
-make kindle-awake     # no sleep from now on: Wi-Fi and SSH stay up
-make kindle-sleep     # back to normal when done (awake drains the battery)
 make kindle-status    # awake or not, battery, Wi-Fi and its address, free memory and storage
 make kindle-wait      # after waking it with its power button: waits until SSH answers
 ```
@@ -75,7 +75,7 @@ throughout. When it sleeps anyway, something turned the switch off: KOReader's K
 
 The experiments' scripts (`run.sh`, `run-epub.sh`, `refresh.sh`…) hold it awake themselves while they run and put
 the switch back as it was at the end (before 2026-10-26 they set it to 0, so the Kindle slept ten minutes after a
-script, even after `make kindle-awake`). For a long run, start it detached so a dropped connection cannot stop it,
+script, even after `make kindle-awake`, since gone). For a long run, start it detached so a dropped connection cannot stop it,
 and read its results file afterwards:
 ```sh
 ssh kindle 'cd /mnt/us/shamsaink-09 && nohup sh run.sh >/dev/null 2>&1 </dev/null &'

@@ -97,7 +97,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
 
 **9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
-- [ ] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them
+- [x] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them (2026-11-07)
 - [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
   player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
@@ -146,8 +146,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Not in the beta, said in its notes: Opus, clips without `clipEnd`, text-to-speech, speed
 
 *The Kindle* (2026-11-07; read-along on it is not in the beta: its notes say Listen is not there yet)
-- [ ] Stage 9's open items but Listen: its end-to-end tests, KOReader's plugin and `-serve` removed, its install
-  package and `install.sh`'s branch
+- [ ] Stage 9's open items but Listen: its end-to-end tests, its install package and `install.sh`'s branch
 - [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
   Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
 - [ ] Its notes in `devices/kindle/`: the jailbreak and KOReader's SSH it needs (not ours to give), the firmware tried,
@@ -191,9 +190,11 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 ## Hosts
 Only the host knows the host: the engine, the book and its cache, the settings and reading one book are host-free; the
 device's parts are behind `reader/device`.
-- **The Kindle: KOReader** (`reader/shamsaink.koplugin`, the reader's `-serve` mode): "Open with ShamsaInk" on an EPUB;
-  the reader kept running between books, since starting it from `/mnt/us` (FUSE) costs ~0.64 s cold. KOReader keeps
-  sleep, Wi-Fi and SSH. A launcher of our own there is stage 9; KOReader stays installed on both devices for SSH.
+- **The Kindle: our own host** (`devices/kindle/README.md`, since 2026-11-06): the scriptlet ShamsaInk in the
+  Kindle's library starts `launch.sh`, which pauses Amazon's framework while reading and resumes it after (stopped,
+  powerd ignores the power button). The library and its books in one process, so starting from `/mnt/us` (FUSE, ~0.64 s
+  cold) is paid once. Sleep is powerd's, answered with our sleep screen. KOReader's plugin, the host before, went on
+  2026-11-07; KOReader stays installed on both devices for SSH.
 - **The Kobo: our own host** (`devices/kobo/setup.md`, section 7): NickelMenu starts `launch.sh`, which stops Nickel
   while reading and starts it after (pausing it brought its watchdog's reboots), or reboots once Bluetooth has been on
   (the kernel's crash on a second start). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's, none KOReader's.
