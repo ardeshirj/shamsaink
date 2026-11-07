@@ -1,0 +1,13 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "filter-all": [826, 221, 1089, 295],
+  "filter-finished": [564, 221, 827, 295],
+  "filter-new": [302, 221, 565, 295],
+  "filter-reading": [43, 221, 303, 295],
+  "list-sort": [1108, 214, 1196, 302],
+  "topbar-battery": [994, 40, 1086, 128],
+  "topbar-light": [884, 40, 973, 128],
+  "topbar-menu": [1108, 40, 1196, 128]
+ }
+}

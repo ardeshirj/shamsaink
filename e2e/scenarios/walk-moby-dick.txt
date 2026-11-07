@@ -2,7 +2,7 @@
 # against its SHA-256, never committed), narrated, left to right. The fixture (e2e/fixtures/moby-dick) opens it on a page
 # of its first chapter, where the walk holds a word for the highlight's menu. Nothing here names a screen: they come from
 # the design spec.
-on: sim kobo
+on: sim kobo kindle
 fixture: moby-dick
 fetch https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub books/idpf/moby-dick-mo.epub 749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c
 walk

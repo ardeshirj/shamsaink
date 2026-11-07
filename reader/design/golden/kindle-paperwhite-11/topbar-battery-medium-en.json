@@ -1,0 +1,9 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "topbar-battery": [994, 40, 1086, 128],
+  "topbar-light": [884, 40, 973, 128],
+  "topbar-menu": [1108, 40, 1196, 128],
+  "topbar-start": [40, 40, 128, 128]
+ }
+}

@@ -249,10 +249,14 @@ func (d *dev) screen() (*screen, error) {
 	if len(raw) < h*stride {
 		return nil, fmt.Errorf("the framebuffer gave %d bytes, want %d", len(raw), h*stride)
 	}
+	g := 0 // the grey: a pixel's byte on the Kindle (8 bits), its green on the Kobo (32 bits)
+	if bpp == 4 {
+		g = 1
+	}
 	s := &screen{w, h, make([]byte, w*h)}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			s.pix[y*w+x] = raw[y*stride+x*bpp+1]
+			s.pix[y*w+x] = raw[y*stride+x*bpp+g]
 		}
 	}
 	return s, nil
@@ -374,16 +378,41 @@ func (d *dev) press(forward bool) error {
 	return err
 }
 
-// power writes the power button's press and release into its input (bd71828-pwrkey, event3 on the Kobo and the
-// simulated Kobo, beside the touch screen's node): the reader sleeps, or wakes.
+// power writes the power button's press and release into its input (bd71828-pwrkey: event3 on the Kobo and the
+// simulated Kobo, event0 on the Kindle, where powerd hears it): the reader sleeps, or wakes.
 func (d *dev) power() error {
 	d.record("button power")
 	const evKey, keyPower = 1, 116
 	b := append(event(evKey, keyPower, 1), event(evSyn, 0, 0)...)
 	b = append(b, event(evKey, keyPower, 0)...)
 	b = append(b, event(evSyn, 0, 0)...)
-	_, err := d.sh("cat > "+filepath.Dir(d.a.Touch.Node)+"/event3", b)
+	node := "event3"
+	if d.place() == "kindle" {
+		node = "event0"
+	}
+	_, err := d.sh("cat > "+filepath.Dir(d.a.Touch.Node)+"/"+node, b)
 	return err
+}
+
+// place is where the device is, as a scenario's on: names it and refs.sum keys it: sim (the simulated Kobo), kobo or
+// kindle.
+func (d *dev) place() string {
+	switch {
+	case d.a.Local != "":
+		return "sim"
+	case strings.HasPrefix(d.name, "kindle"):
+		return "kindle"
+	}
+	return "kobo"
+}
+
+// home is the launcher's line once the device's own interface is back: Kobo's Nickel started again (the simulated
+// launcher says the same), or Amazon's framework resumed on the Kindle.
+func (d *dev) home() string {
+	if d.place() == "kindle" {
+		return `framework resumed`
+	}
+	return `Nickel started again`
 }
 
 // holdAt writes a finger down at the screen's (x, y), held still past the reader's hold time, moved to (x2, y2) in three
@@ -463,6 +492,6 @@ func (d *dev) leave(lib, menu *boxes) error {
 	if _, err := d.expect(`library: left`, 10*time.Second); err != nil {
 		return err
 	}
-	_, err := d.expect(`Nickel started again`, 20*time.Second)
+	_, err := d.expect(d.home(), 20*time.Second)
 	return err
 }

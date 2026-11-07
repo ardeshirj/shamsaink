@@ -11,6 +11,14 @@ kobo-libra-colour:
   framebuffer: {stride: 5056, bits: 32}       # /sys/class/graphics/fb0
   fonts_local: reader/fonts               # the folder the renders are drawn with; the device's must be the same files
   reader_local: reader/out/shamsaink          # the latest local build (make reader); the device's may be an older one
+kindle-paperwhite-11:
+  ssh: kindle                                 # a host of ~/.ssh/config (docs/devices/kindle/setup.md)
+  dir: /mnt/us/shamsaink
+  log: /mnt/us/shamsaink/logs/reader.log
+  touch: {node: /dev/input/event1, name: pt_mt, turn: {x: x, y: y}}   # not turned (reader/device/screen.go, touchTurn)
+  framebuffer: {stride: 1248, bits: 8}        # 8-bit grey, each line padded to 1248 bytes for the 1236 shown
+  fonts_local: reader/fonts
+  reader_local: reader/out/shamsaink
 # The simulated Kobo (docs/TESTING.md, section 2): the reader built for Linux, run in Docker with SHAMSAINK_SIM=/sim, its
 # hardware files under /sim (made fresh for each scenario by e2e/sim/setup.sh); held against the Kobo's profile and kept
 # renders. `make e2e-sim` runs devtest in the same container, so its commands run in a local shell.

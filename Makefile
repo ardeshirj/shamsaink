@@ -102,7 +102,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -110,6 +110,9 @@ devtest:
 
 kobo-check: devtest
 	@reader/out/devtest check kobo-libra-colour
+
+kindle-check: devtest
+	@reader/out/devtest check kindle-paperwhite-11
 
 kobo-reader-install: kobo-package
 	@sh reader/kobo/install.sh $(KOBO) out/release/shamsaink-$(VERSION)-kobo.tgz
@@ -134,9 +137,11 @@ kobo-usage: devtest
 
 RUNS ?= 1
 runs = $(foreach i,$(shell seq $(RUNS)),$(1))
+# DEVICE=kindle runs them on the Kindle instead (its profile kindle-paperwhite-11); a scenario not on: it is skipped.
+E2E_DEVICE = $(if $(filter kindle,$(DEVICE)),kindle-paperwhite-11,kobo-libra-colour)
 e2e: devtest
 	@for s in $(call runs,$(or $(SCENARIO),e2e/scenarios/basics.txt)); do \
-	  echo "== $$s (Kobo)"; reader/out/devtest scenario kobo-libra-colour $$s $(if $(SAVE),--save) || exit 1; done
+	  echo "== $$s ($(E2E_DEVICE))"; reader/out/devtest scenario $(E2E_DEVICE) $$s $(if $(SAVE),--save) || exit 1; done
 
 SIM_BOOKS ?= out/sim-books
 e2e-sim:
@@ -183,6 +188,7 @@ $(NM_TGZ):
 # --- The Kindle ---
 #
 # docs/devices/kindle/setup.md; KINDLE is its SSH host (~/.ssh/config).
+#   make kindle-check    the Kindle held against its design profile (as kobo-check); make e2e DEVICE=kindle: scenarios on it
 #   make kindle-reader-install  build the reader, copy it, its fonts, the launcher and the scriptlet to the Kindle
 #                        (KOReader's plugin, which hosted it until 2026-11-07, removed; reader-install until 2026-10-30)
 #   make kindle-reader-log  the end of the reader's log on the Kindle (reader-log until 2026-10-30)

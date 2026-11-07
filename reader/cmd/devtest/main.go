@@ -126,21 +126,24 @@ func check(name string) bool {
 	}
 
 	if out, err := ssh(a, "echo up"); err != nil || out != "up" {
-		report(false, "reachable over ssh "+a.SSH, fmt.Sprint(out, err)+" (is it awake? make kobo-wait)")
+		report(false, "reachable over ssh "+a.SSH, fmt.Sprint(out, err)+" (is it awake? make kobo-wait, make kindle-wait)")
 		return false
 	}
 	report(true, "reachable over ssh "+a.SSH, "")
 
 	// the screen: size and stride, against the profile and the access facts
-	out, _ := ssh(a, "cat /sys/class/graphics/fb0/virtual_size /sys/class/graphics/fb0/stride /sys/class/graphics/fb0/bits_per_pixel")
+	// The size shown is the mode's (U:1236x1648p-0 on the Kindle, U:1680x1264p-0 on the Kobo, turned): the virtual size
+	// can be larger (the Kindle's: 1248 × 3296, its lines padded and two screens tall)
+	out, _ := ssh(a, "cat /sys/class/graphics/fb0/modes /sys/class/graphics/fb0/stride /sys/class/graphics/fb0/bits_per_pixel")
 	var w, h, stride, bits int
-	fmt.Sscanf(strings.NewReplacer(",", " ", "\n", " ").Replace(out), "%d %d %d %d", &w, &h, &stride, &bits)
-	report(w == profile.Screen.Width && h == profile.Screen.Height, "screen size",
-		fmt.Sprintf("device %d × %d, profile %d × %d", w, h, profile.Screen.Width, profile.Screen.Height))
+	fmt.Sscanf(strings.NewReplacer("U:", "", "x", " ", "p-0", "", "\n", " ").Replace(out), "%d %d %d %d", &w, &h, &stride, &bits)
+	pw, ph := profile.Screen.Width, profile.Screen.Height
+	report(w == pw && h == ph || w == ph && h == pw, "screen size",
+		fmt.Sprintf("device %d × %d, profile %d × %d", w, h, pw, ph))
 	report(stride == a.Framebuffer.Stride && bits == a.Framebuffer.Bits, "framebuffer stride and depth",
 		fmt.Sprintf("device %d bytes, %d bits; expected %d, %d", stride, bits, a.Framebuffer.Stride, a.Framebuffer.Bits))
-	if stride > 0 && w > 0 {
-		report(stride == w*bits/8, "stride is the width times the pixel", fmt.Sprintf("%d = %d × %d", stride, w, bits/8))
+	if stride > 0 {
+		report(stride >= pw*bits/8, "a line holds the width", fmt.Sprintf("%d ≥ %d × %d", stride, pw, bits/8))
 	}
 
 	// the touch screen: the node is the one that has the name
@@ -195,7 +198,7 @@ func check(name string) bool {
 		if got := fmt.Sprintf("%x", md5.Sum(built)); got == sum {
 			fmt.Println("ok   installed reader is the latest local build")
 		} else {
-			fmt.Println("note installed reader differs from " + a.ReaderLocal + " (make kobo-reader-install puts the new one)")
+			fmt.Println("note installed reader differs from " + a.ReaderLocal + " (make kobo-reader-install or kindle-reader-install puts the new one)")
 		}
 	}
 	return ok

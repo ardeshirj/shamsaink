@@ -211,7 +211,12 @@ func TestSleepChoices(t *testing.T) {
 // (and one that draws it anyway is told so).
 func TestRequires(t *testing.T) {
 	s := load(t)
-	d := s.Devices[0]
+	var d Device // a device with everything the bar can show: the Kobo (the Kindle has no sound)
+	for _, x := range s.Devices {
+		if x.Name == "kobo-libra-colour" {
+			d = x
+		}
+	}
 	lightless := Device{Name: "no-light", Has: []string{"sound"}}
 	s.Devices = append(s.Devices, lightless)
 	var all []string

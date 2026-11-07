@@ -11,7 +11,7 @@ import (
 
 // A scenario file (e2e/scenarios/NAME.txt): a header, then steps, one a line; # starts a comment.
 //
-//	on: sim kobo           where it runs (required): the simulated Kobo (make e2e-sim), the Kobo (make e2e), or both
+//	on: sim kobo kindle    where it runs (required): the simulated Kobo (make e2e-sim), the Kobo or the Kindle (make e2e)
 //	book: PATH             a book it needs, by its path under the reader's folder (books/farsiepub/...); checked before
 //	                       the first step, so a missing book is said as such (one line each)
 //	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: default)
@@ -32,8 +32,8 @@ type line struct {
 	words []string
 }
 
-// where are the places a scenario can run: the simulated Kobo and the Kobo.
-var where = map[string]bool{"sim": true, "kobo": true}
+// where are the places a scenario can run: the simulated Kobo, the Kobo and the Kindle.
+var where = map[string]bool{"sim": true, "kobo": true, "kindle": true}
 
 func parseScenario(path string) (*script, error) {
 	data, err := os.ReadFile(path)
@@ -59,7 +59,7 @@ func parseScenario(path string) (*script, error) {
 			case "on:":
 				for _, p := range w[1:] {
 					if !where[p] {
-						return nil, fmt.Errorf("%s:%d: on: %q is neither sim nor kobo", path, n+1, p)
+						return nil, fmt.Errorf("%s:%d: on: %q is not sim, kobo or kindle", path, n+1, p)
 					}
 				}
 				s.on = w[1:]
@@ -118,6 +118,9 @@ func (s *script) check(d *dev) error {
 		}
 		if koboOnly[a[0]] && s.runsOn("sim") {
 			fail(l, "%s runs on the Kobo only (on: kobo)", a[0])
+		}
+		if a[0] == "press" && args == 1 && a[1] != "power" && s.runsOn("kindle") {
+			fail(l, "the Kindle has no page buttons: a scenario with press %s is not on: kindle", a[1])
 		}
 		switch a[0] {
 		case "open":

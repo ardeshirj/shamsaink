@@ -3,7 +3,7 @@
 #     make e2e SCENARIO=e2e/scenarios/watchdog-freeze.txt
 # Bluetooth must not have run in this boot (the launcher would reboot the Kobo instead of starting Nickel again). Needs
 # SSH while the reader is open; if that drops, expect-nickel keeps asking.
-on: kobo                           # the simulated launcher has no watchdog
+on: kobo kindle                    # the simulated launcher has no watchdog
 env HEARTBEAT_EVERY=1s WATCH_EVERY=4
 open
 wait 6

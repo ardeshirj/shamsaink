@@ -55,7 +55,7 @@ func TestScenarioMistakes(t *testing.T) {
 	}
 	for _, c := range []struct{ text, says string }{
 		{"open", "no on: line"},
-		{"on: kindle\nopen", "neither sim nor kobo"},
+		{"on: remarkable\nopen", "not sim, kobo or kindle"},
 		{"on: sim\nopen\non: kobo", "belongs in the header"},
 	} {
 		if _, err := parseText(t, c.text); err == nil || !strings.Contains(err.Error(), c.says) {

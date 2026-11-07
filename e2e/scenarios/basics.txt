@@ -4,7 +4,7 @@
 # the book's is in pixels: the words' places, this book's with e2e/fixtures/default's settings (text 46 px, line height 1.75,
 # margin 60; the second line, from its start, at the right, to its middle). The book is left where it was: Contents' jump is
 # the only move, and Back, at the end, undoes it (the reader's files are put back after a run in any case).
-on: sim kobo
+on: sim kobo kindle
 fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub-sample/buried-alive.epub ac3608ec09e11c29d21e17554ada66a9b0190b433540822ff5a9d720cc1a9475
 open
 tap page-top                       # the bar and the dock

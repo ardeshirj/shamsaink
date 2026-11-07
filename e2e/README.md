@@ -2,19 +2,19 @@
 
 A scenario is a file of steps (`scenarios/basics.txt`): open a book, tap controls by name, wait for the reader's log
 lines, compare the screen with a kept reference. The same file plays on the **simulated Kobo** (Docker, every change)
-and on the **Kobo** itself (by hand, for what only hardware shows). Why it is built this way, and what is left to build:
+and on the **Kobo** and the **Kindle** themselves (by hand, for what only hardware shows; the Kindle since 2026-11-07). Why it is built this way, and what is left to build:
 `docs/TESTING.md`.
 
 ## Running
 
-| | Simulated Kobo | Kobo |
-|---|---|---|
-| Scenarios | `make e2e-sim` (every one marked `sim`), or `SCENARIO=e2e/scenarios/basics.txt` | `make e2e SCENARIO=e2e/scenarios/basics.txt` (the default) |
-| Five times in a row | `make e2e-sim RUNS=5 SCENARIO=...` | `make e2e RUNS=5 SCENARIO=...` |
-| Keep its snapshots as references | `make e2e-sim SAVE=1 ...` | `make e2e SAVE=1 ...` |
-| References (committed) | `e2e/refs.sum`, `sim/...` lines | `e2e/refs.sum`, `kobo/...` lines |
-| Needs | `make engine` once, `reader/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running |
-| Snapshots, references, failure | `e2e/out/sim/NAME/` | `e2e/out/NAME/` |
+| | Simulated Kobo | Kobo | Kindle |
+|---|---|---|---|
+| Scenarios | `make e2e-sim` (every one marked `sim`), or `SCENARIO=e2e/scenarios/basics.txt` | `make e2e SCENARIO=e2e/scenarios/basics.txt` (the default) | `make e2e DEVICE=kindle SCENARIO=...` |
+| Five times in a row | `make e2e-sim RUNS=5 SCENARIO=...` | `make e2e RUNS=5 SCENARIO=...` | the same, `DEVICE=kindle` |
+| Keep its snapshots as references | `make e2e-sim SAVE=1 ...` | `make e2e SAVE=1 ...` | the same, `DEVICE=kindle` |
+| References (committed) | `e2e/refs.sum`, `sim/...` lines | `e2e/refs.sum`, `kobo/...` lines | `e2e/refs.sum`, `kindle/...` lines |
+| Needs | `make engine` once, `reader/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running | the same with `make kindle-reader-install` (`make kindle-check` first) |
+| Snapshots, references, failure | `e2e/out/sim/NAME/` | `e2e/out/NAME/` | `e2e/out/kindle/NAME/` |
 
 `make check` holds every scenario against the design spec without a device (`go test ./cmd/devtest`): a step, a
 control's name or a regular expression mistyped fails there, at its line.
@@ -56,7 +56,7 @@ scenario").
 A header, then the steps (listed at the top of `reader/cmd/devtest/scenario.go`):
 
 ```
-on: sim kobo                       # where it runs: sim, kobo, or both
+on: sim kobo                       # where it runs: sim, kobo, kindle, any of them
 book: books/farsiepub/buried-alive-narrated.epub   # a book it needs (checked first; one line each)
 fixture: default                   # e2e/fixtures/NAME (default if left out)
 open
@@ -72,4 +72,9 @@ expect menu drawn
   expectation or a setting changed for a moment), so it is known to catch something.
 - References are updated only after the changed pages have been looked at: `SAVE=1` rewrites the scenario's lines in
   `e2e/refs.sum` and its pages in `e2e/out/`; `git diff e2e/refs.sum` shows which changed.
-- Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`) need `on: kobo`; `make check` says so.
+- Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`) need `on: kobo` (or `kindle`, whose
+  launcher has the watchdog; there `expect-nickel` waits for Amazon's framework resumed); `make check` says so. The
+  Kindle has no page buttons: a scenario with `press forward|back` is not `on: kindle`.
+- On the Kindle (2026-11-07): `basics`, `walk`, `walk-moby-dick` and `watchdog-freeze`. Not `readalong-granularity` (no
+  sound on it yet) nor `language` (its taps are the Kobo's pixels, until devtest finds the library's controls in the
+  language it is drawn in).

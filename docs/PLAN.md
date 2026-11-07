@@ -103,7 +103,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   from a clean start after `install.sh uninstall`; `install.ps1` for Windows to come, once it can be tried there)
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
   player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
-- [ ] End-to-end tests on the Kindle (2026-11-06; after the other work on `devtest` is committed): its design profile
+- [x] End-to-end tests on the Kindle (2026-11-06; done 2026-11-07: `basics`, both walks and the watchdog pass on it): its design profile
   (1236 x 1648, no page buttons, no sound yet) and renders, its entry in `e2e/devices.yaml`, a third place in `devtest`
   (`kindle`, its references in `refs.sum`; its launcher says "framework resumed", not "Nickel started again"), the
   scenarios that apply marked `on: ... kindle`
@@ -152,7 +152,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Not in the beta, said in its notes: Opus, clips without `clipEnd`, text-to-speech, speed
 
 *The Kindle* (2026-11-07; read-along on it is not in the beta: its notes say Listen is not there yet)
-- [ ] Stage 9's open items but Listen: its end-to-end tests
+- [x] Stage 9's open items but Listen: its end-to-end tests, its install package and `install.sh`'s branch (2026-11-07)
 - [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
   Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
 - [ ] Its notes in `devices/kindle/`: the jailbreak and KOReader's SSH it needs (not ours to give), the firmware tried,

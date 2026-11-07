@@ -1,0 +1,7 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "leave": [752, 252, 1193, 345],
+  "reading-settings": [752, 162, 1193, 252]
+ }
+}

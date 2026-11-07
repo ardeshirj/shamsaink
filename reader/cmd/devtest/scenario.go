@@ -68,7 +68,7 @@ type player struct {
 	lib, menu  *boxes
 	b          *book
 	out, refs  string
-	target     string // refs.sum's TARGET: sim or kobo
+	target     string // refs.sum's TARGET: sim, kobo or kindle
 	scenario   string // and its SCENARIO
 	failure    string // out/failure: what a failed step left (explain)
 	save       bool
@@ -94,10 +94,7 @@ func scenario(name, path string, save bool) bool {
 		fmt.Println("FAIL the scenario does not check:\n" + err.Error())
 		return false
 	}
-	place := "kobo"
-	if d.a.Local != "" {
-		place = "sim"
-	}
+	place := d.place()
 	if !s.runsOn(place) {
 		fmt.Printf("skip %s: on %s only\n", path, strings.Join(s.on, " "))
 		return true
@@ -110,8 +107,8 @@ func scenario(name, path string, save bool) bool {
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base}
-	if place == "sim" { // the simulator's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4)
-		p.out = filepath.Join("e2e", "out", "sim", base)
+	if place != "kobo" { // the simulator's and the Kindle's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4)
+		p.out = filepath.Join("e2e", "out", place, base)
 	}
 	p.refs = filepath.Join(p.out, "refs")
 	p.failure = filepath.Join(p.out, "failure")
@@ -267,7 +264,7 @@ func (p *player) step(a []string) (string, error) {
 			return "", err
 		}
 		p.stop = nil
-		return "Nickel started again", nil
+		return d.home(), nil
 	case "tap":
 		if err := need(1); err != nil {
 			return "", err
@@ -554,14 +551,15 @@ func difference(s *screen, ref []byte) *image.RGBA {
 	return img
 }
 
-// expectNickel waits for Kobo's interface, the reader gone (SSH may drop and come back meanwhile).
+// expectNickel waits for the device's own interface, the reader gone (SSH may drop and come back meanwhile): Kobo's
+// Nickel; on the Kindle Amazon's framework resumed, and on the simulator its launcher's line, which stand for it.
 func (p *player) expectNickel(seconds float64) (string, error) {
-	if p.d.a.Local != "" { // the simulator has no Nickel: its launcher's line stands for it
-		if _, err := p.d.expect(`Nickel started again`, time.Duration(seconds*float64(time.Second))); err != nil {
+	if p.d.a.Local != "" || p.d.place() == "kindle" {
+		if _, err := p.d.expect(p.d.home(), time.Duration(seconds*float64(time.Second))); err != nil {
 			return "", err
 		}
 		p.stop, p.b = nil, nil
-		return "the simulated launcher ended, the reader gone", nil
+		return "the launcher ended (" + p.d.home() + "), the reader gone", nil
 	}
 	end := time.Now().Add(time.Duration(seconds * float64(time.Second)))
 	for time.Now().Before(end) {

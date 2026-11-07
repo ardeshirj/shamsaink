@@ -13,7 +13,7 @@ left: `PLAN.md`, "Alongside", end-to-end tests.
 | `make test` | ~10 s | all of `make check`, the reader's own and `reader/ui`'s tests, every screen drawn and compared with its kept render. Writes nothing | logic in the reader; a panel or screen drawn differently from its kept render |
 | `make design-update` | ~10 s | not a test: after a change to the design made on purpose, writes the generated files and the kept renders | (look at the renders' diff before committing) |
 | `make e2e-sim` | minutes | the reader, whole, on the simulated Kobo (section 2): the walk and the scenarios | navigation broken anywhere (the walk); behaviour broken on a real book (the scenarios) |
-| `make e2e` | minutes | the same files on the Kobo, and those `on: kobo` | what only hardware shows: device code, the watchdog, timing |
+| `make e2e` | minutes | the same files on the Kobo, and those `on: kobo`; `DEVICE=kindle` on the Kindle, those `on: kindle` | what only hardware shows: device code, the watchdog, timing |
 
 - **`make e2e-sim` runs two kinds of test.** The walk (`e2e/scenarios/walk.txt`) is generated from the spec: every screen
   opened the way the spec says, held against its kept render, closed; a screen added to the spec is walked the next time.
@@ -68,7 +68,7 @@ as Nickel coming back.
 ## 4. References: hashes committed, pages not
 
 A snapshot is compared with its reference by SHA-256. `e2e/refs.sum` (committed) lists each scenario's snapshots and
-their hashes, for two targets, the simulator and the Kobo (measured below). Built 2026-11-06
+their hashes, for each target: the simulator, the Kobo (measured below) and the Kindle (since 2026-11-07). Built 2026-11-06
 (`reader/cmd/devtest/refs.go`): a line is `SHA256  TARGET/SCENARIO/NAME`, the hash over the page's size and its pixels
 below the clock's strip; the fixtures' text size 50, the reader's default, since then. The pages
 themselves, drawn from books, stay out of git (CLAUDE.md): `make e2e-sim SAVE=1` writes them into `e2e/out/` and updates

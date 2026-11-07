@@ -1,0 +1,13 @@
+# A device profile: what the design is judged against. Facts from docs/devices/kindle/README.md and reader/device.
+name: kindle-paperwhite-11
+screen: {width: 1236, height: 1648, ppi: 300}
+page_buttons: false    # none: pages turn by touch only
+# What it has, of design.Capabilities: a front light with a warmth. No colour, no sound yet (Amazon's player, experiment
+# 12, not built: Listen shows a notice), no page buttons.
+has: [light, warmth]
+# Waveforms the driver takes (reader/device/screen.go, the MediaTek driver's own update, experiment 10).
+waveforms: [A2, DU, GL16, REAGL, GC16]
+# Untouched this many minutes, powerd sleeps the Kindle (its timeout set from the reader's setting, reader/device/kindle.go).
+sleep_after_min: 10
+tap: {min_mm: 7, slack_px: 16}
+fonts: {text: DejaVu Sans, farsi: Parastoo, icons: Phosphor, icons_filled: Phosphor-Fill}

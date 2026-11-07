@@ -11,6 +11,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"testing"
 	"time"
@@ -74,19 +75,21 @@ func rel(p *Panel) rendered {
 	return r
 }
 
-// libraryTopBar is the bar of the library's renders.
-var libraryTopBar = TopBar{Time: "20:48", Phones: true, Battery: 82, Menu: true}
+// libraryTopBar is the bar of the library's renders (the headphones on a device with sound).
+func libraryTopBar() TopBar {
+	return TopBar{Time: "20:48", Phones: renderHas("sound"), Battery: 82, Menu: true}
+}
 
 func libraryHead(f *blitz.Fonts, w int) *Panel {
-	return LibraryHead(libraryTopBar, LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
+	return LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
 }
 
 // barHeight is the library's bar: where the panels that hang from it start.
-func barHeight(f *blitz.Fonts, w int) int { return DrawTopBar(libraryTopBar, f, w).Rect().Dy() }
+func barHeight(f *blitz.Fonts, w int) int { return DrawTopBar(libraryTopBar(), f, w).Rect().Dy() }
 
 // batteryBox is the battery's place on that bar.
 func batteryBox(f *blitz.Fonts, w int) image.Rectangle {
-	return DrawTopBar(libraryTopBar, f, w).Box("topbar-battery")
+	return DrawTopBar(libraryTopBar(), f, w).Box("topbar-battery")
 }
 
 // opened is an opening screen as a render: no buttons.
@@ -113,6 +116,12 @@ func chapter() string {
 
 // designRenders has, for each screen of the spec that is drawn, the states to draw it in. The page (reading) is the
 // engine's and is not here.
+// renderDevice is the profile being drawn for: a render of something only some devices have (the page buttons'
+// setting) follows it, as the reader does on the device.
+var renderDevice design.Device
+
+func renderHas(what string) bool { return slices.Contains(renderDevice.Has, what) }
+
 var designRenders = map[string][]renderCase{
 	"splash": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
@@ -125,15 +134,15 @@ var designRenders = map[string][]renderCase{
 	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"topbar": {{"battery-full", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 100, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 100, Menu: true, RTL: RTL()}, f, w))
 	}}, {"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-medium", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 50, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 50, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-low", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 25, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 25, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-warning", enFa, func(f *blitz.Fonts, w, h int) rendered { // red on a colour screen (Screen.SetTint): the colour picture is that
-		p := DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 12, Menu: true, RTL: RTL()}, f, w)
+		p := DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 12, Menu: true, RTL: RTL()}, f, w)
 		r := pr(p)
 		r.rgba = image.NewRGBA(r.img.Rect)
 		box := p.Box("topbar-battery")
@@ -149,9 +158,9 @@ var designRenders = map[string][]renderCase{
 		}
 		return r
 	}}, {"battery-charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: true, Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
 	}}},
 	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
@@ -213,10 +222,10 @@ var designRenders = map[string][]renderCase{
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
 	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
+		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: renderHas("buttons"), Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
-			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 60, HasButtons: true, ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
+			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 60, HasButtons: renderHas("buttons"), ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
@@ -287,6 +296,7 @@ func TestScreenRenders(t *testing.T) {
 	}
 	sort.Strings(names)
 	for _, d := range s.Devices {
+		renderDevice = d
 		for _, screen := range names {
 			for _, c := range designRenders[screen] {
 				for _, lang := range c.langs {
@@ -364,17 +374,19 @@ func TestControlsAreWhatIsDrawn(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer SetLanguage("en")
-	d := s.Devices[0]
-	for screen, cases := range designRenders {
-		var found []string
-		for _, c := range cases {
-			for _, lang := range c.langs {
-				SetLanguage(lang)
-				found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids()...)
+	for _, d := range s.Devices {
+		renderDevice = d
+		for screen, cases := range designRenders {
+			var found []string
+			for _, c := range cases {
+				for _, lang := range c.langs {
+					SetLanguage(lang)
+					found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids()...)
+				}
 			}
-		}
-		for _, p := range design.CheckControls(s, d.Name, screen, found) {
-			t.Error(p)
+			for _, p := range design.CheckControls(s, d.Name, screen, found) {
+				t.Errorf("%s: %s", d.Name, p)
+			}
 		}
 	}
 }

@@ -28,7 +28,7 @@ func TestWelcomePictures(t *testing.T) {
 		{Title: "زنده به گور", Author: "صادق هدایت", Read: 62, Narrated: true, RTL: true},
 	}
 	// All chosen, so the rows and the counts agree
-	head := LibraryHead(libraryTopBar, LibraryView{Counts: [4]int{2, 0, 0, 2}, Filter: 3}, f, w)
+	head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{2, 0, 0, 2}, Filter: 3}, f, w)
 	lib := NewLibrary(books, "shamsaink/books", head, f, w, h)
 	defer lib.Close()
 	img := screenOf(w, h, lib.Draw).SubImage(image.Rect(0, 0, w, 740)) // the rows' part: below them the page is empty
