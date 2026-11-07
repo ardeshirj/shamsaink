@@ -26,7 +26,8 @@ import (
 //	                          at once, with no library
 //	close                     the book left by the bar's back arrow, then the reader left from the library's menu
 //	tap SCREEN CONTROL        a control of a screen of the spec, by its kept render: tap dock contents, tap contents e7
-//	                          (a list's row n is the first row's box moved down by n rows), tap topbar topbar-light
+//	                          (a list's row n is the first row's box moved down by n rows), tap topbar topbar-light;
+//	                          tap library eN waits for the row's book and holds the screens after against its direction
 //	tap page-top              the top tenth of the page: the bar and the dock
 //	turn forward|back         a tap on the page that turns it, by the book's own direction
 //	press forward|back|power  a page button pressed and let go: the lower (forward) or the upper (back), as the reader
@@ -289,7 +290,22 @@ func (p *player) step(a []string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return name, p.tapNamed(r, a[2])
+		if err := p.tapNamed(r, a[2]); err != nil {
+			return name, err
+		}
+		if a[1] == "library" && regexp.MustCompile(`^e\d+$`).MatchString(a[2]) { // a row: its book opened, held as open's
+			b, err := d.openedRow(p.lib)
+			if err != nil {
+				return name, err
+			}
+			b.report = func(bool, string, string) {}
+			if p.b != nil {
+				b.report = p.b.report
+			}
+			p.b = b
+			return fmt.Sprintf("%s: document %d page %d, reads %s", name, b.doc, b.page, map[bool]string{true: "right to left", false: "left to right"}[b.rtl]), nil
+		}
+		return name, nil
 	case "turn":
 		if err := need(1); err != nil || p.b == nil {
 			return "", fmt.Errorf("turn forward|back, with a book open")

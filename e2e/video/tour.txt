@@ -1,17 +1,51 @@
-# The tour for the video of the simulated Kobo (e2e/video/README.md): one evening with a book in three acts (a card for
-# each, `caption`), its steps named beside the screen (`title`), on FarsiEPUB's narrated Buried Alive; the end card lists
-# what ShamsaInk does, more than the tour shows, a point a line. Paced by waits for a viewer, not checked against references: not a test
-# (it lives outside e2e/scenarios/).
+# The tour for the video of the simulated Kobo (e2e/video/README.md): one evening with a book. The opening card, the
+# library (an English book, then FarsiEPUB's narrated Buried Alive: record.sh's BOOKS is out/video/books, README.md),
+# two acts (a card for each, `caption`) and one more thing (the sleep screen), their steps named beside the screen
+# (`title`); the end card lists what ShamsaInk does, more than the tour shows, a point a line. Paced by waits for a
+# viewer, not checked against references: not a test (it lives outside e2e/scenarios/).
 on: sim
 book: books/farsiepub/buried-alive-narrated.epub
+book: books/standardebooks/holmes.epub
 env SHAMSAINK_RECORD=/sim/record
 forget books/farsiepub/buried-alive-narrated.epub
-caption ShamsaInk | A light reader for e-ink, made for Farsi
-caption Farsi, done properly | Shaped and set right to left, like a printed page
-title A Farsi book
-open
+forget books/standardebooks/holmes.epub
+caption ShamsaInk | A light e-ink reader for right-to-left books, Farsi first
+open                               # behind the opening card: the library's first row (the English book) opened at its
+tap page-top                       # first story, then back to the library, all its books
+expect menu drawn
+tap dock contents
+expect contents: \d+ entries
+tap contents e2                    # A Scandal in Bohemia
+expect went to document
+tap page-top
+expect menu drawn
+tap topbar topbar-start
+expect library: \d+ books, \d+ rows
+wait 1
+tap library filter-all             # the filter's change redraws the list, with no log line
+wait 1.5
 resume
-wait 2.5
+title Your library
+wait 2.8
+tap library e0                     # All, by title: The Adventures of Sherlock Holmes first
+title English
+wait 2.6
+press forward
+wait 2.2
+press forward
+wait 2.4
+tap page-top
+expect menu drawn
+wait 1.2
+tap topbar topbar-start            # devtest holds the English book's bar as left to right (tap library eN)
+expect library: \d+ books, \d+ rows
+title Your library
+wait 1.4
+tap library filter-all             # back on Reading: All again, both books by title
+wait 2
+tap library e1                     # Buried Alive
+title Right to left, Farsi first
+wait 2.6
 press forward
 wait 2.2
 press forward
@@ -98,7 +132,8 @@ expect read aloud: stopped
 wait 1.2
 tap 632 1000
 wait 1
-title Good night
+title Good night                   # before its card: named when the card lifts
+caption One more thing… | Sleep screens: a poem from FarsiEPUB, or your own pictures
 press power                        # to sleep: a sleep screen (record.sh lays one of FarsiEPUB's in sleep/)
 wait 4.5
 caption end | Farsi and right to left, done properly | Read-along for narrated books | Light, warmth and a dark mode | Sleep screens: poems or your own pictures | and more… | Learn more and install — farsiepub.org/shamsaink

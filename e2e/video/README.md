@@ -35,8 +35,18 @@ so the narration is heard alone, and uses the take's own ending under the end ca
 awk '/^---[ \t]*$/{n++; if(n==2) exit; next} n==1' ~/Github/farsiepub/web/static/shamsaink/sleep-screens.yml > out/video/sleep.yml
 docker run --rm -e SLEEP=/r/out/video/sleep.yml -v "$PWD":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
   -v eink-gocache:/root/.cache/go-build eink-rust sh /r/e2e/video/record.sh out/sim-books out/video/rec   # ~2 min
-sh e2e/video/make.sh out/video/rec out/video/music-upbeat.mp3           # -> out/video/shamsaink-tour.mp4
+DRAFT=1 sh e2e/video/make.sh out/video/rec                               # a draft, no music: ~35 s
+sh e2e/video/make.sh out/video/rec out/video/music-evolving.mp3            # the final one, with music
 ```
+
+**In sections.** `make.sh` draws the video in sections, one from each card to the next (`simvideo -list` numbers them;
+`simvideo -section N` draws one, the recording replayed to its start without drawing), three at a time (Docker's 2.8
+GB on the Mac), keeps them in `out/video/parts/` and joins them. A section is drawn again only when its time or its
+inputs (the recording, simvideo, the music, DRAFT) changed, or when named: `SECTION="2 4"`. `AUDIO=1` only mixes the
+sound again into the video joined last (`MUSIC_DB`, `FADE`). Without music (the default) the cards are not on beats
+and the sound is the reader's own: for working on the pictures; with a take, every section is drawn again once, its
+cards on that take's beats. A full draft takes ~35 s, a section ~18 s (2026-11-07; 5 min 21 s for the whole video at
+once before).
 
 **Music** (ElevenLabs, with a key that has music generation; check the plan allows commercial use): `music.sh` asks
 their music API for an instrumental take, a new one each run (`[OUT] [SECONDS] [PROMPT]`). It must last until the

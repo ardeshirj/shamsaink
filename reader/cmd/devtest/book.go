@@ -24,15 +24,27 @@ var reOpened = regexp.MustCompile(`document (\d+) page (\d+) shown in .*right to
 
 // openFirst taps the library's first row (the book read last) and waits for it: its place and its direction.
 func (d *dev) openFirst(lib *boxes) (*book, error) {
-	b := &book{d: d, lib: lib, w: d.prof.Screen.Width}
 	if d.book == "" { // from the library; a book named by the scenario was opened by the launcher already
 		if err := d.tap(lib, "e0"); err != nil {
 			return nil, err
 		}
-		if _, err := d.expect(`opened \d+ ms`, 40*time.Second); err != nil {
-			return nil, err
-		}
+		return d.openedRow(lib)
 	}
+	return d.opened(lib)
+}
+
+// openedRow waits for the book a tap on a library's row opened, and gives it as openFirst does: its place and its
+// direction, the renders its screens are held against from here on.
+func (d *dev) openedRow(lib *boxes) (*book, error) {
+	if _, err := d.expect(`opened \d+ ms`, 40*time.Second); err != nil {
+		return nil, err
+	}
+	return d.opened(lib)
+}
+
+// opened reads the book just opened from the reader's opening line.
+func (d *dev) opened(lib *boxes) (*book, error) {
+	b := &book{d: d, lib: lib, w: d.prof.Screen.Width}
 	line, err := d.expect(`document \d+ page \d+ shown in`, 20*time.Second)
 	if err != nil {
 		return nil, err

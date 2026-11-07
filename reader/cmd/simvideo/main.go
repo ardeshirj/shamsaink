@@ -27,8 +27,10 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
 	"golang.org/x/image/draw"
 	"golang.org/x/image/font"
@@ -76,6 +78,7 @@ type card struct {
 	at    int64   // the recording's time it comes at (Unix ms)
 	pre   float64 // s the screen is held before it, to the next beat
 	skip  int64   // ms of the recording left out after it: to its resume, else to just before the next thing done
+	hold  float64 // s the screen is held still after it, when the next thing done comes sooner than afterCard
 	start float64 // its start in the video, s
 	secs  float64
 	img   *image.RGBA
@@ -93,6 +96,8 @@ func main() {
 	musicPCM := flag.String("music", "", "the music take as raw mono S16LE at 22050 Hz, for its beats")
 	fps := flag.Int("fps", 30, "frames a second")
 	cardSecs := flag.Float64("card", 2.4, "seconds an act's card is shown, at least")
+	list := flag.Bool("list", false, "write the sound and the times, and list the sections (no frames)")
+	section := flag.Int("section", -1, "draw only this section (from -list); -1: all")
 	flag.Parse()
 	if *rec == "" || *fontDir == "" || *brandDir == "" {
 		flag.Usage()
@@ -153,14 +158,13 @@ func main() {
 			c.img, c.secs = openingCard(f, stack, parts[1:]), whole(*cardSecs+0.6)
 		default:
 			c.img, c.secs = actCard(f, parts[0], parts[1:]), whole(*cardSecs)
-			readalong, readalongSecs = c.start, c.secs // the last act's: the narration's
 		}
 		if n := len(cards); n > 0 && e.t-cards[n-1].at < 400 { // straight after the one before: one into the other, at once
 			c.from = cards[n-1].img
 			c.start, c.pre = cards[n-1].start+cards[n-1].secs, 0
 		}
-		c.skip = skipAfter(events[i+1:], e.t)
-		shift += c.pre + c.secs - float64(c.skip)/1000
+		c.skip, c.hold = skipAfter(events[i+1:], e.t)
+		shift += c.pre + c.secs + c.hold - float64(c.skip)/1000
 		cards = append(cards, c)
 		if c.last {
 			break
@@ -170,28 +174,84 @@ func main() {
 		endAt = events[len(events)-1].t + 1500
 	}
 	total := float64(endAt-t0)/1000 + shift
+	// the read-along's card: the last before the narration's sound; the music comes back with the card after it
+	readalongCard := -1
+	for _, e := range events {
+		if e.kind == "sound" {
+			for i, c := range cards {
+				if c.at <= e.t {
+					readalongCard = i
+				}
+			}
+			break
+		}
+	}
+	if readalongCard >= 0 {
+		readalong, readalongSecs = cards[readalongCard].start, cards[readalongCard].secs
+	}
 	videoAt := func(t int64) float64 { // a time of the recording on the video's clock (outside the cards)
 		v := float64(t-t0) / 1000
 		for _, c := range cards {
 			if c.at <= t {
-				v += c.pre + c.secs - float64(c.skip)/1000
+				v += c.pre + c.secs + c.hold - float64(c.skip)/1000
 			}
 		}
 		return v
 	}
-	outro := -1.0 // the first step after the read-along's narration: the music comes back
+	outro := -1.0 // where the music comes back after the narration: the next card, else the next step
+	if readalongCard >= 0 && readalongCard+1 < len(cards) && !cards[readalongCard+1].last {
+		outro = cards[readalongCard+1].start
+	}
 	for _, e := range events {
 		if e.kind == "title" && readalong >= 0 && videoAt(e.t) > readalong+readalongSecs+1 && outro < 0 {
 			outro = videoAt(e.t)
 		}
 	}
 	last := cards[len(cards)-1]
-	check(writeSound(*rec, events, t0, endAt, cards))
 	if outro < 0 {
 		outro = last.start
 	}
-	check(os.WriteFile(filepath.Join(*rec, "times"), fmt.Appendf(nil, "readalong %.3f %.3f\nend %.3f %.3f\noutro %.3f\ntotal %.3f\n",
-		readalong, readalongSecs, last.start, last.secs, outro, total), 0o644))
+	// the sections: one from each card (one following another straight on stays in its section) to the next, each
+	// frames f0 to f1; frame f is at f/fps s. A section's frames are what a whole render draws there.
+	frames := int(total * float64(*fps))
+	type part struct {
+		f0, f1 int
+		start  float64
+		name   string
+	}
+	var parts []part
+	for i, c := range cards {
+		if i > 0 && c.from != nil {
+			continue
+		}
+		start := c.start
+		if i == 0 {
+			start = 0
+		}
+		f0 := int(math.Ceil(start*float64(*fps) - 1e-9))
+		if n := len(parts); n > 0 {
+			parts[n-1].f1 = f0
+		}
+		parts = append(parts, part{f0: f0, f1: frames, start: start, name: splitBar(eventWords(events, c.at))[0]})
+	}
+	if *list || *section < 0 {
+		check(writeSound(*rec, events, t0, endAt, cards))
+		check(os.WriteFile(filepath.Join(*rec, "times"), fmt.Appendf(nil, "readalong %.3f %.3f\nend %.3f %.3f\noutro %.3f\ntotal %.3f\n",
+			readalong, readalongSecs, last.start, last.secs, outro, total), 0o644))
+	}
+	if *list {
+		for i, p := range parts {
+			fmt.Printf("%d %d %d %s\n", i, p.f0, p.f1, p.name)
+		}
+		return
+	}
+	f0, f1 := 0, frames
+	if *section >= 0 {
+		if *section >= len(parts) {
+			check(fmt.Errorf("no section %d of %d", *section, len(parts)))
+		}
+		f0, f1 = parts[*section].f0, parts[*section].f1
+	}
 
 	still, lay := backdrop(side)
 	scr := lay.screen
@@ -214,39 +274,42 @@ func main() {
 	next, nextTouch := 0, 0
 	dirty := true
 	title, oldTitle, titleAt := "", "", -10.0 // the step's title, the one before it, and when it changed (video s)
-	frames := int(total * float64(*fps))
-	const fade = 0.5 // s, every fade: a card in and out, one title into the next
-	for fr := 0; fr < frames; fr++ {
+	const fade = 0.5                          // s, every fade: a card in and out, one title into the next
+	plain := false                            // the frame before was the device alone, as drawn (no card, no touch): sent again if nothing changed
+	for fr := 0; fr < f1; fr++ {
 		tv := float64(fr) / float64(*fps)
+		draws := fr >= f0 // before the section, the recording is only replayed: the screen as it is, nothing drawn
+		if fr == f0 {
+			dirty, plain = true, false
+		}
 		// the card up now (or waiting for its beat), and the recording's time: the video's less the cards before it
-		var up *card
+		var up, held *card
 		shift := 0.0
-		held := false
 		for _, c := range cards {
-			if tv >= c.start+c.secs {
-				shift += c.pre + c.secs - float64(c.skip)/1000
+			if tv >= c.start+c.secs+c.hold {
+				shift += c.pre + c.secs + c.hold - float64(c.skip)/1000
 				continue
 			}
 			if tv >= c.start-c.pre {
-				held = true
-				if tv >= c.start {
+				held = c
+				if tv < c.start+c.secs && tv >= c.start {
 					up = c
 				}
 			}
 			break
 		}
 		now := t0 + int64((tv-shift)*1000)
-		if held {
-			for _, c := range cards {
-				if tv >= c.start-c.pre && tv < c.start+c.secs {
-					now = c.at
-					if tv >= c.start+c.secs/2 { // the card covers the screen: what it left out is done behind it
-						now = c.at + c.skip
-					}
-				}
+		tnow := now     // the touches' clock: in a card's time it runs up to where the recording goes on, for their lead-in
+		titleNow := now // a step's title is shown from the card on, though logged as the screen is held after it
+		if c := held; c != nil {
+			now = c.at
+			if tv >= c.start+c.secs/2 { // the card covers the screen: what it left out is done behind it
+				now = c.at + c.skip
+				titleNow = now + int64(c.hold*1000) + 1
 			}
+			tnow = c.at + c.skip - int64((c.start+c.secs+c.hold-tv)*1000)
 		}
-		for next < len(events) && events[next].t <= now {
+		for next < len(events) && (events[next].t <= now || events[next].kind == "title" && events[next].t <= titleNow) {
 			e := events[next]
 			next++
 			switch e.kind {
@@ -272,7 +335,23 @@ func main() {
 				dirty = true
 			}
 		}
-		if dirty {
+		composed := false
+		if dirty && !draws { // replayed: the regions' moves ended as they would have, nothing drawn
+			kept := moving[:0]
+			for _, m := range moving {
+				d := duration[m.e.wave]
+				if d == 0 {
+					d = 300
+				}
+				if float64(now-m.e.t) >= d {
+					draw.Draw(shown, m.e.rect, m.to, image.Point{}, draw.Src)
+					continue
+				}
+				kept = append(kept, m)
+			}
+			moving = kept
+		} else if dirty {
+			composed = true
 			copy(view.Pix, shown.Pix)
 			kept := moving[:0]
 			for _, m := range moving {
@@ -310,7 +389,7 @@ func main() {
 			}
 			dirty = len(moving) > 0 || k < 1
 		}
-		for nextTouch < len(events) && events[nextTouch].t <= now+touchLead {
+		for nextTouch < len(events) && events[nextTouch].t <= tnow+touchLead {
 			e := events[nextTouch]
 			hidden := false // done behind a card (what it leaves out): never drawn
 			for _, c := range cards {
@@ -321,13 +400,30 @@ func main() {
 			}
 			nextTouch++
 		}
+		if !draws {
+			kept := touches[:0]
+			for _, t := range touches {
+				if tnow-t.t < 3000 {
+					kept = append(kept, t)
+				}
+			}
+			touches = kept
+			continue
+		}
+		if !composed && plain && up == nil && len(touches) == 0 && tv >= cards[0].start {
+			if _, err := out.Write(rgb); err != nil { // the same as the frame before
+				check(err)
+			}
+			continue
+		}
+		plain = up == nil && len(touches) == 0 && tv >= cards[0].start
 		copy(frame.Pix, device.Pix)
 		if tv < cards[0].start { // before the first card: the paper alone, not an empty device
 			copy(frame.Pix, blank.Pix)
 		}
 		kept := touches[:0]
 		for _, t := range touches {
-			if drawTouch(frame, lay, t, now) {
+			if drawTouch(frame, lay, t, tnow) {
 				kept = append(kept, t)
 			}
 		}
@@ -355,10 +451,13 @@ func main() {
 			if left < fade && !up.last && !nextFollows {
 				k = left / fade
 			}
-			k = ease(k)
-			for i := range frame.Pix {
-				frame.Pix[i] = uint8(float64(under.Pix[i])*(1-k) + float64(up.img.Pix[i])*k + 0.5)
-			}
+			k8 := int(ease(k)*256 + 0.5)
+			img := up.img
+			par(len(frame.Pix), func(a, b int) {
+				for i := a; i < b; i++ {
+					frame.Pix[i] = uint8((int(under.Pix[i])*(256-k8) + int(img.Pix[i])*k8) >> 8)
+				}
+			})
 			for i, it := range up.items { // the list, a beat apart from the second beat
 				a := math.Min(math.Max((in-beat*float64(2+i))/0.35, 0), 1)
 				if a > 0 {
@@ -366,15 +465,17 @@ func main() {
 				}
 			}
 		}
-		for i, j := 0, 0; i < len(frame.Pix); i, j = i+4, j+3 {
-			rgb[j], rgb[j+1], rgb[j+2] = frame.Pix[i], frame.Pix[i+1], frame.Pix[i+2]
-		}
+		par(frameW*frameH, func(a, b int) {
+			for p := a; p < b; p++ {
+				rgb[p*3], rgb[p*3+1], rgb[p*3+2] = frame.Pix[p*4], frame.Pix[p*4+1], frame.Pix[p*4+2]
+			}
+		})
 		if _, err := out.Write(rgb); err != nil {
 			check(err)
 		}
 	}
 	check(out.Flush())
-	fmt.Fprintf(os.Stderr, "simvideo: %d frames, %.1f s, %d events, %d cards\n", frames, total, len(events), len(cards))
+	fmt.Fprintf(os.Stderr, "simvideo: frames %d to %d of %d, %.1f s, %d events, %d cards\n", f0, f1, frames, total, len(events), len(cards))
 }
 
 // splitBar splits "A | B | C" into its parts, trimmed.
@@ -468,26 +569,28 @@ const afterCard = 1300
 
 // skipAfter is how much of the recording after a card at t is left out (events: the log after it): to the resume that
 // follows it before another card (the reader's start and splash, after the tour's first act's card), else to afterCard
-// before the next thing done (a touch, a button, a refresh), so the screen never waits idle after a card. A card
-// straight before another leaves nothing out.
-func skipAfter(events []event, t int64) int64 {
+// before the next thing done (a touch, a button, a refresh), so the screen never waits idle after a card; when the
+// next thing is sooner, the screen is held still after the card instead (hold). A card straight before another leaves
+// nothing out.
+func skipAfter(events []event, t int64) (skip int64, hold float64) {
 	for _, e := range events {
 		if e.kind == "caption" {
 			if e.t-t < 400 {
-				return 0
+				return 0, 0
 			}
 			break
 		}
 		if e.kind == "resume" { // and a little after it: the refreshes just before it done behind the card
-			return e.t - t + 400
+			return e.t - t + 400, 0
 		}
 	}
 	for _, e := range events {
 		if e.t > t && (e.kind == "touch" || e.kind == "button" || e.kind == "refresh") {
-			return max(e.t-t-afterCard, 0)
+			d := e.t - t - afterCard
+			return max(d, 0), float64(max(-d, 0)) / 1000 // too soon: the screen held still until it is afterCard away
 		}
 	}
-	return 0
+	return 0, 0
 }
 
 // disc and ring draw a filled circle and a ring of width w, at alpha a, their edges smoothed.
@@ -517,14 +620,39 @@ func shape(img *image.RGBA, cx, cy, reach float64, c color.RGBA, a float64, cove
 
 // over draws the layer it (the frame's size, transparent where empty) over img at alpha a.
 func over(img, it *image.RGBA, a float64) {
-	for p := 0; p < len(img.Pix); p += 4 {
-		if al := it.Pix[p+3]; al != 0 {
-			w := a * float64(al) / 255
-			for c := 0; c < 3; c++ {
-				img.Pix[p+c] = uint8(float64(img.Pix[p+c])*(1-w) + float64(it.Pix[p+c])*255/float64(al)*w + 0.5)
+	a8 := int(a*256 + 0.5)
+	par(len(img.Pix)/4, func(from, to int) {
+		for p := from * 4; p < to*4; p += 4 {
+			if al := int(it.Pix[p+3]); al != 0 { // the layer's colours are premultiplied
+				w := a8 * al / 255
+				for c := 0; c < 3; c++ {
+					img.Pix[p+c] = uint8((int(img.Pix[p+c])*(256-w) + int(it.Pix[p+c])*a8) >> 8)
+				}
 			}
 		}
+	})
+}
+
+// par runs fn over 0..n in a part for each core.
+func par(n int, fn func(a, b int)) {
+	k := runtime.NumCPU()
+	var wg sync.WaitGroup
+	for i := 0; i < k; i++ {
+		a, b := n*i/k, n*(i+1)/k
+		wg.Add(1)
+		go func() { defer wg.Done(); fn(a, b) }()
 	}
+	wg.Wait()
+}
+
+// eventWords is the words of the caption at t.
+func eventWords(events []event, t int64) string {
+	for _, e := range events {
+		if e.kind == "caption" && e.t == t {
+			return e.words
+		}
+	}
+	return ""
 }
 
 // beats finds the music's beat in a take (raw mono S16LE at 22050 Hz): the onsets (the rise of its loudness, 512
@@ -845,7 +973,7 @@ func writeSound(dir string, events []event, t0, end int64, cards []*card) error 
 	for _, c := range cards {
 		cut := min(at(c.at), len(pcm))
 		out = append(out, pcm[from:cut]...)
-		out = append(out, make([]byte, int((c.pre+c.secs)*rate)*4)...)
+		out = append(out, make([]byte, int((c.pre+c.secs+c.hold)*rate)*4)...)
 		from = min(at(c.at+c.skip), len(pcm))
 	}
 	out = append(out, pcm[from:]...)
