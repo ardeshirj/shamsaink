@@ -46,6 +46,7 @@ func (rd *reader) browse(t time.Time) error {
 func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	own := time.Now() // the library's own time: scanned, laid out and drawn (t: since the reader or the book's leaving)
 	scr := rd.dev.Screen
+	library.Welcome(rd.dir) // the first start: the getting-started guide into the books
 	all := library.Shelf(library.Scan(rd.dir), rd.dir)
 	view, _ := library.LoadView(rd.dir)
 	filter := library.StartFilter(view, library.Counts(all))

@@ -23,6 +23,7 @@ with a reboot, and the kernel has no `pstore`.
     ├── launch.sh                    launcher: stops Nickel, runs the reader on a book, starts Nickel again  [make kobo-reader-install]
     ├── shamsaink                    the reader, a static ARMv7 binary (24 MB)                               [make kobo-reader-install]
     ├── fonts/                       DejaVu, Parastoo                                                        [make kobo-reader-install]
+    ├── getting-started.epub         the guide: copied into books/ on the first start (no library.json yet)  [make kobo-reader-install]
     ├── books/                       by source                                                                  [scp]
     │   ├── farsiepub/               buried-alive-narrated, buried-alive, three-drops-1932-rtlbook, three-drops-1932-parisa
     │   ├── rtlbook/                 blind-owl, tomorrow, gandom, little-black-fish

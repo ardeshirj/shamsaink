@@ -159,6 +159,8 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
   its limits (no page buttons, no Listen, its own Dark Mode kept apart)
 
 *The release*
+- [ ] A getting-started guide in the library on a fresh install (`reader/welcome`, built by pandoc with each package,
+  beside the reader, and copied into `books/` on the reader's first start only, so a removed guide stays removed; 2026-11-07)
 - [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line), its notes in `devices/kobo/`, the readers'
   guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start. The Kindle's the same
   (its package, `devices/kindle/install.md`)

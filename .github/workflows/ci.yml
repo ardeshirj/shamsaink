@@ -117,6 +117,8 @@ jobs:
         run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the reader, static ARMv7 (reader/scripts/build-armv7.sh)
         run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
+      - name: the getting-started guide (reader/scripts/welcome.sh, pandoc in Docker)
+        run: sh reader/scripts/welcome.sh
       - name: the Kobo's and the Kindle's packages and their checksums (reader/scripts/package.sh)
         run: |
           VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh

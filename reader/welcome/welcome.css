@@ -1,0 +1,22 @@
+body { line-height: 1.6; margin: 0 0.5em; }
+p { margin: 0 0 0.6em 0; text-indent: 0; }
+h1 { text-align: center; font-size: 1.4em; font-weight: bold; margin: 1.2em 0 1em 0; }
+ul { margin: 0 0 0.6em 0; padding-inline-start: 1.2em; }
+li { margin: 0 0 0.3em 0; }
+code { font-family: inherit; font-weight: bold; }
+
+/* the reader's own screens (reader/design/golden), framed */
+figure { margin: 0.8em 0; text-align: center; }
+img { display: block; margin: 0.8em auto; width: 100%; border: 2px solid #000; box-sizing: border-box; }
+img.small { width: 40%; border: none; }
+img.page { width: 60%; }
+
+/* the tap areas: a page drawn in CSS, mirrored by the book's direction */
+.zones {
+  width: 50%; aspect-ratio: 3 / 4; margin: 0.8em auto;
+  display: grid; grid-template-columns: 1fr 3fr; grid-template-rows: 1fr 9fr;
+  border: 3px solid #000; border-radius: 0.4em; overflow: hidden;
+}
+.zone { display: flex; align-items: center; justify-content: center; font-size: 0.8em; }
+.zone.top { grid-column: 1 / 3; border-bottom: 2px dashed #000; background: #ddd; }
+.zone.back { border-inline-end: 2px dashed #000; background: #eee; }

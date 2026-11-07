@@ -24,7 +24,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
 #                        committing (docs/DESIGN-SYSTEM.md)
 
-.PHONY: reader engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag
+.PHONY: reader welcome engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag
 
 reader:
 	@sh reader/scripts/build.sh
@@ -32,10 +32,14 @@ reader:
 # the version as build.sh writes it into the binary
 VERSION = $(shell git describe --tags --match 'v[0-9]*' --dirty --always)
 
-kobo-package: reader
+# the getting-started guide as an EPUB (reader/scripts/welcome.sh: pandoc in Docker), for the packages
+welcome:
+	@sh reader/scripts/welcome.sh
+
+kobo-package: reader welcome
 	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) sh reader/scripts/package.sh'
 
-kindle-package: reader
+kindle-package: reader welcome
 	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) BRAND=kindle sh reader/scripts/package.sh'
 
 tag:
@@ -191,7 +195,7 @@ SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 
 .PHONY: kindle-reader-install kindle-reader-log kindle-status kindle-wait kindle-ssh
 
-kindle-reader-install: reader
+kindle-reader-install: reader welcome
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/sleep /mnt/us/shamsaink/books'
 	@# a reader running from the launcher is stopped first (its launcher resumes the framework): its program, replaced on
 	@# /mnt/us (FUSE) under it, would die of SIGBUS at its next page of code
@@ -207,6 +211,8 @@ kindle-reader-install: reader
 	@# the fonts as the package has them: those no longer in it removed
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/fonts && cd /mnt/us/shamsaink/fonts && for f in *.ttf; do case " $(notdir $(wildcard reader/fonts/*.ttf)) " in *" $$f "*) ;; *) rm -f "$$f";; esac; done'
 	@scp -q reader/fonts/*.ttf $(KINDLE):/mnt/us/shamsaink/fonts/
+	@# the getting-started guide beside the reader, as the package has it (copied into books/ on the first start)
+	@scp -q reader/out/welcome/getting-started.epub $(KINDLE):/mnt/us/shamsaink/getting-started.epub
 	@echo "reader, fonts, launcher and scriptlet copied to $(KINDLE)"
 
 kindle-reader-log:

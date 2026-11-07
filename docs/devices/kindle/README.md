@@ -19,7 +19,8 @@ in place: the reader, `launch.sh`, the fonts, the scriptlet (and removes KOReade
 
 ```
 /mnt/us/documents/ShamsaInk.sh        the scriptlet: ShamsaInk in the Kindle's library, with its cover
-/mnt/us/shamsaink/                    shamsaink (the reader), launch.sh, fonts/, books/ (by source), cache/, places/,
+/mnt/us/shamsaink/                    shamsaink (the reader), launch.sh, fonts/, getting-started.epub (the guide, copied
+                                      into books/ on the first start), books/ (by source), cache/, places/,
                                       highlights/, settings.json, logs/reader.log (the launcher's and the reader's)
 ```
 

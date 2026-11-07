@@ -2,14 +2,16 @@
 # A device's package (BRAND: kobo, the default, or kindle), out/release/shamsaink-VERSION-BRAND.tgz and its .sha256.
 #
 # The Kindle's: paths from the root of its USB drive (/mnt/us on the Kindle), unpacked onto it as they are, over USB
-# (install.sh) or SSH: shamsaink/ (the reader, launch.sh, fonts, licences, VERSION, books/ and sleep/ empty) and
+# (install.sh) or SSH: shamsaink/ (the reader, launch.sh, fonts, licences, VERSION, the guide, books/ and sleep/ empty) and
 # documents/ShamsaInk.sh (the scriptlet, ShamsaInk in the Kindle's library, its cover in it: reader/kindle/scriptlet.sh).
 #
 # The Kobo's: one .tgz whose paths start at the Kobo's root, so it installs two ways, the same file:
 #   - over USB, by anyone: copied to the Kobo as .kobo/KoboRoot.tgz; unplugged, Kobo unpacks it at / and restarts
 #     (NickelMenu's own KoboRoot.tgz is made the same way: ./mnt/onboard/.adds/nm/doc)
 #   - over SSH: unpacked at / (reader/kobo/install-package.sh, make kobo-package-install, make kobo-release-install)
-# In it: the reader, its launcher and fonts in .adds/shamsaink, the fonts' and our licences, VERSION, and NickelMenu's
+# In it: the reader, its launcher and fonts in .adds/shamsaink, the fonts' and our licences, VERSION, the getting-started
+# guide beside the reader (reader/scripts/welcome.sh; the reader copies it into books/ on its first start only,
+# library.Welcome, so an upgrade does not bring back a guide that was removed), and NickelMenu's
 # line for ShamsaInk (.adds/nm/shamsaink). Never what the reader makes or reads (settings.json, places, highlights,
 # cache/, logs/, books/, sleep/): an upgrade leaves them as they are. books/ and sleep/ are there as empty folders.
 # GNU tar (in Docker on the Mac, `make kobo-package`; native on CI), owned by root, no macOS extras.
@@ -27,6 +29,7 @@ cd "$(dirname "$0")/../.."
 OUT=${OUT:-out/release}
 BRAND=${BRAND:-kobo}
 [ -f reader/out/shamsaink ] || { echo "reader/out/shamsaink is not built: make reader" >&2; exit 1; }
+[ -f reader/out/welcome/getting-started.epub ] || { echo "the guide is not built: make welcome" >&2; exit 1; }
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 case $BRAND in
@@ -35,6 +38,7 @@ case $BRAND in
   *) echo "BRAND is kobo or kindle, not $BRAND" >&2; exit 1 ;;
 esac
 mkdir -p "$d/fonts" "$d/licenses" "$d/books" "$d/sleep"
+cp reader/out/welcome/getting-started.epub "$d/"
 cp reader/out/shamsaink reader/$BRAND/launch.sh "$d/"
 cp reader/fonts/*.ttf "$d/fonts/"
 cp reader/fonts/LICENSE-*.txt LICENSE NOTICE BRAND.md "$d/licenses/"

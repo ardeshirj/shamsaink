@@ -30,7 +30,7 @@ $R "set -e; cd $NEW && tar -xzf package.tgz && rm package.tgz
   S=$NEW/mnt/onboard/.adds/shamsaink
   mkdir -p $DIR/fonts $DIR/books $DIR/sleep $DIR/licenses /mnt/onboard/.adds/nm
   (cd $DIR/fonts && for f in *; do [ -e \"\$S/fonts/\$f\" ] || rm -f \"\$f\"; done)
-  for f in shamsaink launch.sh VERSION; do mv \$S/\$f $DIR/\$f; done
+  for f in shamsaink launch.sh VERSION getting-started.epub; do mv \$S/\$f $DIR/\$f; done
   for f in \$S/fonts/* \$S/licenses/*; do mv \$f $DIR/\${f#\$S/}; done
   mv $NEW/mnt/onboard/.adds/nm/shamsaink /mnt/onboard/.adds/nm/shamsaink
   rm -rf $NEW $DIR/cache/splash-* $DIR/cache/loading-*"
