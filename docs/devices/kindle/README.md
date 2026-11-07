@@ -100,3 +100,10 @@ Newest last; each a dated entry. The bugs above are the settled ones.
   the same x or y as the last one before (in a Farsi book the back arrow is where the library's menu is) arrived
   without it, read as 0. The reader now asks the kernel where the finger last was when it opens the touch screen
   (`EVIOCGMTSLOTS`, `reader/device/touch.go`). The same code on the Kobo; seen here first.
+- 2026-11-07: **after a crash, the watchdog or a kill, the reader's page stayed in the status bar's strip.** Resuming
+  Amazon's framework redraws nothing: its programs, paused and resumed (`SIGSTOP`, `SIGCONT`), take the screen for what
+  they last drew. The home screen, asked for, redrew its own part; the status bar only its clock. A normal Leave was
+  fine (the reader puts back the screen it found). Now the launcher keeps a copy of the visible screen in `/var/tmp`
+  once the framework is paused, and on any other end writes it back and flashes it whole (`eips -s w=1236,h=1648 -f`)
+  before resuming the framework. KOReader's `koreader.sh` keeps such a copy too (read, not copied), without the flash.
+  Seen in back-to-back e2e runs; checked with the watchdog scenario from a clean home screen.

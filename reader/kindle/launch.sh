@@ -37,14 +37,25 @@ TIMEOUT=$(lipc-get-prop com.lab126.powerd screenSaverTimeout 2>/dev/null)
 # the framework paused
 lipc-set-prop com.lab126.pillow disableEnablePillow disable 2>/dev/null
 killall -STOP awesome volumd JunoStatusBarDriver 2>/dev/null
+# the screen as it was, nothing drawing over it now: put back here if the reader ends without putting it back itself
+# (a crash, the watchdog, a kill). Asking for the home screen instead left our page in the status bar's strip, which
+# its program, resumed, does not redraw whole (2026-11-07). The visible lines of the framebuffer, 1248 bytes each.
+SCREEN=/var/tmp/shamsaink-screen
+dd if=/dev/fb0 of=$SCREEN bs=1248 count=1648 2>/dev/null || rm -f $SCREEN
 log "framework paused (status bar off, awesome, volumd and the status bar's program stopped; screen $KINDLE_EPDC); ${BOOK:+reading $BOOK}${BOOK:-the library}"
 leave() {
   kill "$W" 2>/dev/null
+  # the reader puts back the screen it found when it leaves (RESTORE_SCREEN); if it did not, the launcher's copy, flashed
+  # in whole (GC16), before the framework is resumed over it
+  if [ "$CODE" != 0 ] && [ -s "$SCREEN" ]; then
+    dd if=$SCREEN of=/dev/fb0 bs=1248 count=1648 2>/dev/null && eips -s w=1236,h=1648 -f >/dev/null 2>&1 && RESTORED=1
+  fi
+  rm -f "$SCREEN"
   killall -CONT awesome volumd JunoStatusBarDriver 2>/dev/null
   lipc-set-prop com.lab126.pillow disableEnablePillow enable 2>/dev/null
   [ -n "$TIMEOUT" ] && lipc-set-prop com.lab126.powerd screenSaverTimeout "$TIMEOUT" 2>/dev/null
-  # the reader puts back the screen it found when it leaves (RESTORE_SCREEN); if it did not (killed), the home screen
-  [ "$CODE" = 0 ] || lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home 2>/dev/null
+  # no copy to put back: the home screen
+  [ "$CODE" = 0 ] || [ -n "$RESTORED" ] || lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home 2>/dev/null
   log "framework resumed"
 }
 trap leave EXIT
