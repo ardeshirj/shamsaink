@@ -1,11 +1,11 @@
 # Installing ShamsaInk (2026-11-06)
 
 What is the same on every device. Each brand's own steps, what it needs first and how it comes off are in its folder:
-[`kobo/install.md`](kobo/install.md) (the only one so far; the Kindle's comes with its launcher, `../PLAN.md`, stage
-9). The readers' guide on FarsiEPUB's ShamsaInk page follows these notes.
+[`kobo/install.md`](kobo/install.md) and [`kindle/install.md`](kindle/install.md) (2026-11-07). The readers' guide on
+FarsiEPUB's ShamsaInk page follows these notes.
 
 ## One command
-On a Mac or Linux, with the device plugged in over USB:
+On a Mac or Linux, with the device plugged in over USB (a Kobo or a jailbroken Kindle):
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh          # the newest release
 curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh -s v0.0.1 # a given one
@@ -13,7 +13,8 @@ curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh
 `install.sh`, at the repository's root, finds the device's drive, checks what that device needs first, downloads the
 release's package for it and its `.sha256`, checks the one against the other and puts the package where the device
 installs it from. With no device found it stops before downloading anything. One file for every device (it is piped
-into `sh`): today it knows the Kobo only; each brand added is a branch in it.
+into `sh`): today it knows the Kobo and the Kindle; each brand added is a branch in it. `PKG=file` installs a package
+file already on the computer (its `.sha256` beside it) instead of downloading one.
 
 **While the repository is private** the download goes through `gh` (logged in), and the script is run from a clone
 (`sh install.sh`): curl reaches neither until it is public.

@@ -43,6 +43,8 @@ git push origin main v0.0.1            # GitHub runs the checks, then builds and
 `make tag` (`reader/scripts/release.sh`) only tags a clean `main` with a version newer than the last, and never pushes.
 It reminds you when this file has no entry for the version.
 
-The release (`.github/workflows/ci.yml`, the job `release`) has two files: `shamsaink-vX.Y.Z-kobo.tgz` and its
-`.sha256`. The package's paths start at the Kobo's root, so it installs two ways (`docs/devices/kobo/install.md`):
-over USB as `.kobo/KoboRoot.tgz`, or over SSH with `make kobo-release-install V=X.Y.Z`.
+The release (`.github/workflows/ci.yml`, the job `release`) has a package per device and their `.sha256`:
+`shamsaink-vX.Y.Z-kobo.tgz`, whose paths start at the Kobo's root, so it installs two ways
+(`docs/devices/kobo/install.md`): over USB as `.kobo/KoboRoot.tgz`, or over SSH with `make kobo-release-install
+V=X.Y.Z`; and `shamsaink-vX.Y.Z-kindle.tgz` (2026-11-07), whose paths start at the Kindle's drive, unpacked onto it
+over USB (`docs/devices/kindle/install.md`).

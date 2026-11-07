@@ -4,7 +4,7 @@
 #   test   the engine built (cached: rebuilt only when engine/ changes), make test (every Go test, the renders compared
 #          with the kept ones), and the simulated Kobo's scenarios on public books (make e2e-sim's run.sh); a failure's
 #          folder (step, log, screen, reference, difference) attached to the run
-#   release  on a pushed version tag only, after both: the Kobo package built and published as a GitHub release
+#   release  on a pushed version tag only, after both: the Kobo's and the Kindle's packages built and published as a GitHub release
 #          (CHANGELOG.md, "How to release")
 # On public books, each fetched and checked by its SHA-256: readalong-granularity and the walk on Moby-Dick (IDPF's
 # sample), the walk and basics on Buried Alive (FarsiEPUB's narrated sample, 2026-11-06). basics' pages are held against
@@ -73,8 +73,8 @@ jobs:
           if-no-files-found: ignore
 
   # A pushed version tag (vX.Y.Z, made with make tag; CHANGELOG.md), once check and test pass: the reader built for the
-  # Kobo as on the Mac (reader/scripts/build-armv7.sh, here without the eink-rust image: the same Rust, zig and Go), packed
-  # (reader/scripts/package.sh) and published as a GitHub release with its checksum. Its notes: the version's section of
+  # devices as on the Mac (reader/scripts/build-armv7.sh, here without the eink-rust image: the same Rust, zig and Go),
+  # packed for the Kobo and the Kindle (reader/scripts/package.sh) and published as a GitHub release with checksums. Its notes: the version's section of
   # CHANGELOG.md, else the tag's message. Before 1.0 and with a suffix (-beta) a pre-release.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -117,8 +117,10 @@ jobs:
         run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the reader, static ARMv7 (reader/scripts/build-armv7.sh)
         run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
-      - name: the Kobo package and its checksum (reader/scripts/package.sh)
-        run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh
+      - name: the Kobo's and the Kindle's packages and their checksums (reader/scripts/package.sh)
+        run: |
+          VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh
+          VERSION="$GITHUB_REF_NAME" BRAND=kindle sh reader/scripts/package.sh
       - name: the release, on GitHub
         env:
           GH_TOKEN: ${{ github.token }}
@@ -129,4 +131,6 @@ jobs:
           case "$v" in 0.*|*-*) pre=--prerelease ;; *) pre= ;; esac
           gh release create "$GITHUB_REF_NAME" out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz \
             out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz.sha256 \
+            out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz \
+            out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz.sha256 \
             --title "ShamsaInk $v" --notes-file notes.md $pre --verify-tag

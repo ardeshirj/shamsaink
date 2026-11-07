@@ -99,6 +99,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 **9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
 - [x] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them (2026-11-07)
 - [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
+  (built 2026-11-07: `make kindle-package`, the release's second package; to try over USB from a clean start)
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
   player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
 - [ ] End-to-end tests on the Kindle (2026-11-06; after the other work on `devtest` is committed): its design profile
