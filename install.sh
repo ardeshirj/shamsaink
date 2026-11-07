@@ -21,13 +21,32 @@ REPO=ardeshirj/shamsaink
 say() { printf '%s\n' "$*"; }
 die() { say "ShamsaInk: $*" >&2; exit 1; }
 
-# The device's drive: a Kobo's (KOBOeReader, with .kobo) or a Kindle's (Kindle, with documents and system)
-if [ -z "$KOBO" ] && [ -z "$KINDLE" ]; then
+# The device's drive: a Kobo's (KOBOeReader, with .kobo) or a Kindle's (Kindle, with documents and system). One just
+# plugged in may still be mounting (a drive not ejected last time is checked first, a few seconds): looked for again
+# every second for up to 15 s once its folder is there, or anything was found.
+find_drive() {
   for d in /Volumes/KOBOeReader /media/*/KOBOeReader /run/media/*/KOBOeReader /media/KOBOeReader; do
     [ -d "$d/.kobo" ] && KOBO=$d && break
   done
   for d in /Volumes/Kindle /media/*/Kindle /run/media/*/Kindle /media/Kindle; do
     [ -d "$d/documents" ] && [ -d "$d/system" ] && KINDLE=$d && break
+  done
+}
+mounting() {
+  for d in /Volumes/KOBOeReader /Volumes/Kindle /media/*/KOBOeReader /media/*/Kindle /run/media/*/KOBOeReader \
+    /run/media/*/Kindle; do
+    [ -d "$d" ] && return 0
+  done
+  return 1
+}
+if [ -z "$KOBO" ] && [ -z "$KINDLE" ]; then
+  find_drive
+  i=0
+  while [ -z "$KOBO" ] && [ -z "$KINDLE" ] && mounting && [ $i -lt 15 ]; do
+    [ $i = 0 ] && say "The device's drive is still being mounted: waiting for it..."
+    sleep 1
+    i=$((i + 1))
+    find_drive
   done
 fi
 [ -n "$KOBO" ] && [ -n "$KINDLE" ] && die "a Kobo and a Kindle are both plugged in: unplug one, or set KOBO=... or KINDLE=..."
@@ -46,7 +65,7 @@ elif [ -n "$KINDLE" ]; then
   # the jailbreak's tools (the Kindle Modding Community's): their shell integration runs ShamsaInk.sh from the library
   [ "$1" = uninstall ] || [ -d "$KINDLE/kmc" ] || die "this Kindle is not jailbroken (no kmc folder), and ShamsaInk is started by the jailbreak's tools. Jailbreak it first: https://kindlemodding.org/"
 else
-  die "no Kobo or Kindle found. Plug it in (on a Kobo, tap Connect) and run this again (or set KOBO=... or KINDLE=... to its drive)."
+  die "no Kobo or Kindle found. Plug it in (on a Kobo, tap Connect), wait for its drive to show, and run this again (or set KOBO=... or KINDLE=... to its drive)."
 fi
 
 eject() {
