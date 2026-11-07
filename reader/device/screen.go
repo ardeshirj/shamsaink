@@ -225,7 +225,7 @@ func (s *Screen) Restore(b Saved) {
 func (s *Screen) send(r image.Rectangle, waveform uint32, flash bool) {
 	s.marker++
 	if Sim() {
-		simRefresh(r, waveform, flash)
+		simRefresh(s, r, waveform, flash)
 		return
 	}
 	region := rect{uint32(r.Min.Y), uint32(r.Min.X), uint32(r.Dx()), uint32(r.Dy())}

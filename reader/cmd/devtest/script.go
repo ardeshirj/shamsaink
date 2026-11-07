@@ -143,6 +143,10 @@ func (s *script) check(d *dev) error {
 			if args != 1 || a[1] != "forward" && a[1] != "back" {
 				fail(l, "turn forward|back")
 			}
+		case "press":
+			if args != 1 || a[1] != "forward" && a[1] != "back" && a[1] != "power" {
+				fail(l, "press forward|back|power")
+			}
 		case "tap-menu":
 			if args != 1 {
 				fail(l, "tap-menu CONTROL")
@@ -188,6 +192,14 @@ func (s *script) check(d *dev) error {
 				if !strings.Contains(kv, "=") {
 					fail(l, "env KEY=VALUE...: %q", kv)
 				}
+			}
+		case "resume":
+			if args != 0 {
+				fail(l, "resume takes nothing")
+			}
+		case "caption", "title":
+			if args < 1 {
+				fail(l, "%s TITLE ...", a[0])
 			}
 		case "walk":
 			if !(args == 0 || args == 5 && a[1] == "word" && isInt(a[2]) && isInt(a[3]) && isInt(a[4]) && isInt(a[5])) {

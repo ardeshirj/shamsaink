@@ -1,0 +1,107 @@
+# The tour for the video of the simulated Kobo (e2e/video/README.md): one evening with a book in three acts (a card for
+# each, `caption`), its steps named beside the screen (`title`), on FarsiEPUB's narrated Buried Alive; the end card lists
+# what ShamsaInk does, more than the tour shows, a point a line. Paced by waits for a viewer, not checked against references: not a test
+# (it lives outside e2e/scenarios/).
+on: sim
+book: books/farsiepub/buried-alive-narrated.epub
+env SHAMSAINK_RECORD=/sim/record
+forget books/farsiepub/buried-alive-narrated.epub
+caption ShamsaInk | A light reader for e-ink, made for Farsi
+caption Farsi, done properly | Shaped and set right to left, like a printed page
+title A Farsi book
+open
+resume
+wait 2.5
+press forward
+wait 2.2
+press forward
+wait 2.4
+title Any chapter, two taps
+tap page-top
+expect menu drawn
+wait 1.8
+tap dock contents
+expect contents: \d+ entries
+wait 2
+tap contents e2
+expect went to document
+wait 2.2
+caption Yours to adjust | Size, marks and light, each a tap away
+title Text size
+tap page-top
+expect menu drawn
+wait 1.6
+tap dock text
+wait 1.8
+tap text size-inc
+wait 1.8
+tap text size-inc
+wait 2
+tap text size-dec
+wait 1.6
+tap text size-dec
+wait 1.8
+tap 632 1000
+wait 1.5
+title Highlights
+hold 1120 476 to 600 476
+expect highlight menu: words chosen
+wait 1.8
+tap-menu hl-make
+expect highlight \d+ made
+wait 2
+title Dark mode
+tap page-top
+expect menu drawn
+wait 1.4
+tap topbar topbar-light
+wait 1.8
+tap light dark
+expect dark mode on
+wait 2
+tap 632 1000
+wait 1.4
+tap 632 1000
+wait 1.6
+press forward
+wait 2.4
+tap page-top
+expect menu drawn
+wait 1.4
+tap topbar topbar-light
+wait 1.6
+tap light dark
+expect dark mode off
+wait 1.6
+tap 632 1000
+wait 1.4
+tap 632 1000
+wait 1.6
+caption Listen along | The narrated word is underlined as it is spoken, | the voice through Bluetooth headphones
+title Read-along
+tap page-top                       # behind the card: to the start of «Davood the Hunchback», the chapter of the read-along video
+expect menu drawn
+tap dock contents
+expect contents: \d+ entries
+tap contents e3
+expect went to document
+resume
+wait 1.5
+hold 167 804                       # a word at the start of a sentence in the first paragraph
+expect highlight menu: words chosen
+wait 1.6
+tap-menu hl-listen                 # Listen from here
+expect read aloud from word
+wait 22
+tap page-top
+expect read aloud: stopped
+wait 1.2
+tap 632 1000
+wait 1
+title Good night
+press power                        # to sleep: a sleep screen (record.sh lays one of FarsiEPUB's in sleep/)
+wait 4.5
+caption end | Farsi and right to left, done properly | Read-along for narrated books | Light, warmth and a dark mode | Sleep screens: poems or your own pictures | and more… | Learn more and install — farsiepub.org/shamsaink
+press power                        # awake again, for close
+wait 3
+close

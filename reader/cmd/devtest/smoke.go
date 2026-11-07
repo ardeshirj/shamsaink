@@ -327,8 +327,25 @@ const (
 	slot, posX, posY, trackingID uint16 = 0x2F, 0x35, 0x36, 0x39
 )
 
+// record adds a line to the recording's log when the reader is started recording (env SHAMSAINK_RECORD=DIR, for a
+// video of the simulator: e2e/video/), after its time; it says whether it did.
+func (d *dev) record(line string) bool {
+	dir := ""
+	for _, kv := range strings.Fields(d.env) {
+		if v, ok := strings.CutPrefix(kv, "SHAMSAINK_RECORD="); ok {
+			dir = v
+		}
+	}
+	if dir == "" {
+		return false
+	}
+	_, err := d.sh("mkdir -p "+dir+" && cat >> "+dir+"/log", fmt.Appendf(nil, "%d %s\n", time.Now().UnixMilli(), line))
+	return err == nil
+}
+
 // tapAt writes a finger down and up at the screen's (x, y) into the touch screen.
 func (d *dev) tapAt(x, y int) error {
+	d.record(fmt.Sprintf("touch tap %d %d", x, y))
 	at := func() []byte {
 		b := append(event(evAbs, posX, int32(d.turn(d.a.Touch.Turn.X, x, y))), event(evAbs, posY, int32(d.turn(d.a.Touch.Turn.Y, x, y)))...)
 		return append(b, event(evSyn, 0, 0)...)
@@ -341,6 +358,34 @@ func (d *dev) tapAt(x, y int) error {
 	return err
 }
 
+// press writes a page button's press and release into the buttons' input ("gpio-keys", event0 on the Kobo and the
+// simulated Kobo, beside the touch screen's node): the lower (194) for forward, the upper (193) for back.
+func (d *dev) press(forward bool) error {
+	code, name := uint16(193), "upper"
+	if forward {
+		code, name = 194, "lower"
+	}
+	d.record("button " + name)
+	const evKey = 1
+	b := append(event(evKey, code, 1), event(evSyn, 0, 0)...)
+	b = append(b, event(evKey, code, 0)...)
+	b = append(b, event(evSyn, 0, 0)...)
+	_, err := d.sh("cat > "+filepath.Dir(d.a.Touch.Node)+"/event0", b)
+	return err
+}
+
+// power writes the power button's press and release into its input (bd71828-pwrkey, event3 on the Kobo and the
+// simulated Kobo, beside the touch screen's node): the reader sleeps, or wakes.
+func (d *dev) power() error {
+	d.record("button power")
+	const evKey, keyPower = 1, 116
+	b := append(event(evKey, keyPower, 1), event(evSyn, 0, 0)...)
+	b = append(b, event(evKey, keyPower, 0)...)
+	b = append(b, event(evSyn, 0, 0)...)
+	_, err := d.sh("cat > "+filepath.Dir(d.a.Touch.Node)+"/event3", b)
+	return err
+}
+
 // holdAt writes a finger down at the screen's (x, y), held still past the reader's hold time, moved to (x2, y2) in three
 // steps, and lifted.
 func (d *dev) holdAt(x, y, x2, y2 int) error {
@@ -349,6 +394,7 @@ func (d *dev) holdAt(x, y, x2, y2 int) error {
 		return append(b, event(evSyn, 0, 0)...)
 	}
 	write := func(b []byte) error { _, err := d.sh("cat > "+d.a.Touch.Node, b); return err }
+	d.record(fmt.Sprintf("touch hold %d %d %d %d", x, y, x2, y2)) // held 1.5 s, then moved over 0.9 s
 	down := append(event(evAbs, slot, 0), event(evAbs, trackingID, 7)...)
 	if err := write(append(down, at(x, y)...)); err != nil {
 		return err

@@ -47,8 +47,16 @@ func openSink() (*sink, error) {
 	syscall.Syscall(syscall.SYS_FCNTL, r.Fd(), fSetPipeSz, 4096)
 	if device.Sim() { // no player: the sound read at the sink's pace, 20 ms at a time, so the clock runs as on the Kobo
 		k := &sink{w: w, quit: make(chan struct{})}
+		name := fmt.Sprintf("sound-%d.raw", time.Now().UnixMilli()) // a video of the simulator: what the Kobo would play
+		rec := device.Record(name)
+		if rec != nil {
+			device.RecordNote("sound s16le %d 2 %s", sinkRate, name)
+		}
 		go func() {
 			defer r.Close()
+			if rec != nil {
+				defer rec.Close()
+			}
 			t := time.NewTicker(20 * time.Millisecond)
 			defer t.Stop()
 			buf := make([]byte, len(silence))
@@ -60,6 +68,9 @@ func openSink() (*sink, error) {
 				}
 				if _, err := io.ReadFull(r, buf); err != nil {
 					return
+				}
+				if rec != nil {
+					rec.Write(buf)
 				}
 			}
 		}()

@@ -29,6 +29,8 @@ import (
 //	                          (a list's row n is the first row's box moved down by n rows), tap topbar topbar-light
 //	tap page-top              the top tenth of the page: the bar and the dock
 //	turn forward|back         a tap on the page that turns it, by the book's own direction
+//	press forward|back|power  a page button pressed and let go: the lower (forward) or the upper (back), as the reader
+//	                          has them unless reversed; or the power button (to sleep, or to wake)
 //	tap-menu CONTROL          an entry of the highlight's menu, found where the reader says it put it: tap-menu hl-make
 //	tap X Y                   a tap at the screen's pixels (for what is the book's: a word)
 //	swipe X Y X2 Y2, hold X Y [to X2 Y2]
@@ -48,6 +50,11 @@ import (
 //	walk [word X Y X2 Y2]     the reader launched, and every screen the design spec reaches walked from the library and
 //	                          from the first book's page (walk.go): opened, held against its kept render, closed; the
 //	                          book left open. word: where a word is on that page, for the highlight's menu
+//	caption TITLE | LINE...   for a video of the simulator (e2e/video/): a card of its own (an act of the tour; "end":
+//	                          the end card, its lines "TITLE — WORDS"), in the recording's log (env SHAMSAINK_RECORD=DIR);
+//	                          nothing when not recording. While recording, each tap, hold and turn is logged too
+//	title TITLE               the same: the words beside the screen from here on, with no card
+//	resume                    the same: the video goes on from here after the last card, what came between left out
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored); their hashes are, in e2e/refs.sum (refs.go).
@@ -296,6 +303,14 @@ func (p *player) step(a []string) (string, error) {
 			}
 		}
 		return "", d.tapAt(x, 900)
+	case "press":
+		if err := need(1); err != nil || a[1] != "forward" && a[1] != "back" && a[1] != "power" {
+			return "", fmt.Errorf("press forward|back|power")
+		}
+		if a[1] == "power" {
+			return "", d.power()
+		}
+		return "", d.press(a[1] == "forward")
 	case "tap-menu":
 		if err := need(1); err != nil || !p.hlSeen {
 			return "", fmt.Errorf("tap-menu CONTROL, after the highlight's menu opened")
@@ -416,6 +431,11 @@ func (p *player) step(a []string) (string, error) {
 			return "", err
 		}
 		return p.snap(a[1])
+	case "caption", "title", "resume":
+		if !d.record(strings.TrimSpace(a[0] + " " + strings.Join(a[1:], " "))) {
+			return "not recording", nil
+		}
+		return "", nil
 	case "walk":
 		return p.walk(a[1:])
 	}
