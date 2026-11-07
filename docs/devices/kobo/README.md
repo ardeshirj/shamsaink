@@ -33,10 +33,9 @@ with a reboot, and the kernel has no `pstore`.
     ├── places/                      KEY.place: the page a book was left at
     ├── highlights/                  KEY.json: a book's highlights
     ├── settings.json                text size, line height, margin, lead_ms (narration lead); written by the reader's menu
-    ├── sleep/                       pictures for the sleep screen; empty: the opening screen is used            [by hand]
+    ├── sleep/                       sleep screens (YAML: FarsiEPUB's sleep-screens.yml); empty: the opening screen [by hand]
     ├── logs/                        reader.log, system.log, kernel.log, alive.log (written by the launcher)
-    ├── nickel.env                   Nickel's environment we cannot rebuild (session bus, platform); written at each launch
-    └── sound/                       experiments 12 and 13's leftovers (blitz-follow, follow.sh, a narration); not used
+    └── nickel.env                   Nickel's environment we cannot rebuild (session bus, platform); written at each launch
 
 /var/tmp/shamsaink/                  the narration's decoded sound (RAM, gone with a reboot)
 ```
