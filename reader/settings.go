@@ -77,10 +77,10 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 	case "margin-dec", "margin-inc":
 		s.Margin = int(step(float32(s.Margin), map[bool]float32{true: 10, false: -10}[id == "margin-inc"], 0, 200))
 	case "lines-dec", "lines-inc":
-		// from the spacing as it is (the book's own, measured, until one is set), by 0.05
+		// from the spacing as it is (the book's own, measured, until one is set), by 0.1, on tenths
 		v := cmp.Or(s.LineHeight, lines, 1.2)
-		v = step(v, map[bool]float32{true: 0.05, false: -0.05}[id == "lines-inc"], 0.8, 3)
-		s.LineHeight = float32(math.Round(float64(v)*20) / 20)
+		v = step(v, map[bool]float32{true: 0.1, false: -0.1}[id == "lines-inc"], 0.8, 3)
+		s.LineHeight = float32(math.Round(float64(v)*10) / 10)
 	case "reset":
 		// every setting back to its default (the book's line spacing), the direction too for this book
 		d := defaults()
