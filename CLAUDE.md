@@ -168,6 +168,12 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/DESIGN-SYSTEM.md` (spec in `reader/design/spec`, checks `go test ./design`,
   renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: `docs/DESIGN.md`, "The reader's panels".
+- **One reader, the same on every device** (the maintainer, 2026-11-06): the same behaviour, timings, screens and
+  settings on the Kobo and the Kindle (the opening screen's minimum, sleep screens, dark mode, the light, the battery,
+  ...); a difference only where a device lacks something or forces it, and then written in its
+  `docs/devices/DEVICE/README.md`. Device-specific code stays in `reader/device/` and each host's launcher
+  (`docs/DESIGN.md`, "Where the device-specific code lives"); nothing else asks which device it is on. A change tried
+  on one device is installed and tried on the other too before it is called done.
 - **Testing a change** (2026-11-05): a new or changed control's effect goes in the design spec; a journey on a book, or
   over time, gets a scenario (`docs/TESTING.md` section 6, `e2e/README.md`). Before committing, `make check` and `make test`; a
   change to device code also `make e2e` on the Kobo. `make e2e-sim` runs on CI (every push); locally only to
