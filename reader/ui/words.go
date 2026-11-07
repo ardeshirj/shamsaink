@@ -40,6 +40,9 @@ func SetLanguage(code string) {
 	lang = code
 }
 
+// Language is the interface's language now: a code of Languages.
+func Language() string { return lang }
+
 // Languages are the codes the interface has words in.
 func Languages() (codes []string) {
 	for c := range words {

@@ -284,6 +284,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			case id == "lang-follow" && langOpen:
 				set.EnglishOnly = !set.EnglishOnly
 				set.save(rd.dir)
+				fmt.Println("interface language:", map[bool]string{true: "English only", false: "follows the book"}[set.EnglishOnly])
 				build() // the head drawn with the menu button still on
 				v.Draw(rd.over)
 				panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)

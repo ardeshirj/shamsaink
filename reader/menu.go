@@ -71,7 +71,7 @@ func (s *session) showMenu() {
 	s.list, s.sheet = nil, nil
 	s.drawMenu()
 	s.showPage(device.WfREAGL, false)
-	fmt.Printf("  menu drawn in %.0f ms (the dock)\n", ms(t))
+	fmt.Printf("  menu drawn in %.0f ms (the dock, in %s)\n", ms(t), ui.Language()) // the language its panels are in
 }
 
 // drawMenu draws the dock, or the Text sheet when it is open, and the bar over the page, in the interface's language.
