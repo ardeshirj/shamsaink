@@ -15,7 +15,7 @@ import (
 )
 
 // A sleep screen is a small file (YAML), drawn from templates/sleep.html at the screen's own size, so the type is the same
-// everywhere and the text is fitted to its length. Layouts: "couplet" (FarsiEPUB's screensaver: verses, poet, gloss,
+// everywhere and the text is fitted to its length. Layouts: "couplet" (FarsiEPUB's sleep screens: verses, poet, gloss,
 // signature), "title" and "quote" (the opening screen's logo, a text under it), and "picture": a picture beside the file
 // (Image), shown fitted to the screen (the device loads it: device.sleepScreen).
 type Sleep struct {
@@ -94,7 +94,7 @@ func sleepSize(n int) int {
 	return 40
 }
 
-// twoLines is a verse on two lines, broken at the word nearest its middle (FarsiEPUB's screensaver, render.py two_lines).
+// twoLines is a verse on two lines, broken at the word nearest its middle (as FarsiEPUB's old renders broke them).
 func twoLines(verse string) template.HTML {
 	words := strings.Split(verse, " ")
 	if len(words) < 2 {
@@ -146,11 +146,11 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	if s.Layout != "couplet" {
 		return drawSleepOnce(d, fonts, w, h)
 	}
-	// FarsiEPUB's sizes (screensavers/design.toml: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40), for a 1236 px wide
+	// FarsiEPUB's sizes (from its old renders: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40), for a 1236 px wide
 	// page, scaled with the width. The couplet starts at its full size and shrinks only when a verse is measured on a third
-	// line, 2 px at a width of 1236 a step (FarsiEPUB's fit, render.py). FarsiEPUB stops at 70% and rejects the poem; a
-	// reader keeps going, to 50%, rather than show a third line. No estimate from the letters: it counted the vowel marks
-	// and shrank couplets that fit at full size (Hafez's 71 px of 112).
+	// line, 2 px at a width of 1236 a step, down to 50% rather than show a third line (FarsiEPUB's old renders stopped
+	// at 70% and rejected the poem; they are gone, so the fit is ours). No estimate from the letters: it counted the
+	// vowel marks and shrank couplets that fit at full size (Hafez's 71 px of 112).
 	floor := int(0.5 * 96 * 1.15 * u)
 	for {
 		img, tall := drawSleepOnce(d, fonts, w, h)
