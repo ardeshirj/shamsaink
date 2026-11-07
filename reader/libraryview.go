@@ -44,6 +44,7 @@ func (rd *reader) browse(t time.Time) error {
 // opens a panel to sort them; a finger held on a book opens its menu (library/changes.go); the bar's menu leaves. The power button sleeps (the Kobo) and wakes on
 // the library. What is chosen is kept (library/shelf.go).
 func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
+	own := time.Now() // the library's own time: scanned, laid out and drawn (t: since the reader or the book's leaving)
 	scr := rd.dev.Screen
 	all := library.Shelf(library.Scan(rd.dir), rd.dir)
 	view, _ := library.LoadView(rd.dir)
@@ -94,6 +95,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	build()
 	defer func() { v.Close() }()
 	v.Draw(rd.over)
+	fmt.Printf("library: scanned, laid out and drawn in %.0f ms; the opening screen kept %.0f ms more\n", ms(own),
+		max(float64(time.Until(rd.splashUntil).Milliseconds()), 0))
 	time.Sleep(time.Until(rd.splashUntil)) // the opening screen seen for SplashFor at the start (nothing later)
 	scr.Show(rd.over, device.WfGC16, true)
 	fmt.Printf("library: %d books, %d rows, %d pages, shown in %.0f ms\n", len(all), len(items), v.Pages(), ms(t))

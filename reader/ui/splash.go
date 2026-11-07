@@ -21,8 +21,9 @@ import (
 const SplashAfter = 3 * time.Second
 
 // SplashFor is how long the opening screen shown when the reader starts stays at least, so it is seen, not flashed by
-// when the library is ready sooner.
-const SplashFor = 2 * time.Second
+// when the library is ready sooner. 1 s since 2026-11-06 (2 s before): the library takes ~0.7 s behind it on the
+// Kindle, so the logo is still seen and the start no longer waits ~1.3 s for nothing (2.8 s to the library, now ~1.8).
+const SplashFor = 1 * time.Second
 
 type splashData struct{ Top int }
 
