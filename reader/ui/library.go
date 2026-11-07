@@ -156,7 +156,7 @@ func DrawMenu(under int, which string, fonts *blitz.Fonts, w int) *Panel {
 }
 
 // LibrarySettings is what the Settings panel shows: the interface follows the book's language, the sleep timeout in
-// minutes (0: never), whether the device has page buttons, and whether they are reversed.
+// minutes, whether the device has page buttons, and whether they are reversed.
 type LibrarySettings struct {
 	Follow         bool
 	SleepMin       int
@@ -170,10 +170,7 @@ type LibrarySettings struct {
 // "Follow book language" (the button lang-follow), "Sleep after" (sleep-dec and sleep-inc), and on a device with page
 // buttons "Reverse page buttons" (buttons-reverse); under them the version, small and grey.
 func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
-	sleep := word("never")
-	if st.SleepMin > 0 {
-		sleep = word("min", num(st.SleepMin))
-	}
+	sleep := word("min", num(st.SleepMin))
 	html, ids := render("library-settings.html", struct {
 		LibrarySettings
 		Sleep string

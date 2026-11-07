@@ -28,7 +28,8 @@ type settings struct {
 	// The interface's language (lang.go): the menus follow the book's language unless this is set ("Follow book language"
 	// off: English everywhere). Stored as the opposite so that a file from before it, without the key, follows the book.
 	EnglishOnly bool `json:"english_only,omitempty"`
-	// Minutes untouched before the device is put to sleep (device.SleepMinutes; 0: never).
+	// Minutes untouched before the device is put to sleep (device.SleepMinutes; one not among them, such as the 0 that
+	// was never until 2026-11-07, read as the default).
 	SleepMin int `json:"sleep_min"`
 	// Dark mode: the screen inverted (device.Screen.SetInvert), set from the Light panel.
 	Dark bool `json:"dark,omitempty"`
@@ -54,6 +55,9 @@ func loadSettings(dir string) *settings {
 	s := defaults()
 	if b, err := os.ReadFile(filepath.Join(dir, "settings.json")); err == nil {
 		json.Unmarshal(b, s)
+	}
+	if !slices.Contains(device.SleepMinutes, s.SleepMin) {
+		s.SleepMin = int(device.DefaultSleepAfter / time.Minute)
 	}
 	return s
 }
@@ -102,8 +106,8 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 	return true
 }
 
-// nextSleep is the sleep timeout after cur minutes, a step longer or shorter in device.SleepMinutes (never, 0, is the
-// last; it stops at both ends).
+// nextSleep is the sleep timeout after cur minutes, a step longer or shorter in device.SleepMinutes (it stops at both
+// ends).
 func nextSleep(cur int, longer bool) int {
 	i := slices.Index(device.SleepMinutes, cur)
 	if i < 0 {

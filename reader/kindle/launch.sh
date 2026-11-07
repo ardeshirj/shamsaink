@@ -32,6 +32,8 @@ P=$(pidof shamsaink) && { log "a reader ($P) is already running: not started"; e
 # other way so its own dark mode looks the same either way (reader/device/kindle.go). Asked before awesome, which
 # answers it, is paused: asked after, lipc waits 10 s for it.
 export KINDLE_EPDC="$(lipc-get-prop -s com.lab126.winmgr epdcMode 2>/dev/null)"
+# powerd's timeout (600 s, the Kindle's 10 minutes), which the reader sets to its own "Sleep after": put back on leaving
+TIMEOUT=$(lipc-get-prop com.lab126.powerd screenSaverTimeout 2>/dev/null)
 # the framework paused
 lipc-set-prop com.lab126.pillow disableEnablePillow disable 2>/dev/null
 killall -STOP awesome volumd JunoStatusBarDriver 2>/dev/null
@@ -40,6 +42,7 @@ leave() {
   kill "$W" 2>/dev/null
   killall -CONT awesome volumd JunoStatusBarDriver 2>/dev/null
   lipc-set-prop com.lab126.pillow disableEnablePillow enable 2>/dev/null
+  [ -n "$TIMEOUT" ] && lipc-set-prop com.lab126.powerd screenSaverTimeout "$TIMEOUT" 2>/dev/null
   # the reader puts back the screen it found when it leaves (RESTORE_SCREEN); if it did not (killed), the home screen
   [ "$CODE" = 0 ] || lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.home 2>/dev/null
   log "framework resumed"

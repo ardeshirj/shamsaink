@@ -101,6 +101,13 @@ func kindleTouched(last *atomic.Int64) {
 	go exec.Command("lipc-set-prop", "-i", "com.lab126.powerd", "touchScreenSaverTimeout", "1").Run()
 }
 
+// kindleSleepAfter sets powerd's timeout, how long it waits untouched before the screensaver (600 s, Amazon's own
+// 10 minutes), to the reader's setting, so the Kindle sleeps when the Kobo would (2026-11-07: before, the setting did
+// nothing here). The launcher puts the Kindle's own back when the reader ends (reader/kindle/launch.sh).
+func kindleSleepAfter(t time.Duration) {
+	go exec.Command("lipc-set-prop", "com.lab126.powerd", "screenSaverTimeout", fmt.Sprint(int(t.Seconds()))).Run()
+}
+
 // kindleInverts says whether the Kindle's screen inverts every pixel itself: its own Dark Mode sets the window
 // manager's epdcMode to Y8INV (8-bit grey, inverted; Y8 without it), and the driver inverts whatever is drawn, ours
 // too (2026-11-06). The launcher asks before it pauses the window manager (awesome, which answers it: asked while

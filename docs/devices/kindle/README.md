@@ -23,7 +23,9 @@ in place: the reader, `launch.sh`, the fonts, the scriptlet (and removes KOReade
 ```
 
 Sleep stays `powerd`'s: the reader shows its sleep screen on `goingToScreenSaver` and puts the page back on
-`outOfScreenSaver` (`reader/device/kindle.go`; tried: sleep screen in 1.3 s, the page back 0.8 s after waking). The light
+`outOfScreenSaver` (`reader/device/kindle.go`; tried: sleep screen in 1.3 s, the page back 0.8 s after waking). When:
+the reader's "Sleep after" (5 to 60 minutes), set as powerd's `screenSaverTimeout` while it runs, the Kindle's own (600 s)
+put back by the launcher on leaving (2026-11-07). The light
 and its warmth are `powerd`'s `flIntensity` (0 to 24) and `currentAmberLevel` (0 to 24), behind the reader's Light panel.
 SSH while reading: KOReader's dropbear (port 2222) keeps running when KOReader ends.
 

@@ -57,13 +57,13 @@ func TestLanguageSetting(t *testing.T) {
 	}
 }
 
-// The sleep timeout's stepper goes through the choices and stops at both ends; never is the longest.
+// The sleep timeout's stepper goes through the choices and stops at both ends; 60 is the longest (no never since 2026-11-07).
 func TestNextSleep(t *testing.T) {
 	for _, c := range []struct {
 		cur    int
 		longer bool
 		want   int
-	}{{10, true, 15}, {10, false, 5}, {5, false, 5}, {60, true, 0}, {0, true, 0}, {0, false, 60}, {7, true, 15}} {
+	}{{10, true, 15}, {10, false, 5}, {5, false, 5}, {60, true, 60}, {60, false, 30}, {0, true, 15}, {7, true, 15}} {
 		if got := nextSleep(c.cur, c.longer); got != c.want {
 			t.Errorf("nextSleep(%d, %v) = %d, want %d", c.cur, c.longer, got, c.want)
 		}

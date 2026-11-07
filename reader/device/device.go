@@ -39,18 +39,24 @@ type Device struct {
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
 // button would (the sleep screen, light and Wi-Fi off, suspend); Kobo's own interface, stopped while we run, did the
 // same at 10 minutes. The design's device profile says the same (sleep_after_min; a test holds them). A setting changes
-// it (SetSleepAfter); the Kindle's is powerd's.
+// it (SetSleepAfter), on the Kindle too (powerd's timeout set from it).
 const DefaultSleepAfter = 10 * time.Minute
 
-// SleepMinutes are the choices of the setting, in the order a stepper goes through them; 0 is never. The design spec's
-// sleep control lists the same (a test holds them).
-var SleepMinutes = []int{5, 10, 15, 30, 60, 0}
+// SleepMinutes are the choices of the setting, in the order a stepper goes through them: 5 minutes the least, and no
+// "never" (the maintainer, 2026-11-07). The design spec's sleep control lists the same (a test holds them).
+var SleepMinutes = []int{5, 10, 15, 30, 60}
 
 // Active says something is going on that is not a touch (the narration playing): the idle sleep counts from now.
 func (d *Device) Active() { d.active.Store(time.Now().UnixNano()) }
 
-// SetSleepAfter sets how long the Kobo sits untouched before it sleeps; 0: never.
-func (d *Device) SetSleepAfter(t time.Duration) { d.sleepAfter.Store(int64(t)) }
+// SetSleepAfter sets how long the device sits untouched before it sleeps; 0: never (the Kobo only: on the Kindle,
+// powerd's timeout is set, kindle.go).
+func (d *Device) SetSleepAfter(t time.Duration) {
+	d.sleepAfter.Store(int64(t))
+	if d.Kind == Kindle && t > 0 {
+		kindleSleepAfter(t)
+	}
+}
 
 // Open opens the screen. The device is known by it: a pixel is a byte on the Kindle, four on the Kobo.
 func Open() (*Device, error) {

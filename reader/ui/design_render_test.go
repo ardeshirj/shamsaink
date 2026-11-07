@@ -208,7 +208,7 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
-			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 0, HasButtons: true, ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
+			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 60, HasButtons: true, ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
