@@ -8,7 +8,7 @@ principles:
     text: "The dock at the bottom; the glance beside the finger; in landscape, at the grip."
     check: by eye
   - name: What the device has, only
-    text: "Light where there is a light, Listen where there is sound, colour on colour screens: a control the device lacks is not drawn, never greyed out. What the book lacks is another thing: Listen in a book with no narration is shown light, not a button, so the tools keep their places and the feature is seen to exist."
+    text: "Light where there is a light, Listen where there is sound, colour on colour screens: a control the device lacks is not drawn, never greyed out. What the book lacks is another thing: Listen in a book with no narration is shown light, not a button, so the tools keep their places and the feature is seen to exist. And what is not built yet on a device that has the hardware (the Kindle's sound, 2026-11-06) is drawn, and a notice says it is not there yet."
     check: "a control's `requires` is a capability, and CheckControls leaves it out of a device that lacks it (TestRequires); the light Listen is by eye"
   - name: Everything by buttons too
     text: "The page buttons reach every control, for devices and people that need them."

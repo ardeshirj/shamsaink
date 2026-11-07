@@ -85,5 +85,7 @@
   "dark-mode": "Dark mode",
   "screen": "Screen",
   "highlight": "Highlight",
-  "listen-here": "Listen from here"
+  "listen-here": "Listen from here",
+  "listen-not-here": "Listening is not possible on this device.",
+  "close": "Close"
 }

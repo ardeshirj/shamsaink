@@ -27,7 +27,7 @@ var (
 // roles are what a control is to someone using it, as accessibility and test tools name them: a test says
 // "the menuitem Contents", not a position.
 var roles = map[string]bool{"button": true, "slider": true, "tab": true, "menuitem": true, "switch": true, "listitem": true,
-	"progressbar": true, "radio": true, "spinbutton": true}
+	"progressbar": true, "radio": true, "spinbutton": true, "dialog": true}
 
 func em(s string) (float64, bool) {
 	v, err := strconv.ParseFloat(strings.TrimSuffix(s, "em"), 64)

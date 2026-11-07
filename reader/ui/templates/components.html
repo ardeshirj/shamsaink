@@ -7,6 +7,11 @@ direction ("rtl", "ltr" or "" for the interface's language's: none in English, r
 
 {{define "button"}}<span class="b" id="{{.ID}}">{{.Label}}</span>{{end}}
 
+{{/* A dialog (from dlg): a box with a question or a notice, a title under it in its own direction when there is one (a
+book's), a small note when there is one, then its buttons in a row: one (Close) for a notice, two (the action, then the
+way back) for a question. The same box wherever the reader asks or tells something. */}}
+{{define "dialog"}}<div class="dialog" id="{{.ID}}"><p>{{.Text}}</p>{{if .Title}}<p class="t" dir="{{.Dir}}"{{.Lang}}>{{.Title}}</p>{{end}}{{if .Note}}<p class="n">{{.Note}}</p>{{end}}<div class="row">{{range .Buttons}}{{template "button" .}}{{end}}</div></div>{{end}}
+
 {{/* A button that shows whether it is the one chosen, with a tick. */}}
 {{define "choice"}}<span class="b" id="{{.ID}}">{{if .On}}✓ {{end}}{{.Label}}</span>{{end}}
 

@@ -12,6 +12,6 @@ controls:
   - {id: back, component: button, action: act, does: "back to where the jump started", when: "after a jump", emits: "went to document", walk: "never: the undo of a jump: the walk presses it after each"}
   - {id: contents, component: icon-button, action: goto, to: contents}
   - {id: text, component: icon-button, action: goto, to: text}
-  - {id: read-aloud, component: icon-button, action: act, does: start the narration, when: "the book is narrated", requires: [sound], emits: "read aloud from word", walk: "never: the narration plays on (scenarios/readalong-granularity.txt)"}
+  - {id: read-aloud, component: icon-button, action: act, does: "start the narration (where the device has no player of ours yet, the notice)", when: "the book is narrated", requires: [sound], emits: "read aloud from word", walk: "never: the narration plays on (scenarios/readalong-granularity.txt)"}
 internal: [where-title, where-title-text]
 dismiss: tap-outside

@@ -282,6 +282,10 @@ func (s *session) inMenu(g device.Gesture) {
 		s.jump(min(doc, len(r.spine)-1), at)
 	case id == "back":
 		s.jump(s.backDoc, s.backAt)
+	case id == "read-aloud" && !s.dev.CanPlay(): // no player of ours on this device yet: a notice, the dock under it
+		s.list, s.kind = ui.DrawNotice("listen-not-here", s.rd.fonts, s.scr.W), "notice"
+		s.list.SetY((s.scr.H - s.list.Rect().Dy()) / 2) // in the middle of the screen, as every dialog
+		s.refresh(s.list.Rect(), device.WfREAGL)
 	case id == "read-aloud":
 		s.closeMenu()
 		s.readAloud(nil)

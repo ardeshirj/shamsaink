@@ -19,6 +19,13 @@ p { margin: 0.3em 0; }
 
 /* A row of buttons (and words), wrapped when it is too long, the same room across and down. */
 .row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap); margin: 0.3em 0; }
+/* the dialog (components.html): a question or a notice in a box as wide as its words (at most 85% of the screen),
+centred, its buttons in a row under it; the reader puts it in the middle of the screen (2026-11-06) */
+div.dialog { width: max-content; max-width: 85%; margin-inline: auto; border: var(--line) solid var(--ink);
+  border-radius: var(--radius); padding: 0.5em 0.8em 0.4em; }
+div.dialog p { margin: 0 0 0.3em; }
+div.dialog p.t { font-weight: bold; }
+div.dialog p.n { font-size: 0.85em; color: #444; }
 
 /* a button: its words, and an icon before them centred on them */
 span.b { display: inline-flex; align-items: center; gap: 0.3em; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }

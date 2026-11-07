@@ -1,0 +1,5 @@
+{{/* A notice (DrawNotice): the dialog component with a sentence and Close, in the middle of the screen; any tap closes it. For now the
+one telling that listening is not on this device yet (Listen tapped where the device has no player of ours: the
+Kindle). */ -}}
+{{template "head" ""}}</head><body>
+{{template "dialog" (dlg "notice-box" (t .Key) "" "" "" (btn "notice-close" (t "close")))}}</body></html>

@@ -258,6 +258,13 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 	return drawPanelIn(html, ids, "book-details-box", fonts, w, 1200)
 }
 
+// DrawNotice draws a notice (templates/notice.html: the dialog component), the words of key and Close (its button
+// notice-close), w px wide at most; the caller places it (SetY).
+func DrawNotice(key string, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("notice.html", struct{ Key string }{key})
+	return drawPanelIn(html, ids, "notice-box", fonts, w, 900)
+}
+
 // DrawBookRemove draws the question before a book is removed (templates/library-book-remove.html): its buttons
 // book-remove-yes and book-remove-no.
 func DrawBookRemove(title string, rtl bool, fonts *blitz.Fonts, w int) *Panel {

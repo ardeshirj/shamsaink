@@ -80,6 +80,13 @@ type iconButton struct {
 var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(files, "templates/*.html", "templates/*.css"))
 
 // A button, as the templates draw it; On: ticked (for a choice).
+// dialog is the dialog component's (components.html): a question or a notice, an optional title and note, its buttons.
+type dialog struct {
+	ID, Text, Title, Dir, Note string
+	Lang                       template.HTMLAttr
+	Buttons                    []button
+}
+
 type button struct {
 	ID, Label string
 	On        bool
@@ -136,6 +143,9 @@ func uiFuncs(ids *[]string) template.FuncMap {
 				Flip: pointing(name)}
 		},
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
+		"dlg": func(id, text, title, dir, note string, buttons ...button) dialog { // the box's id is not a button's
+			return dialog{ID: id, Text: text, Title: title, Dir: dir, Lang: textLang(title), Note: note, Buttons: buttons}
+		},
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}
 		},

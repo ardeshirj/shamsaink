@@ -221,6 +221,7 @@ var designRenders = map[string][]renderCase{
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
 	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, f, w)) }}},
+	"notice":              {{"listen", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", f, w)) }}},
 	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
 		{"made", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
 }

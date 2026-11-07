@@ -140,6 +140,10 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 // SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
 func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
 
+// CanPlay says whether the reader has a player for this device's sound: the Kobo's (its Bluetooth sink, sink.go); not
+// yet the Kindle's (Amazon's mplay, experiment 12: to build), where Listen shows a notice instead.
+func (d *Device) CanPlay() bool { return d.Kind != Kindle }
+
 // HasButtons says whether the device has page-turn buttons (the Kobo Libra's, two keys on its side).
 func (d *Device) HasButtons() bool { return d.Kind == Kobo && buttonsDev() != "" }
 

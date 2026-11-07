@@ -101,7 +101,12 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
   player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
-- [ ] The library drawn in 2 to 3.5 s on the Kindle (0.5 s earlier the same day), the sleep screen in 1.3 s: measure
+- [ ] End-to-end tests on the Kindle (2026-11-06; after the other work on `devtest` is committed): its design profile
+  (1236 x 1648, no page buttons, no sound yet) and renders, its entry in `e2e/devices.yaml`, a third place in `devtest`
+  (`kindle`, its references in `refs.sum`; its launcher says "framework resumed", not "Nickel started again"), the
+  scenarios that apply marked `on: ... kindle`
+- [x] Measured (2026-11-06): the library is 0.46 s from a book, 0.7 s behind the opening screen on a start; the opening
+  screen's minimum made 1 s (it was 2: 2.8 s to the library, now ~1.8)
 - [x] Done (2026-11-06): a launcher of our own, a scriptlet in the Kindle's library (no KUAL), Amazon's framework paused
   as KOReader pauses it (stopped, the power button is ignored: `devices/kindle/README.md`); the session and one event
   loop there; sleep ours behind `powerd` (the book kept open, so the reopening on waking that failed is gone); the light

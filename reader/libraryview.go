@@ -144,7 +144,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		if panel != nil {
 			r = panel.Rect()
 		}
-		p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
+		if kind == "remove" { // a dialog: in the middle of the screen, as every dialog
+			p.SetY((scr.H - p.Rect().Dy()) / 2)
+		} else {
+			p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
+		}
 		// where it hangs and which of its cases (the kept renders' names): devtest's walk finds its buttons
 		fmt.Printf("library: book %s (%s) at %d,%d\n", kind, variant, p.Rect().Min.X, p.Rect().Min.Y)
 		panel, bookPanel = p, kind

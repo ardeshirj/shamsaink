@@ -1,0 +1,12 @@
+name: notice
+layer: overlay
+templates: [notice.html]
+buttons: panel
+status: built
+purpose: "A notice in the middle of the screen, over the dock, the dialog component with a sentence and Close; any tap closes it. Now the one Listen shows where the device has no player of ours yet (the Kindle): Listening is not possible on this device."
+enter: [{gesture: no-player, from: dock}]
+internal: [notice-box]
+controls:
+  - {id: notice-close, component: button, action: act, does: closes the notice}
+dismiss: tap-outside
+words: [listen-not-here, close]
