@@ -1,8 +1,8 @@
 # Devices
 
-Which devices ShamsaInk runs on. Installing, what every device shares: [`install.md`](install.md). Everything about one
-brand is in its own folder here: its hardware and paths, its limits and bugs and a dated findings log (`README.md`),
-how it is set up for development (`setup.md`) and its own install steps (`install.md`, the Kobo's so far). A second
+Which devices ShamsaInk runs on. Installing, on every device: [`install.md`](install.md) (one page since 2026-11-07:
+the installer covers them all). Everything else about one brand is in its own folder here: its hardware and paths,
+its limits and bugs and a dated findings log (`README.md`), and how it is set up for development (`setup.md`). A second
 model or firmware of a brand is a section in its README and a row below. The release notes' known limits come from
 each brand's "Limits and bugs".
 

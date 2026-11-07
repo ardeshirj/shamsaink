@@ -8,8 +8,8 @@
 #
 # It finds the device's drive, downloads the release's package for it and its checksum from GitHub, checks it, and
 # puts it on the device (docs/devices/install.md): the Kobo's is copied as .kobo/KoboRoot.tgz, which the Kobo installs
-# once ejected, and restarts (docs/devices/kobo/install.md); the Kindle's is unpacked onto its drive, nothing to
-# restart (docs/devices/kindle/install.md). Nothing else on the device is touched, and an install over an older one
+# once ejected, and restarts; the Kindle's is unpacked onto its drive, nothing to
+# restart. Nothing else on the device is touched, and an install over an older one
 # keeps the settings, places, highlights and books.
 # Without a version: the newest release, pre-releases included. While the repository is private the download needs
 # GitHub's `gh`, logged in; once public, curl alone. KOBO=/path or KINDLE=/path if the drive is mounted somewhere

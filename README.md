@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh
 
 It downloads the newest [release](https://github.com/ardeshirj/shamsaink/releases), checks it and copies it onto the Kobo,
 which installs it and restarts. Then NickelMenu → ShamsaInk. Installing by hand and removing it:
-[`docs/devices/kobo/install.md`](docs/devices/kobo/install.md); building it yourself:
+[`docs/devices/install.md`](docs/devices/install.md); building it yourself:
 [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md).
 
 **Not for everyone yet:** until the beta the releases are pre-releases, tried on a **Kobo Libra Colour** (firmware

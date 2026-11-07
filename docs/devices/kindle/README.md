@@ -2,7 +2,7 @@
 
 MediaTek MT8113 (two Cortex-A53 cores at up to 1 GHz under a 32-bit kernel), 485 MB, 1236 × 1648 at 300 ppi,
 firmware 5.19.2, jailbroken, KOReader v2026.07.1. Reached with `ssh kindle` (KOReader's SSH server). Set up as in
-`setup.md`, installed as in `install.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi
+`setup.md`, installed as in `../install.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi
 and SSH with it (the reader open keeps it awake while it is touched, as any reading does): `make kindle-status`,
 `kindle-wait` once woken by hand.
 In the beta beside the Kobo since 2026-11-07, read-along on it after (plan, stage 9).

@@ -98,7 +98,7 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 
 **9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
 - [x] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them (2026-11-07)
-- [x] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
+- [x] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then its notes (`devices/install.md` since 2026-11-07, one page for every device)
   (2026-11-07: `make kindle-package`, the release's second package; tried over USB on the Kindle, over an install and
   from a clean start after `install.sh uninstall`; `install.ps1` for Windows to come, once it can be tried there)
 - [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
@@ -163,7 +163,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
   beside the reader, and copied into `books/` on the reader's first start only, so a removed guide stays removed; 2026-11-07)
 - [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line), its notes in `devices/kobo/`, the readers'
   guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start. The Kindle's the same
-  (its package, `devices/kindle/install.md`)
+  (its package, `devices/install.md`)
 - [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
   the Kobo over USB from a clean start and over SSH; the version in Settings
 - [ ] Our test EPUB's scenarios committed, `make e2e` passing

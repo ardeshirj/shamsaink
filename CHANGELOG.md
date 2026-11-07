@@ -13,7 +13,7 @@ else yet: the beta (`v0.1.0-beta`) is when a user can install it and read for a 
   page buttons, sleep after idle minutes, and read-along (experimental: narrated EPUBs over Bluetooth headphones;
   leaving the reader after Bluetooth reboots the Kobo, Kobo's own bug).
 - **The version** shows at the end of Settings, small and grey, and as the first line of `logs/reader.log`.
-- **Installing:** the package goes on as `.kobo/KoboRoot.tgz` over USB, or over SSH (`docs/devices/kobo/install.md`).
+- **Installing:** the package goes on as `.kobo/KoboRoot.tgz` over USB, or over SSH (`docs/devices/install.md`).
   NickelMenu is needed. An install over an older one keeps the settings, places, highlights and books.
 
 ## Versions and releases
@@ -45,6 +45,6 @@ It reminds you when this file has no entry for the version.
 
 The release (`.github/workflows/ci.yml`, the job `release`) has a package per device and their `.sha256`:
 `shamsaink-vX.Y.Z-kobo.tgz`, whose paths start at the Kobo's root, so it installs two ways
-(`docs/devices/kobo/install.md`): over USB as `.kobo/KoboRoot.tgz`, or over SSH with `make kobo-release-install
+(`docs/devices/install.md`): over USB as `.kobo/KoboRoot.tgz`, or over SSH with `make kobo-release-install
 V=X.Y.Z`; and `shamsaink-vX.Y.Z-kindle.tgz` (2026-11-07), whose paths start at the Kindle's drive, unpacked onto it
-over USB (`docs/devices/kindle/install.md`).
+over USB.

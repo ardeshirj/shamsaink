@@ -179,7 +179,7 @@ make kobo-reader-install
 scp BOOK.epub kobo:/mnt/onboard/.adds/shamsaink/books/SOURCE/
 ```
 (Since 2026-11-06 the install is the release's package, NickelMenu's line `.adds/nm/shamsaink` in it; a release's own
-package, or one over USB: `install.md`.)
+package, or one over USB: `../install.md`.)
 **Books** are in `.adds/shamsaink/books/`, one folder per source, and NickelMenu → ShamsaInk opens the newest (the paths and how to open a given one: `devices/kobo/README.md`, "Paths"). The menu (a tap on the top tenth) → Close the book
 goes back to Kobo's interface, its home screen after its boot animation (a few seconds). The logs, in `logs/`: `reader.log`, and while a book is open the system's and
 the kernel's (`system.log`, `kernel.log`) and `alive.log` (when the Kobo was last up); `make kobo-reader-log`. If

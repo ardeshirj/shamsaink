@@ -136,7 +136,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   296–299 ms, GC16 366 ms. By eye the page turns look alike in day mode, the flash shows most in night mode: **page
   turns REAGL without a flash**, a flash now and then (how often: in use); night mode driven by us not tried yet.
 - **The devices' own bugs and limits** (the Kobo's kernel panic with Bluetooth, its stray Wi-Fi loaders, the
-  Kindle's headphones dropped after 20 minutes, ...): per device `docs/devices/DEVICE/` (`README.md` with its paths, limits and a dated findings log, `setup.md`, `install.md`; each new one added there when found); what is common in `docs/devices/`: `README.md` (what runs where) and `install.md` (the one command), 2026-11-06.
+  Kindle's headphones dropped after 20 minutes, ...): per device `docs/devices/DEVICE/` (`README.md` with its paths, limits and a dated findings log, `setup.md`; each new one added there when found); what is common in `docs/devices/`: `README.md` (what runs where) and `install.md` (installing on every device, one page since 2026-11-07), 2026-11-06.
 - **Components and dependencies:** `docs/DESIGN.md`, section 6 (on the device: KOReader as host, refresh, input,
   power, sound) and 7 (every dependency and its licence: 215 Rust crates, none GPL, 14 MPL-2.0 from Firefox's CSS).
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
