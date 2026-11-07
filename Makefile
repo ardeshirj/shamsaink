@@ -190,7 +190,7 @@ SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 .PHONY: kindle-reader-install kindle-reader-log kindle-awake kindle-sleep kindle-status kindle-wait kindle-ssh
 
 kindle-reader-install: reader
-	@$(SSH) 'mkdir -p /mnt/us/shamsaink'
+	@$(SSH) 'mkdir -p /mnt/us/shamsaink/sleep /mnt/us/shamsaink/books'
 	@# a reader running from the launcher is stopped first (its launcher resumes the framework): its program, replaced on
 	@# /mnt/us (FUSE) under it, would die of SIGBUS at its next page of code
 	@$(SSH) 'for p in $$(pidof shamsaink); do tr "\0" " " < /proc/$$p/cmdline | grep -q -- -serve || { kill $$p; echo "the open reader ($$p) stopped"; }; done; true'
