@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 	"strings"
 
 	blitz "shamsainkengine"
@@ -37,10 +39,19 @@ func DrawText(x Text, fonts *blitz.Fonts, w, h int) *Panel {
 		lines, linesName = x.LineHeight, word("line-spacing")
 	}
 	html, ids := render("text.html", textData{Tab: x.Tab,
-		Size: word("px", decimal(fmt.Sprintf("%g", x.FontSize))), LinesName: linesName, Lines: word("times", decimal(fmt.Sprintf("%.1f", lines))),
+		Size: word("px", decimal(fmt.Sprintf("%g", x.FontSize))), LinesName: linesName, Lines: word("times", decimal(spacing(lines))),
 		Margin: word("px", num(x.Margin)), Dir: x.Dir,
 	})
 	return atBottom(drawPanel(html, ids, fonts, w, sheetHeight), h)
+}
+
+// spacing is a line spacing as the Text sheet shows it: to two decimals, at least one (1.9, 2.0, 1.75).
+func spacing(v float32) string {
+	f := strconv.FormatFloat(math.Round(float64(v)*100)/100, 'f', -1, 64)
+	if !strings.Contains(f, ".") {
+		f += ".0"
+	}
+	return f
 }
 
 // atBottom puts a panel drawn by drawPanel at the bottom of a screen h px high, its line moved to its top edge.

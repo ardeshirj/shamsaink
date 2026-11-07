@@ -69,3 +69,19 @@ func TestNextSleep(t *testing.T) {
 		}
 	}
 }
+
+// The line spacing steps by 0.1 from wherever it is, so a step back undoes a step.
+func TestNextLines(t *testing.T) {
+	for _, c := range []struct {
+		set, book float32
+		wider     bool
+		want      float32
+	}{
+		{0, 1.9, true, 2}, {2, 1.9, false, 1.9}, {0, 1.16, true, 1.26}, {1.26, 1.16, false, 1.16},
+		{1.75, 1.75, true, 1.85}, {1.85, 1.85, false, 1.75}, {3, 1.9, true, 3}, {0.8, 1.9, false, 0.8}, {0, 0, true, 1.3},
+	} {
+		if got := nextLines(c.set, c.book, c.wider); got != c.want {
+			t.Errorf("nextLines(%g, %g, %v) = %g, want %g", c.set, c.book, c.wider, got, c.want)
+		}
+	}
+}

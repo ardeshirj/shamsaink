@@ -81,10 +81,7 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 	case "margin-dec", "margin-inc":
 		s.Margin = int(step(float32(s.Margin), map[bool]float32{true: 10, false: -10}[id == "margin-inc"], 0, 200))
 	case "lines-dec", "lines-inc":
-		// from the spacing as it is (the book's own, measured, until one is set), by 0.1, on tenths
-		v := cmp.Or(s.LineHeight, lines, 1.2)
-		v = step(v, map[bool]float32{true: 0.1, false: -0.1}[id == "lines-inc"], 0.8, 3)
-		s.LineHeight = float32(math.Round(float64(v)*10) / 10)
+		s.LineHeight = nextLines(s.LineHeight, lines, id == "lines-inc")
 	case "reset":
 		// every setting back to its default (the book's line spacing), the direction too for this book
 		d := defaults()
@@ -104,6 +101,15 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 		return false
 	}
 	return true
+}
+
+// nextLines is the line spacing a step wider or narrower than set (0: the book's own, book, measured as laid out):
+// 0.1 more or less, between 0.8 and 3, kept to two decimals and not snapped to tenths, so a step back undoes a step
+// from wherever it started (2026-11-07: snapped, 1.75 went to 1.8 and back to 1.7).
+func nextLines(set, book float32, wider bool) float32 {
+	cur := float64(cmp.Or(set, book, 1.2))
+	by := map[bool]float64{true: 0.1, false: -0.1}[wider]
+	return float32(math.Round(min(max(cur+by, 0.8), 3)*100) / 100)
 }
 
 // nextSleep is the sleep timeout after cur minutes, a step longer or shorter in device.SleepMinutes (it stops at both
