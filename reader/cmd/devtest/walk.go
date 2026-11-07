@@ -52,10 +52,10 @@ func (r route) String() string {
 }
 
 // walkable are the gestures the walk can make; automatic, the ways in it waits for rather than makes (the screens they
-// open are shown while the reader starts or opens a book, and close themselves).
+// open are shown while the reader starts or opens a book, or while the device sleeps, and close themselves).
 var (
 	walkable  = map[string]bool{"tap": true, "tap-top-tenth": true, "hold-row": true, "hold-word": true}
-	automatic = map[string]bool{"app-start": true, "slow-open": true}
+	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true}
 )
 
 // edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each.

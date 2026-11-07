@@ -1,0 +1,10 @@
+name: sleep
+layer: screen
+templates: [sleep.html]
+buttons: none
+status: built
+purpose: "The sleep screen, while the device sleeps: one screen at random from the YAML files in ShamsaInk's sleep/ folder (docs/SLEEP-SCREEN-FORMAT.md): a couplet, a title or a quote drawn by the reader at the screen's own size, or a picture a file names (image:); grey ones follow dark mode. Only YAML files count: a picture alone in the folder is not shown. With none, or one that fails to load, the opening screen. The page comes back on waking, with a white flash first."
+enter: [{gesture: power-button, from: reading}, {gesture: idle, from: reading}, {gesture: power-button, from: library}, {gesture: idle, from: library}]
+controls: []
+dismiss: automatic
+words: []

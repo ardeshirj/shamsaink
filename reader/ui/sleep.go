@@ -16,10 +16,11 @@ import (
 
 // A sleep screen is a small file (YAML), drawn from templates/sleep.html at the screen's own size, so the type is the same
 // everywhere and the text is fitted to its length. Layouts: "couplet" (FarsiEPUB's screensaver: verses, poet, gloss,
-// signature), "title" and "quote" (the opening screen's logo, a text under it).
-// Experiment (2026-11-05): not used by the reader yet.
+// signature), "title" and "quote" (the opening screen's logo, a text under it), and "picture": a picture beside the file
+// (Image), shown fitted to the screen (the device loads it: device.sleepScreen).
 type Sleep struct {
 	Layout string   `yaml:"layout"`
+	Image  string   `yaml:"image"`  // picture: the picture's file, beside the YAML file
 	Verses []string `yaml:"verses"` // couplet: the two verses
 	Poet   string   `yaml:"poet"`
 	Gloss  string   `yaml:"gloss"`
@@ -45,7 +46,7 @@ func ParseSleeps(b []byte) (screens []Sleep, errs []error) {
 		switch {
 		case err != nil:
 			errs = append(errs, fmt.Errorf("the screen from line %d: %w", line, err))
-		case len(s.Verses) > 0 || s.Text != "" || s.Poet != "" || s.Gloss != "" || s.Credit != "":
+		case len(s.Verses) > 0 || s.Text != "" || s.Poet != "" || s.Gloss != "" || s.Credit != "" || s.Image != "":
 			screens = append(screens, s)
 		}
 	}
@@ -57,9 +58,13 @@ func ParseSleep(b []byte) (Sleep, error) {
 	var s Sleep
 	err := yaml.Unmarshal(b, &s)
 	if s.Layout == "" {
-		s.Layout = "title"
-		if len(s.Verses) > 0 {
+		switch {
+		case len(s.Verses) > 0:
 			s.Layout = "couplet"
+		case s.Image != "":
+			s.Layout = "picture"
+		default:
+			s.Layout = "title"
 		}
 	}
 	return s, err

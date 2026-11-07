@@ -116,6 +116,12 @@ func chapter() string {
 var designRenders = map[string][]renderCase{
 	"splash": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
+	"sleep": {{"couplet", en, func(f *blitz.Fonts, w, h int) rendered { // the screen's own text sets its direction, not the interface
+		return opened(&Opening{Gray: DrawSleep(Sleep{Layout: "couplet", Verses: []string{"بنی آدم اعضایِ یکدیگرند", "که در آفرینش ز یک گوهرند"},
+			Poet: "سعدی", Gloss: "آدمیان مانند اعضای یک پیکرند، چون همه از یک گوهر آفریده شده‌اند."}, f, w, h)})
+	}}, {"quote", en, func(f *blitz.Fonts, w, h int) rendered {
+		return opened(&Opening{Gray: DrawSleep(Sleep{Layout: "quote", Text: "A room without books is like a body without a soul.", Credit: "Cicero"}, f, w, h)})
+	}}},
 	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"topbar": {{"battery-full", enFa, func(f *blitz.Fonts, w, h int) rendered {

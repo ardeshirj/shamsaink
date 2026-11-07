@@ -104,11 +104,15 @@ func TestCoupletFits(t *testing.T) {
 	}
 }
 
-// A file with a field this version does not know still loads (a later version's: image, cover), and its layout is found.
+// A file with a field this version does not know still loads (a later version's: cover), and its layout is found: a
+// couplet with verses (even with an image), a picture with an image alone, else a title.
 func TestSleepFileFields(t *testing.T) {
 	s, err := ParseSleep([]byte("verses: [a, b]\nimage: x.png\ncover: true\nfuture: 1\n"))
 	if err != nil || s.Layout != "couplet" {
 		t.Errorf("couplet: %v, layout %q", err, s.Layout)
+	}
+	if s, err = ParseSleep([]byte("image: x.png\n")); err != nil || s.Layout != "picture" || s.Image != "x.png" {
+		t.Errorf("picture: %v, layout %q, image %q", err, s.Layout, s.Image)
 	}
 	if s, err = ParseSleep([]byte("text: Title\n")); err != nil || s.Layout != "title" {
 		t.Errorf("title: %v, layout %q", err, s.Layout)

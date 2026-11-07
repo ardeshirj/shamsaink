@@ -339,7 +339,7 @@ func (s *session) sleep() {
 }
 
 // sleepText draws the sleep screens of a YAML file (one or a set: ui.ParseSleeps; a couplet, a title, a quote:
-// ui.DrawSleep) at the screen's size.
+// ui.DrawSleep) at the screen's size, and names the picture of a picture screen.
 func (rd *reader) sleepText() device.SleepText {
 	return device.SleepText{
 		Count: func(yml []byte) (int, []error) {
@@ -352,6 +352,12 @@ func (rd *reader) sleepText() device.SleepText {
 				return nil, fmt.Errorf("no screen %d of %d", i+1, len(screens))
 			}
 			return ui.DrawSleep(screens[i], rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H), nil
+		},
+		Picture: func(yml []byte, i int) string {
+			if screens, _ := ui.ParseSleeps(yml); i < len(screens) && screens[i].Layout == "picture" {
+				return screens[i].Image
+			}
+			return ""
 		},
 	}
 }

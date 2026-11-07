@@ -142,14 +142,16 @@ func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
 func (d *Device) HasButtons() bool { return d.Kind == Kobo && buttonsDev() != "" }
 
 // SleepText is how the reader draws the sleep screens written as YAML files (one screen or a set in a file): Count says
-// how many screens a file holds and the errors of those that do not load, Draw draws its screen i.
+// how many screens a file holds and the errors of those that do not load, Draw draws its screen i, and Picture names
+// the picture screen i shows (a file beside the YAML file), "" for a screen Draw draws.
 type SleepText struct {
-	Count func(yml []byte) (int, []error)
-	Draw  func(yml []byte, i int) (*image.Gray, error)
+	Count   func(yml []byte) (int, []error)
+	Draw    func(yml []byte, i int) (*image.Gray, error)
+	Picture func(yml []byte, i int) string
 }
 
-// Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture or a screen of a YAML file from
-// dir/sleep, drawn by text, else fallback), suspends until the power button is pressed again, and returns true once the
+// Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a screen of a YAML file from dir/sleep,
+// drawn by text or a picture it names, else fallback), suspends until the power button is pressed again, and returns true once the
 // Kobo is awake and the screen back. On the Kindle powerd sleeps and wakes it (kindle.go): the same screen, until powerd
 // comes out of the screensaver. Hosted (inside KOReader) it returns false at once: the book is to be left, for KOReader
 // to show its screensaver.
@@ -158,10 +160,13 @@ func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
 		return false
 	}
 	beatSleeping()
+	t := time.Now()
+	pic := sleepScreen(dir, fallback, text)
+	fmt.Printf("sleep screen chosen and drawn in %.0f ms\n", ms(t))
 	if d.Kind == Kindle {
-		d.kindleDoze(sleepScreen(dir, fallback, text))
+		d.kindleDoze(pic)
 	} else {
-		d.doze(sleepScreen(dir, fallback, text))
+		d.doze(pic)
 	}
 	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
