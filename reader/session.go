@@ -323,9 +323,9 @@ func (s *session) drain() {
 	}
 }
 
-// sleep answers the device wanting to sleep, the narration stopped. The Kobo sleeps here, until the power button is
-// pressed again; on the Kindle the book is left, for KOReader to show its
-// screensaver (the plugin opens it again on waking).
+// sleep answers the device wanting to sleep, the narration stopped. The device sleeps here behind the sleep screen,
+// until woken (the Kobo: the power button pressed again; the Kindle: powerd out of the screensaver); inside KOReader on
+// the Kindle the book is left instead, for KOReader to show its screensaver (the plugin opens it again on waking).
 func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()

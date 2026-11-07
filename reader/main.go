@@ -6,7 +6,7 @@
 //
 //	shamsaink BOOK.epub [FONTS_DIR|-]       one book, then exit
 //	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
-//	                                        exits when the library is left (the Kobo's launcher)
+//	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //	shamsaink -serve PIPES [FONTS_DIR|-]    kept running: a book for each message written to PIPES/in, "left" written
 //	                                        to PIPES/out when it is left (the plugin's way: the program starts once)
 //
@@ -73,6 +73,7 @@ func main() {
 	var err error
 	rd.dev, err = device.Open()
 	check(err)
+	rd.dev.Hosted = serve // inside KOReader on the Kindle: KOReader shows the screensaver
 	set := loadSettings(rd.dir)
 	rd.dev.Screen.SetInvert(set.Dark)
 	rd.dev.SetReverseButtons(set.ReverseButtons)

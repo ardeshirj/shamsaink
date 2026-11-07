@@ -56,7 +56,9 @@ type Screen struct {
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
 	tint           image.Rectangle // drawn red on a colour screen (SetTint): the battery when it is low
-	invert         bool            // dark mode: every grey drawn is inverted on its way into the framebuffer (SetInvert)
+	invert         bool            // every grey drawn is inverted on its way into the framebuffer: dark mode, unless the screen inverts already
+	dark           bool            // dark mode, as set (SetInvert)
+	hwInvert       bool            // the screen itself inverts every pixel: the Kindle with its own Dark Mode on (kindleInverts)
 }
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
@@ -98,7 +100,9 @@ func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
 // SetInvert turns dark mode on or off: from the next Show on, each grey is written inverted (white on black), the
 // page, the bar and the panels alike; pictures in colour (ShowRGBA) are left as they are. The caller redraws the whole
 // screen with a flash.
-func (s *Screen) SetInvert(on bool) { s.invert = on }
+// On a screen that inverts every pixel itself (the Kindle's own Dark Mode) the greys are written the other way, so dark
+// mode is dark either way.
+func (s *Screen) SetInvert(on bool) { s.dark, s.invert = on, on != s.hwInvert }
 
 // SetTint draws r of the screen in red from the next Show on, on a colour screen (a grey one ignores it): each ink grey
 // there becomes red, paper staying paper (white, or black in dark mode). The empty rectangle takes it off. For the
@@ -121,7 +125,7 @@ func TintRGB(g uint8, dark bool) (r, gr, b uint8) {
 const LowBattery = 15
 
 // Inverted says whether dark mode is on.
-func (s *Screen) Inverted() bool { return s.invert }
+func (s *Screen) Inverted() bool { return s.dark }
 
 // ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
 func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
@@ -172,7 +176,11 @@ func (s *Screen) ShowRGBA(p *image.RGBA, r image.Rectangle, waveform uint32, fla
 		at := (s.y0+y)*s.line + r.Min.X*s.bytes
 		if s.bytes == 1 {
 			for i := 0; i < len(src); i += 4 { // a grey of the colour: its green weighs most
-				s.mem[at+i/4] = uint8((299*uint32(src[i]) + 587*uint32(src[i+1]) + 114*uint32(src[i+2])) / 1000)
+				g := uint8((299*uint32(src[i]) + 587*uint32(src[i+1]) + 114*uint32(src[i+2])) / 1000)
+				if s.hwInvert { // the screen inverts it back: a picture is shown as it is
+					g = 255 - g
+				}
+				s.mem[at+i/4] = g
 			}
 			continue
 		}

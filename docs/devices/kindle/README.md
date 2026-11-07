@@ -5,7 +5,53 @@ firmware 5.19.2, jailbroken, KOReader v2026.07.1. Reached with `ssh kindle` (KOR
 `setup.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi and SSH with it:
 `make kindle-awake`, `kindle-sleep`, `kindle-status`, `kindle-wait`. A later target than the Kobo (plan, stage 9).
 
+## The launcher (2026-11-06)
+The jailbreak (WinterBreak with the Kindle Modding Community's tools, `/var/local/kmc`) lists a `.sh` file in
+`documents/` as a book and runs it when opened (a "scriptlet"; KOReader starts the same way, through `kpm`, KMC's package
+manager). Ours, `documents/ShamsaInk.sh` (`reader/kindle/ShamsaInk.sh`, its cover `cover.png` put in by
+`scriptlet.sh`), runs `/mnt/us/shamsaink/launch.sh` (`reader/kindle/launch.sh`), which pauses Amazon's framework as
+KOReader does by default (the status bar off, `awesome` and `volumd` stopped), runs the reader on the library, and
+resumes it all when the reader ends. KUAL is not needed (not installed here). `make kindle-reader-install` puts it all
+in place: the reader, `launch.sh`, the fonts, the scriptlet (and KOReader's plugin, until it goes).
+
+```
+/mnt/us/documents/ShamsaInk.sh        the scriptlet: ShamsaInk in the Kindle's library, with its cover
+/mnt/us/shamsaink/                    shamsaink (the reader), launch.sh, fonts/, books/ (by source), cache/, places/,
+                                      highlights/, settings.json, logs/reader.log (the launcher's and the reader's)
+```
+
+Sleep stays `powerd`'s: the reader shows its sleep screen on `goingToScreenSaver` and puts the page back on
+`outOfScreenSaver` (`reader/device/kindle.go`; tried: sleep screen in 1.3 s, the page back 0.8 s after waking). The light
+and its warmth are `powerd`'s `flIntensity` (0 to 24) and `currentAmberLevel` (0 to 24), behind the reader's Light panel.
+SSH while reading: KOReader's dropbear (port 2222) keeps running when KOReader ends.
+
 ## Limits and bugs
+**Amazon's framework cannot be stopped under us** (2026-11-06).
+- What: with it stopped (`stop lab126_gui`, 178 MB more free), `powerd` takes the Kindle for still booting ("Splash
+  screen is on. Ignoring power button", after failing to read `com.lab126.kaf frameworkStarted`): the power button
+  does nothing, and the Kindle never sleeps. Started again, the framework takes 52 s to say it is up.
+- What we do: the launcher pauses it instead, as KOReader does by default (180 MB free with it paused and KOReader not
+  running).
+
+**The window manager answers nothing while paused.**
+- What: `lipc` to `com.lab126.winmgr` (that is `awesome`, which the launcher stops) waits 10 s and fails.
+- What we do: the launcher asks it what it needs (`epdcMode`) before pausing it, and passes the answer on.
+
+**The Kindle's own Dark Mode inverts every pixel, ours too.**
+- What: it sets the window manager's `epdcMode` to `Y8INV`, and the screen's driver inverts whatever is drawn.
+- What we do: the reader draws its greys the other way when it is on (`KINDLE_EPDC` from the launcher), so its own
+  dark mode looks the same either way; the two stay separate, and Amazon's setting is never changed.
+
+**Each `lipc-get-prop` or `lipc-set-prop` costs 35 to 40 ms.**
+- What we do: the light is read from `powerd` once and kept in the reader; a tap changes the copy at once and the
+  change goes to `powerd` in the background.
+
+**The touch screen, grabbed, hides our touches from `powerd`,** which would sleep the Kindle in the middle of a book
+after its timeout. What we do: on a touch, at most every 30 s, the reader sets `touchScreenSaverTimeout` (as KOReader
+does), which restarts `powerd`'s count.
+
+**A program replaced on `/mnt/us` while it runs dies of SIGBUS** (FUSE; 2026-11-06, an install over an open reader).
+What we do: `make kindle-reader-install` stops an open reader first.
 **Bluetooth headphones dropped after 20 minutes.**
 - What: the Bluetooth service (`acsbtfd`) disconnects headphones `btfd.btpowersave.timeout` seconds (1200) after
   they connect unless Amazon's player manager is playing; our sound through `mplay` does not count, and the player

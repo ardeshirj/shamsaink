@@ -97,10 +97,15 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
 
 **9. The Kindle** (later)
-- [ ] The session and one event loop tried there
-- [ ] The book opened again on waking fails since 2026-10-29 (the touch screen's grab busy)
-- [ ] A launcher of our own (a KUAL item, Amazon's interface stopped), in place of KOReader's plugin ("Hosts")
-- [ ] Night mode, driven by us
+- [ ] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them
+- [ ] An install package and `install.sh`'s branch for the Kindle (`devices/install.md`), then `devices/kindle/install.md`
+- [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
+  player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
+- [ ] The library drawn in 2 to 3.5 s on the Kindle (0.5 s earlier the same day), the sleep screen in 1.3 s: measure
+- [x] Done (2026-11-06): a launcher of our own, a scriptlet in the Kindle's library (no KUAL), Amazon's framework paused
+  as KOReader pauses it (stopped, the power button is ignored: `devices/kindle/README.md`); the session and one event
+  loop there; sleep ours behind `powerd` (the book kept open, so the reopening on waking that failed is gone); the light
+  and warmth through `powerd`; dark mode apart from the Kindle's own
 
 ## Releases (2026-11-02)
 What must be true for each release; the stages say how. Checked once done and tried on a device.

@@ -191,13 +191,22 @@ SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 
 kindle-reader-install: reader
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink'
+	@# a reader running from the launcher is stopped first (its launcher resumes the framework): its program, replaced on
+	@# /mnt/us (FUSE) under it, would die of SIGBUS at its next page of code
+	@$(SSH) 'for p in $$(pidof shamsaink); do tr "\0" " " < /proc/$$p/cmdline | grep -q -- -serve || { kill $$p; echo "the open reader ($$p) stopped"; }; done; true'
 	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
 	@scp -q reader/out/shamsaink $(KINDLE):/mnt/us/shamsaink/shamsaink.new
 	@$(SSH) 'mv /mnt/us/shamsaink/shamsaink.new /mnt/us/shamsaink/shamsaink'
 	@# a reader kept running is stopped, so the next book starts the new one
 	@$(SSH) 'kill $$(cat /var/tmp/shamsaink/pid 2>/dev/null) 2>/dev/null; true'
 	@scp -qr reader/shamsaink.koplugin $(KINDLE):/mnt/us/koreader/plugins/
-	@echo "reader and plugin copied to $(KINDLE)"
+	@# the launcher, and the scriptlet that lists it in the Kindle's library (reader/kindle)
+	@scp -q reader/kindle/launch.sh $(KINDLE):/mnt/us/shamsaink/launch.sh
+	@sh reader/kindle/scriptlet.sh | $(SSH) 'cat > /mnt/us/documents/ShamsaInk.sh'
+	@# the fonts as the package has them: those no longer in it removed
+	@$(SSH) 'mkdir -p /mnt/us/shamsaink/fonts && cd /mnt/us/shamsaink/fonts && for f in *.ttf; do case " $(notdir $(wildcard reader/fonts/*.ttf)) " in *" $$f "*) ;; *) rm -f "$$f";; esac; done'
+	@scp -q reader/fonts/*.ttf $(KINDLE):/mnt/us/shamsaink/fonts/
+	@echo "reader, fonts, launcher, scriptlet and plugin copied to $(KINDLE)"
 
 kindle-reader-log:
 	@$(SSH) 'tail -n 40 /mnt/us/shamsaink/log.txt'

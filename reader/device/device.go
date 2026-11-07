@@ -30,6 +30,12 @@ type Device struct {
 	sleepAfter atomic.Int64  // how long untouched before the reader sleeps the device (ns; 0: never)
 	reverse    atomic.Bool   // the page buttons swapped (SetReverseButtons)
 	active     atomic.Int64  // when a touch or a press last came (Unix nanoseconds): the idle sleep counts from it
+	poked      atomic.Int64  // the Kindle: when powerd was last told of a touch (kindleTouched)
+	lightOnce  sync.Once     // the Kindle's light, read from powerd once (light.go)
+	kindle     *kindleLight
+
+	// Hosted: the Kindle's reader runs inside KOReader (its plugin, -serve), which shows the screensaver itself
+	Hosted bool
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
@@ -55,6 +61,9 @@ func Open() (*Device, error) {
 	d.sleepAfter.Store(int64(DefaultSleepAfter))
 	if s != nil && s.bytes == 4 {
 		d.Kind = Kobo
+	}
+	if s != nil && d.Kind == Kindle && !Sim() {
+		s.hwInvert = kindleInverts()
 	}
 	return d, err
 }
@@ -95,6 +104,9 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 			select {
 			case e := <-raw:
 				d.active.Store(time.Now().UnixNano())
+				if d.Kind == Kindle {
+					kindleTouched(&d.poked)
+				}
 				select {
 				case out <- e:
 				case <-done:
@@ -112,7 +124,7 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	}
 	var stopSleeps func()
 	if d.Kind == Kindle {
-		stopSleeps = kindleSleeps(out)
+		stopSleeps = d.kindleSleeps(out)
 	} else {
 		power := d.presses(out)
 		idle := d.idles(out, done)
@@ -138,14 +150,19 @@ type SleepText struct {
 
 // Doze is the answer to a Sleep event. On the Kobo it shows the sleep screen (a picture or a screen of a YAML file from
 // dir/sleep, drawn by text, else fallback), suspends until the power button is pressed again, and returns true once the
-// Kobo is awake and the screen back. On the Kindle it returns false at once: the book is to be left, for KOReader to show
-// its screensaver.
+// Kobo is awake and the screen back. On the Kindle powerd sleeps and wakes it (kindle.go): the same screen, until powerd
+// comes out of the screensaver. Hosted (inside KOReader) it returns false at once: the book is to be left, for KOReader
+// to show its screensaver.
 func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) bool {
-	if d.Kind == Kindle {
+	if d.Kind == Kindle && d.Hosted {
 		return false
 	}
 	beatSleeping()
-	d.doze(sleepScreen(dir, fallback, text))
+	if d.Kind == Kindle {
+		d.kindleDoze(sleepScreen(dir, fallback, text))
+	} else {
+		d.doze(sleepScreen(dir, fallback, text))
+	}
 	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here
 	return true
