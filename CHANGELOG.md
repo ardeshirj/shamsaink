@@ -1,8 +1,31 @@
 # Changelog
 
-ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one builds the Kobo package and puts it
-on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
+ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one builds the Kobo's and the Kindle's
+packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
+
+## 0.0.2 (2026-11-07)
+Before the beta still, for the maintainer's devices: the Kobo Libra Colour (firmware 4.46) and now the jailbroken
+Kindle Paperwhite 11th gen (firmware 5.19.2).
+- **The Kindle:** ShamsaInk in the Kindle's own library (a scriptlet, its cover), Amazon's framework paused while it
+  runs and resumed after; the same reader as the Kobo's: the library, books, highlights, Light (level and warmth through
+  the Kindle's own), dark mode kept apart from the Kindle's, the sleep screen when the Kindle sleeps and the page back
+  on waking, the watchdog. Not on it yet: Listen (a notice says so), page buttons (it has none). KOReader's plugin, the
+  way it ran before, is gone.
+- **Installing:** one command over USB for both, `install.sh` (the Kobo's package as `KoboRoot.tgz`; the Kindle's
+  unpacked onto its drive, its jailbreak checked); `install.sh uninstall` removes it after a typed yes; one page,
+  `docs/devices/install.md`.
+- **The library:** a getting-started guide on a fresh install; "No books here", and where books go when there are none;
+  hidden files (a Mac's `._`) left out; the NEW tag centred.
+- **Sleep screens** from YAML only (`sleep/*.yml`), a picture when a screen names one; **Sleep after** 5 to 60
+  minutes (no never), on the Kindle too.
+- **The bar:** the battery follows the charger at once, the clock the minute, on both devices.
+- **Reading:** line spacing in steps of 0.1; a page button with the bar, the dock or a panel open closes it and turns
+  the page; a dialog for deleting a book, and the notice where Listen has no player; the opening screen held 1 s, not 2.
+- **Fixed:** a tap could land at 0,0 after moving between the library and a book (the touch screen read afresh without
+  the finger's last place); on the Kindle, after a crash the reader's page stayed in the status bar's strip.
+- **Tested:** the end-to-end scenarios run on the Kindle too (`make e2e DEVICE=kindle`), its screens checked at its
+  size.
 
 ## 0.0.1 (2026-11-06)
 The first tagged build, before the beta: for the maintainer's Kobo Libra Colour (firmware 4.46) only. Not for anyone
