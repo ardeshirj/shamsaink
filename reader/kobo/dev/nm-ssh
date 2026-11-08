@@ -1,0 +1,2 @@
+# For development (reader/kobo/dev/ssh.sh): KOReader's SSH server switched on or off with Kobo's interface in front.
+menu_item:main:Toggle SSH:cmd_output:3000:sh /mnt/onboard/.adds/shamsaink/dev/ssh.sh

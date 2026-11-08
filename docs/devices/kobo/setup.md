@@ -5,19 +5,15 @@ it, started from NickelMenu, its SSH server and a key (step 0 of `experiments/13
 1). **Written before the device is here,** from KOReader's Kobo installation page (its wiki) and the Kindle's setup:
 each step to be checked on the device, and this note taken off when it is.
 
-## Each session, quickly (2026-10-30)
-Once sections 1–6 are done. The order matters: Kobo's interface started a second time in a boot and Bluetooth, in
-either order, crash the Kobo (13's NOTES.md).
-1. **Restart the Kobo** (power button held → Restart), unless just switched on.
-2. **In Kobo's interface:** Wi-Fi connected; headphones on and **connected** in Settings → Bluetooth (paired is not
+## Each session, quickly (2026-11-08)
+Once sections 1–7 are done.
+1. **In Kobo's interface:** Wi-Fi connected; headphones on and **connected** in Settings → Bluetooth (paired is not
    enough: `a2dp not ready`).
-3. **NickelMenu → KOReader;** in KOReader, Network → SSH server on. Its Wi-Fi left alone from here.
-4. **On the Mac:** `make kobo-status` (if no answer: the address in KOReader's SSH pop-up, into `~/.ssh/config`).
-5. **To finish:** KOReader → Reboot (or Exit: the exit patch reboots). Never a plain return to Kobo's interface with
-   Bluetooth on.
+2. **NickelMenu → Toggle SSH** (section 3, step 4); its pop-up gives the address. Or KOReader's SSH server, as before.
+3. **On the Mac:** `make kobo-status`.
 
-Warning sign: `ssh kobo` answering with Kobo's interface in front means KOReader was closed in this boot: restart
-before switching Bluetooth on.
+Bluetooth and Nickel's restarts are safe in any order once ShamsaInk has been opened in a boot (`README.md`, "Limits
+and bugs"); before that, KOReader's or Plato's exit after Bluetooth still crashes the Kobo.
 
 ## 1. Kobo's own first setup
 Do Kobo's setup first (language, Wi-Fi, account), as any new Kobo, and update its firmware if it offers. Note the
@@ -117,6 +113,10 @@ starts it again when KOReader is closed (its menu: Exit).
           ServerAliveInterval 30
         ```
       - `make kobo-status`. For another host name, `make KOBO=name ...`.
+4. **For development, SSH without KOReader: NickelMenu's "Toggle SSH"** (`reader/kobo/dev/`, never in the reader's
+   package). `make kobo-dev-ssh` installs it, over USB when the Kobo is connected, else over SSH. A tap starts
+   KOReader's SSH server (key-only, port 2222) with Kobo's interface left in front, or stops it; a pop-up says which,
+   with the address. It needs KOReader installed and the key of step 2. Open sessions survive switching it off.
 
 ## 4. Keeping it awake, and where things are
 - **Awake, and its Wi-Fi up, while experimenting:** sleep and Wi-Fi are whichever is in front's, not a power

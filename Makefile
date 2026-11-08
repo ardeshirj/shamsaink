@@ -102,7 +102,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-nickelmenu kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-nickelmenu kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -167,6 +167,21 @@ kobo-wait:
 
 kobo-ssh:
 	@$(KOBO_SSH)
+
+# For development: NickelMenu's "Toggle SSH" (reader/kobo/dev/), never in the reader's package. Over USB when the Kobo
+# is connected (the first time: no SSH yet), else over SSH.
+kobo-dev-ssh:
+	@if [ -d $(KOBO_USB)/.adds ]; then \
+	  mkdir -p $(KOBO_USB)/.adds/shamsaink/dev $(KOBO_USB)/.adds/nm && \
+	  cp reader/kobo/dev/ssh.sh $(KOBO_USB)/.adds/shamsaink/dev/ssh.sh && \
+	  cp reader/kobo/dev/nm-ssh $(KOBO_USB)/.adds/nm/ssh && \
+	  dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null && \
+	  echo "Toggle SSH copied, Kobo ejected: in NickelMenu once unplugged"; \
+	else \
+	  $(KOBO_SSH) 'mkdir -p $(KOBO_DIR)/dev /mnt/onboard/.adds/nm && cat > $(KOBO_DIR)/dev/ssh.sh' < reader/kobo/dev/ssh.sh && \
+	  $(KOBO_SSH) 'cat > /mnt/onboard/.adds/nm/ssh' < reader/kobo/dev/nm-ssh && \
+	  echo "Toggle SSH installed on $(KOBO): in NickelMenu (its menu reread at Nickel's next start)"; \
+	fi
 
 # Over USB: without NickelMenu, KOReader (and its SSH server) cannot be started. Kobo installs .kobo/KoboRoot.tgz
 # once unplugged (and deletes it).

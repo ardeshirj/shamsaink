@@ -2,9 +2,9 @@
 
 The primary target. MediaTek MT8110 (MT8512 family; two Cortex-A53 cores, the second switched on by Kobo's interface
 when it wants it), 965 MB, 1264 × 1680, firmware 4.46, kernel 4.9.77. Set up as in `setup.md`; found in experiment 13
-(`experiments/13-kobo/`). Reached with `ssh kobo`: KOReader's SSH server on port 2222, started by KOReader or by
-NickelMenu's **Toggle SSH** (by hand on the device, `.adds/nm/ssh` and `.adds/shamsaink/dev/ssh.sh`: KOReader's
-`dropbear`, Nickel left in front). This file: what is on the Kobo, what it does that we work around, a dated log.
+(`experiments/13-kobo/`). Reached with `ssh kobo`: KOReader's SSH server on port 2222, started by KOReader or, for
+development, by NickelMenu's **Toggle SSH** (`reader/kobo/dev/`, `make kobo-dev-ssh`; `setup.md`, 3).
+This file: what is on the Kobo, what it does that we work around, a dated log.
 
 ## Paths
 Everything of ours is under `/mnt/onboard/.adds/` (the storage the Mac sees over USB; a dot-folder, so Kobo does not
