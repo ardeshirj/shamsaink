@@ -6,7 +6,7 @@ import urllib.request
 
 VERSION = "2.1.2"  # @phosphor-icons/web
 ICONS = """magnifying-glass list sun headphones arrow-left caret-left caret-right x list-bullets bookmark-simple text-aa
-play pause skip-back skip-forward highlighter-circle note-pencil copy speaker-high moon arrows-clockwise
+play pause skip-back skip-forward highlighter-circle note-pencil copy speaker-high speaker-low moon arrows-clockwise
 arrow-counter-clockwise arrows-down-up sign-out gear check-circle circle info trash circle-half lightning check battery-low battery-medium battery-high battery-full battery-charging
  battery-warning""".split()
 BASE = f"https://cdn.jsdelivr.net/npm/@phosphor-icons/web@{VERSION}/src"

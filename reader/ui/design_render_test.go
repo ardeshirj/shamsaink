@@ -161,6 +161,8 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
+	}}, {"sound-open", en, func(f *blitz.Fonts, w, h int) rendered { // the headphones filled while the Sound panel is open
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesOn: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},
 	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
@@ -176,6 +178,9 @@ var designRenders = map[string][]renderCase{
 		{"dark", en, func(f *blitz.Fonts, w, h int) rendered {
 			return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w))
 		}}},
+	"sound": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawSound(70, barHeight(f, w), f, w))
+	}}},
 	"reading-settings": {{"settings", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawReadingSettings(ReadingSettings{CleanLight: 0, CleanDark: 5}, barHeight(f, w), f, w))
 	}}},

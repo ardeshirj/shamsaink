@@ -92,3 +92,20 @@ Newest last, dated, with how sure we are; the settled ones are above.
   removes, and gives the ALSA sink instead of MediaTek's Bluetooth one. **After our launcher has stopped Nickel, start
   it with `sh launch.sh nickel`, never by ending Plato or KOReader.** The same day: Plato lays Farsi paragraphs out
   left to right (flush left, measured on a framebuffer grab of *Buried Alive*); KOReader flush right, as it should.
+- **2026-11-08, Bluetooth from our side, Nickel stopped** (read with Kobo's `dbus-send`; `reader/device/headphones.go`).
+  Kobo's Bluetooth service (`mtkbtd`, D-Bus-started as `com.kobo.mtk.bluedroid`) offers BlueZ's interfaces: a device's
+  `org.bluez.Device1` (`Connected`, `Paired`, `Icon`, `Name`), and while it carries sound a transport,
+  `.../dev_ADDRESS/fdN` (`MediaTransport1`), gone once disconnected or switched off. `Device1.Connect` from our side
+  connects a paired pair (0.3–2 s; it may answer "connection timeout" and connect anyway). The transport's `Volume`
+  is read only and stays 127: the headphones report their own volume only in the service's debug log ("volume
+  changed N", 0–127), so it cannot be followed reliably nor set. Their play/pause arrives as a key, `KEY_PAUSECD`
+  (201), on an input device named "NAME (AVRCP)". Never ask while `mtkbtd` is not running: D-Bus would start it.
+- **2026-11-08, the chip hung around a sleep with headphones connected, and Bluetooth stayed dead.** Going to sleep
+  (Wi-Fi switched off by us, headphones connected): `wmt_dev_rx_timeout`; after waking the same every ~0.7 s with a
+  stack trace each (the whole Kobo slow: a menu 7.9 s, listing books 3.8 s), then a whole chip reset 35 s later,
+  Wi-Fi back in 38 s (5 s otherwise). The kernel then asked the Bluetooth service to restart Bluetooth ("Send Hardware
+  Error event to stack"); it never did: `Connect` did nothing, its `BluedroidManager1.On`/`Off` neither. **Recovery,
+  tried:** stop `mtkbtd` and `btservice`; the next D-Bus call starts a fresh one with its adapter off; set
+  `org.bluez.Adapter1.Powered` to true (Bluetooth reopened at once), then `Device1.Connect` (0.3 s). About 5 s, Nickel
+  not needed. Probable trigger (one case; the 2026-10-30 hang looked alike): a sleep with Bluetooth sound connected.
+  To test, then to build: connecting and this recovery from the Sound panel.

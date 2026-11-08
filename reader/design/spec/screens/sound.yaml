@@ -1,0 +1,11 @@
+name: sound
+layer: panel
+templates: [sound.html]
+buttons: panel
+status: built
+purpose: "The narration's volume; the bar's headphones drawn filled while it is open."
+enter: [{gesture: tap, control: topbar-phones, from: topbar}]
+controls:
+  - {id: volume, component: slider, action: act, does: "set the narration's volume (a gain on our sound, remembered per pair of headphones)", emits: "volume \\d+", press: volume-dec, undo: volume-inc}
+dismiss: tap-outside
+words: [volume]

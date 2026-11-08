@@ -17,6 +17,7 @@ highlighter-circle e632
 note-pencil e34c
 copy e1ca
 speaker-high e44a
+speaker-low e44c
 moon e330
 arrows-clockwise e094
 arrow-counter-clockwise e038

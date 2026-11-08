@@ -1,0 +1,7 @@
+{{/* The Sound panel (DrawSound; docs/design/system.html): hanging under the bar, opened by its headphones (drawn
+filled while it is open), in the library and in a book, the headphones shown only while connected. The narration's
+volume as a slider (a small speaker for quieter, a loud one for louder): a gain on our own sound, as the headphones'
+volume cannot be set from the Kobo. Any tap off it closes it. */ -}}
+{{template "head" ""}}</head><body>
+{{template "slider" slide (t "volume") "volume" "" .VolumeShare "speaker-low" "speaker-high" false}}
+</body></html>

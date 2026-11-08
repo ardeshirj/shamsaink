@@ -95,13 +95,14 @@ func (s *session) drawSheet() {
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
-// book's title, the time, the battery and ≡, filled while its list is open.
+// book's title, the time, the headphones while connected, the battery and ≡, filled while its list is open.
 func (s *session) drawTopBar() {
+	phones := s.dev.Headphones() != ""
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: shownNow().Format("03:04"),
-		Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light",
+		Phones: phones, Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())
-	s.barShown = barState(s.dev)
+	s.barShown = barState(s.dev, phones)
 }
 
 // barChanged answers what may have changed what the bar shows (a charger plugged or unplugged, a new minute, a wake):
@@ -111,15 +112,15 @@ func (s *session) barChanged() {
 	if s.nav == nil && s.sheet == nil {
 		return
 	}
-	if now := barState(s.dev); now != s.barShown {
+	if now := barState(s.dev, s.dev.Headphones() != ""); now != s.barShown {
 		s.drawTopBar()
 		s.refresh(s.topBar.Rect(), device.WfREAGL)
 	}
 }
 
 // barState is what the bar's battery and clock show: they are drawn again when it changes.
-func barState(d *device.Device) string {
-	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"))
+func barState(d *device.Device, phones bool) string {
+	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"), phones)
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
@@ -178,8 +179,8 @@ func (s *session) inMenu(g device.Gesture) {
 		id := ""
 		if !g.Swipe {
 			id = s.list.At(g.X, g.Y)
-		} else if s.kind == "light" { // a slider's knob dragged: the value where the finger was lifted
-			if id = s.list.At(g.X, g.Y); id != "light" && id != "warmth" {
+		} else if s.kind == "light" || s.kind == "sound" { // a slider's knob dragged: the value where the finger was lifted
+			if id = s.list.At(g.X, g.Y); !sliders[id] {
 				id = ""
 			}
 		}
@@ -199,6 +200,14 @@ func (s *session) inMenu(g device.Gesture) {
 		if id == "leave" {
 			s.rd.quit = true
 			s.leave()
+			return
+		}
+		if s.kind == "sound" && id != "" { // the volume changed; the panel stays open
+			if s.panelTap(id, g.X+g.DX) {
+				old := s.list.Rect()
+				s.list = s.drawSliders()
+				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
+			}
 			return
 		}
 		if s.kind == "light" && id != "" { // the light changed, or the screen cleaned; the panel stays open
@@ -255,7 +264,13 @@ func (s *session) inMenu(g device.Gesture) {
 		s.list = ui.DrawMenu(s.topBar.Rect().Dy(), "reading", s.rd.fonts, s.scr.W) // Reading settings and Leave: the device's settings are the library's
 		s.drawTopBar()
 		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
-	case strings.HasPrefix(id, "topbar-"): // the headphones, the title: nothing yet
+	case id == "topbar-phones": // the Sound panel under the bar, the headphones filled
+		if s.phones = s.dev.Headphones(); s.phones != "" {
+			s.list, s.kind = s.rd.drawSound(s.set, s.phones, s.topBar.Rect().Dy()), "sound"
+			s.drawTopBar()
+			s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
+		}
+	case strings.HasPrefix(id, "topbar-"): // the title: nothing
 	case id == "contents":
 		t := time.Now()
 		s.nav, s.sheet = nil, nil

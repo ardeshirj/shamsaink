@@ -346,6 +346,7 @@ func (s *session) readAloud(from *blitz.Word) {
 		}
 		s.snd = snd
 	}
+	s.snd.setVolume(s.set.volumeFor(s.dev.Headphones())) // the pair's own volume (sound.go)
 	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
 	nar.begin()
 	s.nar = nar

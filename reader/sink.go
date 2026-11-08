@@ -31,6 +31,8 @@ var silence = make([]byte, sinkBytesPerSecond/50)
 type sink struct {
 	cmd  *exec.Cmd
 	w    *os.File
+	gain atomic.Int32 // the narration's gain, in 1/1024 (1024: as recorded; setVolume)
+	buf  []byte       // the narration's chunk at its gain
 	src  atomic.Pointer[narrator]
 	dead atomic.Bool
 	quit chan struct{}
@@ -47,6 +49,7 @@ func openSink() (*sink, error) {
 	syscall.Syscall(syscall.SYS_FCNTL, r.Fd(), fSetPipeSz, 4096)
 	if device.Sim() { // no player: the sound read at the sink's pace, 20 ms at a time, so the clock runs as on the Kobo
 		k := &sink{w: w, quit: make(chan struct{})}
+		k.gain.Store(1024)
 		name := fmt.Sprintf("sound-%d.raw", time.Now().UnixMilli()) // a video of the simulator: what the Kobo would play
 		rec := device.Record(name)
 		if rec != nil {
@@ -89,6 +92,7 @@ func openSink() (*sink, error) {
 	}
 	r.Close()
 	k := &sink{cmd: cmd, w: w, quit: make(chan struct{})}
+	k.gain.Store(1024)
 	go func() { // the player ended (headphones gone, an error): the writes stop
 		err := cmd.Wait()
 		k.dead.Store(true)
@@ -112,7 +116,7 @@ func (k *sink) run() {
 		default:
 		}
 		if n := k.src.Load(); n != nil {
-			if !n.feed(k.w) {
+			if !n.feed(k) {
 				k.src.CompareAndSwap(n, nil)
 			}
 			continue
@@ -121,6 +125,36 @@ func (k *sink) run() {
 			return
 		}
 	}
+}
+
+// setVolume sets the narration's volume, per cent of the sound as recorded: a gain on our sound, squared so the
+// slider's steps sound even (half way, about a quarter of the amplitude: 12 dB quieter). The headphones' own volume
+// cannot be set from the Kobo (its Bluetooth service's Volume is read only, docs/devices/kobo/README.md).
+func (k *sink) setVolume(percent int) {
+	v := min(max(percent, 0), 100)
+	k.gain.Store(int32(v * v * 1024 / 10000))
+}
+
+// Write writes the narration's chunk p to the player at its volume (each 16-bit sample scaled), as it is at 100.
+func (k *sink) Write(p []byte) (int, error) {
+	g := k.gain.Load()
+	if g >= 1024 {
+		return k.w.Write(p)
+	}
+	k.buf = scale(k.buf[:0], p, g)
+	if _, err := k.w.Write(k.buf); err != nil {
+		return 0, err
+	}
+	return len(p), nil
+}
+
+// scale appends p's 16-bit little-endian samples to out, each times gain/1024.
+func scale(out, p []byte, gain int32) []byte {
+	for i := 0; i+1 < len(p); i += 2 {
+		v := int32(int16(uint16(p[i])|uint16(p[i+1])<<8)) * gain / 1024
+		out = append(out, byte(v), byte(v>>8))
+	}
+	return out
 }
 
 // play makes n the sound heard; the one before it is dropped.

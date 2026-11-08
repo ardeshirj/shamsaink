@@ -43,8 +43,9 @@ type session struct {
 	tab                       string       // the sheet's tab: "text" or "page"
 	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
 	barShown                  string       // the bar's battery and clock as last drawn (barState)
-	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's) or "light"
-	slide                     string       // the Light panel's slider a held finger moves ("light", "warmth"), "" for none
+	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's), "light" or "sound"
+	slide                     string       // the slider a held finger moves ("light", "warmth", "volume"), "" for none
+	phones                    string       // the Sound panel's headphones, their Bluetooth address, while it is open
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -258,10 +259,10 @@ func (s *session) input(e device.Event) {
 		s.button(e.Button, e.Held)
 	case s.cv != nil:
 		s.inContents(e.Gesture)
-	case e.Hold != device.NotHeld && s.list != nil && s.kind == "light": // a slider's knob held and moved
-		if refresh, wf := s.rd.slideLight(s.set, s.list, &s.slide, e.Gesture); refresh {
+	case e.Hold != device.NotHeld && s.list != nil && (s.kind == "light" || s.kind == "sound"): // a slider's knob held and moved
+		if refresh, wf := slidePanel(s.list, &s.slide, e.Gesture, s.panelTap); refresh {
 			old := s.list.Rect()
-			s.list = s.rd.drawLight(s.topBar.Rect().Dy())
+			s.list = s.drawSliders()
 			s.refresh(old.Union(s.list.Rect()), wf)
 		}
 	case e.Hold != device.NotHeld:

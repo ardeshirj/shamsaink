@@ -43,6 +43,9 @@ type settings struct {
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
 	Warmth *int `json:"warmth,omitempty"`
+	// The narration's volume (sound.go), per cent (minVolume to 100), by the headphones' Bluetooth address, as set in the
+	// Sound panel; 100 for a pair never set.
+	Volume map[string]int `json:"volume,omitempty"`
 }
 
 // defaults are the settings before any is set (the environment's, else the reader's own).

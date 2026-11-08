@@ -65,13 +65,16 @@ func (rd *reader) lightTap(set *settings, p *ui.Panel, id string, x int) (change
 	return l != level || w != warmth, false
 }
 
-// slideLight follows a finger held on the Light panel p: held on a slider's track, that slider (*slide) follows it
-// as it moves (refresh: the panel to draw again, with A2 while it moves) and stops where it is lifted (with REAGL, the
-// A2 frames cleaned). A finger held anywhere else does nothing.
-func (rd *reader) slideLight(set *settings, p *ui.Panel, slide *string, g device.Gesture) (refresh bool, waveform uint32) {
+// sliders are the tracks of the panels' sliders (the Light panel's, the Sound panel's), which a held finger moves.
+var sliders = map[string]bool{"light": true, "warmth": true, "volume": true}
+
+// slidePanel follows a finger held on a panel p with sliders (Light, Sound): held on a slider's track, that slider
+// (*slide) follows it as it moves, tap applying it at the finger's x (refresh: the panel to draw again, with A2 while it
+// moves) and stops where it is lifted (with REAGL, the A2 frames cleaned). A finger held anywhere else does nothing.
+func slidePanel(p *ui.Panel, slide *string, g device.Gesture, tap func(id string, x int) bool) (refresh bool, waveform uint32) {
 	switch g.Hold {
 	case device.Held:
-		if id := p.At(g.X, g.Y); id == "light" || id == "warmth" {
+		if id := p.At(g.X, g.Y); sliders[id] {
 			*slide = id
 		}
 		return false, 0
@@ -79,7 +82,7 @@ func (rd *reader) slideLight(set *settings, p *ui.Panel, slide *string, g device
 		if *slide == "" {
 			return false, 0
 		}
-		changed, _ := rd.lightTap(set, p, *slide, g.X)
+		changed := tap(*slide, g.X)
 		if g.Hold == device.Dropped {
 			*slide = ""
 			return true, device.WfREAGL
