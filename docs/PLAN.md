@@ -28,7 +28,8 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [x] Read aloud with sound (Amazon's `mplay`)
 
 **3. The Kobo's own host** (experiment 13, 2026-10-30; "Hosts")
-- [x] Started from NickelMenu; Nickel stopped while reading and started after, a reboot once Bluetooth has been on
+- [x] Started from NickelMenu; Nickel stopped while reading and started after (a reboot once Bluetooth had been on,
+  until 2026-11-08: stage 8)
 - [x] The power button: the sleep screen (pictures from `sleep/`), light and Wi-Fi off, suspend, awake on the next press
 - [x] The launcher's logs cut back; the stray Wi-Fi loaders stopped (`devices/kobo/README.md`)
 - [x] A chapter's narration through Kobo's own Bluetooth sink
@@ -80,8 +81,9 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 **8. Read-along on the Kobo** (how it plays: `DESIGN.md`, section 4, sound)
 - [ ] The hour: no drop-outs or drift over an hour, Nickel stopped
 - [ ] The screen and the narration together across the power button
-- [ ] Leaving after Bluetooth: the launcher reboots (Kobo's bug); clean, never losing the place, highlights or
-  settings. Stopping the daemon and its driver before Nickel instead: after the beta, not tried, may panic the kernel
+- [x] Leaving after Bluetooth without a reboot (2026-11-08; on the Kobo by hand from a fresh boot and `make e2e`): Kobo's
+  bug found in its driver's source, avoided by skipping `wmt_loader` and restarting Bluetooth's daemon
+  (`devices/kobo/README.md`)
 - [ ] `lead_ms` tuned by ear (250 by default); a page the narration turns counted for "Clean every N" (built, to try)
 - [x] Done (2026-11-05): one pipeline kept open a session; the sleep timer waits while narration plays; MP3 and AAC
   clips as EPUB 3.3 defines them
@@ -143,8 +145,8 @@ and remove it)
   after a few days of use on both devices, then decided: holds selecting only on the text, not in the margins, or not
   (`holdTime` stays 1000 ms)
 
-*Read-along, **experimental** in the beta* (decided 2026-11-05: the notes say the Kobo restarts on leaving after
-Bluetooth, no "Restarting" screen, voice timing after the beta)
+*Read-along, **experimental** in the beta* (decided 2026-11-05: voice timing after the beta; the Kobo's restart on
+leaving after Bluetooth gone since 2026-11-08)
 - [ ] Stage 8's open items
 - [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL (also
   the tests' narrated scenario); FarsiEPUB's narrated books work as well
@@ -167,7 +169,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
 - [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
   the Kobo over USB from a clean start and over SSH; the version in Settings
 - [ ] Our test EPUB's scenarios committed, `make e2e` passing
-- [ ] Release notes: the known limits (two devices and their firmware, read-along's headphones and reboot, the Kobo's
+- [ ] Release notes: the known limits (two devices and their firmware, read-along's headphones, the Kobo's
   bugs, no Listen on the Kindle) from `devices/README.md` and each device's README, and how to report a problem
 - [ ] The tag `v0.1.0-beta`, a GitHub release with both packages and their checksums
 
@@ -176,7 +178,7 @@ Bluetooth, no "Restarting" screen, voice timing after the beta)
   a stepper in the Listen tab, 50 ms steps, heard at once, remembered per Bluetooth address
 - [ ] Listen controls: volume (a gain in `sinkFormat`, a slider) and speed (a pitch-preserving stretch such as WSOLA,
   pure Go, the cues' times scaled; the Kobo's CPU measured first)
-- [ ] Read-along smoother: no Bluetooth reboot, more headphones, the player's screens (listening, paused)
+- [ ] Read-along smoother: more headphones, the player's screens (listening, paused)
 - [ ] Stages 6 and 7 finished: layers, the dock, components, the word panel, footnotes, the sleep screen's choice;
   covers, search, OPDS
 - [ ] A dictionary on a word held (2026-11-06), Farsi and English, the word panel's meaning: StarDict dictionaries, as
@@ -204,8 +206,8 @@ device's parts are behind `reader/device`.
   cold) is paid once. Sleep is powerd's, answered with our sleep screen. KOReader's plugin, the host before, went on
   2026-11-07; KOReader stays installed on both devices for SSH.
 - **The Kobo: our own host** (`devices/kobo/setup.md`, section 7): NickelMenu starts `launch.sh`, which stops Nickel
-  while reading and starts it after (pausing it brought its watchdog's reboots), or reboots once Bluetooth has been on
-  (the kernel's crash on a second start). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's, none KOReader's.
+  while reading and starts it after (pausing it brought its watchdog's reboots); Kobo's crash on a second start after
+  Bluetooth avoided since 2026-11-08 (`devices/kobo/README.md`). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's, none KOReader's.
 
 ## Ideas for the reading
 *Smarter flashes* (flash only when the ink changed enough for ghosting to show); *you were here* (on reopening or after a

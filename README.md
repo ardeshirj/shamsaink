@@ -115,12 +115,12 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 - **Is quick.** As fast as KOReader's engine (crengine) on these devices, and a cache file per book so a reopened
   book comes up quickly.
 - **Reads along (experimental).** For books with narration (EPUB media overlays), it plays the voice through Bluetooth
-  headphones and marks each word as it is spoken. It works, but a bug in Kobo's firmware gives it one cost: once
-  Bluetooth has been used since the Kobo started, Kobo's own interface cannot be started a second time without a
-  kernel crash ([koreader/koreader#12739](https://github.com/koreader/koreader/issues/12739), which KOReader and Plato
-  have too). So when you leave ShamsaInk after using Bluetooth, the Kobo **restarts** instead of returning to its home
-  screen (a minute; your place, highlights and settings are saved first). Reading without Bluetooth is not affected.
-  The headphones' own delay is a setting we have not built yet.
+  headphones and marks each word as it is spoken. Leaving ShamsaInk after using Bluetooth returns to Kobo's home
+  screen like any other time: the headphones drop for a moment and reconnect. (A bug in Kobo's firmware crashes the
+  Kobo when its interface starts again after Bluetooth,
+  [koreader/koreader#12739](https://github.com/koreader/koreader/issues/12739); ShamsaInk steps around it, and once
+  it has been opened, KOReader's and Plato's exits are covered too until the Kobo restarts.) The headphones' own delay
+  is a setting we have not built yet.
 - **Is made for the screen.** Page turns without flashes, partial refreshes for panels and menus, a dark mode, the
   front light and its warmth, touch and the Kobo's page buttons, contents, highlights, sleep and wake, and a sleep
   screen from your own pictures. The interface is in English or Farsi.

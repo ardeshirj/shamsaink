@@ -80,6 +80,8 @@ dot are hidden in Finder (Cmd-Shift-. shows them).
    patch: ./patches/2-kobo-mtk-bt-exit.lua`. Without the patch: with Bluetooth on, leave KOReader with **Reboot**.
    **The other order crashes too:** after a normal Exit (Nickel started again), switching Bluetooth on panics the
    kernel; restart the Kobo before using Bluetooth. NickelMenu lost to a crash: `make kobo-nickelmenu` (over USB).
+   Once ShamsaInk has been opened in a boot, both orders are safe until the next restart (it skips the driver's
+   second start: `README.md`, "Limits and bugs"); Bluetooth after KOReader's exit then may need switching off and on.
 
 KOReader on a Kobo stops Kobo's interface while it runs (unlike the Kindle's, which stays paused beside it) and
 starts it again when KOReader is closed (its menu: Exit).
@@ -167,7 +169,8 @@ the Libra Colour (`monza`). Its guide points to MobileRead's one-click packages;
 **With Bluetooth used since the last start, leave Plato with Reboot, not Quit:** Quit starts Nickel again (its
 `plato.sh` runs `nickel.sh`), the same kernel panic as KOReader's Exit (section 2, step 6), and there is no patch for
 Plato (seen 2026-10-29: Quit with Bluetooth off, then Bluetooth switched on, crashed the Kobo; the same bug in the
-other order). After a normal Quit, restart the Kobo before using Bluetooth.
+other order). After a normal Quit, restart the Kobo before using Bluetooth. Both are safe once ShamsaInk has been
+opened in that boot (section 2, step 6).
 
 ## 7. ShamsaInk from NickelMenu (2026-10-30)
 Our reader, with Kobo's interface stopped while a book is open and started again when it is closed, as KOReader

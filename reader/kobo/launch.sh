@@ -1,8 +1,8 @@
 #!/bin/sh
 # On the Kobo, from NickelMenu: a book read with Kobo's interface (Nickel) stopped, and started again once the book is
 # closed, as KOReader and Plato do (13's NOTES.md, step 3: pausing Nickel instead brought its watchdog's reboots, a
-# frozen screen and a power button nobody heard). Bluetooth is left alone: started a second time in a boot with
-# Bluetooth on, Nickel panics the kernel (13's NOTES.md), so then the Kobo is rebooted instead. The first argument: a book
+# frozen screen and a power button nobody heard). Bluetooth stays on while the reader runs; Kobo's bug that panicked
+# the kernel when Nickel started again after Bluetooth is avoided (skip_wmt_loader, below). The first argument: a book
 # to read; without one, the library (books/ and one folder down, by source: farsiepub/, rtlbook/, ...;
 # docs/devices/kobo/setup.md, 7), where a book is chosen and the library comes back when it is left.
 #
@@ -30,13 +30,20 @@ log() { echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC') launch: $*" >> "$D"/logs/reade
 # kept in nickel.env), after taking Wi-Fi down as Nickel wants to find it. Not KOReader's nickel.sh: it gives Nickel
 # ALSA's audio sink, where rcS gives this Kobo (mt8113t) MediaTek's Bluetooth one.
 start_nickel() {
-  # Bluetooth on in this boot (its daemon runs from the first time it is switched on): a second Nickel would panic
-  # the kernel and lose NickelMenu (koreader/koreader#12739; our KOReader patch, 13's koreader-patch, does the same)
+  skip_wmt_loader
+  # Bluetooth's daemon, started through D-Bus for the Nickel stopped: a new Nickel cannot use it (its switch stuck,
+  # Bluetooth shown off), so it goes too and D-Bus starts a fresh one on Nickel's first call (tried 2026-11-08: the
+  # headphones reconnect). Its launcher script first (its parent, unless init took it), or it would start it again.
   if pidof mtkbtd > /dev/null; then
-    log "Bluetooth's daemon runs: rebooting instead of starting Nickel again"
-    sync
-    reboot
-    return
+    for p in $(pidof mtkbtd); do
+      pp=$(cut -d' ' -f4 /proc/"$p"/stat)
+      [ "$pp" -gt 1 ] && kill "$pp" 2>/dev/null
+      kill "$p" 2>/dev/null
+    done
+    killall -q -TERM btservice
+    i=0
+    while pidof mtkbtd btservice > /dev/null && [ $i -lt 12 ]; do usleep 250000; i=$((i + 1)); done
+    log "Bluetooth's daemon stopped in $((i * 250)) ms, for Nickel to start its own"
   fi
   # Wi-Fi down (this Kobo's driver, wlan_drv_gen4m, is powered off through /dev/wmtWifi, its module left loaded)
   killall -q -TERM dhcpcd udhcpc
@@ -84,6 +91,21 @@ stray_loaders() {
     done
   done
 }
+# MediaTek's wmt_loader (MediaTek Kobos), which Nickel runs on each of its starts, skipped from here to the next reboot.
+# Run again, it re-initialises the Wi-Fi/Bluetooth driver while it runs, and the driver's bug there (osal_fifo_init
+# frees its buffer's counter as a pointer) panics the kernel once Bluetooth has carried data: koreader/koreader#12739,
+# docs/devices/kobo/README.md. Its run at boot, before any of ours, did the work; later runs only fail (the modules
+# are loaded). A bind mount from /tmp: Kobo's system is not written, and a reboot undoes it. Done when the reader
+# opens, so any later start of Nickel in this boot is covered, KOReader's and Plato's too.
+skip_wmt_loader() {
+  [ -x /usr/bin/wmt_loader ] || return 0
+  grep -q " /usr/bin/wmt_loader " /proc/mounts && return 0
+  printf '#!/bin/sh\necho "$(date -u "+%%Y-%%m-%%d %%H:%%M:%%S UTC") wmt_loader skipped (launch.sh)" >> /tmp/shamsaink-wmt-loader.log\n' \
+    > /tmp/shamsaink-wmt_loader
+  chmod 755 /tmp/shamsaink-wmt_loader
+  mount --bind /tmp/shamsaink-wmt_loader /usr/bin/wmt_loader && log "wmt_loader skipped from now to the next reboot"
+}
+
 if [ "$1" = nickel ]; then
   pidof nickel > /dev/null && { echo "Nickel is running"; exit 1; }
   start_nickel
@@ -92,6 +114,7 @@ fi
 
 # on storage at once, so a crash in the first seconds still shows the launcher started
 log "started, uptime $(cut -d' ' -f1 /proc/uptime) s"
+skip_wmt_loader
 sync
 N=$(pidof nickel)
 [ -n "$N" ] || { log "Nickel is not running (KOReader in front?): not started"; exit 1; }
@@ -139,7 +162,7 @@ trap 'exit 1' HUP INT TERM
 # A counter that stands still for 20 s (2 looks, 10 s apart: both clocks stop together in a suspend; the longest
 # stall seen is 4 s) is a frozen reader:
 # SIGQUIT first, so Go writes every goroutine's stack to reader.log (what it was waiting on), then SIGKILL, and the exit
-# path below brings Nickel back (a reboot when Bluetooth ran). A reader that has not beaten at all in the first minute
+# path below brings Nickel back. A reader that has not beaten at all in the first minute
 # counts too (the file is removed before it starts; it beats within 5 s). A long task in the loop must call Beat
 # itself (a big library's first scan: to do).
 watch() {

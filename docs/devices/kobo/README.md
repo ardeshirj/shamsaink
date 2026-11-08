@@ -1,140 +1,94 @@
 # Kobo Libra Colour
 
-MediaTek MT8110 (MT8512 family, read from its device tree; two Cortex-A53 cores; the second off unless switched on, Kobo's interface does it itself), 965 MB,
-firmware 4.46, 1264 × 1680. The primary target. Reached with `ssh kobo` (KOReader's SSH server on port 2222, when
-KOReader is in front; Kobo's interface answers nothing). Set up as in `setup.md`; experiment 13
-(`experiments/13-kobo/`). One file per device in `docs/devices/`: what is on it, what it does that we work around,
-and a dated log of what we found.
+The primary target. MediaTek MT8110 (MT8512 family; two Cortex-A53 cores, the second switched on by Kobo's interface
+when it wants it), 965 MB, 1264 × 1680, firmware 4.46, kernel 4.9.77. Set up as in `setup.md`; found in experiment 13
+(`experiments/13-kobo/`). Reached with `ssh kobo`: KOReader's SSH server on port 2222, started by KOReader or by
+NickelMenu's **Toggle SSH** (by hand on the device, `.adds/nm/ssh` and `.adds/shamsaink/dev/ssh.sh`: KOReader's
+`dropbear`, Nickel left in front). This file: what is on the Kobo, what it does that we work around, a dated log.
 
 ## Paths
-On the Kobo, everything of ours is under `/mnt/onboard/.adds/` (the storage the Mac sees over USB; a dot-folder, so
-Kobo does not import it). Nothing is written outside it except RAM (`/var/tmp`). `$D` = `/mnt/onboard/.adds/shamsaink`.
-Until the reader has a library (plan, stage 7), NickelMenu → ShamsaInk opens the newest EPUB under `books/` (one
-folder down); over SSH, `sh launch.sh books/rtlbook/gandom.epub` opens a given one (add books with `scp` into a source
-folder). The logs are kept only while a book is open (`make kobo-reader-log`); Kobo's own system log is in RAM, gone
-with a reboot, and the kernel has no `pstore`.
+Everything of ours is under `/mnt/onboard/.adds/` (the storage the Mac sees over USB; a dot-folder, so Kobo does not
+import it); nothing is written outside it but RAM (`/tmp`, `/var/tmp`). `$D` = `/mnt/onboard/.adds/shamsaink`. Over
+SSH, `sh launch.sh books/rtlbook/gandom.epub` opens a given book. The logs are kept only while the reader is open
+(`make kobo-reader-log`); Kobo's system log is in RAM and the kernel has no `pstore`, so both go with a reboot.
 
 ```
-/mnt/onboard/.adds/                  (a dot-folder: Kobo does not import it; nothing of ours is written outside it but RAM)
-├── nm/shamsaink                     NickelMenu entry: menu_item:main:ShamsaInk:cmd_spawn:quiet:sh $D/launch.sh
-│                                    (by hand, setup.md 7)
+/mnt/onboard/.adds/
+├── nm/shamsaink                     NickelMenu: menu_item:main:ShamsaInk:cmd_spawn:quiet:sh $D/launch.sh  [make kobo-reader-install]
 ├── koreader/                        KOReader with our exit patch (experiments/13-kobo/koreader-patch/); crash.log is its own
 └── shamsaink/                       $D
-    ├── launch.sh                    launcher: stops Nickel, runs the reader on a book, starts Nickel again  [make kobo-reader-install]
-    ├── shamsaink                    the reader, a static ARMv7 binary (24 MB)                               [make kobo-reader-install]
-    ├── fonts/                       DejaVu, Parastoo                                                        [make kobo-reader-install]
-    ├── getting-started.epub         the guide: copied into books/ on the first start (no library.json yet)  [make kobo-reader-install]
-    ├── books/                       by source                                                                  [scp]
-    │   ├── farsiepub/               buried-alive-narrated, buried-alive, three-drops-1932-rtlbook, three-drops-1932-parisa
-    │   ├── rtlbook/                 blind-owl, tomorrow, gandom, little-black-fish
-    │   ├── standard-ebooks/         holmes
-    │   ├── archive-org/             haji-agha-ocr
-    │   └── test/                    alice-mono
-    ├── cache/                       NAME.epub-SIZE-DATE.cache (pages laid out), splash-WxH-HASH.gray (opening screen); safe to delete
-    ├── places/                      KEY.place: the page a book was left at
-    ├── highlights/                  KEY.json: a book's highlights
-    ├── settings.json                text size, line height, margin, lead_ms (narration lead); written by the reader's menu
-    ├── sleep/                       sleep screens (YAML: FarsiEPUB's sleep-screens.yml); empty: the opening screen [by hand]
-    ├── logs/                        reader.log, system.log, kernel.log, alive.log (written by the launcher)
-    └── nickel.env                   Nickel's environment we cannot rebuild (session bus, platform); written at each launch
-
-/var/tmp/shamsaink/                  the narration's decoded sound (RAM, gone with a reboot)
+    ├── launch.sh                    stops Nickel, runs the reader, starts Nickel again                  [make kobo-reader-install]
+    ├── shamsaink                    the reader, a static ARMv7 binary (24 MB)                           [make kobo-reader-install]
+    ├── fonts/  licenses/  VERSION   [make kobo-reader-install]
+    ├── getting-started.epub         the guide, copied into books/ on the first start                    [make kobo-reader-install]
+    ├── books/                       by source: farsiepub/, rtlbook/, standard-ebooks/, archive-org/, test/   [scp]
+    ├── cache/                       KEY pages laid out, the opening screen; safe to delete
+    ├── places/  highlights/         KEY.place (the page left at), KEY.json (highlights)
+    ├── library.json  library-view.json  settings.json   written by the reader
+    ├── sleep/                       sleep screens (FarsiEPUB's sleep-screens.yml); empty: the opening screen [by hand]
+    ├── logs/                        reader.log, system.log, kernel.log, alive.log (the launcher's)
+    └── nickel.env                   what of Nickel's environment we cannot rebuild (session bus, platform); each launch
+/var/tmp/shamsaink/                  the narration's decoded sound (RAM)
+/tmp/shamsaink-wmt_loader            the script put over /usr/bin/wmt_loader until the next reboot (Limits and bugs)
 ```
 
-A *KEY* is 12 hex digits of a SHA-256 over the book's size, its first 64 KB and its last 64 KB (the whole file under
-128 KB; `library.Key`, `reader/library/scan.go`), since 2026-11-05. Not the name or the modification time, so a book moved,
-renamed, touched or copied again keeps its cache, place and highlights; a replaced book starts afresh when its end (a
-ZIP's central directory, with every file's CRC) differs, and its old files stay in `cache/`, `places/`, `highlights/`
-unused (delete them by hand). Two copies of one book share them. In a shell: `{ echo SIZE; head -c 65536 F; tail -c 65536
-F; } | sha256sum | cut -c1-12` (a small file: `cat F` for the head and tail). `library.json` lists each book's key.
+A *KEY* (since 2026-11-05, `library.Key` in `reader/library/scan.go`): 12 hex digits of a SHA-256 over the book's size,
+its first 64 KB and its last 64 KB (the whole file under 128 KB). A book moved, renamed, touched or copied again keeps
+its cache, place and highlights; a replaced one starts afresh, its old files left unused. In a shell:
+`{ echo SIZE; head -c 65536 F; tail -c 65536 F; } | sha256sum | cut -c1-12`.
 
 ## Limits and bugs
-**Nickel started twice in one boot, and Bluetooth, panic the kernel.**
-- What: with Bluetooth having been on, starting Nickel again (KOReader's or Plato's Exit, our launcher closing a
-  book) panics the kernel and reboots; NickelMenu is lost. The other order too: Nickel started again, then
-  Bluetooth switched on. KOReader's SSH answering with Nickel in front means Nickel has already started twice.
-- Cause: each start of Nickel loads MediaTek's Wi-Fi/Bluetooth driver (`wmt`) again; with Bluetooth used, the
-  second load dereferences a null pointer in the kernel.
-- What we do: our launcher reboots instead of starting Nickel when Bluetooth's daemon (`mtkbtd`) runs; KOReader's
-  Exit made a reboot by our patch (`experiments/13-kobo/koreader-patch/`); headphones connected in Nickel on a
-  fresh boot, before anything else.
-- Upstream: koreader/koreader#12739 (open; Kobo's bug, KOReader's maintainers say). Not reported to Kobo.
-- Found: experiment 13 (`experiments/13-kobo/NOTES.md`), `setup.md` section 2.
-
-**Every book's file time shifted by 8 hours, and every book was new** (2026-11-05).
-- What: after a few reboots in a day, the library listed every book as new and none had its place; the files were in
-  `places/`, `highlights/` and `cache/` under the old keys. Each book's modification time read exactly 28,800 s earlier
-  than before.
-- Probable cause (inferred, not proved): the books are on `vfat`, mounted without `tz=` or `time_offset=`. FAT stores
-  local time and the kernel turns it into UTC with its own timezone value, which is not kept across boots and is set at
-  runtime by something (Nickel, we think). Not a kernel crash: no panic, oops or watchdog line in `kernel.log`. Not
-  known: what sets it, or why the earlier Bluetooth reboots kept the old times.
-- What we do: the key no longer uses the modification time (above); this boot's history was copied to the new keys by hand.
-- Plato's fingerprint is the modification time and the size (`crates/core/src/helpers.rs`), the same weakness; KOReader
-  hashes 1 KiB samples (`util.partialMD5`); Kobo's own library identifies a sideloaded book by its path.
-
-**A frozen screen** (2026-11-05). The reader's watchdog (`docs/DESIGN.md`, "Keeping the reader alive") kills a reader
-that stops answering after 20 to 30 s and brings Nickel back. If even that does not help, **hold the power button for
-about 5 s**: the hardware cuts the power and the Kobo restarts (tried: screen dark, a full reboot, the system partition
-replayed its journal; nothing of ours is lost but the last page turn). For the release notes.
-
-**Wi-Fi is not managed while the reader is open** (2026-11-05, a theory to validate: the same with Plato). Opening the
-reader stops Nickel, which looked after Wi-Fi, and `ssh kobo` stopped answering; it comes back when Nickel does, or
-after waking (the reader brings it back). Nothing is built for it: a Settings switch can come with OPDS (stage 7), and
-KOReader's `dropbear` (`koreader/dropbear -E -R -p 2222`, `/dev/pts` mounted) is what would give SSH, as KOReader starts it.
+**A second start of Nickel in a boot, with Bluetooth, panics the kernel** (avoided by our launcher since 2026-11-08).
+- What: Bluetooth used, then Nickel started again (KOReader's or Plato's exit, our launcher closing the reader): the
+  kernel panics, the Kobo reboots, NickelMenu is lost. The other order too: Nickel started again, then Bluetooth on.
+- Cause (2026-11-08, Kobo's source: `kobolabs/Kobo-Reader`, `hw/mt8113-libraC_vision7/kernel.tar.zst`,
+  `modules/connectivity/wmt_mt66xx`): each start of Nickel runs `/usr/bin/wmt_loader`, whose init ioctl runs the
+  driver's `WMT_init` again on the running driver. There `osal_fifo_init` (`common_main/linux/osal.c`) frees the old
+  buffer with `FifoDeInit(pFifo->pFifoBody)` for `FifoDeInit(pFifo)`: it reads the kfifo's `in` counter as a pointer
+  and frees it. Bluetooth never used, the counter is 0: an error logged, no harm. After Bluetooth it is a number
+  (#12739's oops: 0xd26, a fault at 0xd36, `__kfifo_free` reading `data` at +0x10). Firmware 4.46's `wmt_drv.ko` has
+  the same code. The fix for Kobo (the driver is GPL: described, no patch kept here): the init ioctl
+  (`common_detect/wmt_detect.c`) once per boot, and `FifoDeInit(pFifo)` with the body freed and set to NULL.
+- What we do: `launch.sh` (`skip_wmt_loader`), from the reader's opening to the next reboot, bind-mounts a script that
+  does nothing over `/usr/bin/wmt_loader` (Kobo's system not written); the boot's run did the work, later ones only
+  fail. Before starting Nickel it also stops Bluetooth's daemon (`mtkbtd`, `btservice`): a new Nickel cannot use the
+  one D-Bus started for the old (switch stuck, Bluetooth shown off); D-Bus starts a fresh one. Tried 2026-11-08:
+  headphones on from a fresh boot, the reader opened and closed three times, Bluetooth off and on: no panic, the driver
+  initialised once, the headphones reconnecting by themselves. KOReader's or Plato's exit before the reader's first
+  opening in a boot still panics: KOReader keeps our exit patch.
+- Upstream: koreader/koreader#12739 (open); the cause not posted yet. Not reported to Kobo.
 
 **Each start of Nickel leaves a stuck Wi-Fi loader** (2026-10-30).
-- What: one more `wmt_launcher` each time Nickel starts after boot, stuck in the kernel (`WMT_open`, state D)
-  failing every 2 s for good; the load average climbs (about 11 with seven of them), and about nine took Wi-Fi down
-  until a reboot.
-- Cause: Nickel runs `wmt_loader` and `wmt_launcher -p /lib/firmware` each time it starts (in `libnickel`), as if
-  just booted; the one from boot holds the chip's device, so a second one can never open it. Restarting Nickel is
-  what KOReader, Plato and our launcher all do; none of them handles it.
-- What we do: `reader/kobo/launch.sh` kills every `wmt_launcher` but the oldest for 30 s after starting Nickel
-  (they never had the chip; the one from boot keeps working). Tried: six old ones and the new one stopped, Wi-Fi up.
-- Upstream: not reported yet (KOReader's `nickel.sh` and Plato's could do the same).
+- What: one more `wmt_launcher` per start of Nickel, stuck in `WMT_open` (state D), failing every 2 s for good; the
+  load climbs and about nine took Wi-Fi down until a reboot.
+- Cause: Nickel runs `wmt_launcher -p /lib/firmware` on each start, as if just booted; the boot's one holds the chip.
+- What we do: `launch.sh` kills every `wmt_launcher` but the oldest for 30 s after starting Nickel. Not reported.
 
-**A suspend while plugged in hangs the kernel.**
-- What: on MediaTek Kobos, writing "mem" to `/sys/power/state` on a charger hangs.
-- What we do: plugged in, the Kobo stays awake behind the sleep screen until unplugged or pressed again
-  (`reader/device/kobo.go`), as KOReader does.
-- Upstream: known to KOReader (its Kobo code).
+**Book times shifted by 8 hours, every book new** (2026-11-05). After a few reboots in a day, each book's modification
+time read exactly 28,800 s earlier. Probably the `vfat` storage, mounted without `tz=`: the kernel's timezone, set at
+runtime (by Nickel, we think), is not kept across boots. Not proved. What we do: the KEY no longer uses the time.
 
-**The screen's driver refuses a suspend right after a refresh.**
-- What: "operation not permitted" from `/sys/power/state` while the panel stays powered a moment after the last
-  refresh (`hwtcon ... xon off timer pending` in the kernel log).
-- What we do: tried again after 3 s, five times at most (`reader/device/kobo.go`).
+**A frozen screen** (2026-11-05). The reader's watchdog (`docs/DESIGN.md`, "Keeping the reader alive") kills a reader
+silent for 20 to 30 s and brings Nickel back. Failing that, **hold the power button about 5 s**: the Kobo restarts,
+nothing of ours lost but the last page turn. For the release notes.
+
+**Wi-Fi is not managed while the reader is open** (2026-11-05). Nickel looked after it: `ssh kobo` stops answering
+until Nickel is back or the Kobo wakes. A Settings switch can come with OPDS (stage 7).
+
+**A suspend on a charger hangs the kernel** (MediaTek Kobos, as KOReader knows). Plugged in, the Kobo stays awake
+behind the sleep screen (`reader/device/kobo.go`).
+
+**The screen's driver refuses a suspend right after a refresh** ("operation not permitted", `hwtcon ... xon off timer
+pending`). Tried again after 3 s, five times at most (`reader/device/kobo.go`).
 
 ## Findings log
-Newest last; each a dated entry, what was seen and how sure we are. The bugs above are the settled ones.
+Newest last, dated, with how sure we are; the settled ones are above.
 
-- **2026-10-30, kernel crash and reboot after seven Nickel starts in one boot.** SSH was lost, then the Kobo
-  rebooted and NickelMenu had to be deployed again. Logs: the reader's sessions all ended `exited (0)`; the last line
-  is `Nickel started again` (22:56:34 UTC) with no "Wi-Fi loader stopped" after it, as every earlier start had, so the
-  kernel probably died within seconds of Nickel's start. About 75 s before (uptime ~3905 s), with the launcher idle,
-  the Wi-Fi/Bluetooth chip hung (`wmt_dev_rx_timeout`, "trigger assert fail, do chip reset", `Invoke whole chip reset
-  from stp_btm`) and reset once. The seven starts: three end-to-end runs (`e2e/`), manual launches, and the strays.
-  Not captured: the panic itself (our kernel log stops when Nickel starts again). The e2e left nothing on the Kobo.
-  Cause not known; the Kobo's driver, with our restarts as the likely trigger. **Not pursued until it happens again.**
-  If it does: keep the kernel log running ~90 s past Nickel's start with a `sync` a second, and reboot between e2e
-  runs.
-- **2026-11-02, Nickel stuck on a black screen after Plato, when our launcher had removed its FIFO.** Plato was run
-  (to see how it draws Farsi) by a copy of its `plato.sh` while our launcher had Nickel stopped. When Plato ended, its
-  own script started Nickel with KOReader's `nickel.sh`: Nickel ran (busy, 90 s of CPU) with a black frame buffer
-  and SSH answering, so the Kobo looked frozen. Cause, seen: `/tmp/nickel-hardware-status` was a plain file, not the
-  FIFO that our `start_nickel` makes (`mkfifo`; our stop removes it), which `nickel.sh` does not recreate; Nickel also
-  had the ALSA audio sink instead of the MediaTek Bluetooth one. Fixed by stopping that Nickel and starting it with
-  `sh launch.sh nickel` (a FIFO again, the right sink, Wi-Fi back, the home screen in under a minute). Plato started
-  later from NickelMenu, with the FIFO in place, ended with a working Nickel (but still the ALSA sink until the next
-  start through our launcher or a reboot). **So: after our launcher has stopped Nickel, start it with `launch.sh
-  nickel`, never by ending Plato or KOReader's `nickel.sh`.** Plato from NickelMenu says it is running on a Kobo Libra
-  Colour (the "Touch A/B" of the first run was my launching it with no Nickel to take its environment from). **Plato
-  and Farsi, checked the same day, measured on grabs of the framebuffer of *Buried Alive*, chapter 2 («حاجی مراد»):** in
-  Plato the last line of a paragraph spans x 120–643 of a column of 116–1146: flush left, so the paragraph is laid out
-  left to right; in KOReader it spans 620–1215 of 45–1219: flush right, as right-to-left text should be. The word order
-  inside Plato's lines looked right when read against the EPUB's `sec002.xhtml`, but that was read by eye, which is
-  unreliable for right-to-left text: only the alignment is measured. So what looked reversed in Plato may be the
-  paragraph's direction (left to right) and not, or not only, the words.
-  KOReader draws this page
-  in the right direction; its lines are broken differently from a browser's (experiment 03's NOTES: 42–67% of line starts
-  as Chromium's on rtlbook's books, against 94–100% for our layout).
+- **2026-10-30, a panic after seven starts of Nickel in one boot** (e2e runs and launches, Bluetooth not used). The
+  last log line `Nickel started again`; 75 s before, the chip hung and reset (`wmt_dev_rx_timeout`, "do chip reset").
+  Likely the driver initialised again on each start (2026-11-08's cause, above), now skipped. To watch.
+- **2026-11-02, Nickel on a black screen after Plato.** Plato, run while our launcher had Nickel stopped, restarted
+  it with KOReader's `nickel.sh`, which does not make Nickel's FIFO (`/tmp/nickel-hardware-status`) that our launcher
+  removes, and gives the ALSA sink instead of MediaTek's Bluetooth one. **After our launcher has stopped Nickel, start
+  it with `sh launch.sh nickel`, never by ending Plato or KOReader.** The same day: Plato lays Farsi paragraphs out
+  left to right (flush left, measured on a framebuffer grab of *Buried Alive*); KOReader flush right, as it should.

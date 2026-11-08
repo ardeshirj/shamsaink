@@ -5,8 +5,7 @@
 # moved in, so a reader that is running keeps the file it started from (a shell reads its script as it goes: writing
 # launch.sh in place would break a launcher that is running). Fonts no longer in the package are removed. If the
 # reader was open it is restarted on the new build: stopped (launch.sh brings Kobo's interface back), then started
-# again as NickelMenu starts it. Not when Bluetooth's daemon runs: leaving the reader would then reboot the Kobo
-# (docs/devices/kobo/README.md); nothing is copied either.
+# again as NickelMenu starts it.
 # Arguments: the ssh host, the package (its .sha256 beside it is checked when there).
 set -e
 HOST=$1 PKG=$2
@@ -20,10 +19,6 @@ if [ -f "$PKG.sha256" ]; then
   [ "$want" = "$got" ] || { echo "$PKG does not match its checksum: not installed" >&2; exit 1; }
 fi
 open=$($R 'pidof shamsaink >/dev/null && echo yes || echo no')
-if [ "$open" = yes ] && [ "$($R 'pidof mtkbtd >/dev/null && echo yes || echo no')" = yes ]; then
-  echo "the reader is open and Bluetooth is on: leaving it would reboot the Kobo, so it is not restarted. Leave it yourself, then install again"
-  exit 1
-fi
 $R "rm -rf $NEW && mkdir -p $NEW"
 scp -q "$PKG" "$HOST:$NEW/package.tgz"
 $R "set -e; cd $NEW && tar -xzf package.tgz && rm package.tgz
