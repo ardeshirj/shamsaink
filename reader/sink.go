@@ -23,20 +23,28 @@ const (
 	sinkRate           = 48000 // the sink takes S16LE, 48 kHz, stereo
 	sinkBytesPerSecond = sinkRate * 4
 	fSetPipeSz         = 1031 // fcntl F_SETPIPE_SZ (Linux)
+	// sinkBuffer is the player's buffer (its buffer-time). GStreamer's default for audio sinks, 200 ms, which Kobo's
+	// Bluetooth sink and its own interface keep, is less than the player's stalls on the Libra Colour: 250-320 ms, every
+	// 4 and 10 s in turn, the writer ready all along (2026-11-08); a stall longer than the buffer was heard as a glitch.
+	sinkBuffer = 500 * time.Millisecond
+	// sinkLater is how much later than with the default buffer the sound written is heard: the underline is moved by it
+	// (the lead set by ear, lead_ms, was set with the default).
+	sinkLater = sinkBuffer - 200*time.Millisecond
 )
 
 // silence is the chunk written when there is nothing to play: 20 ms.
 var silence = make([]byte, sinkBytesPerSecond/50)
 
 type sink struct {
-	cmd  *exec.Cmd
-	w    *os.File
-	gain atomic.Int32 // the narration's gain, in 1/1024 (1024: as recorded; setVolume)
-	buf  []byte       // the narration's chunk at its gain
-	src  atomic.Pointer[narrator]
-	dead atomic.Bool
-	quit chan struct{}
-	once sync.Once
+	cmd     *exec.Cmd
+	w       *os.File
+	gain    atomic.Int32 // the narration's gain, in 1/1024 (1024: as recorded; setVolume)
+	settled atomic.Bool  // the player is taking sound at its pace (run): the narration may start
+	buf     []byte       // the narration's chunk at its gain
+	src     atomic.Pointer[narrator]
+	dead    atomic.Bool
+	quit    chan struct{}
+	once    sync.Once
 }
 
 // openSink starts the player; it fails if gst-launch-1.0 cannot be run. The player is up ~2 s later: what is written
@@ -50,6 +58,7 @@ func openSink() (*sink, error) {
 	if device.Sim() { // no player: the sound read at the sink's pace, 20 ms at a time, so the clock runs as on the Kobo
 		k := &sink{w: w, quit: make(chan struct{})}
 		k.gain.Store(1024)
+		k.settled.Store(true)                                       // no player to wait for: the scenarios' timing as before
 		name := fmt.Sprintf("sound-%d.raw", time.Now().UnixMilli()) // a video of the simulator: what the Kobo would play
 		rec := device.Record(name)
 		if rec != nil {
@@ -82,7 +91,7 @@ func openSink() (*sink, error) {
 	}
 	cmd := exec.Command("gst-launch-1.0", "-q", "fdsrc", "fd=0", "!", "rawaudioparse", "format=pcm", "pcm-format=s16le",
 		fmt.Sprintf("sample-rate=%d", sinkRate), "num-channels=2", "!", "audioconvert", "!", "audioresample", "!",
-		fmt.Sprintf("audio/x-raw,format=S16LE,rate=%d,channels=2", sinkRate), "!", "mtkbtmwrpcaudiosink")
+		fmt.Sprintf("audio/x-raw,format=S16LE,rate=%d,channels=2", sinkRate), "!", "mtkbtmwrpcaudiosink", fmt.Sprintf("buffer-time=%d", sinkBuffer.Microseconds()))
 	cmd.Stdin = r
 	cmd.Stdout, cmd.Stderr = os.Stderr, os.Stderr
 	if err := cmd.Start(); err != nil {
@@ -107,13 +116,41 @@ func openSink() (*sink, error) {
 	return k, nil
 }
 
-// run writes the narration's chunks, else silence, as the sink takes them.
+// A player just opened takes ~2 s to wake the headphones (experiment 13): it takes its buffer's worth at once, then
+// stalls (1.4 s, then 0.6 s, seen 2026-11-08), so a voice written meanwhile was cut near its start. It is given silence
+// until it has settled: open settleAfter at least and settleRun of chunks taken each within settleChunk, or settleMax
+// whatever it does. The narration's clock starts with its first chunk taken after that.
+const (
+	settleAfter = time.Second
+	settleRun   = 500 * time.Millisecond
+	settleChunk = 100 * time.Millisecond
+	settleMax   = 5 * time.Second
+)
+
+// run writes the narration's chunks, else silence, as the sink takes them; silence alone until the player has settled.
 func (k *sink) run() {
+	opened, run := time.Now(), time.Duration(0)
 	for !k.dead.Load() {
 		select {
 		case <-k.quit:
 			return
 		default:
+		}
+		if !k.settled.Load() {
+			t := time.Now()
+			if _, err := k.w.Write(silence); err != nil {
+				return
+			}
+			if d := time.Since(t); d > settleChunk {
+				run = 0
+			} else {
+				run += 20 * time.Millisecond
+			}
+			if since := time.Since(opened); since >= settleAfter && run >= settleRun || since >= settleMax {
+				fmt.Printf("sound: the player settled after %d ms\n", since.Milliseconds())
+				k.settled.Store(true)
+			}
+			continue
 		}
 		if n := k.src.Load(); n != nil {
 			if !n.feed(k) {

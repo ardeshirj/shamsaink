@@ -7,7 +7,9 @@ import (
 	"image"
 	"io"
 	"os"
+	"runtime"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -117,11 +119,27 @@ type narrator struct {
 	failed  atomic.Bool
 
 	// the feeder's, used by the sink's goroutine only
-	fp       int   // the part being fed
-	off      int   // bytes of it fed
-	fed      int64 // bytes of narration fed (silence put in not counted)
-	decoding int   // parts whose decoding has started
+	fp         int       // the part being fed
+	off        int       // bytes of it fed
+	fed        int64     // bytes of narration fed (silence put in not counted)
+	decoding   int       // parts whose decoding has started
+	lastWrite  time.Time // when the last chunk was taken by the sink's pipe
+	lateLogged int       // the part (+1) whose late decoding was logged
+	gcSeen     uint32    // Go's collections at the last gap logged
+
+	// What a glitch heard may come from (2026-11-08, to find its cause), logged as it happens and summed up when the
+	// narration stops: chunks of silence put in because a part was decoded late, and gaps between two chunks taken by
+	// the sink's pipe over gapLog (a chunk is 20 ms and is taken as the sink plays it: a longer gap means the writer or
+	// the player was held up, and the player may have run dry). started: when the narration was started.
+	started time.Time
+	late    atomic.Int64
+	gaps    atomic.Int64
+	maxGap  atomic.Int64 // ms
 }
+
+// gapLog is the gap between two chunks taken by the sink's pipe from which it is logged (60-65 ms is the player's
+// usual rhythm, seen 2026-11-08).
+const gapLog = 150 * time.Millisecond
 
 // newNarrator plans the narration from word first: a new part where the file changes or the clips go back.
 func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) *narrator {
@@ -147,27 +165,37 @@ func newNarrator(all []cue, first int, read blitz.ReadFunc, lead time.Duration) 
 // the sink is given silence until it is done, and a failure ends the narration (feed). The rest are decoded as the
 // feeder comes to them.
 func (n *narrator) begin() {
+	n.started = time.Now()
 	n.decoding = 1
 	go n.decode(0)
 }
 
-// prefetch starts decoding the parts after the one being fed, until ~4 s of sound is ahead (a part may be a title's
-// second), so at most a few are in RAM (~11 MB a minute).
+// prefetch starts decoding the parts after the one being fed until a part's length (maxPart) of sound is ahead, what is
+// left of the one being fed counted: the next part is decoded while this one plays, a minute to do it in, and at most
+// two parts' sound is in RAM (~11 MB a minute). (Until 2026-11-08 4 s, and the whole of the part being fed counted:
+// the next part's decoding started only when it was due, heard as a second of silence at each part's start.)
 func (n *narrator) prefetch() {
 	ahead := 0.0
-	for i := n.fp; i < len(n.parts) && ahead < 4; i++ {
+	for i := n.fp; i < len(n.parts) && ahead < maxPart; i++ {
 		if i >= n.decoding {
 			n.decoding = i + 1
 			go n.decode(i)
 		}
-		ahead += n.parts[i].to - n.parts[i].from
+		p := n.parts[i]
+		left := p.to - p.from
+		if i == n.fp {
+			left -= float64(n.off) / sinkBytesPerSecond
+		}
+		ahead += left
 	}
 }
 
 // decode makes part i's sound, and says it is done.
 func (n *narrator) decode(i int) error {
 	p := n.parts[i]
+	t := time.Now()
 	p.pcm, p.err = n.decodeParts(p)
+	fmt.Printf("read aloud: part %d (%.0f s of sound) decoded in %.0f ms, at %.1f s\n", i, p.to-p.from, ms(t), time.Since(n.started).Seconds())
 	close(p.done)
 	return p.err
 }
@@ -248,12 +276,37 @@ func (n *narrator) feed(w io.Writer) bool {
 		}
 		chunk, live = p.pcm[n.off:min(n.off+len(silence), len(p.pcm))], true
 	default: // decoded late: silence until it is, the clock waiting
+		if n.anchor.Load() != 0 { // the player started: heard as a pause
+			n.late.Add(1)
+			if n.lateLogged != n.fp+1 { // once a part
+				n.lateLogged = n.fp + 1
+				fmt.Printf("read aloud: part %d decoded late, silence put in at %.1f s\n", n.fp, time.Since(n.started).Seconds())
+			}
+		}
 	}
+	before := time.Now()
 	if _, err := w.Write(chunk); err != nil {
 		fmt.Fprintln(os.Stderr, "shamsaink: read aloud: sound:", err)
 		n.failed.Store(true)
 		return false
 	}
+	now := time.Now()
+	if n.anchor.Load() != 0 { // the player started: the gaps between the chunks it takes
+		g := now.Sub(n.lastWrite)
+		if g > gapLog { // split: the time before the write (ours: the writer late) and in it (the player not taking it)
+			n.gaps.Add(1)
+			var m runtime.MemStats
+			runtime.ReadMemStats(&m)
+			fmt.Printf("read aloud: a gap of %d ms at %.1f s: %d ms before the write, %d ms in it; Go's collections %d (+%d)\n",
+				g.Milliseconds(), time.Since(n.started).Seconds(), before.Sub(n.lastWrite).Milliseconds(),
+				now.Sub(before).Milliseconds(), m.NumGC, m.NumGC-n.gcSeen)
+			n.gcSeen = m.NumGC
+		}
+		if g.Milliseconds() > n.maxGap.Load() {
+			n.maxGap.Store(g.Milliseconds())
+		}
+	}
+	n.lastWrite = now
 	if live {
 		n.off += len(chunk)
 		n.fed += int64(len(chunk))
@@ -347,11 +400,18 @@ func (s *session) readAloud(from *blitz.Word) {
 		s.snd = snd
 	}
 	s.snd.setVolume(s.set.volumeFor(s.dev.Headphones())) // the pair's own volume (sound.go)
-	nar := newNarrator(s.narration, first, r.read, time.Duration(s.set.LeadMs)*time.Millisecond)
+	lead := time.Duration(s.set.LeadMs) * time.Millisecond
+	if !device.Sim() { // Kobo's player, its buffer larger than the one lead_ms was set with (sink.go)
+		lead += sinkLater
+	}
+	nar := newNarrator(s.narration, first, r.read, lead)
 	nar.begin()
 	s.nar = nar
 	s.dev.Active()
 	s.snd.play(nar)
+	if !s.snd.settled.Load() { // the player still waking (sink.go): the first word underlined at once, so the press is seen
+		s.underline(nar.cues[0]) // to be answered; the voice follows
+	}
 	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",
 		first, s.narration[first].doc, ms(t), len(nar.parts))
 	s.due()
@@ -409,12 +469,14 @@ func (s *session) underline(c cue) {
 		// a page the narration turns counts like one turned by hand: every Nth is cleaned with a flash (the words due
 		// while the screen is busy are skipped, ~0.4 s)
 		s.turns++
-		if s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery() {
+		clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
+		if clean {
 			s.turns = 0
 			s.showPage(device.WfGC16, true)
 		} else {
 			s.showPage(device.WfREAGL, false)
 		}
+		fmt.Printf("read aloud: page turned at %.1f s%s\n", time.Since(nar.started).Seconds(), map[bool]string{true: ", cleaned"}[clean])
 		r.keep(s.rest)
 	}
 	region := union(nar.bars)
@@ -435,7 +497,22 @@ func (s *session) silence() {
 	region := union(nar.bars)
 	nar.bars = nil
 	s.refresh(region, device.WfA2)
-	fmt.Printf("read aloud: stopped at word %d of %d\n", nar.next, len(nar.cues))
+	fmt.Printf("read aloud: stopped at word %d of %d after %.0f s: %d chunks late, %d gaps over %d ms, the longest %d ms; second core %s\n",
+		nar.next, len(nar.cues), time.Since(nar.started).Seconds(), nar.late.Load(), nar.gaps.Load(), gapLog.Milliseconds(),
+		nar.maxGap.Load(), cpuOnline(1))
 	s.nar = nil
 	s.ahead = true
+}
+
+// cpuOnline says whether CPU core n is switched on ("on", "off"; "?" where the kernel does not say: the Kindle's, the
+// simulator's). The Kobo's second core is switched on by Kobo's own interface only (experiment 13).
+func cpuOnline(n int) string {
+	b, err := os.ReadFile(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/online", n))
+	switch {
+	case err != nil:
+		return "?"
+	case strings.TrimSpace(string(b)) == "1":
+		return "on"
+	}
+	return "off"
 }

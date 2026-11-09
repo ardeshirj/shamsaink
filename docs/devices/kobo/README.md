@@ -109,3 +109,15 @@ Newest last, dated, with how sure we are; the settled ones are above.
   `org.bluez.Adapter1.Powered` to true (Bluetooth reopened at once), then `Device1.Connect` (0.3 s). About 5 s, Nickel
   not needed. Probable trigger (one case; the 2026-10-30 hang looked alike): a sleep with Bluetooth sound connected.
   To test, then to build: connecting and this recovery from the Sound panel.
+- **2026-11-08, glitches in the narration: Kobo's player stalls, and its buffer was too small.** Measured with the
+  narration's own log (`reader/narration.go`: each pause between chunks split into before the write and in it). Kobo's
+  player (`gst-launch` into `mtkbtmwrpcaudiosink`) stops taking sound for 250–320 ms every 4 and 10 s in turn, from
+  when it opened; our writer was ready every time and Go's collector did not run, so the stall is the player's or
+  Bluetooth's (cause not known; Wi-Fi sharing the chip not ruled out). Its buffer is GStreamer's default for audio
+  sinks, `buffer-time` 200 ms, which neither the sink nor Nickel changes (Nickel's audiobooks too, presumably): a stall
+  longer than that was heard. **What we do:** the player opened with a 500 ms buffer (`reader/sink.go`), the underline
+  moved by the 300 ms more (`lead_ms`, set by ear, stays right); not heard since. Also: a player just opened takes its
+  buffer at once, then stalls 1.4 s and 0.6 s while it wakes the headphones, so it is given silence until it takes
+  chunks at its pace (1–2 s, the first word underlined meanwhile). And a bug of ours, heard as a second of silence at
+  each part's start: the next part was decoded only once due; now one part ahead (a 60 s part decodes in 0.4–1.4 s,
+  2.8 s for Moby-Dick's first, one large file).
