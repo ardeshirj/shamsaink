@@ -116,6 +116,12 @@ sequenceDiagram
   S->>P: ~121 ms, a word due while busy is skipped (4% of words)
 ```
 
+The narration reaches the next page when a narrated element's first line is on it, or, for a sentence or paragraph
+that runs onto it (narration by sentence or paragraph, as IDPF's Moby-Dick), when the voice reaches the element's first
+line there (2026-11-08): the engine gives every line of the element with its page (`find_lines_all`), and the moment is
+the element's share of its time as its lines' share of its width (`underline`, `pageTurn` in `reader/narration.go`).
+Until then the page turned with the next element only, its end spoken over the old page.
+
 ### The reader's panels
 
 The menu, the contents, the navigation panel, the highlight's panel and the clock's digits are HTML too, drawn by the

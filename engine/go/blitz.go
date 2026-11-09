@@ -178,6 +178,30 @@ func (d *doc) Find(spine int, id string) (int, []image.Rectangle) { return d.fin
 // what read-along marks. Find gives it one box, its own, which is what a tap is tested against.
 func (d *doc) FindLines(spine int, id string) (int, []image.Rectangle) { return d.find(spine, id, true) }
 
+// A LineBox is a line of an element's text on a page (FindAllLines).
+type LineBox struct {
+	Page int
+	Box  image.Rectangle
+}
+
+// FindAllLines is FindLines, but every line, on whichever page it is, up to 256, in order: a narrated paragraph that
+// runs onto the next page has its lines there too. Nil if the element is not found.
+func (d *doc) FindAllLines(spine int, id string) []LineBox {
+	var buf [5 * 256]C.int32_t
+	var n C.size_t
+	cid := C.CBytes([]byte(id))
+	defer C.free(cid)
+	if C.be_find_lines_all(d.b, C.size_t(spine), (*C.uint8_t)(cid), C.size_t(len(id)), &buf[0], 256, &n) < 0 {
+		return nil
+	}
+	ls := make([]LineBox, int(n))
+	for i := range ls {
+		b := buf[5*i:]
+		ls[i] = LineBox{int(b[0]), image.Rect(int(b[1]), int(b[2]), int(b[3]), int(b[4]))}
+	}
+	return ls
+}
+
 func (d *doc) find(spine int, id string, lines bool) (int, []image.Rectangle) {
 	var buf [4 * 256]C.int32_t
 	var n C.size_t

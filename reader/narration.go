@@ -110,6 +110,7 @@ type narrator struct {
 	lead  time.Duration // the words are underlined this much after the sound is taken, for the headphones' own delay
 	read  blitz.ReadFunc
 	bars  []image.Rectangle // the underline shown, to erase
+	turn  *pageTurn         // a page turn due in the middle of the stretch underlined (underline), nil for none
 
 	// the clock: anchor is when (UnixNano) the narration's second 0 was taken by the sink's pipe, found again after every
 	// chunk written as now minus the narration's seconds written so far, so a stalled link stalls the clock, and a part
@@ -336,8 +337,9 @@ func (n *narrator) end() float64 {
 	return c.at + c.end - c.begin
 }
 
-// due is when the next thing is to be done: a word underlined, or the narration's end; false when it is over (or
-// failed). Until the pipe has taken the first chunk (the player starting, ~2 s the first time) it asks again soon.
+// due is when the next thing is to be done: a word underlined, a page turned in the middle of a stretch, or the
+// narration's end; false when it is over (or failed). Until the pipe has taken the first chunk (the player starting,
+// ~2 s the first time) it asks again soon.
 func (n *narrator) due() (time.Time, bool) {
 	if n.failed.Load() {
 		return time.Now(), false
@@ -345,6 +347,9 @@ func (n *narrator) due() (time.Time, bool) {
 	s := n.end()
 	if n.next < len(n.cues) {
 		s = n.cues[n.next].at
+	}
+	if n.turn != nil && n.turn.at < s { // a page turn in the middle of a stretch comes first
+		s = n.turn.at
 	}
 	t, ok := n.at(s)
 	if !ok {
@@ -447,38 +452,98 @@ func (s *session) speak() {
 	if w >= 0 {
 		s.underline(nar.cues[w])
 	}
+	if t := nar.turn; t != nil { // the voice has reached the stretch's lines on the next page
+		if at, ok := nar.at(t.at); ok && !now.Before(at.Add(nar.lead)) {
+			nar.turn = nil
+			s.turnMidway(t)
+		}
+	}
 	s.due()
 }
 
 // underline marks word c: a bar under each of its boxes, the last one erased, refreshed together with A2; the page
-// turned first if the narration has crossed to another.
+// turned first if the narration has crossed to another. A sentence or paragraph that runs onto the next page is marked
+// on its first page, and its page turn is planned for when the voice reaches its first line there (nar.turn): its
+// share of the stretch's time as its lines' share of the stretch's width.
 func (s *session) underline(c cue) {
-	r, nar := s.r, s.nar
-	page, boxes := r.book.FindLines(c.doc, c.id) // a paragraph in its lines, not as one box
-	if page < 0 || len(boxes) == 0 {
+	nar := s.nar
+	lines := s.r.book.FindAllLines(c.doc, c.id) // a paragraph in its lines, not as one box, on every page it is on
+	if len(lines) == 0 {
 		return
 	}
-	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
-		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(boxes))
-	}
-	if first, _ := r.book.Layout(c.doc); c.doc != r.doc || page != first+r.at {
-		r.doc, r.at = c.doc, page-first
-		s.shown = s.rd.pages.get(r, r.doc, r.at, page)
-		s.rd.pages.touch(s.shown)
-		nar.bars = nil
-		// a page the narration turns counts like one turned by hand: every Nth is cleaned with a flash (the words due
-		// while the screen is busy are skipped, ~0.4 s)
-		s.turns++
-		clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
-		if clean {
-			s.turns = 0
-			s.showPage(device.WfGC16, true)
-		} else {
-			s.showPage(device.WfREAGL, false)
+	page := lines[0].Page
+	var here, next []image.Rectangle
+	hereW, allW := 0, 0
+	for _, l := range lines {
+		allW += l.Box.Dx()
+		switch l.Page {
+		case page:
+			here = append(here, l.Box)
+			hereW += l.Box.Dx()
+		case page + 1:
+			next = append(next, l.Box)
 		}
-		fmt.Printf("read aloud: page turned at %.1f s%s\n", time.Since(nar.started).Seconds(), map[bool]string{true: ", cleaned"}[clean])
-		r.keep(s.rest)
 	}
+	if markLog { // for the end-to-end tests (MARK_LOG=1): what was marked, and in how many boxes (one a line)
+		fmt.Printf("mark %s: document %d page %d, %d boxes\n", c.id, c.doc, page, len(here))
+	}
+	s.narratedPage(c.doc, page)
+	s.markLines(here)
+	nar.turn = nil
+	if len(next) > 0 && allW > 0 {
+		at := c.at + (c.end-c.begin)*float64(hereW)/float64(allW) - turnEarly.Seconds()
+		nar.turn = &pageTurn{doc: c.doc, page: page + 1, boxes: next, at: max(at, c.at)}
+	}
+}
+
+// turnEarly is how much before the voice reaches the next page's first line a page turn in the middle of a stretch
+// comes (the maintainer, 2026-11-08: on time felt late; the ink takes ~0.3 s, and the eyes a moment to move to the top).
+const turnEarly = time.Second
+
+// A pageTurn is a page turn due in the middle of a narrated stretch (underline): at, on the narration's clock, the
+// voice reaches the stretch's first line on page (the book's), whose lines there are boxes.
+type pageTurn struct {
+	doc, page int
+	boxes     []image.Rectangle
+	at        float64
+}
+
+// turnMidway turns the page planned by underline, and marks the stretch's lines on it.
+func (s *session) turnMidway(t *pageTurn) {
+	if markLog {
+		fmt.Printf("mark: document %d page %d, %d boxes, the stretch's rest\n", t.doc, t.page, len(t.boxes))
+	}
+	s.narratedPage(t.doc, t.page)
+	s.markLines(t.boxes)
+}
+
+// narratedPage shows page (the book's) of document doc, if it is not the page shown: a page the narration turns counts
+// like one turned by hand, every Nth cleaned with a flash (the words due while the screen is busy are skipped, ~0.4 s).
+func (s *session) narratedPage(doc, page int) {
+	r, nar := s.r, s.nar
+	first, _ := r.book.Layout(doc)
+	if doc == r.doc && page == first+r.at {
+		return
+	}
+	r.doc, r.at = doc, page-first
+	s.shown = s.rd.pages.get(r, r.doc, r.at, page)
+	s.rd.pages.touch(s.shown)
+	nar.bars = nil
+	s.turns++
+	clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
+	if clean {
+		s.turns = 0
+		s.showPage(device.WfGC16, true)
+	} else {
+		s.showPage(device.WfREAGL, false)
+	}
+	fmt.Printf("read aloud: page turned at %.1f s%s\n", time.Since(nar.started).Seconds(), map[bool]string{true: ", cleaned"}[clean])
+	r.keep(s.rest)
+}
+
+// markLines underlines boxes: a bar under each, the bars before erased, refreshed together with A2.
+func (s *session) markLines(boxes []image.Rectangle) {
+	nar := s.nar
 	region := union(nar.bars)
 	nar.bars = nar.bars[:0]
 	for _, b := range boxes {

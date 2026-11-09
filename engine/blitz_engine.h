@@ -32,6 +32,7 @@ float be_line_spacing(Book *b, size_t doc);           // doc's most common line 
 int64_t be_find(Book *b, size_t doc, const uint8_t *id, size_t id_len, int32_t *rects, size_t max, size_t *n);
 // be_find, but a paragraph gives its text's line boxes, one a line (what read-along marks)
 int64_t be_find_lines(Book *b, size_t doc, const uint8_t *id, size_t id_len, int32_t *rects, size_t max, size_t *n);
+int64_t be_find_lines_all(Book *b, size_t doc, const uint8_t *id, size_t id_len, int32_t *out, size_t max, size_t *n);
 // the words on a page: block, start, end, left, top, right, bottom each, up to max; returns how many there are
 size_t be_words(Book *b, size_t page, int32_t *words, size_t max);
 // doc's text from (block, byte) to (block, byte), UTF-8, len bytes; free with be_bytes_free

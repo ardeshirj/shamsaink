@@ -455,7 +455,27 @@ impl Book {
         self.find_boxes(doc, id, true)
     }
 
-    fn find_boxes(&mut self, doc: usize, id: &str, lines: bool) -> Option<(usize, Vec<[i32; 4]>)> {
+    /// As `find_lines`, but every line of the element, on whichever page it is: (page, box in that page's pixels) each,
+    /// in order. For a narrated paragraph or sentence that runs onto the next page, whose page read-along turns when the
+    /// voice reaches its first line there (2026-11-08; until then the page turned with the next element only).
+    pub fn find_lines_all(&mut self, doc: usize, id: &str) -> Option<Vec<(usize, [i32; 4])>> {
+        let rects = self.element_rects(doc, id, true)?;
+        let m = self.opts.margin as f64;
+        let mut out = vec![];
+        for &(x, ry, w, h) in &rects {
+            if w <= 0.0 {
+                continue;
+            }
+            let Some(page) = self.page_at(doc, ry + h / 2.0) else { continue };
+            let y = ry - self.pages[page].top + m;
+            out.push((page, [x.floor() as i32, y.floor() as i32, (x + w).ceil() as i32, (y + h).ceil() as i32]));
+        }
+        Some(out)
+    }
+
+    /// The element's rects in its document's coordinates (x, y, width, height): with `lines`, a paragraph's line boxes
+    /// (`find_lines`), else, or when it has none, its client rects. Lays the document out if it is not.
+    fn element_rects(&mut self, doc: usize, id: &str, lines: bool) -> Option<Vec<(f64, f64, f64, f64)>> {
         if doc >= self.docs.len() {
             return None;
         }
@@ -470,6 +490,11 @@ impl Book {
         if rects.is_empty() {
             rects = d.node_client_rects(node).iter().map(|r| (r.x, r.y, r.width, r.height)).collect();
         }
+        Some(rects)
+    }
+
+    fn find_boxes(&mut self, doc: usize, id: &str, lines: bool) -> Option<(usize, Vec<[i32; 4]>)> {
+        let rects = self.element_rects(doc, id, lines)?;
         let first = rects.first()?;
         let page = self.page_at(doc, first.1 + first.3 / 2.0)?;
         let p = self.pages[page];

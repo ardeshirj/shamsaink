@@ -277,6 +277,36 @@ pub unsafe extern "C" fn be_find_lines(
     page as i64
 }
 
+/// As be_find_lines, but every line, on whichever page it is (Book::find_lines_all): five ints a line in `out` (its
+/// page, then its box), up to `max` lines; 0, or -1 if the element is not found.
+///
+/// # Safety
+/// `b` comes from be_open; `id` has `id_len` bytes; `out` has room for 5 × `max` ints; `n` is writable.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn be_find_lines_all(
+    b: *mut Book,
+    doc: usize,
+    id: *const u8,
+    id_len: usize,
+    out: *mut i32,
+    max: usize,
+    n: *mut usize,
+) -> i64 {
+    let b = unsafe { &mut *b };
+    let id = String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(id, id_len) }).into_owned();
+    unsafe { *n = 0 };
+    let Some(lines) = b.find_lines_all(doc, &id) else { return -1 };
+    let k = lines.len().min(max);
+    for (i, (page, r)) in lines.iter().take(k).enumerate() {
+        unsafe { *out.add(5 * i) = *page as i32 };
+        for j in 0..4 {
+            unsafe { *out.add(5 * i + 1 + j) = r[j] };
+        }
+    }
+    unsafe { *n = k };
+    0
+}
+
 /// The words on a page (Book::words): block, start, end, left, top, right, bottom for each, seven ints, into
 /// `words` (room for `max`). Returns how many there are, which may be more than `max`.
 ///
