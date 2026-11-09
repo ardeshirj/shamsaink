@@ -10,6 +10,8 @@ div.topbar .lead { display: flex; align-items: center; gap: 0.5em; min-width: 0;
 .topbar .title { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-width: 0; width: 0; white-space: nowrap; font-weight: bold; }
 /* an experimental run (Exp): the flask in a box as the buttons' icons, right after the title, which then takes only its width */
 div.topbar .lead.exp .title { flex: none; width: auto; }
+/* Phosphor's flask fills more of its square than the bar's glyphs: drawn smaller, as high as the headphones and the battery */
+div.topbar .lead.exp .i { font-size: 1.1em; }
 div.topbar .end { display: flex; align-items: center; justify-content: flex-end; gap: 0.55em; }
 /* the status (the time, the battery) a little smaller than the buttons; the time larger in Farsi, whose digits in
    Parastoo are small for their size (the battery the same size in both) */
