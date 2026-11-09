@@ -19,8 +19,8 @@ import (
 // paired device is /org/bluez/hci0/dev_ADDRESS (org.bluez.Device1), and while it carries sound it has a transport,
 // .../fdN (org.bluez.MediaTransport1), gone once it is disconnected or switched off. Asked only while mtkbtd runs:
 // D-Bus starts it on demand, so asking would switch Bluetooth's daemon on in a boot where Bluetooth was never used.
-// Never on the Kindle (no sound of ours there yet). On the simulator, files under DIR/sim/: bluetooth (Bluetooth on),
-// headphones (connected: the address it holds), connect-fails (Connect fails).
+// Never on the Kindle (no sound of ours there yet). On the simulator, files under DIR/sim/: headphones (connected:
+// the address it holds), connect-fails (Connect fails).
 
 // Phones is the headphones' state: whether the device has Bluetooth sound (the Kobo: the bar's headphones are there,
 // Bluetooth switched on by Connect if it is off), the address of the pair connected ("" for none), and a pair of
@@ -76,29 +76,17 @@ func (d *Device) notePhones(p Phones, connect int) {
 	}
 }
 
-// hasPhones says whether the device has Bluetooth sound: the Kobo; on the simulator, when DIR/sim/bluetooth or
-// DIR/sim/headphones exists.
-func (d *Device) hasPhones() bool {
-	if Sim() {
-		_, err := os.Stat(hw("/sim/bluetooth"))
-		_, err2 := os.Stat(hw("/sim/headphones"))
-		return err == nil || err2 == nil
-	}
-	return d.Kind == Kobo
-}
+// hasPhones says whether the device has Bluetooth sound: the Kobo, the simulated one too (a simulated Kobo Libra
+// Colour: the design's walk taps the bar's headphones wherever the spec has sound, 2026-11-08).
+func (d *Device) hasPhones() bool { return d.Kind == Kobo || Sim() }
 
 // askPhones asks Kobo's Bluetooth service for the headphones' state, waiting at most wait.
 func (d *Device) askPhones(wait time.Duration) Phones {
-	if Sim() {
-		_, err := os.Stat(hw("/sim/bluetooth"))
-		p := Phones{On: err == nil}
+	if Sim() { // a pair paired; connected while DIR/sim/headphones exists (its address)
 		if b, err := os.ReadFile(hw("/sim/headphones")); err == nil {
 			return Phones{On: true, Addr: cmp.Or(strings.TrimSpace(string(b)), simPair), Pair: simPair}
 		}
-		if p.On {
-			p.Pair = simPair
-		}
-		return p
+		return Phones{On: true, Pair: simPair}
 	}
 	if d.Kind != Kobo {
 		return Phones{}

@@ -21,5 +21,5 @@ does not clip text, so DrawDock cuts a long chapter title itself, as DrawTopBar 
 <div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}"{{textlang .Chapter}}>{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>
 <div class="navrow" dir="{{.Dir}}">{{template "iconbutton" ibtn "chapter-prev" "caret-left" false}}<div class="prog" id="{{id "progress"}}"><i></i>{{range .Ticks}}<b style="{{$.Side}}: {{.}}%"></b>{{end}}</div>{{template "iconbutton" ibtn "chapter-next" "caret-right" false}}</div>
 <div class="where">{{if .Back}}<span class="b" id="{{id "back"}}">{{icon "arrow-counter-clockwise"}} {{.Back}}</span>{{else}}<span class="t">{{.Left}}</span>{{end}}</div>
-<div class="tools">{{template "iconbutton" ibtn "contents" "list-bullets" false}}{{template "iconbutton" ibtn "text" "text-aa" false}}{{if .Narrated}}{{template "iconbutton" ibtn "read-aloud" "play" false}}{{else}}<span class="tb off">{{icon "headphones"}}</span>{{end}}</div>
+<div class="tools">{{template "iconbutton" ibtn "contents" "list-bullets" false}}{{template "iconbutton" ibtn "text" "text-aa" false}}{{if .Narrated}}{{template "iconbutton" ibtn "read-aloud" "play" false}}{{else}}<span class="tb off">{{icon "play"}}</span>{{end}}</div>
 </body></html>
