@@ -9,7 +9,7 @@ book: books/standardebooks/holmes.epub
 env SHAMSAINK_RECORD=/sim/record
 forget books/farsiepub/buried-alive-narrated.epub
 forget books/standardebooks/holmes.epub
-caption ShamsaInk | A light e-ink reader for right-to-left books, Farsi first
+caption ShamsaInk | An EPUB reader for e-ink devices, Farsi first
 open                               # behind the opening card: the library's first row (the English book) opened at its
 tap page-top                       # first story, then back to the library, all its books
 expect menu drawn
