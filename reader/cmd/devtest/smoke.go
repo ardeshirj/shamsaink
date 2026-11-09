@@ -114,6 +114,10 @@ func (d *dev) knownStart(fixture string) (string, error) {
 	if _, err := d.sh("cd "+d.a.Dir+" && mkdir "+savedDir+" && for f in "+stateFiles+"; do [ ! -e $f ] || cp -Rp $f "+savedDir+"/; done", nil); err != nil {
 		return "", fmt.Errorf("saving the reader's files: %v", err)
 	}
+	// The Kindle's own Dark Mode (its window manager's epdcMode Y8INV) off for the run, kept to be put back with the
+	// files: its screen inverts every pixel itself, so the reader writes the page inverted into the framebuffer, which
+	// the snapshots read (2026-11-08: every one failed with it on). Elsewhere there is no lipc-get-prop: nothing done.
+	d.sh(`m=$(lipc-get-prop com.lab126.winmgr epdcMode 2>/dev/null); case "$m" in *INV) lipc-set-prop com.lab126.winmgr epdcMode "${m%INV}" && echo "$m" > `+d.a.Dir+"/"+savedDir+`/epdc-mode && echo "the Kindle's Dark Mode off for the run" >&2;; esac`, nil)
 	dir := filepath.Join("e2e", "fixtures", fixture)
 	var laid []string
 	err := filepath.WalkDir(dir, func(path string, e os.DirEntry, err error) error {
@@ -143,8 +147,9 @@ func (d *dev) putBack() (string, error) {
 		}
 		time.Sleep(200 * time.Millisecond)
 	}
-	_, err := d.sh("cd "+d.a.Dir+" && test -d "+savedDir+" && ! pidof shamsaink >/dev/null && rm -rf "+stateFiles+
-		" && cp -Rp "+savedDir+"/. . && rm -rf "+savedDir, nil)
+	_, err := d.sh("cd "+d.a.Dir+" && test -d "+savedDir+" && ! pidof shamsaink >/dev/null && "+
+		"{ [ ! -f "+savedDir+"/epdc-mode ] || { lipc-set-prop com.lab126.winmgr epdcMode \"$(cat "+savedDir+"/epdc-mode)\"; rm "+savedDir+"/epdc-mode; }; } && "+
+		"rm -rf "+stateFiles+" && cp -Rp "+savedDir+"/. . && rm -rf "+savedDir, nil)
 	if err != nil {
 		return "", fmt.Errorf("the reader still running, or no saved copy: %v", err)
 	}
