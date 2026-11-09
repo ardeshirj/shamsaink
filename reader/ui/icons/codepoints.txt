@@ -38,3 +38,4 @@ battery-high e0c2
 battery-full e0c0
 battery-charging e0ba
 battery-warning e0c8
+flask e79e

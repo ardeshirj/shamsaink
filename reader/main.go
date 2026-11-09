@@ -8,7 +8,8 @@
 //	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
 //	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //
-// DIR: $SHAMSAINK_DIR, or the folder the program is in.
+// DIR: $SHAMSAINK_DIR, or the folder the program is in. $SHAMSAINK_EXP set (any value): an experimental run, a flask
+// after the library's title.
 package main
 
 import (
@@ -65,6 +66,7 @@ func main() {
 	started := sinceStart()
 	fmt.Printf("shamsaink %s\n", version)
 	ui.Build = version
+	ui.Experimental = os.Getenv("SHAMSAINK_EXP") != ""
 	exe, _ := os.Executable()
 	rd := &reader{dir: env("SHAMSAINK_DIR", filepath.Dir(exe))}
 	var err error

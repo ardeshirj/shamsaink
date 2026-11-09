@@ -20,7 +20,7 @@ div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
 .batt.on { background: var(--ink); border-radius: var(--radius); }
 .batt.on .i { color: var(--paper); }
 </style></head><body>
-<div class="topbar"><div class="lead">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div></div>
+<div class="topbar"><div class="lead">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span>{{if .Exp}} <span class="i exp">{{icon "flask"}}</span>{{end}}</div></div>
 <span class="time">{{.Time}}</span><span class="end">
 {{- if .Phones}}{{template "iconbutton" ibtn "topbar-phones" "headphones" .PhonesOn}}{{end -}}
 {{template "iconbutton" ibtn "topbar-light" "sun" .LightOn -}}
