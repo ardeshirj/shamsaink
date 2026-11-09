@@ -81,6 +81,12 @@ What we do: `make kindle-reader-install` stops an open reader first.
   the setting reaches the service only when it restarts.
 - Found: experiment 12 (`experiments/12-sound/NOTES.md`).
 
+**No sound yet: no headphones on the bar, Listen a notice** (2026-11-08).
+- What: the reader has no player for the Kindle's sound yet (Amazon's `mplay`, experiment 12, to build), so the bar
+  has no headphones and no Sound panel (`hasPhones`, `reader/device/headphones.go`), and Listen in a narrated book
+  shows a notice instead of playing (`CanPlay`, `reader/device/device.go`). The Kobo has both.
+- What we do: read-along on the Kindle comes after the Kobo's (plan, stage 9); the headphones and Listen with it.
+
 **`mplay` cannot play from a pipe.**
 - What: fed a named pipe, it exits normally and nothing is heard.
 - What we do: each part of the narration decoded to a raw file in RAM, one `mplay` each (`reader/narration.go`).
