@@ -76,13 +76,16 @@ in the tag; the build writes it into the binary (`shamsaink -version`, the first
 
 ```bash
 # add the version at the top of this file (its section is the release's notes), and commit
+make e2e-sim                           # when the design spec or a scenario changed: the screen walk, as CI runs it
+git push origin main                   # then wait for CI to pass on it (gh run watch)
 make tag V=0.0.1 NOTE="What changed"   # tag v0.0.1: the note, then the commits since the last tag
 git show v0.0.1                        # check it
-git push origin main v0.0.1            # GitHub runs the checks, then builds and publishes the release
+git push origin v0.0.1                 # GitHub runs the checks again, then builds and publishes the release
 ```
 
-`make tag` (`reader/scripts/release.sh`) only tags a clean `main` with a version newer than the last, and never pushes.
-It reminds you when this file has no entry for the version.
+`make tag` (`reader/scripts/release.sh`) only tags a clean `main` with a version newer than the last, that is
+`origin/main` and that CI has passed (2026-11-08: v0.0.3 was first tagged on a commit whose screen walk failed, and its
+release was never built). It never pushes, and reminds you when this file has no entry for the version.
 
 The release (`.github/workflows/ci.yml`, the job `release`) has a package per device and their `.sha256`:
 `shamsaink-vX.Y.Z-kobo.tgz`, whose paths start at the Kobo's root, so it installs two ways

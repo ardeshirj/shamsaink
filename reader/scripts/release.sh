@@ -4,7 +4,8 @@
 # (.github/workflows/ci.yml, the release job): git push origin main v0.0.1.
 # FarsiEPUB's scripts/release, for ShamsaInk: the version is only its tag (the build writes it into the binary), so
 # there is no bump. Checks first: on main, nothing uncommitted, no such tag yet, newer than the last one, something new
-# since it. The tag's message is the note and the commits since the last tag. It doesn't push.
+# since it, pushed as origin/main and passed by CI there. The tag's message is the note and the commits since the last
+# tag. It doesn't push.
 # Versions: X.Y.Z, or X.Y.Z-beta / X.Y.Z-beta.2 and the like. When to raise which number, and the history: CHANGELOG.md.
 set -e
 cd "$(dirname "$0")/../.."
@@ -37,6 +38,18 @@ if [ -n "$last" ]; then
     exit 1
   fi
 fi
+# Only a commit CI has passed on main is tagged (2026-11-08: v0.0.3 was tagged on a commit whose screen walk failed,
+# so its release was never built): pushed first, its CI run green, then tagged and the tag pushed.
+head=$(git rev-parse HEAD)
+git fetch -q origin main
+[ "$(git rev-parse origin/main)" = "$head" ] || { echo "Push main first (git push origin main), wait for CI to pass, then tag: this commit is not origin/main." >&2; exit 1; }
+runs=$(gh run list --branch main --commit "$head" --json status,conclusion --jq '.[] | "\(.status) \(.conclusion)"' 2>/dev/null) || { echo "Could not ask GitHub for CI's runs (gh)." >&2; exit 1; }
+case "$runs" in
+  "") echo "CI has not run on $(git rev-parse --short HEAD) yet: wait for it, then tag." >&2; exit 1 ;;
+  *"completed success"*) ;;
+  *completed*) echo "CI failed on $(git rev-parse --short HEAD) (gh run list --branch main): fix it first." >&2; exit 1 ;;
+  *) echo "CI is still running on $(git rev-parse --short HEAD) (gh run watch): tag once it passes." >&2; exit 1 ;;
+esac
 grep -q "^## $v " CHANGELOG.md || echo "Note: CHANGELOG.md has no entry for $v yet (the release's notes come from it)." >&2
 {
   echo "ShamsaInk $v"
@@ -44,4 +57,4 @@ grep -q "^## $v " CHANGELOG.md || echo "Note: CHANGELOG.md has no entry for $v y
   if [ -n "$2" ]; then echo "$2"; echo; fi
   if [ -n "$last" ]; then echo "Since $last:"; git log --format='- %s' "$last..HEAD"; fi
 } | git tag -a "$t" -F -
-echo "Tagged $t on $(git rev-parse --short HEAD). Check it with git show $t, then release it: git push origin main $t"
+echo "Tagged $t on $(git rev-parse --short HEAD), which CI passed. Check it with git show $t, then release it: git push origin $t"
