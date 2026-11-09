@@ -14,8 +14,9 @@ Read-along on the Kobo, made for daily use; before the beta still, for the maint
 - **Listening:** no more glitches (the next part decoded ahead; a larger buffer for Kobo's player); a clean start (the
   first word underlined at once, the voice once the headphones are awake); the page turns inside a sentence or
   paragraph that runs onto the next page, a little early; cleaning every Nth page counts the pages the narration turns.
-- **Icons:** play starts listening (the dock, the word menu); headphones are the device's sound.
+- **Icons:** play starts listening (the dock, the word menu, in every book); headphones are the device's sound.
 - **The library:** a long title cut with "…" before its progress bar.
+- **Fixed:** a sleep screen file macOS leaves beside one copied from a Mac (`._name`) is skipped, as the library does.
 - **For development:** NickelMenu's Toggle SSH (`make kobo-dev-ssh`), SSH without KOReader; the Kindle's end-to-end
   tests run with its own Dark Mode on.
 - **Known:** the narration logs its pauses and decoding times while we watch it (`reader.log`); Kobo's player still
