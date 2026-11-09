@@ -4,6 +4,23 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.0.3 (2026-11-08)
+Read-along on the Kobo, made for daily use; before the beta still, for the maintainer's devices.
+- **Leaving after Bluetooth:** back to Kobo's home screen, no more restart: the cause found in Kobo's Wi-Fi/Bluetooth
+  driver and stepped around (KOReader's and Plato's exits too, once ShamsaInk has been opened in a boot).
+- **Headphones:** in the bar on the Kobo, grey until connected; the Sound panel connects them (Bluetooth switched on if
+  it is off, Kobo's stuck Bluetooth restarted if need be) and disconnects them, and sets the narration's volume, kept
+  per pair.
+- **Listening:** no more glitches (the next part decoded ahead; a larger buffer for Kobo's player); a clean start (the
+  first word underlined at once, the voice once the headphones are awake); the page turns inside a sentence or
+  paragraph that runs onto the next page, a little early; cleaning every Nth page counts the pages the narration turns.
+- **Icons:** play starts listening (the dock, the word menu); headphones are the device's sound.
+- **The library:** a long title cut with "…" before its progress bar.
+- **For development:** NickelMenu's Toggle SSH (`make kobo-dev-ssh`), SSH without KOReader; the Kindle's end-to-end
+  tests run with its own Dark Mode on.
+- **Known:** the narration logs its pauses and decoding times while we watch it (`reader.log`); Kobo's player still
+  stalls briefly every few seconds, covered by its buffer.
+
 ## 0.0.2 (2026-11-07)
 Before the beta still, for the maintainer's devices: the Kobo Libra Colour (firmware 4.46) and now the jailbroken
 Kindle Paperwhite 11th gen (firmware 5.19.2).
