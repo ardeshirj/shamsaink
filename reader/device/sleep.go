@@ -9,6 +9,7 @@ import (
 	"math/rand/v2"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"golang.org/x/image/draw"
 )
@@ -35,6 +36,9 @@ func sleepScreen(dir string, fallback *image.Gray, text SleepText) image.Image {
 	for _, ext := range []string{"*.yml", "*.yaml", "*.YML", "*.YAML"} {
 		m, _ := filepath.Glob(filepath.Join(dir, "sleep", ext))
 		for _, p := range m {
+			if strings.HasPrefix(filepath.Base(p), ".") { // macOS's ._name beside a file copied from a Mac, as the library skips
+				continue
+			}
 			b, err := os.ReadFile(p)
 			if err != nil {
 				fmt.Fprintln(os.Stderr, "shamsaink: sleep screen:", filepath.Base(p), err)

@@ -17,6 +17,10 @@ func TestSleepScreenSets(t *testing.T) {
 	os.MkdirAll(filepath.Join(dir, "sleep"), 0o755)
 	os.WriteFile(filepath.Join(dir, "sleep", "set.yml"), []byte("a\n---\nb\n---\nc\n"), 0o644)
 	os.WriteFile(filepath.Join(dir, "sleep", "one.YAML"), []byte("d\n"), 0o644)
+	// macOS's metadata beside a file copied from a Mac, and a file hidden on purpose: never read (2026-11-08: ._ logged
+	// a YAML error on the Kobo); a screen from either would show as "x" or "y"
+	os.WriteFile(filepath.Join(dir, "sleep", "._set.yml"), []byte("x\n"), 0o644)
+	os.WriteFile(filepath.Join(dir, "sleep", ".hidden.yml"), []byte("y\n"), 0o644)
 	text := SleepText{
 		Count: func(yml []byte) (int, []error) { return len(strings.Split(string(yml), "---")), nil },
 		Draw: func(yml []byte, i int) (*image.Gray, error) {
@@ -37,6 +41,9 @@ func TestSleepScreenSets(t *testing.T) {
 	}
 	if seen[0] > 0 {
 		t.Errorf("the fallback shown %d times", seen[0])
+	}
+	if seen['x'] > 0 || seen['y'] > 0 {
+		t.Errorf("a hidden file's screen shown: ._set.yml %d times, .hidden.yml %d", seen['x'], seen['y'])
 	}
 }
 
