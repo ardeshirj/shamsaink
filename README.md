@@ -80,9 +80,9 @@ Narration can change how a book is read: a classic made easier to follow, a lang
 We want Farsi and other right-to-left books done properly, and books that read along.
 
 <p align="center">
-  <a href="https://youtu.be/jwZjB0vJuRs"><img src="docs/images/readalong-thumbnail.png" width="360"
-     alt="Watch the read-along, with sound (an emulation in the browser)"></a><br>
-  <sub><b>Read-along, with sound</b> (YouTube; emulated in the browser, the same pages and timings as on the Kobo)</sub>
+  <a href="https://youtu.be/zfsITJZmzdE"><img src="docs/images/tour-thumbnail.png" width="560"
+     alt="Watch the tour, with sound (an emulation in the browser)"></a><br>
+  <sub><b>A two-minute tour, with sound</b> (YouTube; emulated in the browser, the reader's own screens on a simulated Kobo)</sub>
 </p>
 
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
