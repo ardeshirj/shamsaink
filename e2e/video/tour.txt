@@ -111,7 +111,7 @@ tap 632 1000
 wait 1.4
 tap 632 1000
 wait 1.6
-caption Listen along | The narrated word is underlined as it is spoken, | the voice through Bluetooth headphones
+caption Listen along | Each word underlined as it is spoken
 title Read-along
 tap page-top                       # behind the card: to the start of «Davood the Hunchback», the chapter of the read-along video
 expect menu drawn
@@ -119,24 +119,21 @@ tap dock contents
 expect contents: \d+ entries
 tap contents e3
 expect went to document
-resume
-wait 1.5
-hold 167 804                       # a word at the start of a sentence in the first paragraph
+hold 167 804                       # «صورت», mid-paragraph, as in the first video: chosen behind the card, its menu up
 expect highlight menu: words chosen
-wait 1.6
+resume                             # the card lifts on the menu
+wait 1.4
 tap-menu hl-listen                 # Listen from here
 expect read aloud from word
-wait 22
+wait 12.2                          # stopped in the pause after «داشت:», before «لبهای»
 tap page-top
-expect read aloud: stopped
-wait 1.2
-tap 632 1000
-wait 1
-title Good night                   # before its card: named when the card lifts
-caption One more thing… | Sleep screens: a poem from FarsiEPUB, or your own pictures
+expect read aloud: stopped        # the page stays as it is: no tap after (it would turn the page)
+wait 1.6
+caption One more thing… | Make it yours: pictures, like your favorite book covers, | or Farsi poems from FarsiEPUB
+title Customizable sleep screens   # after its card: never beside the read-along
 press power                        # to sleep: a sleep screen (record.sh lays one of FarsiEPUB's in sleep/)
 wait 4.5
-caption end | Farsi and right to left, done properly | Read-along for narrated books | Light, warmth and a dark mode | Sleep screens: poems or your own pictures | and more… | Learn more and install — farsiepub.org/shamsaink
+caption end | Farsi and right to left, done properly | Read-along for narrated books | Light, warmth and a dark mode | Customizable sleep screens | and more… | Learn more and install — farsiepub.org/shamsaink
 press power                        # awake again, for close
 wait 3
 close

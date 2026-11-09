@@ -6,9 +6,9 @@ pages, a chapter from Contents), *Yours to adjust* (text size, a highlight, dark
 sleep screens. It is played on the simulated Kobo with recording on, then drawn at 1920×1080:
 
 - an opening card with the stacked logo;
-- a card for each act: its title and a line;
+- a card for each act: its title and a line, up longer the more words it has (1 s and 0.3 s a word, at least `-card`);
 - between the cards, the e-reader at the right (a book read right to left: the eye starts there), the stacked logo at
-  the left and the step's name under it, small. Every touch is drawn where the finger went, in the mark's saffron, and
+  the left and the step's name under it, in an outlined pill. Every touch is drawn where the finger went, in the mark's saffron, and
   a page button lights up when pressed;
 - an end card with the stacked logo, the main features a line a beat, "and more…", and where to learn more and
   install (`farsiepub.org/shamsaink`).
@@ -36,7 +36,7 @@ awk '/^---[ \t]*$/{n++; if(n==2) exit; next} n==1' ~/Github/farsiepub/web/static
 docker run --rm -e SLEEP=/r/out/video/sleep.yml -v "$PWD":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod \
   -v eink-gocache:/root/.cache/go-build eink-rust sh /r/e2e/video/record.sh out/sim-books out/video/rec   # ~2 min
 DRAFT=1 sh e2e/video/make.sh out/video/rec                               # a draft, no music: ~35 s
-sh e2e/video/make.sh out/video/rec out/video/music-evolving.mp3            # the final one, with music
+sh e2e/video/make.sh out/video/rec out/video/music-piano.mp3               # the final one, with music
 ```
 
 **In sections.** `make.sh` draws the video in sections, one from each card to the next (`simvideo -list` numbers them;
@@ -50,9 +50,12 @@ once before).
 
 **Music** (ElevenLabs, with a key that has music generation; check the plan allows commercial use): `music.sh` asks
 their music API for an instrumental take, a new one each run (`[OUT] [SECONDS] [PROMPT]`). It must last until the
-read-along's card ends (`mix.sh` says if it does not). The take used on 2026-11-06 was
-`music.sh out/video/music-upbeat.mp3 80` with an upbeat prompt (bright synths and piano, a light beat with claps,
-~118 bpm, a santur hook); simvideo found its beat at 118.0 bpm.
+read-along's card ends (`mix.sh` says if it does not). The take used since 2026-11-09 (neutral, not Farsi-flavoured:
+the reader is for English books too; upbeat, acoustic and launch-style takes did not fit) was
+`music.sh out/video/music-piano.mp3 130` with this prompt: "Modern neo-classical instrumental for a quiet, thoughtful
+product film: intimate felt piano with a soft, steady pulse around 104 bpm, warm cello and light strings joining
+gradually, gentle and hopeful, understated, no drums, no vocals, no clichés of corporate stock music, a soft lift near
+the end and a calm resolved ending.
 
 ```sh
 ELEVENLABS_API_KEY=... sh e2e/video/music.sh out/video/music.mp3 80 "PROMPT"

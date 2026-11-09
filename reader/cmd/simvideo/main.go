@@ -155,9 +155,9 @@ func main() {
 			c.img, c.items = endCard(f, stackEnd, parts[1:])
 			c.secs = whole(beat*float64(2+len(c.items)) + 3.5) // the list a beat at a time, then held
 		case parts[0] == "ShamsaInk":
-			c.img, c.secs = openingCard(f, stack, parts[1:]), whole(*cardSecs+0.6)
+			c.img, c.secs = openingCard(f, stack, parts[1:]), whole(math.Max(*cardSecs+0.6, readSecs(parts)))
 		default:
-			c.img, c.secs = actCard(f, parts[0], parts[1:]), whole(*cardSecs)
+			c.img, c.secs = actCard(f, parts[0], parts[1:]), whole(math.Max(*cardSecs, readSecs(parts)))
 		}
 		if n := len(cards); n > 0 && e.t-cards[n-1].at < 400 { // straight after the one before: one into the other, at once
 			c.from = cards[n-1].img
@@ -174,6 +174,9 @@ func main() {
 		endAt = events[len(events)-1].t + 1500
 	}
 	total := float64(endAt-t0)/1000 + shift
+	if n := len(cards); n > 0 && cards[n-1].last { // the end card is the video's last frame: no screen held after it
+		total = cards[n-1].start + cards[n-1].secs
+	}
 	// the read-along's card: the last before the narration's sound; the music comes back with the card after it
 	readalongCard := -1
 	for _, e := range events {
@@ -302,7 +305,7 @@ func main() {
 		tnow := now     // the touches' clock: in a card's time it runs up to where the recording goes on, for their lead-in
 		titleNow := now // a step's title is shown from the card on, though logged as the screen is held after it
 		if c := held; c != nil {
-			now = c.at
+			now, titleNow = c.at, c.at  // frozen while the card waits for its beat, the title too: the next step's never before it
 			if tv >= c.start+c.secs/2 { // the card covers the screen: what it left out is done behind it
 				now = c.at + c.skip
 				titleNow = now + int64(c.hold*1000) + 1
@@ -391,6 +394,13 @@ func main() {
 		}
 		for nextTouch < len(events) && events[nextTouch].t <= tnow+touchLead {
 			e := events[nextTouch]
+			early := false // after a card that has not come yet: its lead-in waits for the card (never before it)
+			for _, c := range cards {
+				early = early || e.t >= c.at && tv < c.start
+			}
+			if early {
+				break
+			}
 			hidden := false // done behind a card (what it leaves out): never drawn
 			for _, c := range cards {
 				hidden = hidden || e.t >= c.at && e.t < c.at+c.skip
@@ -775,11 +785,18 @@ func paper() *image.RGBA {
 	return img
 }
 
-// sideTitle is a step's name as it stands under the logo beside the device: small and quiet, a label, on a
-// transparent box 740 wide.
+// sideTitle is a step's name as it stands under the logo beside the device: a label in a pill outlined in the ink's
+// grey, on the paper of a box 740 wide (opaque: one title fades into the next over the same paper).
 func sideTitle(f fonts, title string) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, 740, 120))
-	text(img, newFace(f.regular, 40), title, 370, 85, muted)
+	draw.Draw(img, img.Bounds(), &image.Uniform{bg}, image.Point{}, draw.Src)
+	face := newFace(f.regular, 40)
+	w := float64((&font.Drawer{Face: face}).MeasureString(title).Round()) + 2*40
+	h := 80.0
+	x, y := 370-w/2, 60-h/2
+	roundRect(img, x, y, w, h, h/2, func(_, _ float64) color.RGBA { return muted }, 0.55)
+	roundRect(img, x+2.5, y+2.5, w-5, h-5, h/2-2.5, func(_, _ float64) color.RGBA { return color.RGBA{0xfc, 0xfc, 0xfb, 0xff} }, 1)
+	text(img, face, title, 370, 74, ink)
 	return img
 }
 
@@ -1045,4 +1062,13 @@ func check(err error) {
 		fmt.Fprintln(os.Stderr, "simvideo:", err)
 		os.Exit(1)
 	}
+}
+
+// readSecs is how long a card's words take to read: a second to see it, then 0.3 s a word.
+func readSecs(parts []string) float64 {
+	n := 0
+	for _, p := range parts {
+		n += len(strings.Fields(p))
+	}
+	return 1 + 0.3*float64(n)
 }
