@@ -22,7 +22,7 @@ div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
 </style></head><body>
 <div class="topbar"><div class="lead">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div></div>
 <span class="time">{{.Time}}</span><span class="end">
-{{- if .Phones}}{{template "iconbutton" faint (ibtn "topbar-phones" "headphones" .PhonesOn) .PhonesAway}}{{end -}}
+{{- if .Phones}}{{template "iconbutton" ibtn "topbar-phones" "headphones" .PhonesOn}}{{end -}}
 {{template "iconbutton" ibtn "topbar-light" "sun" .LightOn -}}
 {{- if ge .Battery 0}}<span class="batt{{if .BatteryOn}} on{{end}}" id="{{id "topbar-battery"}}"><span class="i">{{icon .BatteryIcon}}</span></span>{{end -}}
 {{- if .Menu}}{{template "iconbutton" ibtn "topbar-menu" "list" .MenuOn}}{{end -}}

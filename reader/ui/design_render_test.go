@@ -164,8 +164,6 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
-	}}, {"sound-away", en, func(f *blitz.Fonts, w, h int) rendered { // Bluetooth on, no headphones connected: faint
-		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesAway: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}, {"sound-open", en, func(f *blitz.Fonts, w, h int) rendered { // the headphones filled while the Sound panel is open
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesOn: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},

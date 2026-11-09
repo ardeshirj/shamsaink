@@ -8,7 +8,7 @@ is at the end, under "Versions and releases".
 Read-along on the Kobo, made for daily use; before the beta still, for the maintainer's devices.
 - **Leaving after Bluetooth:** back to Kobo's home screen, no more restart: the cause found in Kobo's Wi-Fi/Bluetooth
   driver and stepped around (KOReader's and Plato's exits too, once ShamsaInk has been opened in a boot).
-- **Headphones:** in the bar on the Kobo, grey until connected; the Sound panel connects them (Bluetooth switched on if
+- **Headphones:** in the bar on the Kobo; the Sound panel connects them (Bluetooth switched on if
   it is off, Kobo's stuck Bluetooth restarted if need be) and disconnects them, and sets the narration's volume, kept
   per pair.
 - **Listening:** no more glitches (the next part decoded ahead; a larger buffer for Kobo's player); a clean start (the

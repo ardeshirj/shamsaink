@@ -9,8 +9,8 @@ import (
 	"shamsainkreader/ui"
 )
 
-// The Sound panel (ui.DrawSound), opened by the bar's headphones (there on a device with Bluetooth sound, faint while
-// no headphones are connected) in the library and in a book. Connected: the narration's volume by 10, or where its track
+// The Sound panel (ui.DrawSound), opened by the bar's headphones (there on a device with Bluetooth sound, the same
+// connected or not: the panel says which) in the library and in a book. Connected: the narration's volume by 10, or where its track
 // is tapped or its knob dragged to; kept per pair of headphones (settings' volume, by Bluetooth address) and applied as
 // a gain on our own sound (sink.setVolume), as the headphones' own volume cannot be set from the Kobo. Not connected:
 // Connect, for the pair used last (settings' last_headphones; else a paired pair), in the background

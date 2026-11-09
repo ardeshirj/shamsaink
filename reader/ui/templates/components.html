@@ -32,7 +32,7 @@ direction of its own. */}}
 
 {{/* A button that is an icon alone (from ibtn), no border; drawn filled when on. The arrows that point are mirrored
 in right to left. */}}
-{{define "iconbutton"}}<span class="tb" id="{{.ID}}"><span class="i{{if .On}} on{{end}}{{if .Flip}} flip{{end}}{{if .Faint}} faint{{end}}">{{.Glyph}}</span></span>{{end}}
+{{define "iconbutton"}}<span class="tb" id="{{.ID}}"><span class="i{{if .On}} on{{end}}{{if .Flip}} flip{{end}}">{{.Glyph}}</span></span>{{end}}
 
 {{/* Tabs over a panel: each a button (from pick, gathered by list), the one shown bold and underlined, a line under them
 all. */}}

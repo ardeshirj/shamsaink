@@ -35,7 +35,7 @@ If your device has page buttons, the lower one goes forward, whichever way you h
 
 Tap the top of the page to bring up the controls. Tap the page again to put them away.
 
-**The bar, at the top,** belongs to the device. From the left: back to your library, the chapter you are in, the time, Bluetooth headphones (grey until they are connected: tap them to connect, or to set the narration's volume), the light, the battery and the menu.
+**The bar, at the top,** belongs to the device. From the left: back to your library, the chapter you are in, the time, Bluetooth headphones (tap them to connect, or to set the narration's volume), the light, the battery and the menu.
 
 ![](topbar-book-en.png)
 

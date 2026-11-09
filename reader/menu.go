@@ -95,12 +95,12 @@ func (s *session) drawSheet() {
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
-// book's title, the time, the headphones on a device with sound (faint while none are connected), the battery and ≡,
+// book's title, the time, the headphones on a device with sound, the battery and ≡,
 // filled while its list is open.
 func (s *session) drawTopBar() {
 	phones := s.rd.phonesNow(s.set)
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: shownNow().Format("03:04"),
-		Phones: phones.On, PhonesAway: phones.Addr == "", Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
+		Phones: phones.On, Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())
 	s.barShown = barState(s.dev, phones)
@@ -121,7 +121,7 @@ func (s *session) barChanged() {
 
 // barState is what the bar's battery, clock and headphones show: they are drawn again when it changes.
 func barState(d *device.Device, phones device.Phones) string {
-	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"), phones.On, phones.Addr != "")
+	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"), phones.On)
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.

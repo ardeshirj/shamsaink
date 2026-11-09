@@ -55,7 +55,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
 	phonesSeen := rd.phonesNow(set)
-	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: phonesSeen.On, PhonesAway: phonesSeen.Addr == "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
+	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: phonesSeen.On, Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
 	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
@@ -201,11 +201,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// wake, headphones connected or gone)
 	headChanged := func() {
 		p := rd.phonesNow(set)
-		now := ui.TopBar{Time: shownNow().Format("03:04"), Phones: p.On, PhonesAway: p.Addr == "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
-		if now.Time == topBar.Time && now.Phones == topBar.Phones && now.PhonesAway == topBar.PhonesAway && now.Battery == topBar.Battery && now.Charging == topBar.Charging && now.Full == topBar.Full {
+		now := ui.TopBar{Time: shownNow().Format("03:04"), Phones: p.On, Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
+		if now.Time == topBar.Time && now.Phones == topBar.Phones && now.Battery == topBar.Battery && now.Charging == topBar.Charging && now.Full == topBar.Full {
 			return
 		}
-		topBar.Time, topBar.Phones, topBar.PhonesAway, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Phones, now.PhonesAway, now.Battery, now.Charging, now.Full
+		topBar.Time, topBar.Phones, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Phones, now.Battery, now.Charging, now.Full
 		setHead()
 		v.Draw(rd.over)
 		if panel != nil {
