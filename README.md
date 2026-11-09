@@ -4,9 +4,7 @@
 </p>
 
 <p align="center">
-  A light EPUB reader for e-ink, built on open source tools such as
-  <a href="https://github.com/DioxusLabs/blitz">Blitz</a> and <a href="https://github.com/readium/go-toolkit">Readium</a>.<br>
-  Right-to-left books done properly, Farsi first.
+  An EPUB reader for e-ink devices, Farsi first.
 </p>
 
 <p align="center">
