@@ -112,6 +112,8 @@ type Event struct {
 func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	out := make(chan Event, 8)
 	d.events.Store(&out)
+	d.phones.Store(nil) // looked at again: a state seen before this channel was there (its event lost) is sent anew
+	d.Phones()
 	done := make(chan struct{})
 	raw := make(chan Event, 8) // the touches, noted on their way
 	d.active.Store(time.Now().UnixNano())

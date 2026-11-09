@@ -88,6 +88,7 @@
   "screen": "Screen",
   "volume": "Volume",
   "connect": "Connect",
+  "disconnect": "Disconnect",
   "connecting": "Connecting…",
   "connect-failed": "Couldn't connect. Are the headphones on?",
   "pair-first": "Pair headphones in the device's Bluetooth settings first.",

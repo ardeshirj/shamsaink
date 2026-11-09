@@ -358,6 +358,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				open(false)
 				scr.Show(rd.over, device.WfREAGL, false)
 			case soundOpen && id != "": // the volume changed, or Connect tapped; the panel stays open
+				if id == "disconnect" && !e.Swipe {
+					rd.disconnectTap(phones)
+					break
+				}
 				connect := id == "connect" && !e.Swipe && rd.connectTap(set)
 				if connect {
 					soundState = "connecting"

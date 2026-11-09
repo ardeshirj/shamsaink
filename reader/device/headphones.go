@@ -22,8 +22,9 @@ import (
 // Never on the Kindle (no sound of ours there yet). On the simulator, files under DIR/sim/: bluetooth (Bluetooth on),
 // headphones (connected: the address it holds), connect-fails (Connect fails).
 
-// Phones is the headphones' state: whether Bluetooth is on (Kobo's service running), the address of the pair
-// connected ("" for none), and a pair of headphones paired ("" for none: one to connect when none is remembered).
+// Phones is the headphones' state: whether the device has Bluetooth sound (the Kobo: the bar's headphones are there,
+// Bluetooth switched on by Connect if it is off), the address of the pair connected ("" for none), and a pair of
+// headphones paired ("" for none, or not known while Bluetooth is off: one to connect when none is remembered).
 type Phones struct {
 	On   bool
 	Addr string
@@ -37,6 +38,10 @@ func (d *Device) Phones() Phones {
 	var p Phones
 	if q := d.phones.Load(); q != nil {
 		p = *q
+	}
+	p.On = d.hasPhones() // known at once: the icon never waits for the first look
+	if !p.On {
+		p = Phones{}
 	}
 	if d.phonesBusy.CompareAndSwap(false, true) {
 		go func() {
@@ -71,6 +76,17 @@ func (d *Device) notePhones(p Phones, connect int) {
 	}
 }
 
+// hasPhones says whether the device has Bluetooth sound: the Kobo; on the simulator, when DIR/sim/bluetooth or
+// DIR/sim/headphones exists.
+func (d *Device) hasPhones() bool {
+	if Sim() {
+		_, err := os.Stat(hw("/sim/bluetooth"))
+		_, err2 := os.Stat(hw("/sim/headphones"))
+		return err == nil || err2 == nil
+	}
+	return d.Kind == Kobo
+}
+
 // askPhones asks Kobo's Bluetooth service for the headphones' state, waiting at most wait.
 func (d *Device) askPhones(wait time.Duration) Phones {
 	if Sim() {
@@ -84,8 +100,11 @@ func (d *Device) askPhones(wait time.Duration) Phones {
 		}
 		return p
 	}
-	if d.Kind != Kobo || !running("mtkbtd") {
+	if d.Kind != Kobo {
 		return Phones{}
+	}
+	if !running("mtkbtd") { // Bluetooth off in this boot: nothing connected; not asked (D-Bus would start it)
+		return Phones{On: true}
 	}
 	out, err := bluez(wait, "/", "org.freedesktop.DBus.ObjectManager.GetManagedObjects")
 	if err != nil {
@@ -100,7 +119,8 @@ const simPair = "00:00:00:00:00:00"
 // ConnectHeadphones connects the paired headphones at addr in the background, and sends an Event{Sound} when it ends:
 // Connect 1 once they carry sound, -1 if they do not. Kobo's service is asked to connect them (0.3-2 s, measured); if
 // they are not connected 8 s later, the service is taken to be stuck (as after the chip reset of 2026-11-08: it then
-// does nothing, docs/devices/kobo/README.md), restarted, its adapter switched on, and asked once more. A call while one
+// does nothing, docs/devices/kobo/README.md), restarted, its adapter switched on, and asked once more. With Bluetooth
+// off (the service not running) it is started the same way: Bluetooth switched on from the reader. A call while one
 // runs does nothing.
 func (d *Device) ConnectHeadphones(addr string) {
 	if !d.connecting.CompareAndSwap(false, true) {
@@ -113,7 +133,30 @@ func (d *Device) ConnectHeadphones(addr string) {
 	}()
 }
 
-// Connecting says whether ConnectHeadphones is at work.
+// DisconnectHeadphones disconnects the headphones at addr in the background (Kobo's service, Device1.Disconnect: gone
+// within 4 s, measured 2026-11-08); the change is an Event{Sound}, as any. A call while a connection is under way does
+// nothing.
+func (d *Device) DisconnectHeadphones(addr string) {
+	if !d.connecting.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		defer d.connecting.Store(false)
+		if Sim() {
+			os.Remove(hw("/sim/headphones"))
+		} else if d.Kind == Kobo && running("mtkbtd") {
+			bluez(5*time.Second, "/org/bluez/hci0/dev_"+strings.ReplaceAll(addr, ":", "_"), "org.bluez.Device1.Disconnect")
+			for end := time.Now().Add(6 * time.Second); time.Now().Before(end); time.Sleep(500 * time.Millisecond) {
+				if d.askPhones(time.Second).Addr != addr {
+					break
+				}
+			}
+		}
+		d.notePhones(d.askPhones(2*time.Second), 0)
+	}()
+}
+
+// Connecting says whether ConnectHeadphones (or DisconnectHeadphones) is at work.
 func (d *Device) Connecting() bool { return d.connecting.Load() }
 
 // connect connects addr, the stuck service restarted if need be (ConnectHeadphones): whether it carries sound.

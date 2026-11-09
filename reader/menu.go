@@ -95,7 +95,7 @@ func (s *session) drawSheet() {
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
-// book's title, the time, the headphones while Bluetooth is on (faint while none are connected), the battery and ≡,
+// book's title, the time, the headphones on a device with sound (faint while none are connected), the battery and ≡,
 // filled while its list is open.
 func (s *session) drawTopBar() {
 	phones := s.rd.phonesNow(s.set)
@@ -204,6 +204,10 @@ func (s *session) inMenu(g device.Gesture) {
 			return
 		}
 		if s.kind == "sound" && id != "" { // the volume changed, or Connect tapped; the panel stays open
+			if id == "disconnect" {
+				s.rd.disconnectTap(s.phones)
+				return
+			}
 			if id == "connect" && s.rd.connectTap(s.set) {
 				s.soundState = "connecting"
 				old := s.list.Rect()

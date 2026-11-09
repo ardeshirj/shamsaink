@@ -13,7 +13,7 @@ type TopBar struct {
 	Start             string // the icon at the start, its button "topbar-start": "arrow-left" (back to the library); "" for none (the library: search, its magnifying-glass, comes with a keyboard)
 	Title             string
 	Time              string // "03:04" (12 hours, with its leading zero now that it stands apart in the middle), drawn in the interface's digits; "" hides it
-	Phones            bool   // Bluetooth on: the headphones' button "topbar-phones", opening the Sound panel
+	Phones            bool   // the device has Bluetooth sound: the headphones' button "topbar-phones", opening the Sound panel
 	PhonesAway        bool   // no headphones connected: the headphones drawn faint
 	PhonesOn, LightOn bool   // the panel each opens is open: drawn filled
 	MenuOn            bool   // the same for the menu button

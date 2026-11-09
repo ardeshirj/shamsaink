@@ -9,7 +9,7 @@ enter: [{gesture: tap-top-tenth, from: reading}]
 controls:
   - {id: topbar-light, component: icon-button, action: goto, to: light, requires: [light]}
   - {id: topbar-start, component: icon-button, action: goto, to: library}
-  - {id: topbar-phones, component: icon-button, action: goto, to: sound, when: "Bluetooth is on (faint while no headphones are connected)", requires: [sound]}
+  - {id: topbar-phones, component: icon-button, action: goto, to: sound, requires: [sound]}
   - {id: topbar-menu, component: icon-button, action: goto, to: menu}
   - {id: topbar-battery, component: button, action: goto, to: battery}
 internal: [topbar-title, topbar-title-text]

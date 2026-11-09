@@ -4,7 +4,7 @@ import blitz "shamsainkengine"
 
 // Sound is what the Sound panel shows.
 type Sound struct {
-	Connected bool   // headphones connected: the volume; else Connect
+	Connected bool   // headphones connected: the volume and Disconnect; else Connect
 	Volume    int    // the narration's volume, per cent
 	Paired    bool   // a pair to connect (the one used last); none: a line saying to pair one
 	State     string // while not connected: "" (Connect alone), "connecting" or "failed"

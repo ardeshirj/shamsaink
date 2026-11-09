@@ -1,12 +1,14 @@
 {{/* The Sound panel (DrawSound; docs/design/system.html): hanging under the bar, opened by its headphones (drawn
-filled while it is open), in the library and in a book; the headphones are there while Bluetooth is on, faint while no
-headphones are connected. Connected: the narration's volume as a slider (a small speaker for quieter, a loud one for
-louder), a gain on our own sound, as the headphones' volume cannot be set from the Kobo. Not connected: Connect, for
+filled while it is open), in the library and in a book; the headphones are there on a device with Bluetooth sound, faint
+while no headphones are connected (Connect switches Bluetooth on if it is off). Connected: the narration's volume as a slider (a small speaker for quieter, a loud one for
+louder), a gain on our own sound, as the headphones' volume cannot be set from the Kobo, and under it Disconnect, where
+Connect is when they are not: one button that turns. Not connected: Connect, for
 the pair used last (pairing, and choosing another pair, stay in the device's own settings), and beside it, while it
 connects or once it failed, a few words saying so; no pair yet, a line saying to pair one. Any tap off it closes it. */ -}}
 {{template "head" ""}}</head><body>
 {{- if .Connected}}
 {{template "slider" slide (t "volume") "volume" "" .VolumeShare "speaker-low" "speaker-high" false}}
+<div class="row"><span class="b" id="{{id "disconnect"}}">{{icon "bluetooth"}} {{t "disconnect"}}</span></div>
 {{- else if .Paired}}
 <div class="row"><span class="b" id="{{id "connect"}}">{{icon "bluetooth"}} {{t "connect"}}</span>
 {{- if eq .State "connecting"}}<span id="panel-end">{{t "connecting"}}</span>{{else if eq .State "failed"}}<span id="panel-end">{{t "connect-failed"}}</span>{{end}}</div>
