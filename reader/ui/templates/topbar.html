@@ -8,6 +8,8 @@ and of the words in it (not buttons: DrawTopBar drops them from the panel). */ -
 div.topbar { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 0.8em; }
 div.topbar .lead { display: flex; align-items: center; gap: 0.5em; min-width: 0; }
 .topbar .title { flex-grow: 1; flex-shrink: 1; flex-basis: 0; min-width: 0; width: 0; white-space: nowrap; font-weight: bold; }
+/* an experimental run (Exp): the flask in a box as the buttons' icons, right after the title, which then takes only its width */
+div.topbar .lead.exp .title { flex: none; width: auto; }
 div.topbar .end { display: flex; align-items: center; justify-content: flex-end; gap: 0.55em; }
 /* the status (the time, the battery) a little smaller than the buttons; the time larger in Farsi, whose digits in
    Parastoo are small for their size (the battery the same size in both) */
@@ -20,7 +22,7 @@ div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
 .batt.on { background: var(--ink); border-radius: var(--radius); }
 .batt.on .i { color: var(--paper); }
 </style></head><body>
-<div class="topbar"><div class="lead">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span>{{if .Exp}} <span class="i exp">{{icon "flask"}}</span>{{end}}</div></div>
+<div class="topbar"><div class="lead{{if .Exp}} exp{{end}}">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div>{{if .Exp}}<span class="tb"><span class="i">{{icon "flask"}}</span></span>{{end}}</div>
 <span class="time">{{.Time}}</span><span class="end">
 {{- if .Phones}}{{template "iconbutton" ibtn "topbar-phones" "headphones" .PhonesOn}}{{end -}}
 {{template "iconbutton" ibtn "topbar-light" "sun" .LightOn -}}
