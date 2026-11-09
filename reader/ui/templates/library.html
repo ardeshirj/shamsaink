@@ -1,6 +1,6 @@
 {{/* The library's rows (library.go): a book a row, in its title's direction, every row as high as the others: the title
 (bold for the book read last; headphones after it when the book is narrated) and the author (an empty line if none);
-at the end of the title's line how much is read, as a short bar (full for a finished book), or "NEW", framed as a
+at the end of the title's line how much is read (a title too long for the room before it cut, with "…": fitTitles), as a short bar (full for a finished book), or "NEW", framed as a
 tag; in the New filter when the book was added instead, in Finished when it was finished, small and grey. A line under every row, so each bar is in its own book's row.
 With no rows, one placeholder under the filters: "No books here"; when the library has no books at all, also the
 folder they go in, as the device's drive shows it (left to right, bold). The engine cuts pages between blocks
@@ -27,9 +27,11 @@ li .pct.when { font-family: Vazirmatn, "DejaVu Sans", sans-serif; font-size: 0.7
 .empty h2 { margin: 0 0 0.6em; font-size: 1.1em; font-weight: bold; }
 .empty p { margin: 0; font-size: 0.85em; line-height: 1.5; color: #444; }
 .empty bdi { font-weight: bold; color: var(--ink); }
+/* measuring the titles (fitTitles): the title's line kept on one line */
+.ml { white-space: nowrap; }
 li .pct.tag { height: auto; top: 0.55em; font-size: 0.75em; line-height: 1; padding: 8px 0.4em 0; border: 2px solid var(--ink); border-radius: 0.3em; }
 </style></head><body><ul>
 {{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}"{{textlang .Title}}>
-<h3><span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
-{{if .When}}<span class="pct when"><bdi dir="ltr">{{.When}}</bdi></span>{{else if or .Width .New}}<span class="pct{{if .New}} tag{{end}}">{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul>
+<h3>{{if $.Measure}}<span class="ml" id="{{.ID}}-t">{{end}}<span class="t">{{.Title}}</span>{{if .Narrated}} <span class="nar">{{icon "headphones"}}</span>{{end}}{{if $.Measure}}</span>{{end}}<br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
+{{if .When}}<span class="pct when"{{if $.Measure}} id="{{.ID}}-p"{{end}}><bdi dir="ltr">{{.When}}</bdi></span>{{else if or .Width .New}}<span class="pct{{if .New}} tag{{end}}"{{if $.Measure}} id="{{.ID}}-p"{{end}}>{{if .Width}}<span class="prog"><i style="width: {{.Width}}%"></i></span>{{end}}{{if .New}}<span>{{.Read}}</span>{{end}}</span>{{end}}</li>{{end}}</ul>
 {{- with .Empty}}<div class="empty"><h2>{{.Title}}</h2>{{if .Folder}}<p>{{.Hint}}<bdi dir="ltr">{{.Folder}}</bdi>{{.After}}</p>{{end}}</div>{{end}}</body></html>

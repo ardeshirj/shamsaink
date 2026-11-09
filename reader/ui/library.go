@@ -119,11 +119,93 @@ func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w,
 			none.Hint, none.After, _ = strings.Cut(word("no-books-hint", "\x00"), "\x00")
 		}
 	}
+	fitTitles(rows, fonts, w)
 	html, _ := render("library.html", struct {
-		Rows  []libraryRow
-		Empty *emptyWords
-	}{rows, none})
+		Rows    []libraryRow
+		Empty   *emptyWords
+		Measure bool
+	}{rows, none, false})
 	return NewList(head, html, len(books), -1, true, false, fonts, w, h)
+}
+
+// fitTitles cuts each title too wide for its row's first line, the share read at the line's end, to the most letters
+// that fit and "…" (the engine does not clip text: a long title ran under the bar, 2026-11-08); the whole title stays
+// in the book's details. The rows are measured in a page of their own (the list's options, titles on one line): a title
+// too wide is cut by its share of the room, the cut ones measured again and cut a little more until each fits; a few
+// layouts, not one a letter.
+func fitTitles(rows []libraryRow, fonts *blitz.Fonts, w int) {
+	full := make([][]rune, len(rows))
+	keep := make([]int, len(rows)) // letters kept, -1 for the whole title
+	for i := range rows {
+		full[i], keep[i] = []rune(rows[i].Title), -1
+	}
+	todo := make([]int, len(rows))
+	for i := range todo {
+		todo[i] = i
+	}
+	for pass := 0; pass < 8 && len(todo) > 0; pass++ {
+		var some []libraryRow
+		for _, i := range todo {
+			some = append(some, rows[i])
+		}
+		room, width := measureTitles(some, fonts, w)
+		var next []int
+		for j, i := range todo {
+			if width[j] <= room[j] || width[j] == 0 {
+				continue
+			}
+			n := keep[i]
+			if n < 0 { // the first cut: by the share of the room, as letters are about as wide as each other
+				n = int(float64(len(full[i])) * float64(room[j]) / float64(width[j]))
+			} else {
+				n -= max(1, n/20)
+			}
+			keep[i] = max(n, 1)
+			rows[i].Title = strings.TrimSpace(string(full[i][:keep[i]])) + "…"
+			if keep[i] > 1 {
+				next = append(next, i)
+			}
+		}
+		todo = next
+	}
+}
+
+// measureTitles lays out rows with their titles on one line: for each, the room for its title's line (up to the share
+// read at its end, a gap before it, else the row's end) and the line's width, in px.
+func measureTitles(rows []libraryRow, fonts *blitz.Fonts, w int) (room, width []int) {
+	const margin, gap = 40, 20 // the list's margin (NewList); between the title and the share read
+	html, _ := render("library.html", struct {
+		Rows    []libraryRow
+		Empty   *emptyWords
+		Measure bool
+	}{rows, nil, true})
+	b := blitz.New([]string{"list.html"}, readFor(html), blitz.Options{Width: w, Height: 1200, Margin: margin, FontSize: 44}, fonts)
+	defer b.Close()
+	b.Layout(0)
+	room, width = make([]int, len(rows)), make([]int, len(rows))
+	for i, r := range rows {
+		_, ts := b.Find(0, r.ID+"-t")
+		if len(ts) == 0 {
+			continue
+		}
+		t := union(ts)
+		width[i] = t.Dx()
+		_, ps := b.Find(0, r.ID+"-p")
+		if r.Dir == "rtl" { // the title from the right, the share read at the left
+			limit := margin
+			if len(ps) > 0 {
+				limit = union(ps).Max.X + gap
+			}
+			room[i] = t.Max.X - limit
+		} else {
+			limit := w - margin
+			if len(ps) > 0 {
+				limit = union(ps).Min.X - gap
+			}
+			room[i] = limit - t.Min.X
+		}
+	}
+	return room, width
 }
 
 // AddedWhen is a date in a book's row (when it was added, or finished), from now: today, yesterday, a number of days within a

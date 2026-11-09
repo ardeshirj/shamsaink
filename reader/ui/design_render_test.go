@@ -40,6 +40,9 @@ func designBooks() []Book {
 		{Title: "رود کم‌آب", Author: "مارا الیس", Read: 100, Finished: true, RTL: true},
 		{Title: "Tales of a Small Town", Author: "Another Author", Read: -1},
 		{Title: "سفر به ماه", Read: 30, RTL: true},
+		// titles too long for their row: cut with "…" before the share read (fitTitles)
+		{Title: "The Remarkably Long and Winding Account of a Voyage Around Every Lighthouse of the Northern Coast", Author: "A Patient Author", Read: 45, Narrated: true},
+		{Title: "سرگذشت دراز و پرپیچ‌وخم سفری به گرد همه‌ی فانوس‌های دریایی کرانه‌ی شمال", Author: "نویسنده‌ای شکیبا", Read: 20, RTL: true},
 	}
 	for i := range 6 {
 		books = append(books, Book{Title: fmt.Sprintf("A new book %d", i), Author: "Someone", New: true, Read: -1})
