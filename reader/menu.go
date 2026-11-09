@@ -95,11 +95,12 @@ func (s *session) drawSheet() {
 func (s *session) applyLanguage() { ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode)) }
 
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
-// book's title, the time, the headphones while connected, the battery and ≡, filled while its list is open.
+// book's title, the time, the headphones while Bluetooth is on (faint while none are connected), the battery and ≡,
+// filled while its list is open.
 func (s *session) drawTopBar() {
-	phones := s.dev.Headphones() != ""
+	phones := s.rd.phonesNow(s.set)
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: shownNow().Format("03:04"),
-		Phones: phones, Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
+		Phones: phones.On, PhonesAway: phones.Addr == "", Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
 	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())
 	s.barShown = barState(s.dev, phones)
@@ -112,15 +113,15 @@ func (s *session) barChanged() {
 	if s.nav == nil && s.sheet == nil {
 		return
 	}
-	if now := barState(s.dev, s.dev.Headphones() != ""); now != s.barShown {
+	if now := barState(s.dev, s.rd.phonesNow(s.set)); now != s.barShown {
 		s.drawTopBar()
 		s.refresh(s.topBar.Rect(), device.WfREAGL)
 	}
 }
 
-// barState is what the bar's battery and clock show: they are drawn again when it changes.
-func barState(d *device.Device, phones bool) string {
-	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"), phones)
+// barState is what the bar's battery, clock and headphones show: they are drawn again when it changes.
+func barState(d *device.Device, phones device.Phones) string {
+	return fmt.Sprint(d.Battery(), d.Charging(), d.Full(), shownNow().Format("03:04"), phones.On, phones.Addr != "")
 }
 
 // closeMenu takes the bar, the dock or the sheet, and any panel off the page.
@@ -202,8 +203,15 @@ func (s *session) inMenu(g device.Gesture) {
 			s.leave()
 			return
 		}
-		if s.kind == "sound" && id != "" { // the volume changed; the panel stays open
-			if s.panelTap(id, g.X+g.DX) {
+		if s.kind == "sound" && id != "" { // the volume changed, or Connect tapped; the panel stays open
+			if id == "connect" && s.rd.connectTap(s.set) {
+				s.soundState = "connecting"
+				old := s.list.Rect()
+				s.list = s.drawSliders()
+				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
+				return
+			}
+			if s.phones != "" && s.panelTap(id, g.X+g.DX) {
 				old := s.list.Rect()
 				s.list = s.drawSliders()
 				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
@@ -265,8 +273,9 @@ func (s *session) inMenu(g device.Gesture) {
 		s.drawTopBar()
 		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 	case id == "topbar-phones": // the Sound panel under the bar, the headphones filled
-		if s.phones = s.dev.Headphones(); s.phones != "" {
-			s.list, s.kind = s.rd.drawSound(s.set, s.phones, s.topBar.Rect().Dy()), "sound"
+		if p := s.rd.phonesNow(s.set); p.On {
+			s.phones, s.soundState = p.Addr, ""
+			s.list, s.kind = s.rd.drawSound(s.set, s.phones, "", s.topBar.Rect().Dy()), "sound"
 			s.drawTopBar()
 			s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 		}

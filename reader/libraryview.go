@@ -54,7 +54,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	set := loadSettings(rd.dir)
 	// the library is always in English; a book's language applies inside the book (lang.go)
 	ui.SetLanguage("en")
-	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: rd.dev.Headphones() != "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
+	phonesSeen := rd.phonesNow(set)
+	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: phonesSeen.On, PhonesAway: phonesSeen.Addr == "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
 	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
@@ -128,19 +129,21 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	var panel *ui.Panel
 	langOpen := false  // the panel is the language panel, not the menu
 	lightOpen := false // the panel is the Light panel (light.go)
-	phones := ""       // the panel is the Sound panel (sound.go): its headphones' Bluetooth address
+	soundOpen := false // the panel is the Sound panel (sound.go)
+	phones := ""       // its headphones' Bluetooth address ("" none connected)
+	soundState := ""   // its Connect: "", "connecting" or "failed"
 	slide := ""        // its slider a held finger moves
 	// a slider's tap or drag at x on the Light or Sound panel: whether it changed; the panel as it is now
 	sliderTap := func(id string, x int) bool {
-		if phones != "" {
-			return rd.soundTap(set, panel, phones, id, x)
+		if soundOpen {
+			return phones != "" && rd.soundTap(set, panel, phones, id, x)
 		}
 		changed, _ := rd.lightTap(set, panel, id, x)
 		return changed
 	}
 	drawSliders := func() *ui.Panel {
-		if phones != "" {
-			return rd.drawSound(set, phones, v.TopBarHeight())
+		if soundOpen {
+			return rd.drawSound(set, phones, soundState, v.TopBarHeight())
 		}
 		return rd.drawLight(v.TopBarHeight())
 	}
@@ -197,11 +200,12 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the header again, and only it refreshed, if its battery, clock or headphones changed (a charger, a new minute, a
 	// wake, headphones connected or gone)
 	headChanged := func() {
-		now := ui.TopBar{Time: shownNow().Format("03:04"), Phones: rd.dev.Headphones() != "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
-		if now.Time == topBar.Time && now.Phones == topBar.Phones && now.Battery == topBar.Battery && now.Charging == topBar.Charging && now.Full == topBar.Full {
+		p := rd.phonesNow(set)
+		now := ui.TopBar{Time: shownNow().Format("03:04"), Phones: p.On, PhonesAway: p.Addr == "", Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full()}
+		if now.Time == topBar.Time && now.Phones == topBar.Phones && now.PhonesAway == topBar.PhonesAway && now.Battery == topBar.Battery && now.Charging == topBar.Charging && now.Full == topBar.Full {
 			return
 		}
-		topBar.Time, topBar.Phones, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Phones, now.Battery, now.Charging, now.Full
+		topBar.Time, topBar.Phones, topBar.PhonesAway, topBar.Battery, topBar.Charging, topBar.Full = now.Time, now.Phones, now.PhonesAway, now.Battery, now.Charging, now.Full
 		setHead()
 		v.Draw(rd.over)
 		if panel != nil {
@@ -222,8 +226,23 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			rd.dev.Beat()
 			continue
 		}
-		if e.Power || e.Clock { // a charger plugged or unplugged, a new minute
+		if e.Power || e.Clock || e.Sound { // a charger plugged or unplugged, a new minute, the headphones changed
 			headChanged()
+			if e.Sound { // the Sound panel, if open, as the headphones are now: the volume once connected, or the failure
+				st := soundEnded(e)
+				if soundOpen && panel != nil {
+					p := rd.phonesNow(set)
+					if e.Connect == 0 && p.Addr == "" {
+						st = soundState
+					}
+					phones, soundState = p.Addr, st
+					old := panel.Rect()
+					panel = drawSliders()
+					v.Draw(rd.over)
+					panel.Over(rd.over)
+					scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
+				}
+			}
 			continue
 		}
 		head := v.HeadAt(e.X, e.Y)
@@ -238,7 +257,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			if panel == nil && !e.Held {
 				turn(e.Button)
 			}
-		case e.Hold != device.NotHeld && (lightOpen || phones != "") && panel != nil: // a slider's knob held and moved
+		case e.Hold != device.NotHeld && (lightOpen || soundOpen && phones != "") && panel != nil: // a slider's knob held and moved
 			if refresh, wf := slidePanel(panel, &slide, e.Gesture, sliderTap); refresh {
 				old := panel.Rect()
 				panel = drawSliders()
@@ -338,8 +357,12 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				build() // the head drawn with the panel still open
 				open(false)
 				scr.Show(rd.over, device.WfREAGL, false)
-			case phones != "" && id != "": // the volume changed; the panel stays open
-				if (!e.Swipe || sliders[id]) && sliderTap(id, e.X+e.DX) { // a drag: where the finger was lifted
+			case soundOpen && id != "": // the volume changed, or Connect tapped; the panel stays open
+				connect := id == "connect" && !e.Swipe && rd.connectTap(set)
+				if connect {
+					soundState = "connecting"
+				}
+				if connect || (!e.Swipe || sliders[id]) && sliderTap(id, e.X+e.DX) { // a drag: where the finger was lifted
 					old := panel.Rect()
 					panel = drawSliders()
 					v.Draw(rd.over)
@@ -369,7 +392,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				}
 				held, bookPanel = -1, ""
 				panel, langOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false
-				phones, topBar.PhonesOn = "", false
+				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
 				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
@@ -390,10 +413,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 			}
 		case head == "topbar-phones": // the Sound panel under the top bar, the headphones filled
-			if phones = rd.dev.Headphones(); phones != "" {
-				topBar.PhonesOn = true
+			if p := rd.phonesNow(set); p.On {
+				soundOpen, phones, soundState, topBar.PhonesOn = true, p.Addr, "", true
 				setHead()
-				panel = rd.drawSound(set, phones, v.TopBarHeight())
+				panel = rd.drawSound(set, phones, "", v.TopBarHeight())
 				v.Draw(rd.over)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)

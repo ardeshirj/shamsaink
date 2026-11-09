@@ -33,7 +33,11 @@ type Device struct {
 	poked      atomic.Int64  // the Kindle: when powerd was last told of a touch (kindleTouched)
 	lightOnce  sync.Once     // the Kindle's light, read from powerd once (light.go)
 	kindle     *kindleLight
-	clockKick  chan struct{} // Doze, once awake: the clock's wait worked out again (clock.go)
+	clockKick  chan struct{}              // Doze, once awake: the clock's wait worked out again (clock.go)
+	phones     atomic.Pointer[Phones]     // the headphones as last seen (headphones.go)
+	phonesBusy atomic.Bool                // a look at the headphones under way
+	connecting atomic.Bool                // ConnectHeadphones at work
+	events     atomic.Pointer[chan Event] // Inputs' channel, for the headphones' events
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
@@ -98,12 +102,16 @@ type Event struct {
 	Clock  bool // a new minute started (clock.go): the time to read again
 	Button int  // a page button pressed: 1 forward (the lower button), -1 back (the upper), as the reader's setting has them
 	Held   bool // with Button: the button was held (about 0.4 s), not pressed; sent once, while it is still down, and no press follows
+	Sound  bool // the headphones changed (connected, gone, Bluetooth on or off: Phones), or a connection asked for ended
+	// Connect, with Sound: the connection asked for (ConnectHeadphones) ended, 1 connected, -1 not
+	Connect int
 }
 
 // Inputs grabs the touch screen (TOUCH, /dev/input/event1 by default) and listens for sleep, sending both as events
 // in one channel (gestures in the screen's coordinates) until stop is called, which lets go of the touch screen.
 func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	out := make(chan Event, 8)
+	d.events.Store(&out)
 	done := make(chan struct{})
 	raw := make(chan Event, 8) // the touches, noted on their way
 	d.active.Store(time.Now().UnixNano())

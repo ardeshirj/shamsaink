@@ -8,6 +8,7 @@ css:
   --radius: 0.4em      # a button's corners
   --pad: 0.05em 0.6em  # inside a button
   --gap: 0.5em         # between buttons side by side, and between rows of them
+  --faint: gray        # what is there but not ready (the headphones while none are connected)
 panel:
   font_px: 40     # the panels' base font size (the engine's FontSize), 1em
   margin_px: 40   # around a panel's content (the engine's Margin)

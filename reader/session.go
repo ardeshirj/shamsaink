@@ -45,7 +45,8 @@ type session struct {
 	barShown                  string       // the bar's battery and clock as last drawn (barState)
 	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's), "light" or "sound"
 	slide                     string       // the slider a held finger moves ("light", "warmth", "volume"), "" for none
-	phones                    string       // the Sound panel's headphones, their Bluetooth address, while it is open
+	phones                    string       // the Sound panel's headphones, their Bluetooth address, while it is open ("" none connected)
+	soundState                string       // the Sound panel's Connect: "", "connecting" or "failed"
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -249,8 +250,11 @@ func (s *session) input(e device.Event) {
 	switch {
 	case e.Sleep:
 		s.sleep()
-	case e.Power || e.Clock:
+	case e.Power || e.Clock || e.Sound:
 		s.barChanged()
+		if e.Sound {
+			s.soundChanged(e)
+		}
 	case s.nar != nil:
 		// reading aloud: a touch stops it
 		s.silence()

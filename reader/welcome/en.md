@@ -35,7 +35,7 @@ If your device has page buttons, the lower one goes forward, whichever way you h
 
 Tap the top of the page to bring up the controls. Tap the page again to put them away.
 
-**The bar, at the top,** belongs to the device. From the left: back to your library, the chapter you are in, the time, Bluetooth headphones, the light, the battery and the menu.
+**The bar, at the top,** belongs to the device. From the left: back to your library, the chapter you are in, the time, Bluetooth headphones (grey until they are connected: tap them to connect, or to set the narration's volume), the light, the battery and the menu.
 
 ![](topbar-book-en.png)
 
@@ -87,7 +87,7 @@ ShamsaInk reads EPUB books. Connect the device to a computer and copy them into 
 
 Folders inside **books** are fine, one level deep.
 
-![](library-en.png)
+![](library-guide-en.png)
 
 In the library, **Reading**, **New**, **Finished** and **All** show those books, and the arrows on the right sort them. Hold your finger on a book for its menu: mark it finished, start again, its details, or remove it.
 

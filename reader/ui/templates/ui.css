@@ -7,6 +7,7 @@
   --radius: 0.4em;      /* a button's corners */
   --pad: 0.05em 0.6em;  /* inside a button */
   --gap: 0.5em;         /* between buttons side by side, and between rows of them */
+  --faint: gray;        /* what is there but not ready (the headphones while none are connected) */
 }
 /* end generated */
 /* Everything in the panels is Vazirmatn, Latin and Farsi alike, a book's own words too (a title, a chapter's, a library
@@ -64,6 +65,7 @@ div.set > .sw { grid-column: 2 / 5; justify-self: end; display: flex; }
 @font-face { font-family: icons-fill; src: url(Phosphor-Fill.ttf); }
 .i { font-family: icons; font-size: 1.35em; line-height: 1; }
 .i.on { font-family: icons-fill; }
+.i.faint { color: var(--faint); }
 /* an arrow that points, mirrored in right to left */
 [dir="rtl"] .flip { display: inline-block; transform: scaleX(-1); }
 

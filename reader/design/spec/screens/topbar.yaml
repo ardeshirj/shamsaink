@@ -3,13 +3,13 @@ layer: topbar
 templates: [topbar.html]
 buttons: panel
 status: built
-order: [battery-full, book, battery-medium, battery-low, battery-warning, battery-charging, battery-open, sound-open]
+order: [battery-full, book, battery-medium, battery-low, battery-warning, battery-charging, battery-open, sound-away, sound-open]
 purpose: Over the page's top, the same in the library and a book.
 enter: [{gesture: tap-top-tenth, from: reading}]
 controls:
   - {id: topbar-light, component: icon-button, action: goto, to: light, requires: [light]}
   - {id: topbar-start, component: icon-button, action: goto, to: library}
-  - {id: topbar-phones, component: icon-button, action: goto, to: sound, when: "headphones are connected", requires: [sound]}
+  - {id: topbar-phones, component: icon-button, action: goto, to: sound, when: "Bluetooth is on (faint while no headphones are connected)", requires: [sound]}
   - {id: topbar-menu, component: icon-button, action: goto, to: menu}
   - {id: topbar-battery, component: button, action: goto, to: battery}
 internal: [topbar-title, topbar-title-text]

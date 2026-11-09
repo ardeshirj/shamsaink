@@ -3,9 +3,10 @@ layer: panel
 templates: [sound.html]
 buttons: panel
 status: built
-purpose: "The narration's volume; the bar's headphones drawn filled while it is open."
+purpose: "Connected, the narration's volume; not connected, connecting the pair used last. The bar's headphones drawn filled while it is open."
 enter: [{gesture: tap, control: topbar-phones, from: topbar}]
 controls:
-  - {id: volume, component: slider, action: act, does: "set the narration's volume (a gain on our sound, remembered per pair of headphones)", emits: "volume \\d+", press: volume-dec, undo: volume-inc}
+  - {id: volume, component: slider, action: act, does: "set the narration's volume (a gain on our sound, remembered per pair of headphones)", when: "headphones are connected", emits: "volume \\d+", press: volume-dec, undo: volume-inc}
+  - {id: connect, component: button, action: act, does: "connect the pair used last, Bluetooth restarted first if it is stuck", when: "no headphones are connected", emits: "headphones (connected|not connected)", walk: "never: needs headphones switched on near the device"}
 dismiss: tap-outside
-words: [volume]
+words: [volume, connect, connecting, connect-failed, pair-first]

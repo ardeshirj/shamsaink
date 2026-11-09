@@ -72,9 +72,9 @@ func pointing(name string) bool {
 
 // An icon button, as the templates draw it; On: drawn filled; Flip: mirrored in right to left (an arrow that points).
 type iconButton struct {
-	ID       string
-	Glyph    template.HTML
-	On, Flip bool
+	ID              string
+	Glyph           template.HTML
+	On, Flip, Faint bool // filled (its panel open), mirrored in right to left, grey (there but not ready)
 }
 
 var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(files, "templates/*.html", "templates/*.css"))
@@ -142,7 +142,8 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
 				Flip: pointing(name)}
 		},
-		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
+		"faint": func(b iconButton, faint bool) iconButton { b.Faint = faint; return b },
+		"btn":   func(id, label string) button { return button{ID: add(id), Label: label} },
 		"dlg": func(id, text, title, dir, note string, buttons ...button) dialog { // the box's id is not a button's
 			return dialog{ID: id, Text: text, Title: title, Dir: dir, Lang: textLang(title), Note: note, Buttons: buttons}
 		},

@@ -10,4 +10,4 @@ ul.menu { list-style: none; margin: 0; margin-inline-start: auto; padding: 0; wi
 </style></head><body>
 <ul class="menu" id="highlight-menu">
 {{- if .Made}}<li id="{{id "hl-remove"}}">{{icon "trash"}}{{t "remove-highlight"}}</li>{{else}}<li id="{{id "hl-make"}}">{{icon "highlighter-circle"}}{{t "highlight"}}</li>{{end}}
-{{- if .Narrated}}<li id="{{id "hl-listen"}}">{{icon "speaker-high"}}{{t "listen-here"}}</li>{{end}}</ul></body></html>
+{{- if .Narrated}}<li id="{{id "hl-listen"}}">{{icon "play"}}{{t "listen-here"}}</li>{{end}}</ul></body></html>

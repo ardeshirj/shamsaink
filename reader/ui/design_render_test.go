@@ -161,6 +161,8 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
+	}}, {"sound-away", en, func(f *blitz.Fonts, w, h int) rendered { // Bluetooth on, no headphones connected: faint
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesAway: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}, {"sound-open", en, func(f *blitz.Fonts, w, h int) rendered { // the headphones filled while the Sound panel is open
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesOn: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},
@@ -179,7 +181,15 @@ var designRenders = map[string][]renderCase{
 			return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w))
 		}}},
 	"sound": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawSound(70, barHeight(f, w), f, w))
+		return pr(DrawSound(Sound{Connected: true, Volume: 70}, barHeight(f, w), f, w))
+	}}, {"connect", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawSound(Sound{Paired: true}, barHeight(f, w), f, w))
+	}}, {"connecting", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawSound(Sound{Paired: true, State: "connecting"}, barHeight(f, w), f, w))
+	}}, {"failed", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawSound(Sound{Paired: true, State: "failed"}, barHeight(f, w), f, w))
+	}}, {"unpaired", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawSound(Sound{}, barHeight(f, w), f, w))
 	}}},
 	"reading-settings": {{"settings", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawReadingSettings(ReadingSettings{CleanLight: 0, CleanDark: 5}, barHeight(f, w), f, w))
@@ -221,6 +231,18 @@ var designRenders = map[string][]renderCase{
 		lib := NewLibrary(nil, ".adds/shamsaink/books", libraryHead(f, w), f, w, h)
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
+	}}, {"guide", en, func(f *blitz.Fonts, w, h int) rendered {
+		// the getting-started guide's picture (reader/welcome/en.md): two real books (titles and authors only), all
+		// chosen so the rows and the counts agree, cut to the rows (below them the page is empty)
+		books := []Book{
+			{Title: "Moby-Dick", Author: "Herman Melville", Read: 35},
+			{Title: "زنده به گور", Author: "صادق هدایت", Read: 62, Narrated: true, RTL: true},
+		}
+		head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{2, 0, 0, 2}, Filter: 3}, f, w)
+		lib := NewLibrary(books, "shamsaink/books", head, f, w, h)
+		defer lib.Close()
+		img := screenOf(w, h, lib.Draw).SubImage(image.Rect(0, 0, w, 740)).(*image.Gray)
+		return rendered{img: img, boxes: lib.Boxes(), placement: "screen"}
 	}}, {"empty-filter", en, func(f *blitz.Fonts, w, h int) rendered { // none in this filter, some in others
 		lib := NewLibrary(nil, "", libraryHead(f, w), f, w, h)
 		defer lib.Close()

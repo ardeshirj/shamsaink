@@ -18,6 +18,7 @@ note-pencil e34c
 copy e1ca
 speaker-high e44a
 speaker-low e44c
+bluetooth e0da
 moon e330
 arrows-clockwise e094
 arrow-counter-clockwise e038

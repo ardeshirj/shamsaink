@@ -1,6 +1,9 @@
 package device
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // The Kobo's Bluetooth service answers GetManagedObjects, printed by dbus-send, in this shape (measured 2026-11-08 on
 // the Libra Colour; addresses made up, most properties left out): a paired device, and once connected its transport.
@@ -26,6 +29,10 @@ const (
                   dict entry(
                      string "Icon"
                      variant                         string "audio-headphones"
+                  )
+                  dict entry(
+                     string "Paired"
+                     variant                         boolean true
                   )
 `
 	btTransport = `      dict entry(
@@ -53,6 +60,25 @@ func TestSoundConnected(t *testing.T) {
 		{"headphones connected", btAdapter + btPaired + btTransport, "00:11:22:33:44:55"},
 	} {
 		if got := soundConnected([]byte(c.out)); got != c.want {
+			t.Errorf("%s: %q, want %q", c.name, got, c.want)
+		}
+	}
+}
+
+// The pair to connect: a paired device that plays sound, not one seen in a scan nor a paired keyboard.
+func TestPairedAudio(t *testing.T) {
+	scanned := strings.ReplaceAll(strings.ReplaceAll(btPaired, "00_11_22_33_44_55", "66_77_88_99_AA_BB"), "boolean true", "boolean false")
+	keyboard := strings.ReplaceAll(strings.ReplaceAll(btPaired, "00_11_22_33_44_55", "CC_DD_EE_FF_00_11"), "audio-headphones", "input-keyboard")
+	for _, c := range []struct {
+		name, out, want string
+	}{
+		{"nothing", btAdapter, ""},
+		{"seen in a scan, not paired", btAdapter + scanned, ""},
+		{"a paired keyboard", btAdapter + keyboard, ""},
+		{"paired headphones after them", btAdapter + scanned + keyboard + btPaired, "00:11:22:33:44:55"},
+		{"connected: its transport after it", btAdapter + btPaired + btTransport, "00:11:22:33:44:55"},
+	} {
+		if got := pairedAudio([]byte(c.out)); got != c.want {
 			t.Errorf("%s: %q, want %q", c.name, got, c.want)
 		}
 	}
