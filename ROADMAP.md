@@ -35,6 +35,7 @@ remove again.
 ## Toward 1.0
 - [ ] Read-along finished: a setting to match the delay of your headphones, volume and speed, a player screen, and no
   restart on leaving, once Kobo's firmware bug is fixed or we find a safe way around it
+- [ ] Listening like an audiobook: the narration without marking words, the screen asleep
 - [ ] A finished interface: a dock of controls on a tap, a panel for a held word (meaning, colours, a note, listen from
   here), footnotes shown in place, two pages in landscape
 - [ ] A library with covers and search, with a keyboard for English and Farsi

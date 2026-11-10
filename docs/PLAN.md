@@ -179,6 +179,8 @@ leaving after Bluetooth gone since 2026-11-08)
 - [ ] Listen controls: volume (a gain in `sinkFormat`, a slider) and speed (a pitch-preserving stretch such as WSOLA,
   pure Go, the cues' times scaled; the Kobo's CPU measured first)
 - [ ] Read-along smoother: more headphones, the player's screens (listening, paused)
+- [ ] Listen without read-along, like an audiobook (2026-11-09): no underline or page turns, the screen asleep, the
+  place kept by the voice
 - [ ] Stages 6 and 7 finished: layers, the dock, components, the word panel, footnotes, the sleep screen's choice;
   covers, search, OPDS
 - [ ] A dictionary on a word held (2026-11-06), Farsi and English, the word panel's meaning: StarDict dictionaries, as
