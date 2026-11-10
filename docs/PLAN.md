@@ -71,11 +71,14 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
   from stage 6's list component; covers after, with a cache of them
 - [ ] A keyboard (English and Farsi) for search; not designed yet (`unbuilt-screens.md`, "The keyboard")
-- [ ] Books over the air, **OPDS** (2026-11-02, after the beta): browse a catalogue and download an EPUB into the
-  library's folder, FarsiEPUB's first (it needs to publish a feed: its repo, the maintainer's call), any after
-  (Standard Ebooks, Gutenberg). go-toolkit has an OPDS package: check it first. In the library's header, a two-part
-  choice (On this Kobo | FarsiEPUB), not a setting (2026-11-06). Needs the catalogue and download screens, Wi-Fi from
-  the reader (today it is Nickel's); measure the downloads' memory and TLS on the device first
+- [ ] Books over the air, **OPDS** (2026-11-02; right after the beta, decided 2026-11-10): the aim is one tap from a
+  list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's address
+  ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any OPDS
+  feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header, a
+  two-part choice (On this Kobo | FarsiEPUB), not a setting (2026-11-06). Order: FarsiEPUB's feed first (OPDS 1.2,
+  its repo), then this. go-toolkit has an OPDS package: check it first. Needs the catalogue and download screens and
+  Wi-Fi from the reader (today it is Nickel's); measure the downloads' memory and TLS on the device first. Narrated
+  books, large and hard to copy by hand, gain the most
 - [x] Done: a book's key from its content (`library.Key`, 2026-11-05); the two layouts decided (text rows, covers)
 
 **8. Read-along on the Kobo** (how it plays: `DESIGN.md`, section 4, sound)

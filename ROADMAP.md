@@ -39,7 +39,7 @@ remove again.
 - [ ] A finished interface: a dock of controls on a tap, a panel for a held word (meaning, colours, a note, listen from
   here), footnotes shown in place, two pages in landscape
 - [ ] A library with covers and search, with a keyboard for English and Farsi
-- [ ] Getting books over the air from an OPDS catalogue
+- [ ] Getting books over the air from an OPDS catalogue: FarsiEPUB's library built in, other catalogues added by you
 - [ ] Upgrades that keep your place, highlights, settings and cache
 - [ ] Testing across many books, Farsi and English, picture-heavy ones and scans, and a month of daily use without a
   crash
