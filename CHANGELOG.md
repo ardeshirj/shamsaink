@@ -4,6 +4,22 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.1.0-beta (2026-11-11)
+The first public beta: an EPUB reader for e-ink devices, Farsi first. It is early, tried on two devices, and we would
+like to hear how it does on yours (contact@farsiepub.org, or an issue here). More on
+[farsiepub.org/shamsaink](https://farsiepub.org/shamsaink/), with a two-minute tour.
+- **Right to left, properly:** joined letters and a browser's line breaks for Farsi; any EPUB, English left to right.
+- **Quick:** fast to open, and pages turn without flashes.
+- **Yours to adjust:** text size, highlights, dark mode, light and warmth.
+- **Reads along:** each narrated word underlined as it is spoken, with Bluetooth headphones on the Kobo.
+- **Sleep screens:** a poem from FarsiEPUB, or your own pictures.
+- **Tried on:** a Kobo Libra Colour (firmware 4.46, with NickelMenu) and a Kindle Paperwhite 11th gen (firmware 5.19.2,
+  jailbroken). Install with one command over USB (`docs/devices/install.md`); `install.sh uninstall` removes it.
+- **Known:** no sound on the Kindle yet (Amazon's software drops Bluetooth headphones after 20 minutes unless its own
+  player is playing), so read-along with sound is on the Kobo only. Other Kobo models, PocketBook and reMarkable are not
+  tried yet.
+- **Since 0.0.3:** nothing a reader sees; the README and its video.
+
 ## 0.0.3 (2026-11-08)
 Read-along on the Kobo, made for daily use; before the beta still, for the maintainer's devices.
 - **Leaving after Bluetooth:** back to Kobo's home screen, no more restart: the cause found in Kobo's Wi-Fi/Bluetooth
