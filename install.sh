@@ -31,6 +31,7 @@ find_drive() {
   for d in /Volumes/Kindle /media/*/Kindle /run/media/*/Kindle /media/Kindle; do
     [ -d "$d/documents" ] && [ -d "$d/system" ] && KINDLE=$d && break
   done
+  return 0 # set -e: the loops' last test fails when nothing (or only one device) is found, which is not an error
 }
 mounting() {
   for d in /Volumes/KOBOeReader /Volumes/Kindle /media/*/KOBOeReader /media/*/Kindle /run/media/*/KOBOeReader \
