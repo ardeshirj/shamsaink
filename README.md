@@ -28,8 +28,8 @@ it yourself: [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md), [`docs/
 
 **A beta:** tried on a **Kobo Libra Colour** (firmware 6.0) and a **Kindle Paperwhite** (11th generation, firmware
 5.19.2). ShamsaInk takes over the screen while it is open (Kobo's interface stopped, the Kindle's paused) and gives it
-back when you leave. What works where, and the known limits: [`docs/devices/README.md`](docs/devices/README.md); what
-comes next: [`ROADMAP.md`](ROADMAP.md).
+back when you leave. What works where, and the known limits: [`docs/devices/README.md`](docs/devices/README.md); the
+languages, their fonts and directions: [`docs/LANGUAGES.md`](docs/LANGUAGES.md); what comes next: [`ROADMAP.md`](ROADMAP.md).
 
 ## Why it exists
 An e-ink device is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
@@ -128,7 +128,7 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 | [`reader/`](reader/) | The reader: Go, the screen, touch, sleep, sound and the panels (HTML templates drawn by Blitz) |
 | [`engine/`](engine/) | The page engine: Rust, Blitz with our layout, glyph drawing and the cache |
 | [`bench/`](bench/) | One interface over the engines, to compare them on the same books |
-| [`docs/`](docs/) | [Design](docs/DESIGN.md), the [design system](docs/DESIGN-SYSTEM.md), the [devices](docs/devices/README.md) (what runs where, known limits; [Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/PLAN.md) |
+| [`docs/`](docs/) | [Design](docs/DESIGN.md), the [design system](docs/DESIGN-SYSTEM.md), the [devices](docs/devices/README.md) (what runs where, known limits; [Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [working plan](docs/PLAN.md); the [languages](docs/LANGUAGES.md) |
 | [`e2e/`](e2e/) | End-to-end scenarios run on a device |
 
 ## About the name
