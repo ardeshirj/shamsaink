@@ -29,7 +29,7 @@ Sleep fixed on Kobo firmware 6, and books in Hebrew, Urdu and more of the right-
 - **Leaving:** on the Kobo, ShamsaInk's mark and "Exiting…" while Kobo's home screen comes back (8 to 10 s),
   where the screen was blank or still showed the library. (On the Kindle its own screen is back at once.) Leave is now
   in the library's menu only: from a book, the bar's arrow goes back to the library first.
-- **Tried on:** a Kobo Libra Colour (firmware 6.0). The Kindle: the new fonts not tried on it yet.
+- **Tried on:** a Kobo Libra Colour (firmware 6.0) and a Kindle Paperwhite 11th gen (firmware 5.19.2, jailbroken).
 - **For development:** sleep is now tested on the Kobo itself, woken by its clock's alarm (`sleep`, `sleep-more`,
   `sleep-narration`); reopening ShamsaInk right after leaving it no longer restarts the Kobo, and a test's settings no
   longer stay in ShamsaInk after it (one had every sleep woken after 20 s).
