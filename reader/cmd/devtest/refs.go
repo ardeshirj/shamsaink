@@ -3,7 +3,10 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"image"
+	"image/png"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -64,4 +67,45 @@ func keepRef(key, hash string) error {
 		fmt.Fprintf(&b, "%s  %s\n", refs[k], k)
 	}
 	return os.WriteFile(refsSum, []byte(b.String()), 0o644)
+}
+
+// refImages holds the references of scenarios on our own books (refs: images) as pictures, committed beside their hashes
+// so a changed page shows in a diff and CI's failure folder has the old page: e2e/refs/TARGET/SCENARIO/NAME.png.
+const refImages = "e2e/refs"
+
+func refImage(key string) string { return filepath.Join(refImages, key+".png") }
+
+// writeRefImage keeps a snapshot as a grey PNG.
+func writeRefImage(path string, w, h int, pix []byte) error {
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return err
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	img := &image.Gray{Pix: pix, Stride: w, Rect: image.Rect(0, 0, w, h)}
+	if err := (&png.Encoder{CompressionLevel: png.BestCompression}).Encode(f, img); err != nil {
+		f.Close()
+		return err
+	}
+	return f.Close()
+}
+
+// readRefImage reads a kept picture back as the P5 file snap compares with; a picture of another size is an error.
+func readRefImage(path string, w, h int) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	img, err := png.Decode(f)
+	if err != nil {
+		return nil, err
+	}
+	g, ok := img.(*image.Gray)
+	if !ok || g.Rect.Dx() != w || g.Rect.Dy() != h || g.Stride != w {
+		return nil, fmt.Errorf("%s: not a %dx%d grey picture", path, w, h)
+	}
+	return pgm(w, h, g.Pix), nil
 }

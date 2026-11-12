@@ -44,6 +44,8 @@ import (
 //	                          clock, HEARTBEAT_EVERY=1s WATCH_EVERY=4 (a freeze caught in 8 to 12 s, not 20 to 30)
 //	fetch URL PATH SHA256     the file at PATH on the device, downloaded from URL (checked against the SHA256) if it is
 //	                          not there: a public sample book for a scenario, never committed
+//	book NAME                 our own test book e2e/books/NAME, built (books.go), on the device as books/test/NAME.epub,
+//	                          copied unless the same file is there: then open books/test/NAME.epub
 //	forget PATH               the book's saved place removed on the device (its key, as library.Key makes it: a shell
 //	                          recipe, for books over 128 KB), so the book opens at its start
 //	freeze                    the reader stopped (SIGSTOP), as a hang that answers nothing
@@ -61,6 +63,7 @@ import (
 //	                          Wi-Fi/Bluetooth chip without errors since the scenario began: after a sleep, a close
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored); their hashes are, in e2e/refs.sum (refs.go).
+// Those of a scenario on our own books (refs: images) are committed as pictures too, e2e/refs/ (refImage).
 
 // topRows are the rows of the clock's strip, left out of a comparison.
 const topRows = 60
@@ -74,7 +77,8 @@ type player struct {
 	scenario   string // and its SCENARIO
 	failure    string // out/failure: what a failed step left (explain)
 	save       bool
-	hlX, hlY   int // where the highlight's menu was put, from the reader's log
+	images     bool // refs: images: the references as pictures too, committed (refImage)
+	hlX, hlY   int  // where the highlight's menu was put, from the reader's log
 	hlSeen     bool
 	stop       func()
 	closedBook bool
@@ -109,7 +113,7 @@ func scenario(name, path string, save bool) bool {
 	}
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base}
+	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base, images: s.images}
 	if place != "kobo" { // the simulator's and the Kindle's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4)
 		p.out = filepath.Join("e2e", "out", place, base)
 	}
@@ -386,6 +390,11 @@ func (p *player) step(a []string) (string, error) {
 			return "", err
 		}
 		return d.fetch(a[1], a[2], a[3])
+	case "book":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		return d.testBook(a[1])
 	case "forget":
 		if err := need(1); err != nil {
 			return "", err
@@ -508,6 +517,12 @@ func (p *player) snap(name string) (string, error) {
 		if err := os.WriteFile(ref, data, 0o644); err != nil {
 			return "", err
 		}
+		if p.images {
+			if err := writeRefImage(refImage(key), s.w, s.h, s.pix); err != nil {
+				return "", err
+			}
+			return "kept as the reference (" + refsSum + ", " + refImage(key) + ")", keepRef(key, hash)
+		}
 		return "kept as the reference (" + refsSum + ")", keepRef(key, hash)
 	}
 	refs, err := readRefs()
@@ -525,6 +540,9 @@ func (p *player) snap(name string) (string, error) {
 	os.MkdirAll(p.failure, 0o755)
 	os.WriteFile(filepath.Join(p.failure, "screen.pgm"), data, 0o644)
 	old, err := os.ReadFile(ref)
+	if err != nil && p.images { // no local copy: the committed picture is the reference (CI)
+		old, err = readRefImage(refImage(key), s.w, s.h)
+	}
 	if err != nil || len(old) != len(data) || pageHash(s.w, s.h, old[len(data)-len(s.pix):]) != want {
 		return "", fmt.Errorf("the page differs from its reference in %s (no local copy of that reference to compare with: "+
 			"failure/screen.pgm is the page now)", refsSum)

@@ -56,12 +56,12 @@ jobs:
       - name: make test (every Go test with the engine, the renders compared with the kept ones)
         working-directory: reader
         run: FONTS=$PWD/fonts go test -count=1 -tags blitz ./...
-      - name: the simulated Kobo, the scenarios on public books
+      - name: the simulated Kobo, the scenarios on public books and on our own (e2e/books)
         run: |
           sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
           mkdir -p out/sim-books
           sh e2e/sim/run.sh out/sim-books e2e/scenarios/readalong-granularity.txt e2e/scenarios/walk-moby-dick.txt \
-            e2e/scenarios/walk.txt e2e/scenarios/basics.txt
+            e2e/scenarios/walk.txt e2e/scenarios/basics.txt e2e/scenarios/rtl-fa.txt
       - name: a failed scenario's folder
         if: failure()
         uses: actions/upload-artifact@v6

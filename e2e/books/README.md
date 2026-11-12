@@ -1,0 +1,15 @@
+# Our own test books
+
+Books written for the end-to-end tests, so the scenarios cover every right-to-left language the reader supports with
+nothing to download. Each folder holds an EPUB's files as they go in the zip (`mimetype`, `META-INF/`, `OEBPS/`) and a
+`README.md` (left out of the zip) saying what it tests. A scenario's `book NAME` builds the folder into an EPUB
+(`reader/cmd/devtest/books.go`: each file stored, in name order after `mimetype`, all dated 2026-01-01, so the same
+bytes every time: the reader names a book by its bytes) and puts it on the device as `books/test/NAME.epub`;
+`devtest books DIR` builds them all, to open by hand.
+
+The text is ours, written for these tests, under the repository's licence (Apache-2.0). Their pages are committed as
+pictures (`e2e/refs/`, a scenario's `refs: images`); other people's books and their pages never are (CLAUDE.md).
+
+| Book | Language | Tests | Scenario |
+|---|---|---|---|
+| `fa-basics` | Farsi | Farsi pages, the bar and dock in Farsi, contents, pages turned right to left, a highlight | `rtl-fa.txt` |

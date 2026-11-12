@@ -73,7 +73,9 @@ their hashes, for each target: the simulator, the Kobo (measured below) and the 
 below the clock's strip; the fixtures' text size 50, the reader's default, since then. The pages
 themselves, drawn from books, stay out of git (CLAUDE.md): `make e2e-sim SAVE=1` writes them into `e2e/out/` and updates
 `refs.sum`; the maintainer looks at the changed pages before `refs.sum` is committed. A page that differs in CI is
-attached to the run, so the change can be seen.
+attached to the run, so the change can be seen. **Pages of our own books** (`e2e/books/`, since 2026-11-12) are
+committed too, as grey PNGs beside their hashes (`e2e/refs/TARGET/SCENARIO/NAME.png`, a scenario with `refs: images`):
+a changed page shows in the diff, and CI's failure folder has the old page and the difference.
 
 **Measured (2026-11-05): who draws the same bytes.** `blitz-pages` (the engine with `parallel`, the reader's fonts) drew
 all 119 pages of *Buried Alive* on each target, compared pixel by pixel with the Kobo's own:

@@ -66,8 +66,8 @@ type KoboAccess struct {
 }
 
 func main() {
-	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "scenario" && os.Args[1] != "usage") {
-		fmt.Fprintln(os.Stderr, "usage: devtest check|usage DEVICE, devtest scenario DEVICE FILE [--save]")
+	if len(os.Args) < 3 || (os.Args[1] != "check" && os.Args[1] != "scenario" && os.Args[1] != "usage" && os.Args[1] != "books") {
+		fmt.Fprintln(os.Stderr, "usage: devtest check|usage DEVICE, devtest scenario DEVICE FILE [--save], devtest books DIR")
 		os.Exit(2)
 	}
 	if os.Args[1] == "scenario" { // devtest scenario DEVICE FILE [--save]
@@ -85,7 +85,7 @@ func main() {
 		}
 		return
 	}
-	run := map[string]func(string) bool{"check": check, "usage": usage}[os.Args[1]]
+	run := map[string]func(string) bool{"check": check, "usage": usage, "books": buildBooks}[os.Args[1]]
 	if !run(os.Args[2]) {
 		os.Exit(1)
 	}

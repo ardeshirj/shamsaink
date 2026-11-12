@@ -21,7 +21,7 @@ FarsiEPUB's ShamsaInk page.
 
 | Language | Codes (`dc:language`) | Book text in | Pages, with no stated direction | Interface | Tested |
 |---|---|---|---|---|---|
-| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on *Buried Alive* (Kobo, simulator) |
+| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on *Buried Alive* (Kobo, simulator); e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; Kobo, simulator, its pages committed as pictures) |
 | Arabic | `ar` | Noto Naskh Arabic | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; by hand on the Kobo (experiment 15) |
 | Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English, mirrored | the same |
 | Pashto, Sindhi, Sorani Kurdish, Uyghur | `ps`, `sd`, `ckb`, `ug` | Noto Naskh Arabic | right to left | English, mirrored | unit tests (direction); fonts' coverage checked (experiment 15) |
@@ -51,8 +51,8 @@ The lists are in several places and nothing yet checks them against each other: 
 - **Urdu in Nastaliq**, what its readers expect: waits for a timing on the Kobo (the slowest script to shape, lines
   twice as tall; experiment 15).
 - **The Kindle:** the Hebrew, Arabic and Urdu books not tried on it yet (same binary and fonts as the Kobo).
-- **Tests:** right-to-left languages other than Farsi are tried by hand only; our own test books (`e2e/books/`, in
-  progress) bring Arabic, Urdu, Hebrew, a book with no stated direction, a mixed paragraph and a narrated Farsi book
+- **Tests:** right-to-left languages other than Farsi are tried by hand only; our own test books (`e2e/books/`, Farsi's
+  `fa-basics` since 2026-11-12) bring Arabic, Urdu, Hebrew, a book with no stated direction, a mixed paragraph and a narrated Farsi book
   to e2e, after which this table's last column changes.
 - **Found, not changed** (experiment 15): a Farsi book asking for `sans-serif` gets DejaVu Sans's Arabic letters
   before Parastoo's; the library marks every Arabic-script title as Farsi (`textLang`).

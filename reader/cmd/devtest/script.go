@@ -15,6 +15,8 @@ import (
 //	book: PATH             a book it needs, by its path under the reader's folder (books/farsiepub/...); checked before
 //	                       the first step, so a missing book is said as such (one line each)
 //	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: default)
+//	refs: images           its references kept as pictures too, committed (e2e/refs/TARGET/SCENARIO/NAME.png): only for
+//	                       scenarios on our own books (e2e/books), never on another's
 //
 // The steps are listed in scenario.go. check holds every step against the design spec's kept renders without a device:
 // go test ./cmd/devtest checks every scenario, so a step or control name mistyped fails in make check, not on the Kobo.
@@ -23,6 +25,7 @@ type script struct {
 	on      []string
 	books   []string
 	fixture string
+	images  bool // refs: images
 	steps   []line
 }
 
@@ -48,7 +51,7 @@ func parseScenario(path string) (*script, error) {
 		}
 		w := strings.Fields(text)
 		switch w[0] {
-		case "on:", "book:", "fixture:":
+		case "on:", "book:", "fixture:", "refs:":
 			if len(s.steps) > 0 {
 				return nil, fmt.Errorf("%s:%d: %s belongs in the header, before the first step", path, n+1, w[0])
 			}
@@ -67,6 +70,11 @@ func parseScenario(path string) (*script, error) {
 				s.books = append(s.books, w[1])
 			case "fixture:":
 				s.fixture = w[1]
+			case "refs:":
+				if len(w) != 2 || w[1] != "images" {
+					return nil, fmt.Errorf("%s:%d: refs: images (nothing else)", path, n+1)
+				}
+				s.images = true
 			}
 			continue
 		}
@@ -189,6 +197,12 @@ func (s *script) check(d *dev) error {
 		case "forget":
 			if args != 1 {
 				fail(l, "forget PATH")
+			}
+		case "book":
+			if args != 1 {
+				fail(l, "book NAME")
+			} else if _, err := os.Stat(filepath.Join(booksDir, a[1], "mimetype")); err != nil {
+				fail(l, "no book %s/%s", booksDir, a[1])
 			}
 		case "env":
 			for _, kv := range a[1:] {
