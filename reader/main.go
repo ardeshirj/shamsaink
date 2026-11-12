@@ -114,7 +114,10 @@ func main() {
 		// the leaving screen (the mark and "Exiting…"), up until the device's own interface draws over it: Kobo's
 		// home screen comes 8 to 10 s after the reader ends, the screen blank or still the library meanwhile
 		// (2026-11-12). Not where the screen found is put back (the Kindle's): its interface is back at once.
+		// Always in English, as the library (the maintainer, 2026-11-12): a book opened by name ends the reader with
+		// its own language still set.
 		t := time.Now()
+		ui.SetLanguage("en")
 		showOpening(rd.dev.Screen, ui.Leaving(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H, rd.dev.Colour()),
 			device.WfGC16, true)
 		rd.dev.Screen.Wait()

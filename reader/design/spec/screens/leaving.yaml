@@ -3,7 +3,7 @@ layer: screen
 templates: [leaving.html]
 buttons: none
 status: built
-purpose: "The reader being left, back to the device's own interface: the mark and Exiting…, in colour on a colour screen. Stays until that interface draws over it (on the Kobo 8 to 10 s), where the screen was blank or still the library."
+purpose: "The reader being left, back to the device's own interface: the mark and Exiting…, in colour on a colour screen, always in English (as the library: a book opened by name ends the reader in its own language). Stays until that interface draws over it (on the Kobo 8 to 10 s), where the screen was blank or still the library."
 enter: [{gesture: leave, from: menu}]
 controls: []
 dismiss: automatic
