@@ -149,7 +149,12 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 		keys := d.buttons(out)
 		stopSleeps = func() { power.Close(); idle(); keys.Close() }
 	}
-	power := powerChanges(out)
+	var changed func()
+	if d.Kind != Kindle {
+		changed = chargeLight
+		chargeLight()
+	}
+	power := powerChanges(out, changed)
 	d.clockKick = make(chan struct{}, 1)
 	clock := clockChanges(out, d.clockKick)
 	var once sync.Once
@@ -247,7 +252,7 @@ func (d *Device) Charging() bool {
 }
 
 // chargerOnline says whether a power supply that charges (Mains, USB, Wireless: not the battery itself, which reads
-// online all the time) is online.
+// online all the time) is online: anything but 0 (the Kobo on firmware 6 reads 2 on a computer's USB).
 func chargerOnline() bool {
 	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/online"))
 	for _, f := range files {
@@ -255,7 +260,7 @@ func chargerOnline() bool {
 		t, _ := os.ReadFile(filepath.Join(dir, "type"))
 		switch strings.TrimSpace(string(t)) {
 		case "Mains", "USB", "Wireless":
-			if b, err := os.ReadFile(f); err == nil && strings.TrimSpace(string(b)) == "1" {
+			if b, err := os.ReadFile(f); err == nil && strings.TrimSpace(string(b)) != "0" && strings.TrimSpace(string(b)) != "" {
 				return true
 			}
 		}
@@ -263,6 +268,17 @@ func chargerOnline() bool {
 	return false
 }
 func (d *Device) Full() bool { return batteryIs("Full") }
+
+// batteryKnown says whether a battery reports its status at all.
+func batteryKnown() bool {
+	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity"))
+	for _, f := range files {
+		if _, err := os.Stat(filepath.Join(filepath.Dir(f), "status")); err == nil {
+			return true
+		}
+	}
+	return false
+}
 
 func batteryIs(status string) bool {
 	files, _ := filepath.Glob(hw("/sys/class/power_supply/*/capacity"))

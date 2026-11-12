@@ -16,8 +16,8 @@ import (
 // (Battery, Charging, Full) and redraw the bar if it shows and something changed; nothing is drawn while reading.
 
 // powerChanges sends Event{Power: true} for each power supply's change until closed (nothing on the simulated device,
-// or where netlink cannot be opened).
-func powerChanges(out chan<- Event) io.Closer {
+// or where netlink cannot be opened), and calls changed (if not nil) with each, in its own goroutine.
+func powerChanges(out chan<- Event, changed func()) io.Closer {
 	if Sim() {
 		return io.NopCloser(nil)
 	}
@@ -34,6 +34,9 @@ func powerChanges(out chan<- Event) io.Closer {
 	syscall.SetsockoptTimeval(fd, syscall.SOL_SOCKET, syscall.SO_RCVTIMEO, &tv)
 	c := &uevents{fd: fd}
 	send := func() {
+		if changed != nil {
+			changed()
+		}
 		select {
 		case out <- Event{Power: true}:
 		default: // one already waiting: it reads the latest state anyway

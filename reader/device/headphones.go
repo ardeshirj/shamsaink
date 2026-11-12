@@ -182,6 +182,35 @@ func (d *Device) connect(addr string) bool {
 	return connected(8 * time.Second)
 }
 
+// bluetoothAsleep switches Bluetooth's part of the chip off for a suspend, as Nickel does before it sleeps (firmware 6:
+// 0 written to /dev/wmtBluetooth, the driver's "power-disable request", hci0 unregistered), and says whether it was
+// on. Left on, the kernel's suspend switched it off under Kobo's sound and speech services, whose next writes to the
+// chip timed out: its firmware crashed, and Nickel found no Wi-Fi network after; BlueZ's Powered false, or rfkill,
+// only take the adapter down, and the kernel still switched it off itself (2026-11-12).
+func bluetoothAsleep() bool {
+	if Sim() || !running("bluetoothd") {
+		return false
+	}
+	if _, err := os.Stat("/sys/class/bluetooth/hci0"); err != nil {
+		return false
+	}
+	return sysfs(btPower, "0") == nil
+}
+
+// bluetoothAwake switches it on again after a suspend (hci0 back in ~2 s, BlueZ's adapter powered as before); paired
+// headphones reconnect by themselves or from the Sound panel.
+func bluetoothAwake() {
+	sysfs(btPower, "1")
+	for end := time.Now().Add(5 * time.Second); time.Now().Before(end); time.Sleep(250 * time.Millisecond) {
+		if _, err := os.Stat("/sys/class/bluetooth/hci0"); err == nil {
+			return
+		}
+	}
+}
+
+// btPower is the Bluetooth driver's power switch (MediaTek's WMT, as /dev/wmtWifi for Wi-Fi).
+const btPower = "/dev/wmtBluetooth"
+
 // bluez calls method on BlueZ at object path with args (dbus-send's), waiting at most wait.
 func bluez(wait time.Duration, path, method string, args ...string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), wait+500*time.Millisecond)

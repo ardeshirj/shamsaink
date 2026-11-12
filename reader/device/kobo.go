@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -27,19 +28,11 @@ const (
 	evKey    = 1
 	keyPower = 116
 	// the white light, 0 to 100 (KOReader's): set in brightness, which always reads 0; its level in actual_brightness
-	lightFile     = "/sys/class/backlight/mxc_msp430.0/brightness"
-	lightLevel    = "/sys/class/backlight/mxc_msp430.0/actual_brightness"
-	batteryStatus = "/sys/class/power_supply/bd71827_bat/status"
-	// this Kobo's Wi-Fi (wlan_drv_gen4m), as the launcher takes it down for Kobo's interface
-	wifiOff = "killall -q -TERM dhcpcd udhcpc; wpa_cli -i wlan0 terminate; ifconfig wlan0 down; echo 0 > /dev/wmtWifi"
-	// and up again on waking, its drivers still loaded: the Wi-Fi function cycled through MediaTek's wmt_dbg (as
-	// Nickel's own log shows it, and KOReader's enable-wifi.sh), powered, then wpa_supplicant and dhcpcd as Nickel
-	// runs them (its known networks in /etc/wpa_supplicant)
-	wifiOn = "echo 0xDB9DB9 > /proc/driver/wmt_dbg; echo '7 9 0' > /proc/driver/wmt_dbg; sleep 1; " +
-		"echo 0xDB9DB9 > /proc/driver/wmt_dbg; echo '7 9 1' > /proc/driver/wmt_dbg; echo 1 > /dev/wmtWifi; sleep 1; " +
-		"ifconfig wlan0 up && wpa_supplicant -D nl80211 -s -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant.conf " +
-		"-C /var/run/wpa_supplicant -B && dhcpcd -d -t 30 -w wlan0"
-	wifiState = "/sys/class/net/wlan0/operstate"
+	lightFile  = "/sys/class/backlight/mxc_msp430.0/brightness"
+	lightLevel = "/sys/class/backlight/mxc_msp430.0/actual_brightness"
+	wifiState  = "/sys/class/net/wlan0/operstate"
+	// the charge light: the kernel switches it on when a charger goes in, Nickel off when it comes out
+	chargeLED = "/sys/class/leds/LED/brightness"
 )
 
 // presses sends each press of the power button to out, or to the doze while the Kobo dozes (the press that wakes it),
@@ -217,9 +210,39 @@ func setLight(level int) {
 const lightDelay = 2 * time.Second
 
 // plugged says whether the Kobo is on a charger (charging or full: anything but discharging, as KOReader reads it).
+// plugged says whether a charger is in: the battery not discharging, or a charger supply online. Found by what the
+// supplies are, not their names: firmware 6 calls the battery "battery" (4.x: bd71827_bat), and its charger supply
+// reads online 2 on a computer's USB (2026-11-12: a charging Kobo was not seen, and tried to suspend again and again).
 func plugged() bool {
-	b, err := os.ReadFile(hw(batteryStatus))
-	return err == nil && strings.TrimSpace(string(b)) != "Discharging"
+	return chargerOnline() || !batteryIs("Discharging") && batteryKnown()
+}
+
+// online says whether wlan0 is up with an IPv4 address.
+func online() bool {
+	state, _ := os.ReadFile(hw(wifiState))
+	if strings.TrimSpace(string(state)) != "up" {
+		return false
+	}
+	i, err := net.InterfaceByName("wlan0")
+	if err != nil {
+		return false
+	}
+	addrs, _ := i.Addrs()
+	for _, a := range addrs {
+		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// chargeLight switches the charge light off on battery, as Nickel does while it runs: with Nickel stopped it stayed on
+// after a charger was taken out, and came back on with each wake from a suspend (firmware 6, 2026-11-12). On a charger
+// it is left as the kernel set it.
+func chargeLight() {
+	if !Sim() && !plugged() {
+		sysfs(chargeLED, "0")
+	}
 }
 
 // doze shows pic (grey, or a picture in colour: sleepScreen), takes Wi-Fi down and the light off, and suspends the Kobo
@@ -244,25 +267,49 @@ func (d *Device) doze(pic image.Image) {
 	d.Screen.Wait()
 	time.Sleep(lightDelay)
 	setLight(0)
-	wifi, _ := os.ReadFile(hw(wifiState))
+	// Wi-Fi off for the suspend and on again after (firmware 6), as Bluetooth: the interface down and the chip's Wi-Fi
+	// switched off through its driver (/dev/wmtWifi), then on and up again. Nickel's wpa_supplicant and dhcpcd are left
+	// running and join the network again by themselves. Tried 2026-11-12: left up, wlan0 went with the suspend and
+	// nothing brought it back; 4.x's way (Nickel's processes ended, the chip reset through wmt_dbg on waking, our own
+	// wpa_supplicant) failed after the wake ("wake up failed"), the chip was reset and Nickel found no network after.
+	wifi := online()
+	if wifi && !Sim() {
+		exec.Command("sh", "-c", "ifconfig wlan0 down; echo 0 > /dev/wmtWifi").Run()
+	}
 	defer func() {
-		if strings.TrimSpace(string(wifi)) != "up" {
+		if !wifi || Sim() {
 			return
 		}
 		go func() {
 			s := time.Now()
-			out, err := exec.Command("sh", "-c", wifiOn).CombinedOutput()
+			out, err := exec.Command("sh", "-c", "echo 1 > /dev/wmtWifi; i=0; "+
+				"while [ ! -e /sys/class/net/wlan0 ] && [ $i -lt 40 ]; do usleep 250000; i=$((i + 1)); done; "+
+				"ifconfig wlan0 up").CombinedOutput()
 			if err != nil {
 				fmt.Printf("  Wi-Fi not back: %v: %s\n", err, strings.TrimSpace(string(out)))
 				return
 			}
-			fmt.Printf("  Wi-Fi back in %.1f s\n", time.Since(s).Seconds())
+			for time.Since(s) < 30*time.Second {
+				if online() {
+					fmt.Printf("  Wi-Fi back in %.1f s\n", time.Since(s).Seconds())
+					return
+				}
+				time.Sleep(500 * time.Millisecond)
+			}
+			fmt.Println("  Wi-Fi not back in 30 s: the interface is up, without an address")
 		}()
 	}()
-	if !Sim() {
-		exec.Command("sh", "-c", wifiOff).Run()
-	}
-	fmt.Printf("asleep: sleep screen shown, light and Wi-Fi off in %.0f ms\n", ms(t))
+	bt := bluetoothAsleep()
+	defer func() {
+		if bt {
+			go func() {
+				s := time.Now()
+				bluetoothAwake()
+				fmt.Printf("  Bluetooth back on in %.1f s\n", time.Since(s).Seconds())
+			}()
+		}
+	}()
+	fmt.Printf("asleep: sleep screen shown, light, Wi-Fi (%v) and Bluetooth (%v) off in %.0f ms\n", wifi, bt, ms(t))
 	for len(power) > 0 {
 		<-power
 	}
@@ -331,6 +378,7 @@ func (d *Device) doze(pic image.Image) {
 	d.Screen.Clean() // white first: the sleep screen, left for hours, does not stay behind the page
 	d.Screen.Restore(back)
 	setLight(lit)
+	chargeLight()
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 	d.Usage("wake", fmt.Sprintf(" asleep=%d", int(time.Now().Round(0).Sub(slept).Seconds())))
 }

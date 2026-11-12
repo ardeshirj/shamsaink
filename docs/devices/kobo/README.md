@@ -82,94 +82,62 @@ runtime (by Nickel, we think), is not kept across boots. Not proved. What we do:
 silent for 20 to 30 s and brings Nickel back. Failing that, **hold the power button about 5 s**: the Kobo restarts,
 nothing of ours lost but the last page turn. For the release notes.
 
-**Wi-Fi while the reader is open:** nobody manages it. On 4.x it went down soon after Nickel stopped (2026-11-05); on
-6.0 it stays up (`ssh kobo` answers) until the reader sleeps, which switches it off. A Settings switch can come with
-OPDS (stage 7).
+**Wi-Fi while the reader is open:** nobody manages it. On 6.0 it stays up (`ssh kobo` answers) until the reader
+sleeps. A Settings switch can come with OPDS (stage 7).
 
-**A suspend on a charger hangs the kernel** (MediaTek Kobos, as KOReader knows; seen on 4.x). Plugged in, the Kobo
-stays awake behind the sleep screen (`reader/device/kobo.go`).
+**Sleep: Wi-Fi and Bluetooth through the chip's own switches** (6.0, 2026-11-12). The reader suspends at once (Nickel,
+in 3½ minutes of its sleep screen, never suspended: it only switched Bluetooth off). Before the suspend: Bluetooth off
+through its driver as Nickel does (`/dev/wmtBluetooth` 0: "power-disable request", `hci0` unregistered), Wi-Fi off
+(`wlan0` down, `/dev/wmtWifi` 0); after: both on again (`hci0` back in 0.7 s, an address in about 2 s), Nickel's
+`wpa_supplicant` and `dhcpcd` left running throughout. What failed first, each leaving Wi-Fi dead in Nickel after the
+reader was closed (only a restart brought it back):
+- 4.x's way (Nickel's `wpa_supplicant` and `dhcpcd` ended, the chip's Wi-Fi reset through `wmt_dbg` on waking, our own
+  `wpa_supplicant`): its network file was `/etc/wpa_supplicant`'s, empty on 6.0 (Kobo's is `.kobo/wpa_supplicant.conf`),
+  and the power-up after the suspend failed ("wake up failed ... type(9)"); the chip was reset.
+- Bluetooth left on, or off through BlueZ (`Adapter1.Powered`) or rfkill: the kernel's suspend switched it off itself
+  ("wmt_core_suspend: Turning off BT"), Kobo's sound and speech services then timed out on the chip's link (STP), and
+  its firmware crashed ("firmware assert"); Nickel found no network, Bluetooth greyed out.
+- Wi-Fi left up: `wlan0` went with the suspend and nothing brought it back.
+
+**Plugged in, the Kobo stays awake behind the sleep screen** (MediaTek Kobos: a suspend on a charger hangs the kernel,
+as KOReader knows). A charger is seen by what the supplies are: 6.0's battery is `battery` (4.x: `bd71827_bat`) and its
+charger reads `online` 2 on a computer's USB; before 2026-11-12 neither was seen, and a charging Kobo tried to suspend
+again and again (refused: the USB controller holds a wakeup source while plugged in).
+
+**The charge light** is the kernel's on a charger and Nickel's off it: with Nickel stopped, it stayed on once the
+charger was out, and came on again with each wake. The reader switches it off on battery (start, power changes, wake).
 
 **The screen's driver refuses a suspend right after a refresh** ("operation not permitted", `hwtcon ... xon off timer
 pending`). Tried again after 3 s, five times at most (`reader/device/kobo.go`).
 
-## Firmware 4.x (until 2026-11-11)
-No longer supported: ShamsaInk was started from NickelMenu, and `launch.sh` worked around 4.x's Bluetooth stack
-(Kobo's `mtkbtd`) and its Wi-Fi and Bluetooth driver. That launcher, its install as `KoboRoot.tgz` and its setup with
-NickelMenu and KOReader are at the tag **`kobo-fw4`** (`git show kobo-fw4:docs/devices/kobo/setup.md`); the last release
-for 4.x is v0.1.0-beta. Kept here for anyone on 4.x, and for Kobo:
+**Leaving takes 11–12 s** to Kobo's home screen (6.0, 2026-11-12): the reader gone in about 1 s, Nickel's home ready 8–10
+s after it starts.
 
-**A second start of Nickel in a boot, with Bluetooth, panics the kernel** (4.x; avoided by our 4.x launcher since
-2026-11-08; 6.0 runs no `wmt_loader` and did not panic).
-- What: Bluetooth used, then Nickel started again (KOReader's or Plato's exit, our launcher closing the reader): the
-  kernel panics, the Kobo reboots, NickelMenu is lost. The other order too: Nickel started again, then Bluetooth on.
-- Cause (2026-11-08, Kobo's source: `kobolabs/Kobo-Reader`, `hw/mt8113-libraC_vision7/kernel.tar.zst`,
-  `modules/connectivity/wmt_mt66xx`): each start of Nickel runs `/usr/bin/wmt_loader`, whose init ioctl runs the
-  driver's `WMT_init` again on the running driver. There `osal_fifo_init` (`common_main/linux/osal.c`) frees the old
-  buffer with `FifoDeInit(pFifo->pFifoBody)` for `FifoDeInit(pFifo)`: it reads the kfifo's `in` counter as a pointer
-  and frees it. Bluetooth never used, the counter is 0: an error logged, no harm. After Bluetooth it is a number
-  (#12739's oops: 0xd26, a fault at 0xd36, `__kfifo_free` reading `data` at +0x10). Firmware 4.46's `wmt_drv.ko` has
-  the same code. The fix for Kobo (the driver is GPL: described, no patch kept here): the init ioctl
-  (`common_detect/wmt_detect.c`) once per boot, and `FifoDeInit(pFifo)` with the body freed and set to NULL.
-- What the 4.x launcher did: from the reader's opening to the next reboot, bind-mount a script that does nothing over
-  `/usr/bin/wmt_loader`; before starting Nickel, stop Bluetooth's daemon (`mtkbtd`, `btservice`), which a new Nickel
-  cannot use. Tried 2026-11-08: no panic over three openings with headphones on. KOReader's or Plato's exit before the
-  reader's first opening in a boot still panicked.
-- Upstream: koreader/koreader#12739 (open); the cause not posted yet. Not reported to Kobo.
-
-**Each start of Nickel left a stuck Wi-Fi loader** (4.x, 2026-10-30): one more `wmt_launcher` stuck in `WMT_open`
-(state D), failing every 2 s for good; about nine took Wi-Fi down until a reboot. The 4.x launcher killed every one but
-the oldest for 30 s after starting Nickel.
+## Firmware 4.x
+Not supported since 2026-11-11 (the last release for it: v0.1.0-beta). ShamsaInk was started from NickelMenu, set up
+with KOReader for SSH, and `launch.sh` worked around 4.x's Bluetooth service (`mtkbtd`) and its Wi-Fi and Bluetooth
+driver: among them a kernel panic on Nickel's second start after Bluetooth, its cause found in Kobo's driver source
+(described for Kobo there, not reported yet; koreader/koreader#12739). All of it, with its findings, is this file at
+the tag **`kobo-fw4`**: `git show kobo-fw4:docs/devices/kobo/README.md` (and `setup.md`).
 
 ## Findings log
-Newest last, dated, with how sure we are; the settled ones are above. Until 2026-11-08: firmware 4.46.
+Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at the tag `kobo-fw4`.
 
-- **2026-10-30, a panic after seven starts of Nickel in one boot** (e2e runs and launches, Bluetooth not used). The
-  last log line `Nickel started again`; 75 s before, the chip hung and reset (`wmt_dev_rx_timeout`, "do chip reset").
-  Likely the driver initialised again on each start (2026-11-08's cause, above), then skipped.
-- **2026-11-02, Nickel on a black screen after Plato.** Plato, run while our launcher had Nickel stopped, restarted
-  it with KOReader's `nickel.sh`, which does not make Nickel's FIFO (`/tmp/nickel-hardware-status`) that our launcher
-  removes, and gives the ALSA sink instead of MediaTek's Bluetooth one. **After our launcher has stopped Nickel, start
-  it with `sh launch.sh nickel`, never by ending another reader.** The same day: Plato lays Farsi paragraphs out
-  left to right (flush left, measured on a framebuffer grab of *Buried Alive*); KOReader flush right, as it should.
-- **2026-11-08, Bluetooth from our side, Nickel stopped** (4.x; read with Kobo's `dbus-send`;
-  `reader/device/headphones.go`). Kobo's Bluetooth service (`mtkbtd`, D-Bus-started as `com.kobo.mtk.bluedroid`) offers
-  BlueZ's interfaces: a device's `org.bluez.Device1` (`Connected`, `Paired`, `Icon`, `Name`), and while it carries
-  sound a transport, `.../dev_ADDRESS/fdN` (`MediaTransport1`), gone once disconnected or switched off.
-  `Device1.Connect` from our side connects a paired pair (0.3–2 s; it may answer "connection timeout" and connect
-  anyway). The transport's `Volume` is read only and stays 127: the headphones report their own volume only in the
-  service's debug log ("volume changed N", 0–127), so it cannot be followed reliably nor set. Their play/pause arrives
-  as a key, `KEY_PAUSECD` (201), on an input device named "NAME (AVRCP)". Never ask while `mtkbtd` is not running:
-  D-Bus would start it.
-- **2026-11-08, the chip hung around a sleep with headphones connected, and Bluetooth stayed dead** (4.x). Going to
-  sleep (Wi-Fi switched off by us, headphones connected): `wmt_dev_rx_timeout`; after waking the same every ~0.7 s with
-  a stack trace each (the whole Kobo slow: a menu 7.9 s, listing books 3.8 s), then a whole chip reset 35 s later,
-  Wi-Fi back in 38 s (5 s otherwise). The kernel then asked the Bluetooth service to restart Bluetooth ("Send Hardware
-  Error event to stack"); it never did. **Recovery, tried:** stop `mtkbtd` and `btservice`; the next D-Bus call starts
-  a fresh one with its adapter off; set `org.bluez.Adapter1.Powered` to true, then `Device1.Connect` (0.3 s). Not seen
-  on 6.0 yet: to watch.
-- **2026-11-08, glitches in the narration: Kobo's player stalls, and its buffer was too small** (4.x). Measured with the
-  narration's own log (`reader/narration.go`: each pause between chunks split into before the write and in it). Kobo's
-  player (`gst-launch` into `mtkbtmwrpcaudiosink`) stops taking sound for 250–320 ms every 4 and 10 s in turn, from
-  when it opened; our writer was ready every time and Go's collector did not run, so the stall is the player's or
-  Bluetooth's (cause not known; Wi-Fi sharing the chip not ruled out). Its buffer is GStreamer's default for audio
-  sinks, `buffer-time` 200 ms, which neither the sink nor Nickel changes: a stall longer than that was heard. **What we
-  do:** the player opened with a 500 ms buffer (`reader/sink.go`, kept for 6.0's sink), the underline moved by the
-  300 ms more (`lead_ms`, set by ear, stays right); not heard since. Also: a player just opened takes its buffer at
-  once, then stalls 1.4 s and 0.6 s while it wakes the headphones, so it is given silence until it takes chunks at its
-  pace (1–2 s, the first word underlined meanwhile). And a bug of ours, heard as a second of silence at each part's
-  start: the next part was decoded only once due; now one part ahead (a 60 s part decodes in 0.4–1.4 s, 2.8 s for
-  Moby-Dick's first, one large file).
 - **2026-11-11, firmware 6.0.279225 installed itself.** NickelMenu (Qt 5) no longer loads, so ShamsaInk's NickelMenu
   line was gone; KOReader's SSH server needs `libcrypt.so.1`, which 6.0 lacks. Since then: our launcher (a Qt 6 plugin,
   built with kobuild, the way in from NickelModManager), `launch.sh` for 6.0's start of Nickel, our own static Dropbear
   for development, and the installer's 5/6 path (`Kobo.tgz`).
 - **2026-11-11, Bluetooth and sound on 6.0.** BlueZ's own `bluetoothd` (`org.bluez` on the system bus) where 4.x had
   `mtkbtd`, and PulseAudio in system mode (`/var/run/pulse/native`) where 4.x had MediaTek's sink: the reader plays into
-  `pulsesink` (`Device.SoundSink`). A pair counts as connected when `Device1.Connected` is true on a device with an
-  `audio-` icon: the transport (`fdN`) is made only once sound flows (measured: Connected and PulseAudio's sink after
-  1.0 s, no transport in 35 s). Connect: the adapter switched on if off (`Adapter1.Powered`), then `Device1.Connect`
-  (about 1 s). Read-along on *Buried Alive* heard, each word underlined.
+  `pulsesink` (`Device.SoundSink`), with 4.x's 500 ms buffer kept (`reader/sink.go`). A pair counts as connected when
+  `Device1.Connected` is true on a device with an `audio-` icon: the transport (`fdN`) is made only once sound flows
+  (measured: Connected and PulseAudio's sink after 1.0 s, no transport in 35 s). Connect: the adapter switched on if
+  off (`Adapter1.Powered`), then `Device1.Connect` (about 1 s). Read-along on *Buried Alive* heard, each word underlined.
 - **2026-11-12, the installer tried over USB on 6.0.** `ExcludeSyncFolders` removed first; the installer added it under
   the empty `[FeatureSettings]` while Kobo was lent over USB; after eject ("Updating", a restart) the line was there,
   the launcher installed (the package's bytes) and `Kobo.tgz` gone, the row in More started ShamsaInk, no `.txt.epub`,
-  nothing from `.adds` in Kobo's library.
+  nothing from `.adds` in Kobo's library. The release v0.2.0-beta the same, from `curl ... | sh`; its launcher, built
+  on CI, byte-identical to the local build.
+- **2026-11-12, sleep on 6.0** (above, "Sleep"): found from the reader's log, a logger writing every new process,
+  `wlan0`'s state and the system log to the storage (it survives the restart a dead Wi-Fi needs), and one capture of
+  Nickel's own sleep for reference.
