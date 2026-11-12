@@ -333,8 +333,8 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | go-text | the Go engine | BSD-3 / Unlicense | only if the Go engine stays (the reference) |
 | NickelModManager | the Kobo launcher's way into Nickel and its row's painting, adapted (`reader/kobo/launcher/plugin.cpp`) | MIT (its notice in the Kobo package's `licenses/`) | no: in the launcher, a separate library loaded by Nickel |
 | Qt 6, Kobo's own build (Nickel's) | the launcher, linked against it at run time | Kobo's (Qt itself: LGPL-3 or commercial) | no: the launcher only |
-| Dropbear | the Kobo's SSH server while developing (dev mode; `reader/kobo/dev/`, built static from source) | MIT | no: never in a release |
-| KOReader | its SSH server on the Kindle while developing (the Kindle's host until 2026-11-07; the Kobo's SSH on 4.x) | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) and `koreader.sh` read as a reference, nothing copied |
+| Dropbear | the Kobo's and the Kindle's SSH server while developing (dev mode; `reader/kobo/dev/`, `reader/kindle/dev/`, built static from source) | MIT | no: never in a release |
+| KOReader | once the Kindle's host (until 2026-11-07) and its SSH server while developing (until 2026-11-12; the Kobo's on 4.x) | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) and `koreader.sh` read as a reference, nothing copied |
 | FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
 | crengine | the bar to measure against | GPL-2.0 | no |
 | the Kindle's `powerd`, `lipc`, `mplay` | sleep watched; sound | Amazon's | no: run as commands |

@@ -78,8 +78,8 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   for a device with a speaker. On hand: the maintainer's
   **reMarkable 2** (Cortex-A7, two cores, as slow as a Kobo; used for every timing since 06, but its screen cannot be
   driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
-  Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
-  v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8110, of the MT8512 family, two Cortex-A53 cores at up to 2 GHz, the second off unless
+  Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, reached with
+  `ssh kindle`, our own Dropbear since 2026-11-12, KOReader removed), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8110, of the MT8512 family, two Cortex-A53 cores at up to 2 GHz, the second off unless
   switched on (Kobo's interface does it itself), 965 MB, firmware 4.46 until it updated itself to **6.0.279225 on 2026-11-11**; reached with `ssh kobo`), for experiment 13
   (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`). **Since 2026-11-11 the Kobo needs firmware 5
   or newer:** ShamsaInk is started from its own row in More (`reader/kobo/launcher`, a Qt 6 plugin installed as
@@ -199,7 +199,8 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   read-along video's thumbnail there (a frame of «داود گوژپشت»). No other page.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
-- **The Kindle:** set up as in `docs/devices/kindle/setup.md` (KOReader's SSH server, a key of its own, `ssh kindle`). It
+- **The Kindle:** set up as in `docs/devices/kindle/setup.md` (ShamsaInk, then our development SSH from its Developer
+  panel, `make kindle-dev-ssh`, a key of its own, `ssh kindle`; KOReader's server until 2026-11-12). It
   sleeps after a few minutes untouched, taking Wi-Fi and SSH with it: `make kindle-status`, `make kindle-wait` once
   woken by hand (`kindle-awake` and `kindle-sleep` went on 2026-11-07: the reader keeps it awake while used). Long runs detached
   (`nohup`), results read from their file. Clean up what goes in `/var/tmp` (RAM).

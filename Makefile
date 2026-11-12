@@ -214,6 +214,7 @@ kobo-import:
 #   make kindle-check    the Kindle held against its design profile (as kobo-check); make e2e DEVICE=kindle: scenarios on it
 #   make kindle-reader-install  build the reader, copy it, its fonts, the launcher and the scriptlet to the Kindle
 #                        (KOReader's plugin, which hosted it until 2026-11-07, removed; reader-install until 2026-10-30)
+#   make kindle-dev-ssh  our own SSH server (development), switched on in the reader's Developer panel
 #   make kindle-reader-log  the end of the reader's log on the Kindle (reader-log until 2026-10-30)
 #   make kindle-status   awake or not, battery, Wi-Fi, free memory and storage
 #   make kindle-wait     wait until it answers over SSH (after waking it by hand)
@@ -222,7 +223,7 @@ kobo-import:
 KINDLE ?= kindle
 SSH = ssh -o ConnectTimeout=10 $(KINDLE)
 
-.PHONY: kindle-reader-install kindle-reader-log kindle-status kindle-wait kindle-ssh
+.PHONY: kindle-reader-install kindle-dev-ssh kindle-reader-log kindle-status kindle-wait kindle-ssh
 
 kindle-reader-install: reader welcome
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/sleep /mnt/us/shamsaink/books'
@@ -244,6 +245,34 @@ kindle-reader-install: reader welcome
 	@# the getting-started guide beside the reader, as the package has it (copied into books/ on the first start)
 	@$(SSH) 'cat > /mnt/us/shamsaink/getting-started.epub' < reader/out/welcome/getting-started.epub
 	@echo "reader, fonts, launcher and scriptlet copied to $(KINDLE)"
+
+# For development, never in the reader's package: our own SSH server on the Kindle (reader/kindle/dev/ssh.sh, the
+# Kobo's Dropbear: make kobo-dropbear) and its switch in the reader's Developer panel (dev mode), so nothing else is
+# needed for SSH (KOReader's server until 2026-11-12). Over USB when the Kindle is plugged in (the first time: no SSH
+# yet), else over SSH. Its keys: KINDLE_KEY=file.pub, kept as dev/authorized_keys; else, over SSH and the first time,
+# KOReader's authorized_keys and host key if it is still there, copied on the Kindle (nothing read here).
+KINDLE_DEV = /mnt/us/shamsaink/dev
+KINDLE_USB = /Volumes/Kindle
+KOREADER_SSH = /mnt/us/koreader/settings/SSH
+KINDLE_DEV_FILES = reader/kindle/dev/ssh.sh out/kobo/dropbear out/kobo/dropbearkey
+kindle-dev-ssh: out/kobo/dropbear
+	@if [ -d $(KINDLE_USB)/documents ]; then \
+	  mkdir -p $(KINDLE_USB)/shamsaink/dev && \
+	  cp $(KINDLE_DEV_FILES) $(KINDLE_USB)/shamsaink/dev/ && \
+	  { [ -z "$(KINDLE_KEY)" ] || cp "$(KINDLE_KEY)" $(KINDLE_USB)/shamsaink/dev/authorized_keys; } && \
+	  dot_clean -m $(KINDLE_USB) && diskutil eject $(KINDLE_USB) >/dev/null && \
+	  echo "SSH (development) copied, Kindle ejected: in the reader, menu > Developer, once unplugged"; \
+	else \
+	  $(SSH) 'mkdir -p $(KINDLE_DEV)' && \
+	  for f in $(KINDLE_DEV_FILES); do \
+	    $(SSH) "cat > $(KINDLE_DEV)/.new && mv $(KINDLE_DEV)/.new $(KINDLE_DEV)/$$(basename $$f)" < $$f || exit 1; \
+	  done && \
+	  { [ -z "$(KINDLE_KEY)" ] || $(SSH) 'cat > $(KINDLE_DEV)/authorized_keys' < "$(KINDLE_KEY)"; } && \
+	  $(SSH) 'cd $(KINDLE_DEV) && chmod 755 ssh.sh dropbear dropbearkey && \
+	    { [ -f authorized_keys ] || cp $(KOREADER_SSH)/authorized_keys . 2>/dev/null || echo "no keys yet: KINDLE_KEY=file.pub"; } && \
+	    { [ -f host_ed25519 ] || cp $(KOREADER_SSH)/dropbear_ed25519_host_key host_ed25519 2>/dev/null || true; }' && \
+	  echo "SSH (development) installed on $(KINDLE): in the reader, menu > Developer"; \
+	fi
 
 kindle-reader-log:
 	@$(SSH) 'tail -n 40 /mnt/us/shamsaink/logs/reader.log'

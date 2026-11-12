@@ -1,7 +1,8 @@
 # Kindle Paperwhite 11th gen
 
 MediaTek MT8113 (two Cortex-A53 cores at up to 1 GHz under a 32-bit kernel), 485 MB, 1236 × 1648 at 300 ppi,
-firmware 5.19.2, jailbroken, KOReader v2026.07.1. Reached with `ssh kindle` (KOReader's SSH server). Set up as in
+firmware 5.19.2, jailbroken (KOReader removed 2026-11-12). Reached with `ssh kindle`: our development SSH server,
+switched on in the reader's Developer panel (`reader/kindle/dev/ssh.sh`, `make kindle-dev-ssh`). Set up as in
 `setup.md`, installed as in `../install.md`; experiments 09 to 12. It sleeps after a few minutes untouched, taking Wi-Fi
 and SSH with it (the reader open keeps it awake while it is touched, as any reading does): `make kindle-status`,
 `kindle-wait` once woken by hand.
@@ -29,7 +30,8 @@ Sleep stays `powerd`'s: the reader shows its sleep screen on `goingToScreenSaver
 the reader's "Sleep after" (5 to 60 minutes), set as powerd's `screenSaverTimeout` while it runs, the Kindle's own (600 s)
 put back by the launcher on leaving (2026-11-07). The light
 and its warmth are `powerd`'s `flIntensity` (0 to 24) and `currentAmberLevel` (0 to 24), behind the reader's Light panel.
-SSH while reading: KOReader's dropbear (port 2222) keeps running when KOReader ends.
+SSH while reading: our Dropbear (port 2222) runs from RAM (`/var/tmp`) and keeps running when the reader ends; it opens
+port 2222 in the Kindle's firewall (INPUT's policy is DROP) while it runs. A restart stops it (2026-11-12).
 
 ## Limits and bugs
 **Amazon's framework cannot be stopped under us** (2026-11-06).
