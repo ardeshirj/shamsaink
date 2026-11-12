@@ -13,8 +13,8 @@ import (
 	"shamsainkreader/device"
 )
 
-// The Kobo's sound (experiment 13): Kobo's own player, one gst-launch-1.0 into mtkbtmwrpcaudiosink (Bluetooth headphones
-// only, no speaker), kept open for the session because only one pipeline can hold the sink and starting one takes ~2 s.
+// The Kobo's sound (experiment 13): Kobo's own player, one gst-launch-1.0 into the device's sink (SoundSink: PulseAudio's
+// on firmware 6, MediaTek's mtkbtmwrpcaudiosink on 4.x; Bluetooth headphones only, no speaker), kept open for the session because only one pipeline can hold the sink and starting one takes ~2 s.
 // Raw sound goes in through its standard input, a pipe cut to one page so it holds ~20 ms: a write returns as the sink
 // plays, which makes what has been written the narration's clock. While nothing is to be heard, silence is written, so
 // the Bluetooth link stays awake.
@@ -49,7 +49,7 @@ type sink struct {
 
 // openSink starts the player; it fails if gst-launch-1.0 cannot be run. The player is up ~2 s later: what is written
 // meanwhile waits in the pipe, so the narration's clock starts when it plays.
-func openSink() (*sink, error) {
+func openSink(dev *device.Device) (*sink, error) {
 	r, w, err := os.Pipe()
 	if err != nil {
 		return nil, err
@@ -89,9 +89,11 @@ func openSink() (*sink, error) {
 		go k.run()
 		return k, nil
 	}
+	element, env := dev.SoundSink()
 	cmd := exec.Command("gst-launch-1.0", "-q", "fdsrc", "fd=0", "!", "rawaudioparse", "format=pcm", "pcm-format=s16le",
 		fmt.Sprintf("sample-rate=%d", sinkRate), "num-channels=2", "!", "audioconvert", "!", "audioresample", "!",
-		fmt.Sprintf("audio/x-raw,format=S16LE,rate=%d,channels=2", sinkRate), "!", "mtkbtmwrpcaudiosink", fmt.Sprintf("buffer-time=%d", sinkBuffer.Microseconds()))
+		fmt.Sprintf("audio/x-raw,format=S16LE,rate=%d,channels=2", sinkRate), "!", element, fmt.Sprintf("buffer-time=%d", sinkBuffer.Microseconds()))
+	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdin = r
 	cmd.Stdout, cmd.Stderr = os.Stderr, os.Stderr
 	if err := cmd.Start(); err != nil {

@@ -5,8 +5,9 @@ import (
 	"testing"
 )
 
-// The Kobo's Bluetooth service answers GetManagedObjects, printed by dbus-send, in this shape (measured 2026-11-08 on
-// the Libra Colour; addresses made up, most properties left out): a paired device, and once connected its transport.
+// BlueZ answers GetManagedObjects, printed by dbus-send, in this shape (measured on the Libra Colour, 4.x's service
+// 2026-11-08 and firmware 6's BlueZ 2026-11-11; addresses made up, most properties left out): a paired device, connected
+// or not, and while sound flows its transport.
 const (
 	btAdapter = `method return time=1762636000.0 sender=:1.12 -> destination=:1.40 serial=50 reply_serial=2
    array [
@@ -35,6 +36,11 @@ const (
                      variant                         boolean true
                   )
 `
+	btConnected = `                  dict entry(
+                     string "Connected"
+                     variant                         boolean true
+                  )
+`
 	btTransport = `      dict entry(
          object path "/org/bluez/hci0/dev_00_11_22_33_44_55/fd0"
          array [
@@ -57,7 +63,9 @@ func TestSoundConnected(t *testing.T) {
 		{"no service's answer", "", ""},
 		{"the adapter only", btAdapter, ""},
 		{"headphones paired, not connected", btAdapter + btPaired, ""},
-		{"headphones connected", btAdapter + btPaired + btTransport, "00:11:22:33:44:55"},
+		{"headphones connected, no sound yet (firmware 6: no transport)", btAdapter + btPaired + btConnected, "00:11:22:33:44:55"},
+		{"headphones connected, sound flowing", btAdapter + btPaired + btConnected + btTransport, "00:11:22:33:44:55"},
+		{"a transport left, not connected", btAdapter + btPaired + btTransport, ""},
 	} {
 		if got := soundConnected([]byte(c.out)); got != c.want {
 			t.Errorf("%s: %q, want %q", c.name, got, c.want)

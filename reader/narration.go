@@ -24,7 +24,7 @@ import (
 
 // Read-along (plan, stage 8): the book's narration played to the Bluetooth headphones paired in Kobo's own settings,
 // each word underlined when the narrator reaches it (experiments 09, 12 and 13). The sound goes through Kobo's own
-// player, one gst-launch-1.0 into mtkbtmwrpcaudiosink kept open for the session (sink.go), fed raw sound through a
+// player, one gst-launch-1.0 into the device's sink (PulseAudio on firmware 6) kept open for the session (sink.go), fed raw sound through a
 // pipe: each part of the narration is decoded by the engine into RAM while the one before it plays, and the pipe
 // takes it as the sink plays it, so the narration's clock is what the pipe has taken (see anchor), not a timer of ours.
 
@@ -397,7 +397,7 @@ func (s *session) readAloud(from *blitz.Word) {
 	}
 	t := time.Now()
 	if s.snd == nil || s.snd.dead.Load() {
-		snd, err := openSink()
+		snd, err := openSink(s.dev)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "shamsaink: read aloud: no player:", err)
 			return
