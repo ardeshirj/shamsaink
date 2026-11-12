@@ -230,18 +230,19 @@ kindle-reader-install: reader welcome
 	@# /mnt/us (FUSE) under it, would die of SIGBUS at its next page of code
 	@$(SSH) 'for p in $$(pidof shamsaink); do kill $$p; echo "the open reader ($$p) stopped"; done; true'
 	@# a new name, then renamed over the old: overwriting it in place fails now and then on /mnt/us (FUSE)
-	@scp -q reader/out/shamsaink $(KINDLE):/mnt/us/shamsaink/shamsaink.new
+	@# copied through ssh's cat, not scp: the development SSH (our Dropbear, since KOReader went) has no sftp-server
+	@$(SSH) 'cat > /mnt/us/shamsaink/shamsaink.new && chmod 755 /mnt/us/shamsaink/shamsaink.new' < reader/out/shamsaink
 	@$(SSH) 'mv /mnt/us/shamsaink/shamsaink.new /mnt/us/shamsaink/shamsaink'
 	@# KOReader's plugin, which hosted the reader until the launcher (2026-11-07), and its pipes
 	@$(SSH) 'rm -rf /mnt/us/koreader/plugins/shamsaink.koplugin /var/tmp/shamsaink'
 	@# the launcher, and the scriptlet that lists it in the Kindle's library (reader/kindle)
-	@scp -q reader/kindle/launch.sh $(KINDLE):/mnt/us/shamsaink/launch.sh
+	@$(SSH) 'cat > /mnt/us/shamsaink/launch.sh' < reader/kindle/launch.sh
 	@sh reader/kindle/scriptlet.sh | $(SSH) 'cat > /mnt/us/documents/ShamsaInk.sh'
 	@# the fonts as the package has them: those no longer in it removed
 	@$(SSH) 'mkdir -p /mnt/us/shamsaink/fonts && cd /mnt/us/shamsaink/fonts && for f in *.ttf; do case " $(notdir $(wildcard reader/fonts/*.ttf)) " in *" $$f "*) ;; *) rm -f "$$f";; esac; done'
-	@scp -q reader/fonts/*.ttf $(KINDLE):/mnt/us/shamsaink/fonts/
+	@for f in reader/fonts/*.ttf; do $(SSH) "cat > /mnt/us/shamsaink/fonts/$$(basename $$f)" < $$f || exit 1; done
 	@# the getting-started guide beside the reader, as the package has it (copied into books/ on the first start)
-	@scp -q reader/out/welcome/getting-started.epub $(KINDLE):/mnt/us/shamsaink/getting-started.epub
+	@$(SSH) 'cat > /mnt/us/shamsaink/getting-started.epub' < reader/out/welcome/getting-started.epub
 	@echo "reader, fonts, launcher and scriptlet copied to $(KINDLE)"
 
 kindle-reader-log:

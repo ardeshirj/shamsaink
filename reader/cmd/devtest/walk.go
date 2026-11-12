@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -61,19 +62,21 @@ var (
 		"leave": true}
 )
 
-// devOnly says whether a control is dev mode's (requires development): devtest runs the reader with dev mode off
-// (SHAMSAINK_DEV=0), so it is never there, and the walk takes no way through it.
-func devOnly(c design.Control) bool {
+// missing is what a control requires that the device has not (its profile's has; development, dev mode's, never: devtest
+// runs the reader with dev mode off, SHAMSAINK_DEV=0), "" if nothing: the walk takes no way through such a control. The
+// Kindle has no sound yet, so no headphones in its bar and no way to the Sound panel (2026-11-12, its walk had tried).
+func missing(c design.Control, has []string) string {
 	for _, r := range c.Requires {
-		if r == "development" {
-			return true
+		if !slices.Contains(has, r) {
+			return r
 		}
 	}
-	return false
+	return ""
 }
 
-// edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each, but dev mode's.
-func edges(spec *design.Spec) []edge {
+// edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each, but through a
+// control the device has not (missing).
+func edges(spec *design.Spec, has []string) []edge {
 	seen := map[string]bool{}
 	var out []edge
 	add := func(e edge) {
@@ -91,7 +94,7 @@ func edges(spec *design.Spec) []edge {
 	for _, n := range names {
 		sc := spec.Screens[n]
 		for _, c := range sc.Controls {
-			if (c.Action == "goto" || c.Action == "replace") && !devOnly(c) {
+			if (c.Action == "goto" || c.Action == "replace") && missing(c, has) == "" {
 				add(edge{from: n, to: c.To, gesture: "tap", control: c.ID, when: c.When})
 			}
 		}
@@ -101,15 +104,15 @@ func edges(spec *design.Spec) []edge {
 			if en.From == "" {
 				continue
 			}
-			when, dev := "", false
+			when, gone := "", false
 			if en.Control != "" { // the control's own condition (menu's settings: in the library)
 				for _, c := range spec.Screens[en.From].Controls {
 					if c.ID == en.Control {
-						when, dev = c.When, devOnly(c)
+						when, gone = c.When, missing(c, has) != ""
 					}
 				}
 			}
-			if dev {
+			if gone {
 				continue
 			}
 			add(edge{from: en.From, to: n, gesture: en.Gesture, control: en.Control, when: when})
@@ -119,10 +122,11 @@ func edges(spec *design.Spec) []edge {
 }
 
 // plan gives the walk's routes, one for each screen it can reach (the shortest, from the base the screen is first found
-// from), and why each built screen it cannot reach is left (reached only automatically, or by nothing walkable).
-func plan(spec *design.Spec) (routes []route, left map[string]string) {
+// from), and why each built screen it cannot reach is left (reached only automatically, only through what the device has
+// not, or by nothing walkable). has: the device's profile's.
+func plan(spec *design.Spec, has []string) (routes []route, left map[string]string) {
 	entry, page := bases(spec)
-	all := edges(spec)
+	all := edges(spec, has)
 	reached := map[string]bool{entry: true, page: true} // by either base
 	// a screen is walked from each base that reaches it: the menu or Light in a book are not the library's
 	for _, base := range []string{entry, page} {
@@ -166,8 +170,14 @@ func plan(spec *design.Spec) (routes []route, left map[string]string) {
 			}
 			if from := spec.Screens[en.From]; from != nil {
 				for _, c := range from.Controls {
-					if c.ID == en.Control && devOnly(c) {
+					if c.ID != en.Control {
+						continue
+					}
+					switch m := missing(c, has); {
+					case m == "development":
 						why = "dev mode only (off in devtest's runs, SHAMSAINK_DEV=0)"
+					case m != "":
+						why = "not on this device (it has no " + m + ")"
 					}
 				}
 			}
@@ -228,7 +238,7 @@ func (p *player) walk(args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	routes, left := plan(spec)
+	routes, left := plan(spec, p.d.prof.Has)
 	d := p.d
 	w := &walker{p: p, spec: spec, lang: "en", placed: map[string][2]int{}, shown: map[string]string{}, told: map[string]string{}, checked: map[string]bool{},
 		hold: [4]int{d.prof.Screen.Width * 7 / 10, 700, d.prof.Screen.Width * 4 / 10, 700}}
