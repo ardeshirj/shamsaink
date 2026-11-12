@@ -5,7 +5,7 @@ with narrated books, each word marked as it is spoken. This page says where it s
 plan, not a promise: nothing here has a date.
 
 ## Where it stands
-- Works today on the **Kobo Libra Colour** (firmware 4.46), as its own reader that takes over the screen while a book
+- Works today on the **Kobo Libra Colour** (firmware 6.0; 5 or newer), as its own reader that takes over the screen while a book
   is open, and on a jailbroken **Kindle Paperwhite** (11th generation, firmware 5.19.2) the same way, started from the
   Kindle's own library.
 - Opens an EPUB as it is, with real CSS, right-to-left text and Farsi shaping, at the speed of KOReader's engine, as a

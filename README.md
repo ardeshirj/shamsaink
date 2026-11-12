@@ -13,20 +13,19 @@
 </p>
 
 ## Install
-On a Kobo with [NickelMenu](https://pgaskin.net/NickelMenu/), plugged into a Mac or Linux computer over USB with Connect
-tapped:
+On a Kobo with firmware 5 or newer, plugged into a Mac or Linux computer over USB with Connect tapped:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh
 ```
 
 It downloads the newest [release](https://github.com/ardeshirj/shamsaink/releases), checks it and copies it onto the Kobo,
-which installs it and restarts. Then NickelMenu → ShamsaInk. Installing by hand and removing it:
+which installs it and restarts. Then More → ShamsaInk; after a Kobo firmware update, run it again. Installing by hand and removing it:
 [`docs/devices/install.md`](docs/devices/install.md); building it yourself:
 [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md).
 
 **Not for everyone yet:** until the beta the releases are pre-releases, tried on a **Kobo Libra Colour** (firmware
-4.46) only, and the reader stops Kobo's own interface while a book is open. A guide for readers comes with the beta
+6.0) only, and the reader stops Kobo's own interface while a book is open. A guide for readers comes with the beta
 ([`ROADMAP.md`](ROADMAP.md)).
 
 ## Why it exists

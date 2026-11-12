@@ -80,8 +80,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   driven by our app, so timings only) and a **jailbroken Kindle Paperwhite 11th gen** (MediaTek MT8113: two
   Cortex-A53 cores at up to 1 GHz under a 32-bit kernel, 485 MB, 1236×1648 at 300 ppi; firmware 5.19.2, KOReader
   v2026.07.1, reached with `ssh kindle`), where our pages go on a real screen (experiment 09); and a **Kobo Libra Colour** (2026-10-29: MediaTek MT8110, of the MT8512 family, two Cortex-A53 cores at up to 2 GHz, the second off unless
-  switched on (Kobo's interface does it itself), 965 MB, firmware 4.46; reached with `ssh kobo`), for experiment 13
-  (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`).
+  switched on (Kobo's interface does it itself), 965 MB, firmware 4.46 until it updated itself to **6.0.279225 on 2026-11-11**; reached with `ssh kobo`), for experiment 13
+  (`experiments/13-kobo/PLAN.md`, set up as `docs/devices/kobo/setup.md`). **Since 2026-11-11 the Kobo needs firmware 5
+  or newer:** ShamsaInk is started from its own row in More (`reader/kobo/launcher`, a Qt 6 plugin installed as
+  `.kobo/Kobo.tgz`, put back by running the installer after each firmware update), and `ssh kobo` is our own Dropbear,
+  switched on in the reader's Developer panel (dev mode: `dev/` beside the reader), never in a release. NickelMenu,
+  KOReader on the Kobo and 4.x's workarounds are gone (`docs/devices/kobo/README.md`, "Firmware 4.x").
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
   and FarsiEPUB and their marks, in `reader/ui/templates/brand/` and the opening screen). So code from KOReader, Plato
   (AGPL-3.0) or FBInk (GPL) is read, never copied. The plan's "Releases" has what a first release needs (the notices, the fonts' licences).
@@ -181,6 +185,8 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
 - **The experiments' full code is behind the `experiments-archive` tag** (2026-11-02, pushed), for when main is trimmed
   to their notes: never move a pushed tag, tag each later experiment as `experiment/NN-name` just before trimming it, rerun old
   experiments from the tag, not main (`experiments/README.md`).
+  Likewise **`kobo-fw4`** (2026-11-11, pushed): the last commit with firmware 4.x's Kobo launcher (NickelMenu, its
+  Bluetooth and Wi-Fi workarounds, `KoboRoot.tgz`); 4.x is looked at from there, not main.
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.

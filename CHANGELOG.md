@@ -4,6 +4,23 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.2.0-beta (unreleased)
+For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer
+needs NickelMenu (which does not run there).
+- **Starting it:** a row of its own in Kobo's More tab, with ShamsaInk's mark. The installer puts it there; after a
+  Kobo firmware update, run the installer again to bring the row back (books, settings and highlights stay).
+- **Installing:** the same one command over USB. It also keeps ShamsaInk's books and files out of Kobo's own library
+  (`ExcludeSyncFolders` in Kobo's settings, left alone if you set your own). Uninstalling removes the row the next time
+  the Kobo restarts.
+- **Reads along on firmware 6:** Bluetooth headphones connect from the Sound panel in about a second, through Kobo's
+  new Bluetooth and sound (BlueZ and PulseAudio).
+- **Settings:** Sleep after comes first.
+- **Tried on:** a Kobo Libra Colour (firmware 6.0) and a Kindle Paperwhite 11th gen (firmware 5.19.2, jailbroken,
+  unchanged).
+- **No longer supported:** Kobo firmware 4.x. 0.1.0-beta stays for it (`install.sh` says how on a 4.x Kobo).
+- **For development:** dev mode (a `dev/` folder beside the reader) shows a Developer panel with an SSH server of our
+  own (Dropbear, built static; `make kobo-dev-ssh`), which stays up through a USB connection. Never in a release.
+
 ## 0.1.0-beta (2026-11-11)
 The first public beta: an EPUB reader for e-ink devices, Farsi first. It is early, tried on two devices, and we would
 like to hear how it does on yours (contact@farsiepub.org, or an issue here). More on
@@ -105,6 +122,7 @@ release was never built). It never pushes, and reminds you when this file has no
 
 The release (`.github/workflows/ci.yml`, the job `release`) has a package per device and their `.sha256`:
 `shamsaink-vX.Y.Z-kobo.tgz`, whose paths start at the Kobo's root, so it installs two ways
-(`docs/devices/install.md`): over USB as `.kobo/KoboRoot.tgz`, or over SSH with `make kobo-release-install
-V=X.Y.Z`; and `shamsaink-vX.Y.Z-kindle.tgz` (2026-11-07), whose paths start at the Kindle's drive, unpacked onto it
+(`docs/devices/install.md`): over USB by `install.sh` (since 0.2.0-beta the folder copied and the launcher given to
+Kobo as `.kobo/Kobo.tgz`; before, the whole package as `.kobo/KoboRoot.tgz`), or over SSH with `make
+kobo-release-install V=X.Y.Z`; and `shamsaink-vX.Y.Z-kindle.tgz` (2026-11-07), whose paths start at the Kindle's drive, unpacked onto it
 over USB.

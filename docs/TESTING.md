@@ -42,7 +42,7 @@ The reader built for Linux (x86 in CI, arm64 in Docker on the Mac), started with
   scenario.
 
 devtest gets a second transport beside SSH: a device of `e2e/devices.yaml` with `local: DIR` runs its commands locally,
-reads `DIR/fb`, writes `DIR/touch`, starts the reader itself instead of through NickelMenu, and takes the reader's exit
+reads `DIR/fb`, writes `DIR/touch`, starts the reader itself instead of through the Kobo's launcher, and takes the reader's exit
 as Nickel coming back.
 
 ## 3. What makes a run trustworthy

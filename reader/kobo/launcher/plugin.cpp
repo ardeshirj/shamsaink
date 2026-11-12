@@ -2,7 +2,7 @@
 // experiment 12, 2026-11-11). Built by build.sh into out/kobo/Kobo.tgz, which the firmware unpacks under
 // /usr/local/Kobo, so the library lands in imageformats/ and Nickel loads it at its start.
 // "ShamsaInk", above Help, shown while .adds/shamsaink/launch.sh is there: runs it, detached (it stops Nickel, runs the
-// reader and starts Nickel again). Nothing else: the development SSH is switched from the reader's Settings, so the code
+// reader and starts Nickel again). Nothing else: the development SSH is switched from the reader's Developer panel, so the code
 // in Nickel's process stays this small (2026-11-11).
 //
 // The way into Nickel follows NickelModManager (github.com/nicoverbruggen/NickelModManager, MIT License, Copyright (c)

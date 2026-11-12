@@ -171,7 +171,7 @@ leaving after Bluetooth gone since 2026-11-08)
 *The release*
 - [ ] A getting-started guide in the library on a fresh install (`reader/welcome`, built by pandoc with each package,
   beside the reader, and copied into `books/` on the reader's first start only, so a removed guide stays removed; 2026-11-07)
-- [ ] An install package (`KoboRoot.tgz`, our folder, the NickelMenu line), its notes in `devices/kobo/`, the readers'
+- [ ] An install package (our folder and the launcher as `Kobo.tgz` since 0.2.0-beta; `KoboRoot.tgz` with NickelMenu's line for 4.x before), its notes in `devices/kobo/`, the readers'
   guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start. The Kindle's the same
   (its package, `devices/install.md`)
 - [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
@@ -214,10 +214,11 @@ device's parts are behind `reader/device`.
   Kindle's library starts `launch.sh`, which pauses Amazon's framework while reading and resumes it after (stopped,
   powerd ignores the power button). The library and its books in one process, so starting from `/mnt/us` (FUSE, ~0.64 s
   cold) is paid once. Sleep is powerd's, answered with our sleep screen. KOReader's plugin, the host before, went on
-  2026-11-07; KOReader stays installed on both devices for SSH.
-- **The Kobo: our own host** (`devices/kobo/setup.md`, section 7): NickelMenu starts `launch.sh`, which stops Nickel
-  while reading and starts it after (pausing it brought its watchdog's reboots); Kobo's crash on a second start after
-  Bluetooth avoided since 2026-11-08 (`devices/kobo/README.md`). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's, none KOReader's.
+  2026-11-07; KOReader stays installed on the Kindle for SSH (the Kobo has its own since 2026-11-11).
+- **The Kobo: our own host** (`devices/kobo/setup.md`): our row in Kobo's More tab (firmware 5 and 6, since 2026-11-11;
+  NickelMenu on 4.x before) starts `launch.sh`, which stops Nickel while reading and starts it after (pausing it
+  brought its watchdog's reboots); 4.x's crash on a second start after Bluetooth was avoided from 2026-11-08, and 6.0
+  has none (`devices/kobo/README.md`). Screen, touch, sleep, Wi-Fi and sound are ours or Kobo's, none KOReader's.
 
 ## Ideas for the reading
 *Smarter flashes* (flash only when the ink changed enough for ghosting to show); *you were here* (on reopening or after a

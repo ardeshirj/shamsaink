@@ -175,28 +175,29 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 ## 4. On the device
 
 What the reader stands on on an e-ink device. Two devices so far (`devices/README.md`): the Kobo Libra Colour, started
-from NickelMenu with Kobo's interface stopped while reading, and the Kindle Paperwhite 11th gen, started from a scriptlet
+from a row of ours in Kobo's More tab with Kobo's interface stopped while reading (firmware 5 and 6, since 2026-11-11;
+NickelMenu on 4.x before), and the Kindle Paperwhite 11th gen, started from a scriptlet
 in its library with Amazon's framework paused (2026-11-06; before, inside KOReader through our plugin, removed 2026-11-07).
 
 ```mermaid
 flowchart LR
-  ko["the launcher (the host)<br/>Kobo: NickelMenu → launch.sh, Nickel stopped<br/>Kindle: a scriptlet → launch.sh, the framework paused"] -- "runs, watches (the watchdog)" --> app["ShamsaInk reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
+  ko["the launcher (the host)<br/>Kobo: the row in More → launch.sh, Nickel stopped<br/>Kindle: a scriptlet → launch.sh, the framework paused"] -- "runs, watches (the watchdog)" --> app["ShamsaInk reader, Go<br/>one static ARMv7 binary<br/>+ the Blitz engine (Rust, cgo)"]
   app -- "exits: the host's interface back" --> ko
   app --> scr["screen: /dev/fb0, mapped;<br/>refresh ioctls, a file<br/>per controller family"]
   app --> inp["touch and buttons:<br/>/dev/input/eventN, grabbed<br/>while the reader runs"]
   app --> pw["sleep: Kobo ours (suspend, Wi-Fi);<br/>Kindle powerd's, its events answered;<br/>power: the kernel's uevents"]
-  app --> snd["sound: Kobo's Bluetooth sink<br/>(GStreamer); the Kindle not yet"]
+  app --> snd["sound: Kobo's PulseAudio, over BlueZ<br/>(GStreamer); the Kindle not yet"]
   scr --> panel["e-ink controller<br/>Kindle PW5: MediaTek hwtcon_v2"]
 ```
 
 | Part | What it does | Whose | State |
 |---|---|---|---|
-| the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by NickelMenu (Kobo) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06) |
+| the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by the row in More (Kobo: `reader/kobo/launcher`, a Qt 6 plugin Nickel loads, installed by Kobo from `.kobo/Kobo.tgz`; it parks itself until a start is confirmed and removes itself once ShamsaInk is deleted) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06; the Kobo's row since 2026-11-11, NickelMenu before) |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so the device's own interface does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
 | sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
 | power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
-| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into Kobo's `mtkbtmwrpcaudiosink` kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
+| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` (firmware 6: BlueZ connects the headphones, PulseAudio in system mode carries the sound; 4.x: Kobo's `mtkbtmwrpcaudiosink`) kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
 | `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
 
 ### Where the device-specific code lives (2026-11-06)
@@ -324,11 +325,14 @@ copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published;
 | rayon | both cores | MIT / Apache-2.0 | yes |
 | Linux's framebuffer, mxcfb/MediaTek and input interfaces | screen and touch | the kernel's interface (numbers and struct layouts, no code) | called |
 | go-text | the Go engine | BSD-3 / Unlicense | only if the Go engine stays (the reference) |
-| KOReader | its SSH server, on both devices while developing (the Kindle's host until 2026-11-07) | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) and `koreader.sh` read as a reference, nothing copied |
+| NickelModManager | the Kobo launcher's way into Nickel and its row's painting, adapted (`reader/kobo/launcher/plugin.cpp`) | MIT (its notice in the Kobo package's `licenses/`) | no: in the launcher, a separate library loaded by Nickel |
+| Qt 6, Kobo's own build (Nickel's) | the launcher, linked against it at run time | Kobo's (Qt itself: LGPL-3 or commercial) | no: the launcher only |
+| Dropbear | the Kobo's SSH server while developing (dev mode; `reader/kobo/dev/`, built static from source) | MIT | no: never in a release |
+| KOReader | its SSH server on the Kindle while developing (the Kindle's host until 2026-11-07; the Kobo's SSH on 4.x) | AGPL-3 | no: a separate program. Its framebuffer code (`ffi/framebuffer_mxcfb.lua`, `mxcfb_kindle_h.lua`) and `koreader.sh` read as a reference, nothing copied |
 | FBInk (`fbink`) | trying refreshes by hand | GPL-3 (to confirm) | no |
 | crengine | the bar to measure against | GPL-2.0 | no |
 | the Kindle's `powerd`, `lipc`, `mplay` | sleep watched; sound | Amazon's | no: run as commands |
-| Go, Rust (musl, static), zig (cgo cross-builds), Docker images `eink-go`, `eink-rust`, `eink-cre`, `eink-koreader` | building and measuring | — | build tools |
+| Go, Rust (musl, static), zig (cgo cross-builds), Docker images `eink-go`, `eink-rust`, `eink-cre`, `eink-koreader`, kobuild's Qt 6 image (`ghcr.io/nicoverbruggen/kobuild`, the Kobo launcher), Alpine (Dropbear) | building and measuring | — | build tools |
 
 ## 8. Words used here
 - **Scene:** the list of drawing commands for a page (fill this shape, draw these glyphs), built before anything is drawn.
