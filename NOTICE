@@ -10,8 +10,9 @@ It uses, and does not change:
 - Readium's Go toolkit (https://github.com/readium/go-toolkit), BSD 3-Clause, for EPUB.
 - Blitz (https://github.com/DioxusLabs/blitz) with Parley, HarfRust and ICU4X (MIT, Apache License 2.0 or the Unicode
   License), for laying out and drawing pages, and Stylo, Firefox's CSS engine, under the Mozilla Public License 2.0.
-- The fonts Parastoo (copyright 2015 Saber Rastikerdar) and Vazirmatn (copyright 2015 The Vazirmatn Project Authors),
-  SIL Open Font License 1.1, and DejaVu (copyright 2003 Bitstream, Inc., and the DejaVu changes in the public domain),
+- The fonts Parastoo (copyright 2015 Saber Rastikerdar), Vazirmatn (copyright 2015 The Vazirmatn Project Authors),
+  Frank Ruhl Libre (copyright 2015 The Frank Ruhl Libre Project Authors) and Noto Naskh Arabic (copyright 2022 The
+  Noto Project Authors), SIL Open Font License 1.1, and DejaVu (copyright 2003 Bitstream, Inc., and the DejaVu changes in the public domain),
   the Bitstream Vera licence: in reader/fonts, each with its licence.
 
 On a Kobo it is started from a row in Kobo's More tab, a launcher of ours inside Kobo's interface whose way in and

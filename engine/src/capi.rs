@@ -95,7 +95,8 @@ pub unsafe extern "C" fn be_open(
 /// be_open.
 ///
 /// # Safety
-/// As be_open; `fonts` is null or from be_fonts.
+/// As be_open; `fonts` is null or from be_fonts; `lang` has `lang_len` bytes of UTF-8 (the book's language, BCP 47; may
+/// be empty).
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn be_new(
     read: ReadFn,
@@ -109,9 +110,13 @@ pub unsafe extern "C" fn be_new(
     margin: u32,
     font_size: f32,
     line_height: f32,
+    lang: *const u8,
+    lang_len: usize,
 ) -> *mut Book {
     let paths = unsafe { spine_paths(spine, spine_len, n) };
-    let opts = Options { width, height, margin, font_size, line_height, ..Options::default() };
+    let lang = if lang_len == 0 { String::new() } else { String::from_utf8_lossy(unsafe { std::slice::from_raw_parts(lang, lang_len) }).into_owned() };
+    let script = crate::BookScript::from_lang(&lang);
+    let opts = Options { width, height, margin, font_size, line_height, script, ..Options::default() };
     let fonts: &[(&str, Vec<u8>)] = if fonts.is_null() { &[] } else { &unsafe { &*fonts }.0 };
     Box::into_raw(Box::new(Book::new(Arc::new(Callback { read, ctx }), &paths, opts, fonts)))
 }

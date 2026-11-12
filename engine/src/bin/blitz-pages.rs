@@ -2,7 +2,8 @@
 //! timings.json, pages.json (each page's spine item and lines of text) and, with WORDS.json (from experiment 03's
 //! spanwords), boxes.json: the same files as experiment 03's cmd/pages, for its tools/linecmp.
 //!
-//! FONTS_DIR, if given, holds fallback fonts for the generic families: files named *Serif*, *Sans*, *Mono*.
+//! FONTS_DIR, if given, holds fallback fonts for the generic families: files named *Serif*, *Sans*, *Mono* (and the
+//! scripts' own, `fallback_fonts`); the OPF's first dc:language says which come first.
 //!
 //!     blitz-pages BOOK_DIR OUT_DIR [WORDS.json|-] [FONTS_DIR]
 
@@ -10,8 +11,8 @@ use blitz_engine::{Book, Dir, Options};
 use std::sync::Arc;
 use std::time::Instant;
 
-/// The spine's documents, from the OPF the container names (paths from the EPUB's root).
-fn spine(dir: &std::path::Path) -> Vec<String> {
+/// The spine's documents, from the OPF the container names (paths from the EPUB's root), and its first dc:language.
+fn spine(dir: &std::path::Path) -> (Vec<String>, String) {
     let attr = |tag: &str, name: &str| -> Option<String> {
         let i = tag.find(&format!("{name}=\""))? + name.len() + 2;
         Some(tag[i..i + tag[i..].find('"')?].to_string())
@@ -27,20 +28,27 @@ fn spine(dir: &std::path::Path) -> Vec<String> {
             hrefs.insert(id, href);
         }
     }
-    opf.split("<itemref ")
+    let lang = opf.find("<dc:language").and_then(|i| {
+        let rest = &opf[i..];
+        let start = rest.find('>')? + 1;
+        Some(rest[start..start + rest[start..].find('<')?].trim().to_string())
+    });
+    let files = opf
+        .split("<itemref ")
         .skip(1)
         .filter_map(|r| attr(&r[..r.find('>').unwrap()], "idref"))
         .filter_map(|id| hrefs.get(&id).map(|h| format!("{base}{h}")))
-        .collect()
+        .collect();
+    (files, lang.unwrap_or_default())
 }
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let (dir, out) = (std::path::PathBuf::from(&args[1]), &args[2]);
     std::fs::create_dir_all(out).unwrap();
-    let opts = Options::default();
     let t = Instant::now();
-    let files = spine(&dir);
+    let (files, lang) = spine(&dir);
+    let opts = Options { script: blitz_engine::BookScript::from_lang(&lang), ..Options::default() };
     let fonts = args.get(4).map(|d| blitz_engine::fallback_fonts(d)).unwrap_or_default();
     let mut book = Book::open_with_fonts(Arc::new(Dir(dir.clone())), &files, opts, &fonts);
     let layout_ms = t.elapsed().as_secs_f64() * 1e3;

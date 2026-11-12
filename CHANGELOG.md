@@ -4,6 +4,11 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## Unreleased
+- **Hebrew, Arabic, Urdu and more:** books in Hebrew and Yiddish now read in Frank Ruhl Libre, and books in Arabic,
+  Urdu, Pashto, Sindhi, Sorani Kurdish and Uyghur in Noto Naskh Arabic. Before, Hebrew letters and some of Urdu's
+  showed as empty boxes. Farsi books are unchanged. The interface stays in English for these books.
+
 ## 0.2.0-beta (2026-11-12)
 For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer
 needs NickelMenu (which does not run there).

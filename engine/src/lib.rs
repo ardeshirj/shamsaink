@@ -99,11 +99,34 @@ pub struct Options {
     pub widows: usize,
     /// documents kept laid out: the ones the reader used last (others are laid out again when reached)
     pub keep: usize,
+    /// the book's script, from its language: which fallback font comes first (`font_context`)
+    pub script: BookScript,
+}
+
+/// What a book's language says about its fonts: Hebrew and the languages written in the Arabic script other than Farsi
+/// have their own fallback font first; everything else (Farsi, Latin, ...) the reader's usual order.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum BookScript {
+    #[default]
+    Other,
+    Hebrew,
+    Arabic,
+}
+
+impl BookScript {
+    /// From a language code in BCP 47 ("ur", "he-IL"): its primary subtag.
+    pub fn from_lang(code: &str) -> BookScript {
+        match code.split(['-', '_']).next().unwrap_or("").to_ascii_lowercase().as_str() {
+            "he" | "iw" | "yi" => BookScript::Hebrew,
+            "ar" | "ur" | "ps" | "sd" | "ckb" | "ug" => BookScript::Arabic,
+            _ => BookScript::Other,
+        }
+    }
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, line_height: 0.0, orphans: 2, widows: 2, keep: 2 }
+        Options { width: 1072, height: 1448, margin: 60, font_size: 34.0, line_height: 0.0, orphans: 2, widows: 2, keep: 2, script: BookScript::Other }
     }
 }
 
@@ -188,7 +211,7 @@ impl Book {
         Book {
             src,
             spine: spine.to_vec(),
-            fctx: font_context(fonts),
+            fctx: font_context(fonts, opts.script),
             docs: spine.iter().map(|_| None).collect(),
             paged: vec![false; spine.len()],
             used: vec![],
@@ -226,7 +249,7 @@ impl Book {
         let mut w = saved::W(saved::MAGIC.to_vec());
         w.u32(saved::VERSION);
         let o = self.opts;
-        for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32] {
+        for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32, o.script as u32] {
             w.u32(v);
         }
         w.u32(self.spine.len() as u32);
@@ -255,7 +278,7 @@ impl Book {
                 return None;
             }
             let o = self.opts;
-            for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32] {
+            for v in [o.width, o.height, o.margin, o.font_size.to_bits(), o.line_height.to_bits(), o.orphans as u32, o.widows as u32, o.script as u32] {
                 if r.u32()? != v {
                     return None;
                 }
@@ -612,7 +635,9 @@ impl Book {
 
 /// The fonts in a folder, each as its generic family by its file name ("Mono", "Serif" or "Sans" in it; others are
 /// skipped), for `Book::new`; in the order of their names, so a generic family's first font is the same on every
-/// system (a folder's own order is the file system's: the Kobo's lists by name, Docker's not).
+/// system (a folder's own order is the file system's: the Kobo's lists by name, Docker's not). Two fonts are for one
+/// script each, Hebrew (Frank Ruhl Libre) and the Arabic script's languages other than Farsi (Noto Naskh Arabic):
+/// after the others in both serif and sans, first in a book in their script (`BookScript`).
 pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
     let mut out = vec![];
     let mut entries: Vec<_> = std::fs::read_dir(dir).unwrap().flatten().collect();
@@ -621,6 +646,10 @@ pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
         let name = e.file_name().to_string_lossy().into_owned();
         let generic = if name.starts_with("Parastoo") {
             "serif+sans" // one family (no separate sans and serif designs): both generics, so it is one file, not two copies
+        } else if name.starts_with("FrankRuhlLibre") {
+            "hebrew"
+        } else if name.starts_with("NotoNaskhArabic") {
+            "arabic"
         } else if name.contains("Mono") {
             "monospace"
         } else if name.contains("Serif") {
@@ -637,18 +666,32 @@ pub fn fallback_fonts(dir: &str) -> Vec<(&'static str, Vec<u8>)> {
     out
 }
 
-/// A font context holding the given fallback fonts as the generic families (None: Blitz's own).
-fn font_context(fonts: &[(&str, Vec<u8>)]) -> Option<parley::FontContext> {
+/// A font context holding the given fallback fonts as the generic families (None: Blitz's own). A script's own font
+/// ("hebrew", "arabic") comes after the others, or first in a book in that script, so that its words are in one font
+/// (Parastoo has most of Urdu's letters but not all: after it, Noto Naskh would draw only the letters it lacks).
+fn font_context(fonts: &[(&str, Vec<u8>)], script: BookScript) -> Option<parley::FontContext> {
     use parley::fontique::{Blob, GenericFamily as G};
     if fonts.is_empty() {
         return None;
     }
+    let first = match script {
+        BookScript::Hebrew => "hebrew",
+        BookScript::Arabic => "arabic",
+        BookScript::Other => "",
+    };
+    let rank = |generic: &str| match generic {
+        g if g == first => 0,
+        "hebrew" | "arabic" => 2,
+        _ => 1,
+    };
+    let mut order: Vec<&(&str, Vec<u8>)> = fonts.iter().collect();
+    order.sort_by_key(|(g, _)| rank(g)); // stable: the files' own order within each rank
     let mut ctx = parley::FontContext::default();
     let mut families: Vec<(G, parley::fontique::FamilyId)> = vec![];
-    for (generic, data) in fonts {
+    for (generic, data) in order {
         let gs: &[G] = match *generic {
             "serif" => &[G::Serif],
-            "serif+sans" => &[G::Serif, G::SansSerif, G::SystemUi, G::UiSansSerif],
+            "serif+sans" | "hebrew" | "arabic" => &[G::Serif, G::SansSerif, G::SystemUi, G::UiSansSerif],
             "sans-serif" => &[G::SansSerif, G::SystemUi, G::UiSansSerif],
             "monospace" => &[G::Monospace, G::UiMonospace],
             _ => &[],

@@ -28,6 +28,7 @@ import (
 type Options struct {
 	Width, Height, Margin int
 	FontSize, LineHeight  float32
+	Lang                  string // the book's language (BCP 47, "" for none): Hebrew's and the Arabic script's fonts first
 }
 
 // PageInfo says which spine document a page is from and how many lines of text it has.
@@ -126,8 +127,11 @@ func New(spine []string, read ReadFunc, o Options, fonts *Fonts) *Book {
 	if fonts != nil {
 		f = fonts.f
 	}
+	lang := C.CBytes([]byte(o.Lang + "\x00"))
+	defer C.free(lang)
 	h := C.be_new(C.be_read_fn(C.goRead), C.uintptr_t(ctx), (**C.uint8_t)(ptrs), (*C.size_t)(lens), C.size_t(n), f,
-		C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize), C.float(o.LineHeight))
+		C.uint32_t(o.Width), C.uint32_t(o.Height), C.uint32_t(o.Margin), C.float(o.FontSize), C.float(o.LineHeight),
+		(*C.uint8_t)(lang), C.size_t(len(o.Lang)))
 	return &Book{doc{b: h, ctx: ctx, w: o.Width, h: o.Height}}
 }
 

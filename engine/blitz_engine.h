@@ -19,7 +19,7 @@ Fonts *be_fonts(const uint8_t *dir, size_t dir_len);  // fallback fonts in a fol
 void be_fonts_free(Fonts *f);                         // books made with it keep their own copy
 Book *be_new(be_read_fn read, uintptr_t ctx, const uint8_t *const *spine, const size_t *spine_len, size_t n,
              const Fonts *fonts /* or NULL */, uint32_t width, uint32_t height, uint32_t margin, float font_size,
-             float line_height /* 0: the book's */);
+             float line_height /* 0: the book's */, const uint8_t *lang, size_t lang_len /* the book's language */);
 void be_layout(Book *b, size_t doc, size_t *first, size_t *last);  // lays out document doc: its pages are [first, last)
 int be_layout_next(Book *b);                          // paginates the next document not paginated yet: 1, or 0 if all are
 uint8_t *be_save(Book *b, size_t *len);               // the cache (free with be_bytes_free); NULL until all are paginated

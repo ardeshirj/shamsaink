@@ -138,7 +138,7 @@ and remove it)
   top, the stages below, the private parts trimmed; the top-level one goes or links to it
 - [ ] The README: the mark (SVG copies of FarsiEPUB's `mark.svg`, `mark-dark.svg` in `docs/brand/`), what it is, honest
   status, a screenshot from our own test EPUB, a map of the repository, the link to FarsiEPUB's page, licence and brand
-- [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, DejaVu)
+- [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, Vazirmatn, Frank Ruhl Libre, Noto Naskh Arabic, DejaVu)
 - [ ] The tour video (https://youtu.be/zfsITJZmzdE) made viewable when the repository is
 - [x] `LICENSE` (Apache-2.0), `NOTICE`, `BRAND.md` (2026-10-30)
 
