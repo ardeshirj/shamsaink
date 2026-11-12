@@ -52,6 +52,8 @@ chmod 755 "$d/shamsaink" "$d/launch.sh"
 if [ "$BRAND" = kobo ]; then
   mkdir -p "$d/launcher"
   cp out/kobo/Kobo.tgz "$d/launcher/Kobo.tgz"
+  # the launcher adapts NickelModManager's code (MIT): its notice goes with it
+  cp reader/kobo/launcher/LICENSE-NickelModManager.txt "$d/licenses/LICENSE-NickelModManager.md"
 else
   mkdir -p "$stage/documents"
   sh reader/kindle/scriptlet.sh > "$stage/documents/ShamsaInk.sh"

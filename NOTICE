@@ -14,6 +14,11 @@ It uses, and does not change:
   SIL Open Font License 1.1, and DejaVu (copyright 2003 Bitstream, Inc., and the DejaVu changes in the public domain),
   the Bitstream Vera licence: in reader/fonts, each with its licence.
 
+On a Kobo it is started from a row in Kobo's More tab, a launcher of ours inside Kobo's interface whose way in and
+row painting are adapted from NickelModManager (https://github.com/nicoverbruggen/NickelModManager, copyright 2026 Nico
+Verbruggen, MIT License: its licence is in licenses/LICENSE-NickelModManager.md in the Kobo package, and in
+reader/kobo/launcher/LICENSE-NickelModManager.txt).
+
 On a Kindle it is started by a launcher of ours from the Kindle's own library; KOReader
 (https://github.com/koreader/koreader, AGPL-3.0) is used only for its SSH server while developing. KOReader is a
 separate program and none of its code is copied here.
