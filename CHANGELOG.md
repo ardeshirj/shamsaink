@@ -13,6 +13,21 @@ is at the end, under "Versions and releases".
 - **Laid out right to left for right-to-left books:** in a Hebrew, Arabic or Urdu book the menus and panels are
   mirrored as in a Farsi book, their words still English. "Follow book language" off keeps them left to right.
 
+## 0.3.0-beta (2026-11-12)
+Sleep fixed on Kobo firmware 6, and books in Hebrew, Urdu and more of the right-to-left languages.
+- **Sleep on firmware 6:** in 0.2.0-beta, putting the Kobo to sleep in ShamsaInk could leave its Wi-Fi (and Bluetooth)
+  dead once you left ShamsaInk, until the Kobo was restarted. Now Wi-Fi and Bluetooth go off for the sleep and come
+  back a few seconds after waking, as with Kobo's own sleep. A Kobo on its charger stays awake behind the sleep screen,
+  as it should (it tried to sleep again and again), and the charge light no longer stays on after the charger is out.
+- **Hebrew and more Arabic-script languages:** Hebrew books no longer show empty boxes, and Urdu, Pashto, Sindhi and
+  the other Arabic-script languages get their own letters (two new fonts: Frank Ruhl Libre and Noto Naskh Arabic).
+  Their pages turn right to left even when the book does not say so.
+- **The interface mirrored for them:** a Hebrew, Arabic or Urdu book has the bar, dock and contents laid out right to
+  left, as a Farsi book has, with the words in English.
+- **Tried on:** a Kobo Libra Colour (firmware 6.0). The Kindle: the new fonts not tried on it yet.
+- **For development:** sleep is now tested on the Kobo itself, woken by its clock's alarm (`sleep`, `sleep-more`,
+  `sleep-narration`); reopening ShamsaInk right after leaving it no longer restarts the Kobo.
+
 ## 0.2.0-beta (2026-11-12)
 For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer
 needs NickelMenu (which does not run there).
