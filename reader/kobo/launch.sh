@@ -45,8 +45,31 @@ esac
 # row in More: after an e2e run, WAKE_AFTER had ShamsaInk's every sleep woken by the clock after 20 s (2026-11-12).
 OURS="WAKE_AFTER SHAMSAINK_DEV SHAMSAINK_DIR SHAMSAINK_CLOCK SHAMSAINK_RECORD SHAMSAINK_SIM HEARTBEAT HEARTBEAT_EVERY
 WATCH_EVERY MARK_LOG FONT_SIZE LINE_HEIGHT MARGIN LEAD_MS TOUCH KOBO_VERSION RESTORE_SCREEN"
+# The light as it is, into Kobo's settings before Nickel starts again, so Nickel comes back at the level and warmth the
+# reader had: it sets its own from [PowerOptions] (FrontLightLevel 0 to 100; ColorSetting in kelvin, its slider going
+# down to the chip's 0 to 10 steps as (K - 1500) / 490, 1500 the warmest), the warmth at once and the level ~15 s on,
+# so a change made in ShamsaInk was undone (measured 2026-11-12, firmware 6). Each line replaced, or added under
+# [PowerOptions]; nothing done without the file, the section or the light's files.
+keep_light() {
+  conf="/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
+  level=$(cat /sys/class/backlight/mxc_msp430.0/actual_brightness 2>/dev/null)
+  chip=$(cat /sys/class/backlight/lm3630a_led/color 2>/dev/null)
+  [ -f "$conf" ] && [ -n "$level" ] && [ -n "$chip" ] && grep -q '^\[PowerOptions\]' "$conf" || return 0
+  kelvin=$((1500 + 490 * chip))
+  awk -v level="$level" -v kelvin="$kelvin" '
+    function put() { if (!l) print "FrontLightLevel=" level; if (!k) print "ColorSetting=" kelvin; l = k = 1 }
+    /^\[/ { if (in_power) put(); in_power = ($0 == "[PowerOptions]") }
+    in_power && /^FrontLightLevel=/ { print "FrontLightLevel=" level; l = 1; next }
+    in_power && /^ColorSetting=/ { print "ColorSetting=" kelvin; k = 1; next }
+    in_power && /^$/ { put() }
+    { print }
+    END { if (in_power) put() }' "$conf" > /tmp/shamsaink-kobo.conf &&
+    cat /tmp/shamsaink-kobo.conf > "$conf" && rm -f /tmp/shamsaink-kobo.conf &&
+    log "light kept for Nickel: level $level, warmth $chip ($kelvin K)"
+}
 start_nickel() {
   rm -f /mnt/onboard/.kobo/sickel_frozen
+  keep_light
   udev_unstick
   killall -q -TERM multilog fontickel adobehost
   i=0

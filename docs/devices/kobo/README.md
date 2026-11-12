@@ -113,6 +113,12 @@ charger was out, and came on again with each wake. The reader switches it off on
 **The screen's driver refuses a suspend right after a refresh** ("operation not permitted", `hwtcon ... xon off timer
 pending`). Tried again after 3 s, five times at most (`reader/device/kobo.go`).
 
+**The light, on leaving** (6.0, 2026-11-12): Nickel sets its own when it starts, from `[PowerOptions]`
+(`FrontLightLevel`, 0 to 100, after ~15 s; `ColorSetting` in kelvin, at once, written only once its warmth is changed),
+so a change made in ShamsaInk was undone. Its slider is continuous, the chip's warmth whole steps: chip =
+(K − 1500) / 490 rounded down (1500 K → 0, 2440 K → 1), 0 the warmest. `launch.sh` writes the light as it is there
+before starting Nickel (`keep_light`).
+
 **Leaving takes 11–12 s** to Kobo's home screen (6.0, 2026-11-12): the reader gone in about 1 s, Nickel's home ready 8–10
 s after it starts.
 
