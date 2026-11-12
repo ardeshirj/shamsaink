@@ -128,6 +128,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the panel under the bar (the menu) or the filters (sort), while open
 	var panel *ui.Panel
 	langOpen := false  // the panel is the language panel, not the menu
+	devOpen := false   // the panel is the Developer panel (dev mode; devssh.go)
 	lightOpen := false // the panel is the Light panel (light.go)
 	soundOpen := false // the panel is the Sound panel (sound.go)
 	phones := ""       // its headphones' Bluetooth address ("" none connected)
@@ -148,7 +149,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		return rd.drawLight(v.TopBarHeight())
 	}
 	open := func(menu bool) {
-		langOpen = false
+		langOpen, devOpen = false, false
 		lv.MenuOn, lv.SortOn = menu, !menu
 		setHead()
 		if menu {
@@ -193,6 +194,14 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	openLang := func() {
 		old := panel.Rect()
 		panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
+	}
+	// the Developer panel in the menu's place, or again after its switch (its address line comes or goes)
+	openDev := func() {
+		old := panel.Rect()
+		panel = ui.DrawDeveloper(developerView(rd.dir), v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
@@ -323,7 +332,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
-			case id == "settings" && lv.MenuOn && !langOpen:
+			case id == "developer" && lv.MenuOn && !langOpen && !devOpen:
+				devOpen = true
+				openDev()
+			case id == "settings" && lv.MenuOn && !langOpen && !devOpen:
 				langOpen = true
 				openLang()
 			case id == "lang-follow" && langOpen:
@@ -343,6 +355,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), v.TopBarHeight(), rd.fonts, scr.W)
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false) // the panel's rows only
+			case id == "dev-ssh" && devOpen:
+				if s := devSSHScript(rd.dir); s != "" {
+					fmt.Println("development ssh:", devSSH(s))
+				}
+				openDev()
 			case (id == "sleep-dec" || id == "sleep-inc") && langOpen:
 				set.SleepMin = nextSleep(set.SleepMin, id == "sleep-inc")
 				set.save(rd.dir)
@@ -395,7 +412,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					r = panel.Rect()
 				}
 				held, bookPanel = -1, ""
-				panel, langOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false
+				panel, langOpen, devOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false, false
 				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
 				setHead()
 				v.Draw(rd.over)

@@ -72,7 +72,9 @@ type ButtonMap struct {
 
 // Capabilities are what a device may have and a control may require: a front light, one whose colour can be set (warmth), a
 // colour screen, a way to play sound (the Kobo has none of its own: its headphones, over Bluetooth), and page-turn buttons.
-var Capabilities = []string{"light", "warmth", "colour", "sound", "buttons"}
+// development: the development tools beside the reader (dev/, never in a release), not a part of the device; no profile
+// has it, so no kept render expects its controls.
+var Capabilities = []string{"light", "warmth", "colour", "sound", "buttons", "development"}
 
 // Device is what the design is judged against (spec/devices/*.yaml).
 type Device struct {

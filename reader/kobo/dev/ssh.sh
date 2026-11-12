@@ -1,7 +1,7 @@
 #!/bin/sh
-# For development, never in a release: an SSH server switched on or off with Kobo's interface in front, from the
-# launcher's "SSH (development)" row in More (shown while this file is there). Our own Dropbear, static
-# (build-dropbear.sh), beside this script: port 2222, root, keys only (-s). The keys: authorized_keys beside this script
+# For development, never in a release: an SSH server switched on or off from the reader's Developer panel, "SSH
+# (development)" (dev mode: dev/ beside the reader; reader/devssh.go). The server outlives the reader, so it serves for
+# Kobo's own interface too. Our own Dropbear, static (build-dropbear.sh), beside this script: port 2222, root, keys only (-s). The keys: authorized_keys beside this script
 # (make kobo-dev-ssh KOBO_KEY=...), copied to RAM with the modes Dropbear insists on: it checks the file and every
 # folder above it (the storage is vfat, every file looks writable to all; /tmp is writable by all, so the copy is in
 # /dev, RAM too, owned by root and closed to others: 2026-11-11). The host key kept beside this script, made at the
@@ -10,11 +10,16 @@
 # stops Kobo lending it to a computer over USB ("Unable to umount /mnt/onboard", 2026-11-11), and Dropbear starts itself
 # again for each connection, reading its host key then (from the storage lent out: "connection reset"). So SSH stays up
 # through a USB connection.
-# Prints the new state on one line, which the row shows. Sessions already open stay open when it is switched off.
-# Installed by `make kobo-dev-ssh`.
+# Prints the new state on one line, which the panel shows. Sessions already open stay open when it is switched off.
+# `ssh.sh status` prints the state without changing it. Installed by `make kobo-dev-ssh`.
 H=$(cd "$(dirname "$0")" && pwd)
 P=/tmp/shamsaink-dropbear.pid
 K=/dev/shamsaink-ssh
+address() { ifconfig wlan0 2>/dev/null | sed -n 's/.*inet addr:\([0-9.]*\).*/\1/p'; }
+if [ "$1" = status ]; then
+  if [ -e "$P" ] && kill -0 "$(cat "$P")" 2>/dev/null; then IP=$(address); echo "SSH on: ${IP:-no Wi-Fi}, port 2222"; else echo "SSH off"; fi
+  exit 0
+fi
 if [ -e "$P" ] && kill -0 "$(cat "$P")" 2>/dev/null; then
   kill "$(cat "$P")"
   rm -f "$P"
@@ -38,5 +43,5 @@ chmod 755 /tmp/shamsaink-dropbear
 # its output to a log, not to whoever started it: the launcher's row waits for this script's output to close
 /tmp/shamsaink-dropbear -E -s -p 2222 -P "$P" -D "$K" -r "$K/host_ed25519" >> "$L" 2>&1 < /dev/null
 usleep 300000
-IP=$(ifconfig wlan0 2>/dev/null | sed -n 's/.*inet addr:\([0-9.]*\).*/\1/p')
+IP=$(address)
 if [ -e "$P" ]; then echo "SSH on: ${IP:-no Wi-Fi yet}, port 2222"; else echo "SSH failed to start ($L)"; fi

@@ -255,6 +255,12 @@ var designRenders = map[string][]renderCase{
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
 			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 60, HasButtons: renderHas("buttons"), ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 		}}},
+	"library-developer": {{"on", en, func(f *blitz.Fonts, w, h int) rendered { // an address from the documentation range
+		return pr(DrawDeveloper(Developer{SSH: "SSH on: 192.0.2.10, port 2222"}, barHeight(f, w), f, w))
+	}},
+		{"off", en, func(f *blitz.Fonts, w, h int) rendered {
+			return pr(DrawDeveloper(Developer{SSH: "SSH off"}, barHeight(f, w), f, w))
+		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
 	}}},

@@ -20,13 +20,14 @@ type TopBar struct {
 	Charging, Full    bool   // on the charger: the charging glyph, charging or full
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
-	Exp               bool   // an experimental run (Experimental): a flask after the title (the library's)
+	Dev               bool   // dev mode (DevMode): a flask after the title (the library's)
 	RTL               bool
 }
 
-// Experimental is set when the reader runs as an experiment, SHAMSAINK_EXP given (main.go): the library's title has a
-// flask after it, so such a run is told from a usual one at a glance.
-var Experimental bool
+// DevMode is set when the reader runs in dev mode (main.go): dev/ beside it (the development tools, make kobo-dev-ssh;
+// never in a release) or SHAMSAINK_DEV given (the simulator, tests). The library's title has a flask after it, and its
+// menu a Developer entry (2026-11-11; until then "an experimental run", SHAMSAINK_EXP).
+var DevMode bool
 
 // BatteryIcon is the battery's glyph (Phosphor's): charging, warning when low (15% or less, as the red is), else its level in
 // five steps.

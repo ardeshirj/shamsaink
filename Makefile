@@ -82,7 +82,7 @@ check:
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
 #   make kobo-dropbear   Dropbear, static ARMv7, for the development SSH (reader/kobo/dev/): out/kobo/dropbear
-#   make kobo-launcher   the launcher, ShamsaInk's rows in More (reader/kobo/launcher, Qt 6, in kobuild's image):
+#   make kobo-launcher   the launcher, ShamsaInk's row in More (reader/kobo/launcher, Qt 6, in kobuild's image):
 #                        out/kobo/Kobo.tgz
 #   make kobo-launcher-install  the launcher built and put in place over SSH; Nickel loads it at its next start (its
 #                        start-up guard checks it then: a new library)
@@ -163,14 +163,14 @@ kobo-status:
 	  df -h /mnt/onboard /tmp | awk "NR>1 {print \"storage \" \$$6 \": \" \$$4 \" free of \" \$$2}"'
 
 kobo-wait:
-	@echo "waiting for $(KOBO) over SSH (wake it with its power button; never answers: More > SSH (development))..."
+	@echo "waiting for $(KOBO) over SSH (wake it with its power button; never answers: ShamsaInk, menu > Developer > SSH)..."
 	@until $(KOBO_SSH) true 2>/dev/null; do sleep 5; done; echo "$(KOBO) is up"
 
 kobo-ssh:
 	@$(KOBO_SSH)
 
 # For development, never in the reader's package: our own SSH server (reader/kobo/dev/: Dropbear, static, built by
-# make kobo-dropbear) and its switch, the launcher's "SSH (development)" row in More. Over USB when the Kobo is
+# make kobo-dropbear) and its switch, in the reader's Developer panel (dev mode). Over USB when the Kobo is
 # connected (the first time: no SSH yet), else over SSH. Its keys: KOBO_KEY=file.pub, copied as dev/authorized_keys
 # (once; kept there after).
 DEV_FILES = reader/kobo/dev/ssh.sh out/kobo/dropbear out/kobo/dropbearkey
@@ -180,7 +180,7 @@ kobo-dev-ssh: out/kobo/dropbear
 	  cp $(DEV_FILES) $(KOBO_USB)/.adds/shamsaink/dev/ && \
 	  { [ -z "$(KOBO_KEY)" ] || cp "$(KOBO_KEY)" $(KOBO_USB)/.adds/shamsaink/dev/authorized_keys; } && \
 	  dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null && \
-	  echo "SSH (development) copied, Kobo ejected: in More once unplugged"; \
+	  echo "SSH (development) copied, Kobo ejected: in the reader, menu > Developer, once unplugged"; \
 	else \
 	  $(KOBO_SSH) 'mkdir -p $(KOBO_DIR)/dev' && \
 	  for f in $(DEV_FILES); do \

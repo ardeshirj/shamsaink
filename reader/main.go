@@ -8,8 +8,8 @@
 //	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
 //	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //
-// DIR: $SHAMSAINK_DIR, or the folder the program is in. $SHAMSAINK_EXP set (any value): an experimental run, a flask
-// after the library's title.
+// DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set (any value): dev mode, a flask
+// after the library's title and a Developer entry in its menu (devssh.go).
 package main
 
 import (
@@ -66,9 +66,9 @@ func main() {
 	started := sinceStart()
 	fmt.Printf("shamsaink %s\n", version)
 	ui.Build = version
-	ui.Experimental = os.Getenv("SHAMSAINK_EXP") != ""
 	exe, _ := os.Executable()
 	rd := &reader{dir: env("SHAMSAINK_DIR", filepath.Dir(exe))}
+	ui.DevMode = os.Getenv("SHAMSAINK_DEV") != "" || isDir(filepath.Join(rd.dir, "dev"))
 	var err error
 	rd.dev, err = device.Open()
 	check(err)
@@ -219,6 +219,12 @@ func shownNow() time.Time {
 		}
 	}
 	return time.Now()
+}
+
+// isDir tells whether p is a folder.
+func isDir(p string) bool {
+	fi, err := os.Stat(p)
+	return err == nil && fi.IsDir()
 }
 
 func env(k, d string) string {

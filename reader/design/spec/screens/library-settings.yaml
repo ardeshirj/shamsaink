@@ -3,7 +3,7 @@ layer: panel
 templates: [library-settings.html]
 buttons: ring
 status: built
-purpose: "Settings, rows with no title: the switches (Follow book language, and on a device with page buttons Reverse page buttons) and then Sleep after with a stepper; under them, small and grey, the version of the reader running. A tap applies it at once."
+purpose: "Settings, rows with no title: Sleep after with a stepper, then the switches (Follow book language, and on a device with page buttons Reverse page buttons); under them, small and grey, the version of the reader running. A tap applies it at once."
 enter: [{gesture: tap, control: settings, from: menu}]
 controls:
   - {id: lang-follow, component: toggle, action: act, does: "interface language follows the book's, or English only", emits: "interface language: (follows the book|English only)", undo: lang-follow}

@@ -63,10 +63,11 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and
   its paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - [ ] The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
-- [ ] Settings › Development (2026-11-11, the maintainer): shown only while the device has `dev/` beside the reader
-  (never in a release), with SSH on and off: the reader runs `dev/ssh.sh` and shows its line ("SSH on: ADDRESS"), the
-  same on every device (each its own `dev/ssh.sh`). The Kobo's "SSH (development)" row in More stays, for when the
-  reader cannot start and for Nickel's own problems
+- [x] Dev mode (2026-11-11, the maintainer): on while `dev/` is beside the reader (never in a release; `SHAMSAINK_DEV`
+  for the simulator), a flask after the library's title and **Developer** in its menu, its panel apart from Settings:
+  SSH (development), the device's own `dev/ssh.sh`, with its address while on; the same on every device. The only SSH
+  switch: the launcher's row in More went, so the code in Nickel stays small (a reader that cannot start: USB still
+  reads `logs/` and takes a new build). Settings: Sleep after first, then the switches
 - [x] Done: the design system as YAML with renders, a generated page and CI (2026-11-01); the page-button maps, Light,
   Text, Contents, the bar's panels, the highlight's menu; a page button with a panel open closes it and turns the page
   (2026-11-06; the spec's `panel` map); the sleep screen from a YAML file in `sleep/` (2026-11-05)

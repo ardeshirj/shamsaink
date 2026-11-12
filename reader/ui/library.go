@@ -49,7 +49,7 @@ type LibraryView struct {
 // filter-finished and filter-all, and list-sort.
 func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
 	topBar.Title = word("library")
-	topBar.Exp = Experimental
+	topBar.Dev = DevMode
 	topBar.MenuOn = v.MenuOn // no start icon: search comes back with a keyboard (docs/design/unbuilt-screens.md)
 	var fs []button
 	for i, name := range library.Filters {
@@ -247,7 +247,8 @@ func DrawMenu(under int, which string, fonts *blitz.Fonts, w int) *Panel {
 	d := struct {
 		Dir   string
 		Which string
-	}{"ltr", which}
+		Dev   bool // dev mode, in the library: the Developer entry
+	}{"ltr", which, DevMode && which == "device"}
 	if RTL() {
 		d.Dir = "rtl"
 	}
@@ -269,14 +270,32 @@ type LibrarySettings struct {
 
 // DrawLibrarySettings draws the Settings panel, directly under the bar (under px from the top), in place of the menu it
 // was opened from: no title, rows with the setting's name at the start and its switch or stepper at the far end:
-// "Follow book language" (the button lang-follow), "Sleep after" (sleep-dec and sleep-inc), and on a device with page
-// buttons "Reverse page buttons" (buttons-reverse); under them the version, small and grey.
+// "Sleep after" (sleep-dec and sleep-inc), then the switches: "Follow book language" (lang-follow), on a device with
+// page buttons "Reverse page buttons" (buttons-reverse); under them the version, small and grey.
 func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
 	sleep := word("min", num(st.SleepMin))
 	html, ids := render("library-settings.html", struct {
 		LibrarySettings
 		Sleep string
 	}{st, sleep})
+	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
+	m.y0 = under
+	return m
+}
+
+// Developer is what the Developer panel shows (dev mode only): the development SSH's state, its script's line ("SSH on:
+// ADDRESS, port 2222" or "SSH off"; empty when the device has no dev/ssh.sh).
+type Developer struct {
+	SSH string
+}
+
+// SSHOn tells whether the development SSH is on, by its state's line.
+func (d Developer) SSHOn() bool { return strings.HasPrefix(d.SSH, "SSH on") }
+
+// DrawDeveloper draws the Developer panel (templates/library-developer.html) directly under the bar (under px from
+// the top), in place of the menu it was opened from: "SSH (development)" (dev-ssh) with its address while on.
+func DrawDeveloper(d Developer, under int, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("library-developer.html", d)
 	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
 	m.y0 = under
 	return m

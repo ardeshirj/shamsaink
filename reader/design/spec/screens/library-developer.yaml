@@ -1,0 +1,12 @@
+name: library-developer
+layer: panel
+templates: [library-developer.html]
+buttons: ring
+status: built
+purpose: "Dev mode only (dev/ beside the reader, never in a release; 2026-11-11): rows as in Settings, SSH (development) with a switch, and under it, small and grey, the server's state (its address while on). English in every interface language: it is for us."
+enter: [{gesture: tap, control: developer, from: menu}]
+# reached only through the menu's Developer, which requires development: no requires of its own
+controls:
+  - {id: dev-ssh, component: toggle, action: act, does: "the development SSH server on or off (the device's dev/ssh.sh; its address shown under the rows while on)"}
+dismiss: tap-outside
+words: [ssh-dev]

@@ -72,6 +72,8 @@
   "px": "%s px",
   "min": "%s min",
   "sleep-after": "Sleep after",
+  "ssh-dev": "SSH (development)",
+  "developer": "Developer",
   "reverse-buttons": "Reverse page buttons",
   "version": "Version",
   "times": "%s×",

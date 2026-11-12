@@ -72,6 +72,8 @@
   "px": "%s پیکسل",
   "min": "%s دقیقه",
   "sleep-after": "خواب پس از",
+  "ssh-dev": "SSH (development)",
+  "developer": "Developer",
   "reverse-buttons": "برعکس کردن دکمه‌های صفحه",
   "version": "نسخه",
   "times": "%s برابر",
