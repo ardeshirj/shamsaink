@@ -36,7 +36,7 @@ VERSION = $(shell git describe --tags --match 'v[0-9]*' --dirty --always)
 welcome:
 	@sh reader/scripts/welcome.sh
 
-kobo-package: reader welcome
+kobo-package: reader welcome kobo-launcher
 	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) sh reader/scripts/package.sh'
 
 kindle-package: reader welcome

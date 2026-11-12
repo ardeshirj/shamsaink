@@ -119,6 +119,8 @@ jobs:
         run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
       - name: the getting-started guide (reader/scripts/welcome.sh, pandoc in Docker)
         run: sh reader/scripts/welcome.sh
+      - name: the Kobo's launcher (reader/kobo/launcher/build.sh, in kobuild's Qt 6 image)
+        run: sh reader/kobo/launcher/build.sh
       - name: the Kobo's and the Kindle's packages and their checksums (reader/scripts/package.sh)
         run: |
           VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh

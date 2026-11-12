@@ -5,14 +5,17 @@
 # (install.sh) or SSH: shamsaink/ (the reader, launch.sh, fonts, licences, VERSION, the guide, books/ and sleep/ empty) and
 # documents/ShamsaInk.sh (the scriptlet, ShamsaInk in the Kindle's library, its cover in it: reader/kindle/scriptlet.sh).
 #
-# The Kobo's: one .tgz whose paths start at the Kobo's root, so it installs two ways, the same file:
-#   - over USB, by anyone: copied to the Kobo as .kobo/KoboRoot.tgz; unplugged, Kobo unpacks it at / and restarts
-#     (NickelMenu's own KoboRoot.tgz is made the same way: ./mnt/onboard/.adds/nm/doc)
-#   - over SSH: unpacked at / (reader/kobo/install-package.sh, make kobo-package-install, make kobo-release-install)
-# In it: the reader, its launcher and fonts in .adds/shamsaink, the fonts' and our licences, VERSION, the getting-started
+# The Kobo's (firmware 5.x/6.x since 0.2.0-beta): one .tgz whose paths start at the Kobo's root (./mnt/onboard/...),
+# installed two ways, the same file:
+#   - over USB, by anyone: install.sh copies .adds/shamsaink onto the Kobo's drive and the launcher in it,
+#     launcher/Kobo.tgz, to .kobo/Kobo.tgz, which the firmware unpacks under /usr/local/Kobo at its restart
+#   - over SSH: unpacked beside the reader and moved in, the launcher put in imageformats/ (reader/kobo/install.sh,
+#     make kobo-package-install, make kobo-release-install)
+# In it: the reader, launch.sh and fonts in .adds/shamsaink, the fonts' and our licences, VERSION, the getting-started
 # guide beside the reader (reader/scripts/welcome.sh; the reader copies it into books/ on its first start only,
-# library.Welcome, so an upgrade does not bring back a guide that was removed), and NickelMenu's
-# line for ShamsaInk (.adds/nm/shamsaink). Never what the reader makes or reads (settings.json, places, highlights,
+# library.Welcome, so an upgrade does not bring back a guide that was removed), and the launcher
+# (reader/kobo/launcher, out/kobo/Kobo.tgz: make kobo-launcher). The fonts' licences are .md: Kobo's firmware 6 turns
+# every .txt file it finds into an EPUB beside it (2026-11-11); the Kindle's the same, one package's shape. Never what the reader makes or reads (settings.json, places, highlights,
 # cache/, logs/, books/, sleep/): an upgrade leaves them as they are. books/ and sleep/ are there as empty folders.
 # GNU tar (in Docker on the Mac, `make kobo-package`; native on CI), owned by root, no macOS extras.
 # Run from the repository's root once reader/out/shamsaink is built.
@@ -30,6 +33,7 @@ OUT=${OUT:-out/release}
 BRAND=${BRAND:-kobo}
 [ -f reader/out/shamsaink ] || { echo "reader/out/shamsaink is not built: make reader" >&2; exit 1; }
 [ -f reader/out/welcome/getting-started.epub ] || { echo "the guide is not built: make welcome" >&2; exit 1; }
+[ "${BRAND:-kobo}" != kobo ] || [ -f out/kobo/Kobo.tgz ] || { echo "the launcher is not built: make kobo-launcher" >&2; exit 1; }
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 case $BRAND in
@@ -41,13 +45,13 @@ mkdir -p "$d/fonts" "$d/licenses" "$d/books" "$d/sleep"
 cp reader/out/welcome/getting-started.epub "$d/"
 cp reader/out/shamsaink reader/$BRAND/launch.sh "$d/"
 cp reader/fonts/*.ttf "$d/fonts/"
-cp reader/fonts/LICENSE-*.txt LICENSE NOTICE BRAND.md "$d/licenses/"
+for f in reader/fonts/LICENSE-*.txt; do cp "$f" "$d/licenses/$(basename "$f" .txt).md"; done
+cp LICENSE NOTICE BRAND.md "$d/licenses/"
 echo "$VERSION" > "$d/VERSION"
 chmod 755 "$d/shamsaink" "$d/launch.sh"
 if [ "$BRAND" = kobo ]; then
-  mkdir -p "$stage/mnt/onboard/.adds/nm"
-  echo 'menu_item:main:ShamsaInk:cmd_spawn:quiet:sh /mnt/onboard/.adds/shamsaink/launch.sh' \
-    > "$stage/mnt/onboard/.adds/nm/shamsaink"
+  mkdir -p "$d/launcher"
+  cp out/kobo/Kobo.tgz "$d/launcher/Kobo.tgz"
 else
   mkdir -p "$stage/documents"
   sh reader/kindle/scriptlet.sh > "$stage/documents/ShamsaInk.sh"

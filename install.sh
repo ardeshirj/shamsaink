@@ -7,9 +7,12 @@
 #     curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh -s uninstall
 #
 # It finds the device's drive, downloads the release's package for it and its checksum from GitHub, checks it, and
-# puts it on the device (docs/devices/install.md): the Kobo's is copied as .kobo/KoboRoot.tgz, which the Kobo installs
-# once ejected, and restarts; the Kindle's is unpacked onto its drive, nothing to
-# restart. Nothing else on the device is touched, and an install over an older one
+# puts it on the device (docs/devices/install.md). On a Kobo with firmware 5.x/6.x (ShamsaInk 0.2.0-beta and later):
+# ShamsaInk's folder copied onto its drive, the launcher (ShamsaInk's row in More) as .kobo/Kobo.tgz, which the Kobo
+# installs as it restarts once ejected, and Kobo's library told to leave ShamsaInk's folder alone (ExcludeSyncFolders, if
+# Kobo's settings have none); a Kobo firmware update removes the launcher, so this is run again after one. A release for
+# firmware 4.x (0.1.0-beta, the last) goes the old way: the package as .kobo/KoboRoot.tgz, NickelMenu needed. The
+# Kindle's is unpacked onto its drive, nothing to restart. Nothing else on the device is touched, and an install over an older one
 # keeps the settings, places, highlights and books.
 # Without a version: the newest release, pre-releases included. While the repository is private the download needs
 # GitHub's `gh`, logged in; once public, curl alone. KOBO=/path or KINDLE=/path if the drive is mounted somewhere
@@ -56,8 +59,13 @@ if [ -n "$KOBO" ]; then
   NAME=Kobo
   DRIVE=$KOBO
   [ -d "$KOBO/.kobo" ] || die "$KOBO is not a Kobo's drive (no .kobo folder)."
-  [ "$1" = uninstall ] || [ -f "$KOBO/.adds/nm/doc" ] || die "NickelMenu is not on this Kobo, and ShamsaInk is started from its menu. Install NickelMenu first: https://pgaskin.net/NickelMenu/"
-  [ "$1" != uninstall ] && [ -f "$KOBO/.kobo/KoboRoot.tgz" ] && die "the Kobo already has an update waiting (.kobo/KoboRoot.tgz). Eject it to let it install, then run this again."
+  # its firmware, 4.x or 5.x/6.x: which releases it takes (checked once the package is here)
+  FW=$(cut -d, -f3 "$KOBO/.kobo/version" 2>/dev/null)
+  FWMAJOR=${FW%%.*}
+  case "$FWMAJOR" in '' | *[!0-9]*) FWMAJOR=0 ;; esac
+  for f in KoboRoot.tgz Kobo.tgz; do
+    [ "$1" != uninstall ] && [ -f "$KOBO/.kobo/$f" ] && die "the Kobo already has an update waiting (.kobo/$f). Eject it to let it install, then run this again."
+  done
 elif [ -n "$KINDLE" ]; then
   BRAND=kindle
   NAME=Kindle
@@ -96,6 +104,9 @@ if [ "$1" = uninstall ]; then
   rm -rf "$@"
   sync
   if eject; then say "Done: removed, and the $NAME is ejected; unplug it."; else say "Done: removed. Eject the $NAME, then unplug it."; fi
+  # firmware 5.x/6.x: the launcher is in Kobo's own software, out of reach over USB; it removes itself at the next start
+  # of Kobo's interface, its folder gone (reader/kobo/launcher)
+  [ "$BRAND" = kobo ] && [ "$FWMAJOR" -ge 5 ] && say "ShamsaInk's row in More goes the next time the Kobo restarts."
   exit 0
 fi
 
@@ -107,6 +118,7 @@ if [ -n "$PKG" ]; then
   [ -f "$PKG" ] && [ -f "$PKG.sha256" ] || die "$PKG or $PKG.sha256 is not there."
   case "$PKG" in *-$BRAND.tgz) ;; *) die "$PKG is not a package for the $NAME." ;; esac
   cp "$PKG" "$PKG.sha256" "$tmp/"
+  got=checked
   PKG=$(basename "$PKG")
   V=${PKG#shamsaink-}
   V=${V%-$BRAND.tgz}
@@ -136,13 +148,52 @@ if [ ! -f "$tmp/$PKG" ]; then
 fi
 if command -v sha256sum >/dev/null 2>&1; then sum=$(sha256sum "$tmp/$PKG"); else sum=$(shasum -a 256 "$tmp/$PKG"); fi
 [ "${sum%% *}" = "$(cut -d' ' -f1 "$tmp/$PKG.sha256")" ] || die "the download does not match its checksum: nothing was copied. Try again."
-say "  downloaded and checked ($(wc -c < "$tmp/$PKG" | tr -d ' ') bytes)"
+say "  ${got:-downloaded and checked} ($(wc -c < "$tmp/$PKG" | tr -d ' ') bytes)"
 
+# Kobo's library kept out of ShamsaInk's folder (firmware 6 dropped this line, and Kobo then listed ShamsaInk's books in
+# its own library too: 2026-11-11): the line the KOReader community gives, skipping every hidden folder but .kobo and
+# .adobe, added under [FeatureSettings] when Kobo's settings have no ExcludeSyncFolders. Kobo applies it when this USB
+# connection ends. An ExcludeSyncFolders of the owner's own is left as it is.
+exclude_sync() {
+  conf="$KOBO/.kobo/Kobo/Kobo eReader.conf"
+  line='ExcludeSyncFolders=(\\.(?!kobo|adobe).+|([^.][^/]*/)+\\..+)'
+  [ -f "$conf" ] || return 0
+  if grep -q '^ExcludeSyncFolders=' "$conf"; then
+    grep -qxF "$line" "$conf" || say "  Kobo's settings have an ExcludeSyncFolders of their own: left as it is (ShamsaInk's books may show in Kobo's library too)"
+    return 0
+  fi
+  if grep -q '^\[FeatureSettings\]' "$conf"; then
+    L=$line awk '{ print } /^\[FeatureSettings\]/ && !done { print ENVIRON["L"]; done = 1 }' "$conf" > "$tmp/conf"
+  else
+    { cat "$conf"; printf '\n[FeatureSettings]\n%s\n' "$line"; } > "$tmp/conf"
+  fi
+  cat "$tmp/conf" > "$conf" # written in place, through cat: macOS adds nothing beside it
+  say "  Kobo's library told to leave ShamsaInk's folder alone (ExcludeSyncFolders, in Kobo's settings)"
+}
+
+LAUNCHER=
 if [ "$BRAND" = kobo ]; then
-  # Onto the Kobo: written through cat, so macOS adds none of its own extras to the file; the update waits as
-  # KoboRoot.tgz until the Kobo is ejected
-  cat "$tmp/$PKG" > "$KOBO/.kobo/KoboRoot.tgz.part"
-  mv "$KOBO/.kobo/KoboRoot.tgz.part" "$KOBO/.kobo/KoboRoot.tgz"
+  if tar -tzf "$tmp/$PKG" | grep -q 'adds/shamsaink/launcher/Kobo.tgz$'; then
+    LAUNCHER=1 # 0.2.0-beta and later: firmware 5.x/6.x, its own launcher
+    [ "$FWMAJOR" -ge 5 ] || die "this Kobo has firmware ${FW:-unknown}, and ShamsaInk $V needs 5 or newer. For firmware 4.x, 0.1.0-beta is the last release (it needs NickelMenu): run this again with sh -s v0.1.0-beta"
+    mkdir "$tmp/x"
+    tar -xzf "$tmp/$PKG" -C "$tmp/x"
+    # the fonts and licences are the package's: the old ones go first; the rest of the folder (settings, places,
+    # highlights, cache, books, sleep screens) is left as it is
+    rm -rf "$KOBO/.adds/shamsaink/fonts" "$KOBO/.adds/shamsaink/licenses"
+    mkdir -p "$KOBO/.adds/shamsaink"
+    cp -R "$tmp/x/mnt/onboard/.adds/shamsaink/." "$KOBO/.adds/shamsaink/"
+    # the launcher, written through cat (macOS adds nothing beside it); it waits as Kobo.tgz until the Kobo restarts
+    cat "$tmp/x/mnt/onboard/.adds/shamsaink/launcher/Kobo.tgz" > "$KOBO/.kobo/Kobo.tgz.part"
+    mv "$KOBO/.kobo/Kobo.tgz.part" "$KOBO/.kobo/Kobo.tgz"
+    exclude_sync
+  else
+    # 0.1.0-beta and before: firmware 4.x, started from NickelMenu; the package waits as KoboRoot.tgz until ejected
+    [ "$FWMAJOR" -lt 5 ] || die "ShamsaInk $V is for Kobo firmware 4.x, and this Kobo has ${FW}: run this again without a version for the newest release"
+    [ -f "$KOBO/.adds/nm/doc" ] || die "NickelMenu is not on this Kobo, and ShamsaInk $V is started from its menu. Install NickelMenu first: https://pgaskin.net/NickelMenu/"
+    cat "$tmp/$PKG" > "$KOBO/.kobo/KoboRoot.tgz.part"
+    mv "$KOBO/.kobo/KoboRoot.tgz.part" "$KOBO/.kobo/KoboRoot.tgz"
+  fi
 else
   # Onto the Kindle: unpacked at its drive's root (shamsaink/ and documents/ShamsaInk.sh). The fonts are the package's:
   # the old ones go first, so a font a release drops does not stay behind. The rest of shamsaink/ (settings, places,
@@ -160,7 +211,12 @@ if [ "$BRAND" = kobo ]; then
   else
     say "Done. Eject the Kobo (or: umount $KOBO): it installs ShamsaInk and restarts (about a minute); then unplug it."
   fi
-  say "Then: NickelMenu (bottom right of the home screen) > ShamsaInk. Books go in .adds/shamsaink/books/."
+  if [ -n "$LAUNCHER" ]; then
+    say "Then: More (bottom right of the home screen) > ShamsaInk. Books go in .adds/shamsaink/books/."
+    say "After a Kobo firmware update, run this again: the update removes ShamsaInk's row from More."
+  else
+    say "Then: NickelMenu (bottom right of the home screen) > ShamsaInk. Books go in .adds/shamsaink/books/."
+  fi
 else
   if [ -n "$ejected" ]; then
     say "Done: the Kindle is ejected; unplug it."

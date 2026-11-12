@@ -3,7 +3,9 @@
 # reader just built, packed), `make kobo-package-install` (a package file), `make kobo-release-install` (a release's).
 # The same files as the installer copies over USB, put in place differently: unpacked into a folder beside them, then each
 # moved in, so a reader that is running keeps the file it started from (a shell reads its script as it goes: writing
-# launch.sh in place would break a launcher that is running). Fonts no longer in the package are removed. If the
+# launch.sh in place would break a launcher that is running). Fonts and licences no longer in the package are removed.
+# The launcher (launcher/Kobo.tgz in the package) is put in /usr/local/Kobo/imageformats/ the same way, moved in, when it
+# differs: Nickel loads it at its next start, its start-up guard checking it then. If the
 # reader was open it is restarted on the new build: stopped (launch.sh brings Kobo's interface back), then started
 # again as the launcher's row starts it. Sent through ssh, not scp: the Mac's scp needs an SFTP server, which our
 # development Dropbear has not (reader/kobo/dev/).
@@ -26,6 +28,13 @@ $R "set -e; cd $NEW && tar -xzf package.tgz && rm package.tgz
   S=$NEW/mnt/onboard/.adds/shamsaink
   mkdir -p $DIR/fonts $DIR/books $DIR/sleep $DIR/licenses
   (cd $DIR/fonts && for f in *; do [ -e \"\$S/fonts/\$f\" ] || rm -f \"\$f\"; done)
+  (cd $DIR/licenses && for f in *; do [ -e \"\$S/licenses/\$f\" ] || rm -f \"\$f\"; done)
+  if [ -f \$S/launcher/Kobo.tgz ]; then
+    mkdir -p $DIR/launcher && mv \$S/launcher/Kobo.tgz $DIR/launcher/Kobo.tgz
+    L=/usr/local/Kobo/imageformats/libshamsaink-launcher.so
+    tar -xzOf $DIR/launcher/Kobo.tgz imageformats/libshamsaink-launcher.so > \$L.new
+    if cmp -s \$L.new \$L; then rm \$L.new; else chmod 755 \$L.new && mv \$L.new \$L && echo 'launcher: new, loaded when Nickel next starts'; fi
+  fi
   for f in shamsaink launch.sh VERSION getting-started.epub; do mv \$S/\$f $DIR/\$f; done
   for f in \$S/fonts/* \$S/licenses/*; do mv \$f $DIR/\${f#\$S/}; done
   rm -rf $NEW $DIR/cache/splash-* $DIR/cache/loading-*"
