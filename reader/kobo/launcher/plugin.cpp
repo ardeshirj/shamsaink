@@ -1,15 +1,14 @@
 // ShamsaInk's rows in Nickel's More tab, for Kobo firmware 5.x/6.x (Qt 6), where NickelMenu does not run (ShamsaOS
 // experiment 12, 2026-11-11). Built by build.sh into out/kobo/Kobo.tgz, which the firmware unpacks under
 // /usr/local/Kobo, so the library lands in imageformats/ and Nickel loads it at its start.
-//   - "ShamsaInk", above Help, shown while .adds/shamsaink/launch.sh is there: runs it, detached (it stops Nickel, runs
-//     the reader and starts Nickel again).
-//   - "SSH (development)", below it, shown only while .adds/shamsaink/dev/ssh.sh is there (make kobo-dev-ssh; never in
-//     a release): runs it and shows its last line ("SSH on: ADDRESS" or "SSH off") in the row until More is opened again.
+// "ShamsaInk", above Help, shown while .adds/shamsaink/launch.sh is there: runs it, detached (it stops Nickel, runs the
+// reader and starts Nickel again). Nothing else: the development SSH is switched from the reader's Settings, so the code
+// in Nickel's process stays this small (2026-11-11).
 //
 // The way into Nickel follows NickelModManager (github.com/nicoverbruggen/NickelModManager, MIT License, Copyright (c)
 // 2026 Nico Verbruggen): a Qt image plugin that decodes nothing, started by Q_COREAPP_STARTUP_FUNCTION in Nickel only;
-// Nickel's widgets found by object name ("helpButton", "MainWindow", "moreButton"), not by translated labels; the rows
-// inserted above Help while Help is polished or shown, so they are in More's first paint; the rows' painting adapted
+// Nickel's widgets found by object name ("helpButton", "MainWindow", "moreButton"), not by translated labels; the row
+// inserted above Help while Help is polished or shown, so it is in More's first paint; the row's painting adapted
 // from its src/ui/menu.cpp.
 //
 // Start-up guard: at a start not yet confirmed for this library and this firmware, the library moves out of
@@ -33,14 +32,13 @@
 #include <QLabel>
 #include <QPainter>
 #include <QPointer>
+#include <QPolygonF>
 #include <QPushButton>
 #include <QTimer>
 #include <cerrno>
 #include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <poll.h>
-#include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
@@ -50,7 +48,6 @@ const char kDir[] = "/mnt/onboard/.adds/shamsaink";
 const char kLog[] = "/mnt/onboard/.adds/shamsaink/logs/launcher.log";
 const char kConfirmed[] = "/mnt/onboard/.adds/shamsaink/launcher.confirmed";
 const char kLaunch[] = "/mnt/onboard/.adds/shamsaink/launch.sh";
-const char kSsh[] = "/mnt/onboard/.adds/shamsaink/dev/ssh.sh";
 const char kParked[] = "/usr/local/Kobo/libshamsaink-launcher.so.parked";
 
 void note(const QByteArray &line) {
@@ -159,64 +156,50 @@ void launch() {
     waitpid(pid, nullptr, 0);
 }
 
-// The development row's script, run as NickelMenu's cmd_output ran it: waited for (3 s at most, Nickel's interface held
-// meanwhile), its last line of output returned. The script must not leave its output open (ssh.sh sends the server's
-// to a log), or the wait runs to its end.
-QByteArray runSsh() {
-    int out[2];
-    if (pipe(out) != 0) {
-        return "SSH: no pipe";
+// ShamsaInk's mark (docs/brand/mark.svg, a 64-unit square), drawn from its own coordinates: an eight-pointed star in
+// ink, its inner outline and four dots in paper, an amber centre (a light grey on a black and white screen). Ink and
+// paper swap while the row is held, as Nickel's icons do.
+void drawMark(QPainter &painter, const QRect &column, const QColor &ink, const QColor &paper) {
+    static const qreal outer[] = {32, 3, 40.49, 11.49, 52.51, 11.49, 52.51, 23.51, 61, 32, 52.51, 40.49, 52.51, 52.51,
+                                  40.49, 52.51, 32, 61, 23.51, 52.51, 11.49, 52.51, 11.49, 40.49, 3, 32, 11.49, 23.51,
+                                  11.49, 11.49, 23.51, 11.49};
+    static const qreal inner[] = {32, 9, 38.74, 15.74, 48.26, 15.74, 48.26, 25.26, 55, 32, 48.26, 38.74, 48.26, 48.26,
+                                  38.74, 48.26, 32, 55, 25.26, 48.26, 15.74, 48.26, 15.74, 38.74, 9, 32, 15.74, 25.26,
+                                  15.74, 15.74, 25.26, 15.74};
+    const qreal side = qMin(column.width(), column.height()) * 0.8;
+    if (side < 8) {
+        return;
     }
-    const pid_t pid = fork();
-    if (pid < 0) {
-        close(out[0]);
-        close(out[1]);
-        return "SSH: fork failed";
+    painter.save();
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.translate(column.center().x() - side / 2, column.center().y() - side / 2);
+    painter.scale(side / 64, side / 64);
+    QPolygonF star, outline;
+    for (int k = 0; k < 32; k += 2) {
+        star << QPointF(outer[k], outer[k + 1]);
+        outline << QPointF(inner[k], inner[k + 1]);
     }
-    if (pid == 0) { // async-signal-safe calls only until exec
-        setpgid(0, 0);
-        dup2(out[1], 1);
-        dup2(out[1], 2);
-        for (int fd = 3; fd < 1024; fd++) {
-            close(fd);
-        }
-        const int null = open("/dev/null", O_RDONLY);
-        if (null >= 0) {
-            dup2(null, 0);
-        }
-        execl("/bin/sh", "sh", kSsh, static_cast<char *>(nullptr));
-        _exit(127);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(ink);
+    painter.drawPolygon(star);
+    painter.setPen(QPen(paper, 1.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawPolygon(outline);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(paper);
+    for (const QPointF &dot : {QPointF(32, 22), QPointF(22, 32), QPointF(42, 32), QPointF(32, 42)}) {
+        painter.drawEllipse(dot, 3.5, 3.5);
     }
-    close(out[1]);
-    QByteArray text;
-    const qint64 end = QDateTime::currentMSecsSinceEpoch() + 3000;
-    for (;;) {
-        const qint64 left = end - QDateTime::currentMSecsSinceEpoch();
-        pollfd p{out[0], POLLIN, 0};
-        if (left <= 0 || poll(&p, 1, static_cast<int>(left)) <= 0) {
-            break;
-        }
-        char buf[512];
-        const ssize_t n = read(out[0], buf, sizeof buf);
-        if (n <= 0) {
-            break;
-        }
-        text.append(buf, n);
-    }
-    close(out[0]);
-    if (waitpid(pid, nullptr, WNOHANG) == 0) { // still running after 3 s: its group stopped
-        kill(-pid, SIGKILL);
-        waitpid(pid, nullptr, 0);
-    }
-    const QList<QByteArray> lines = text.trimmed().split('\n');
-    return lines.isEmpty() || lines.last().trimmed().isEmpty() ? QByteArray("SSH: no answer") : lines.last().trimmed();
+    painter.setBrush(QColor(0xF2, 0xB5, 0x44));
+    painter.drawEllipse(QPointF(32, 32), 4, 4);
+    painter.restore();
 }
 
 // The row: Nickel's own More rows are drawn from Help's label and icon column (NickelModManager's MenuEntry, adapted).
 class Row final : public QPushButton {
   public:
-    Row(const QString &caption, bool icon, QWidget *reference, QWidget *parent)
-        : QPushButton(caption, parent), reference_(reference), icon_(icon) {
+    Row(const QString &caption, QWidget *reference, QWidget *parent)
+        : QPushButton(caption, parent), reference_(reference) {
         setFocusPolicy(Qt::NoFocus);
         setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     }
@@ -242,21 +225,9 @@ class Row final : public QPushButton {
             painter.fillRect(rect(), ink);
             ink = paper;
         }
-        if (icon_ && glyph && glyph->isVisible()) { // a small sun (shamsa) in the icon column
+        if (glyph && glyph->isVisible()) { // ShamsaInk's mark in the icon column
             const QRect column(glyph->mapTo(reference_, QPoint()), glyph->size());
-            const int r = qMax(3, qRound(qMin(column.width(), column.height()) * .14));
-            const QPointF c = column.center();
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setPen(QPen(ink, qMax<qreal>(1.5, r / 3.0), Qt::SolidLine, Qt::RoundCap));
-            painter.setBrush(Qt::NoBrush);
-            painter.drawEllipse(c, r, r);
-            for (int i = 0; i < 8; i++) {
-                QLineF ray(c, c + QPointF(r * 2.0, 0));
-                ray.setAngle(i * 45.0);
-                ray.setP1(ray.pointAt(0.72));
-                painter.drawLine(ray);
-            }
-            painter.setRenderHint(QPainter::Antialiasing, false);
+            drawMark(painter, column, ink, paper);
         }
         painter.setFont(label ? label->font() : font());
         painter.setPen(ink);
@@ -266,7 +237,6 @@ class Row final : public QPushButton {
 
   private:
     QPointer<QWidget> reference_;
-    bool icon_;
 };
 
 class Integration final : public QObject {
@@ -309,37 +279,20 @@ class Integration final : public QObject {
         if (!layout || layout->indexOf(help) < 0 || parent->findChild<QPushButton *>("shamsainkButton")) {
             return;
         }
-        auto *row = new Row("ShamsaInk", true, help, parent);
+        auto *row = new Row("ShamsaInk", help, parent);
         row->setObjectName("shamsainkButton");
         layout->insertWidget(layout->indexOf(help), row);
         connect(row, &QPushButton::clicked, this, [] { launch(); });
-        auto *ssh = new Row(kSshCaption, false, help, parent);
-        ssh->setObjectName("shamsainkSshButton");
-        layout->insertWidget(layout->indexOf(help), ssh);
-        connect(ssh, &QPushButton::clicked, this, [ssh] {
-            const QByteArray answer = runSsh();
-            note("SSH (development): " + answer);
-            ssh->setText(QString::fromUtf8(answer));
-            ssh->update();
-        });
-        note("rows added to More");
+        note("row added to More");
         showRows(help);
     }
-    // Each row shown while its script is there, the development row with its caption back, each time More is shown.
+    // The row shown while launch.sh is there, each time More is shown.
     static void showRows(QWidget *help) {
         auto *parent = help->parentWidget();
-        if (!parent) {
-            return;
-        }
-        if (auto *row = parent->findChild<QPushButton *>("shamsainkButton")) {
+        if (auto *row = parent ? parent->findChild<QPushButton *>("shamsainkButton") : nullptr) {
             row->setVisible(access(kLaunch, R_OK) == 0);
         }
-        if (auto *ssh = parent->findChild<QPushButton *>("shamsainkSshButton")) {
-            ssh->setText(kSshCaption);
-            ssh->setVisible(access(kSsh, R_OK) == 0);
-        }
     }
-    static constexpr const char *kSshCaption = "SSH (development)";
     void queue() {
         if (queued_) {
             return;
