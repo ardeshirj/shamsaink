@@ -85,8 +85,6 @@ check:
 #                        out/kobo/Kobo.tgz
 #   make kobo-launcher-install  the launcher built and put in place over SSH; Nickel loads it at its next start (its
 #                        start-up guard checks it then: a new library)
-#   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
-#                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
 #   make e2e-sim         the scenarios on the simulated Kobo (e2e/README.md), in Docker: SCENARIO (every one marked on: sim by
 #                        default), each on a fresh device; SIM_BOOKS (out/sim-books) is the books/ folder it gets
@@ -96,17 +94,15 @@ check:
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
-# The reader on the Kobo, started from NickelMenu (docs/devices/kobo/setup.md, section 7): in .adds/shamsaink, the program
-# named shamsaink there, as in reader/out
+# The reader on the Kobo, started from the launcher's row in More (docs/devices/kobo/setup.md): in .adds/shamsaink, the
+# program named shamsaink there, as in reader/out
 KOBO_DIR = /mnt/onboard/.adds/shamsaink
 # Kobo's settings: its sleep timer is [PowerOptions] AutoSleepMinutes (0: never). Kobo's interface reads them only
 # when it starts, so the timer is set by hand in its Settings (docs/devices/kobo/setup.md, section 4), not here.
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
-NM_VERSION ?= 0.6.0
-NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-launcher kobo-launcher-install kobo-nickelmenu kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -195,22 +191,11 @@ kobo-launcher-install: kobo-launcher
 	@tar -xzOf out/kobo/Kobo.tgz imageformats/libshamsaink-launcher.so | $(KOBO_SSH) 'L=/usr/local/Kobo/imageformats/libshamsaink-launcher.so; \
 	  cat > $$L.new && chmod 755 $$L.new && mv $$L.new $$L && echo "launcher installed on $(KOBO): loaded at Nickel'"'"'s next start"'
 
-# Over USB: without NickelMenu, KOReader (and its SSH server) cannot be started. Kobo installs .kobo/KoboRoot.tgz
-# once unplugged (and deletes it).
-kobo-nickelmenu: $(NM_TGZ)
-	@[ -d $(KOBO_USB)/.kobo ] || { echo "the Kobo is not connected: plug it in and tap Connect"; exit 1; }
-	@cp $(NM_TGZ) $(KOBO_USB)/.kobo/KoboRoot.tgz && dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null
-	@echo "NickelMenu $(NM_VERSION) copied, Kobo ejected: unplug it, it installs and restarts (about a minute)"
-
 # Kobo imports new books and drops the gone ones (and what ExcludeSyncFolders now skips) when a USB connection ends.
 kobo-import:
 	@[ -d $(KOBO_USB)/.kobo ] || { echo "the Kobo is not connected: plug it in and tap Connect"; exit 1; }
 	@dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null
 	@echo "Kobo ejected: unplug it, it imports its books (a minute or so)"
-
-$(NM_TGZ):
-	@mkdir -p out
-	@curl -fsSL -o $@ https://github.com/pgaskin/NickelMenu/releases/download/v$(NM_VERSION)/KoboRoot.tgz
 
 # --- The Kindle ---
 #

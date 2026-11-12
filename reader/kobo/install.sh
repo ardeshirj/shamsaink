@@ -1,11 +1,12 @@
 #!/bin/sh
 # From the Mac: a package (reader/scripts/package.sh) installed on the Kobo over SSH: `make kobo-reader-install` (the
 # reader just built, packed), `make kobo-package-install` (a package file), `make kobo-release-install` (a release's).
-# The same files as a KoboRoot.tgz over USB, put in place differently: unpacked into a folder beside them, then each
+# The same files as the installer copies over USB, put in place differently: unpacked into a folder beside them, then each
 # moved in, so a reader that is running keeps the file it started from (a shell reads its script as it goes: writing
 # launch.sh in place would break a launcher that is running). Fonts no longer in the package are removed. If the
 # reader was open it is restarted on the new build: stopped (launch.sh brings Kobo's interface back), then started
-# again as NickelMenu starts it.
+# again as the launcher's row starts it. Sent through ssh, not scp: the Mac's scp needs an SFTP server, which our
+# development Dropbear has not (reader/kobo/dev/).
 # Arguments: the ssh host, the package (its .sha256 beside it is checked when there).
 set -e
 HOST=$1 PKG=$2
@@ -20,14 +21,13 @@ if [ -f "$PKG.sha256" ]; then
 fi
 open=$($R 'pidof shamsaink >/dev/null && echo yes || echo no')
 $R "rm -rf $NEW && mkdir -p $NEW"
-scp -q "$PKG" "$HOST:$NEW/package.tgz"
+$R "cat > $NEW/package.tgz" < "$PKG"
 $R "set -e; cd $NEW && tar -xzf package.tgz && rm package.tgz
   S=$NEW/mnt/onboard/.adds/shamsaink
-  mkdir -p $DIR/fonts $DIR/books $DIR/sleep $DIR/licenses /mnt/onboard/.adds/nm
+  mkdir -p $DIR/fonts $DIR/books $DIR/sleep $DIR/licenses
   (cd $DIR/fonts && for f in *; do [ -e \"\$S/fonts/\$f\" ] || rm -f \"\$f\"; done)
   for f in shamsaink launch.sh VERSION getting-started.epub; do mv \$S/\$f $DIR/\$f; done
   for f in \$S/fonts/* \$S/licenses/*; do mv \$f $DIR/\${f#\$S/}; done
-  mv $NEW/mnt/onboard/.adds/nm/shamsaink /mnt/onboard/.adds/nm/shamsaink
   rm -rf $NEW $DIR/cache/splash-* $DIR/cache/loading-*"
 echo "$(basename "$PKG") installed on $HOST: $($R "cat $DIR/VERSION")"
 if [ "$open" = yes ]; then
