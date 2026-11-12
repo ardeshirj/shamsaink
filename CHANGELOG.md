@@ -4,7 +4,7 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
-## 0.2.0-beta (unreleased)
+## 0.2.0-beta (2026-11-12)
 For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer
 needs NickelMenu (which does not run there).
 - **Starting it:** a row of its own in Kobo's More tab, with ShamsaInk's mark. The installer puts it there; after a
