@@ -81,6 +81,10 @@ check:
 #   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
+#   make kobo-launcher   the launcher, ShamsaInk's rows in More (reader/kobo/launcher, Qt 6, in kobuild's image):
+#                        out/kobo/Kobo.tgz
+#   make kobo-launcher-install  the launcher built and put in place over SSH; Nickel loads it at its next start (its
+#                        start-up guard checks it then: a new library)
 #   make kobo-nickelmenu NickelMenu (NM_VERSION) installed again over USB, e.g. after a crash removed it (downloaded
 #                        once into out/); the Kobo is ejected: unplug it
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
@@ -102,7 +106,7 @@ NM_VERSION ?= 0.6.0
 NM_TGZ = out/nickelmenu-$(NM_VERSION)-KoboRoot.tgz
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-nickelmenu kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-launcher kobo-launcher-install kobo-nickelmenu kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -182,6 +186,14 @@ kobo-dev-ssh:
 	  $(KOBO_SSH) 'cat > /mnt/onboard/.adds/nm/ssh' < reader/kobo/dev/nm-ssh && \
 	  echo "Toggle SSH installed on $(KOBO): in NickelMenu (its menu reread at Nickel's next start)"; \
 	fi
+
+kobo-launcher:
+	@sh reader/kobo/launcher/build.sh
+
+# moved into place, not written over: Nickel has the old one loaded
+kobo-launcher-install: kobo-launcher
+	@tar -xzOf out/kobo/Kobo.tgz imageformats/libshamsaink-launcher.so | $(KOBO_SSH) 'L=/usr/local/Kobo/imageformats/libshamsaink-launcher.so; \
+	  cat > $$L.new && chmod 755 $$L.new && mv $$L.new $$L && echo "launcher installed on $(KOBO): loaded at Nickel'"'"'s next start"'
 
 # Over USB: without NickelMenu, KOReader (and its SSH server) cannot be started. Kobo installs .kobo/KoboRoot.tgz
 # once unplugged (and deletes it).
