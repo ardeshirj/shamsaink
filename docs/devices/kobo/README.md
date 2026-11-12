@@ -58,7 +58,10 @@ Kobo. With ShamsaInk's folder deleted it removes itself at the next start. `laun
 **Nickel's start is ours to repeat** (6.0). Closing the reader starts Nickel as 6.0's `/etc/rc.local` does (hindenburg,
 memorylogger, Nickel into `multilog`, `udev-sync.sh`) in the environment it had (`nickel.env`). Nickel's old
 `multilog`, `fontickel` and `adobehost` are stopped first: the old `multilog` holds `/tmp/nickel-log`'s lock, so the new
-one quits and the new Nickel dies writing to it (2026-11-11). Nickel not back 30 s after: the Kobo reboots.
+one quits and the new Nickel dies writing to it (2026-11-11). Nickel not back 30 s after: the Kobo reboots. A Nickel
+still starting is never stopped: the reader opened again 7 s after it was closed (a test) stopped a half-started Nickel,
+the next one did not start and the Kobo rebooted (2026-11-12); `launch.sh` now waits (20 s at most) for the launcher's
+"Home reached" for it first.
 
 **USB plugged in after the reader was closed: no Connect** (2026-11-11, fixed). The hardware's events reach Nickel
 through a pipe, `/run/kobo/udev/fifo`, written by Kobo's udev scripts under a lock. With Nickel stopped the pipe has no

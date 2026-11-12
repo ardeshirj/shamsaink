@@ -101,6 +101,14 @@ log "started, firmware $FW, uptime $(cut -d' ' -f1 /proc/uptime) s"
 sync
 N=$(pidof nickel)
 [ -n "$N" ] || { log "Nickel is not running (another reader in front?): not started"; exit 1; }
+# A Nickel still starting is left to reach its home screen first (20 s at most): stopped half-started, the next one
+# failed to start, and nickel_back rebooted the Kobo (2026-11-12, a test reopening the reader 7 s after closing it, two
+# Nickel processes still starting). Its home screen is the launcher's "Home reached" after its last "loaded in Nickel".
+home() { [ -f logs/launcher.log ] || return 0; awk '/loaded in Nickel/ { l = NR } /Home reached/ { h = NR } END { exit !(l && h > l) }' logs/launcher.log 2>/dev/null; }
+i=0
+while ! home && [ $i -lt 80 ]; do usleep 250000; i=$((i + 1)); done
+[ $i -gt 0 ] && log "Nickel still starting: waited $((i * 250)) ms for its home screen"
+N=$(pidof nickel)
 BOOK=$1
 [ -z "$BOOK" ] || [ -f "$BOOK" ] || { log "no book $BOOK"; exit 1; }
 # all of Nickel's environment, to start it again with (rc.local's, from nickel-env.sh); the reader is given what it
