@@ -81,6 +81,7 @@ check:
 #   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
+#   make kobo-dropbear   Dropbear, static ARMv7, for the development SSH (reader/kobo/dev/): out/kobo/dropbear
 #   make kobo-launcher   the launcher, ShamsaInk's rows in More (reader/kobo/launcher, Qt 6, in kobuild's image):
 #                        out/kobo/Kobo.tgz
 #   make kobo-launcher-install  the launcher built and put in place over SSH; Nickel loads it at its next start (its
@@ -102,7 +103,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -162,26 +163,36 @@ kobo-status:
 	  df -h /mnt/onboard /tmp | awk "NR>1 {print \"storage \" \$$6 \": \" \$$4 \" free of \" \$$2}"'
 
 kobo-wait:
-	@echo "waiting for $(KOBO) over SSH (wake it with its power button; never answers: open KOReader)..."
+	@echo "waiting for $(KOBO) over SSH (wake it with its power button; never answers: More > SSH (development))..."
 	@until $(KOBO_SSH) true 2>/dev/null; do sleep 5; done; echo "$(KOBO) is up"
 
 kobo-ssh:
 	@$(KOBO_SSH)
 
-# For development: NickelMenu's "Toggle SSH" (reader/kobo/dev/), never in the reader's package. Over USB when the Kobo
-# is connected (the first time: no SSH yet), else over SSH.
-kobo-dev-ssh:
+# For development, never in the reader's package: our own SSH server (reader/kobo/dev/: Dropbear, static, built by
+# make kobo-dropbear) and its switch, the launcher's "SSH (development)" row in More. Over USB when the Kobo is
+# connected (the first time: no SSH yet), else over SSH. Its keys: KOBO_KEY=file.pub, copied as dev/authorized_keys
+# (once; kept there after).
+DEV_FILES = reader/kobo/dev/ssh.sh out/kobo/dropbear out/kobo/dropbearkey
+kobo-dev-ssh: out/kobo/dropbear
 	@if [ -d $(KOBO_USB)/.adds ]; then \
-	  mkdir -p $(KOBO_USB)/.adds/shamsaink/dev $(KOBO_USB)/.adds/nm && \
-	  cp reader/kobo/dev/ssh.sh $(KOBO_USB)/.adds/shamsaink/dev/ssh.sh && \
-	  cp reader/kobo/dev/nm-ssh $(KOBO_USB)/.adds/nm/ssh && \
+	  mkdir -p $(KOBO_USB)/.adds/shamsaink/dev && \
+	  cp $(DEV_FILES) $(KOBO_USB)/.adds/shamsaink/dev/ && \
+	  { [ -z "$(KOBO_KEY)" ] || cp "$(KOBO_KEY)" $(KOBO_USB)/.adds/shamsaink/dev/authorized_keys; } && \
 	  dot_clean -m $(KOBO_USB) && diskutil eject $(KOBO_USB) >/dev/null && \
-	  echo "Toggle SSH copied, Kobo ejected: in NickelMenu once unplugged"; \
+	  echo "SSH (development) copied, Kobo ejected: in More once unplugged"; \
 	else \
-	  $(KOBO_SSH) 'mkdir -p $(KOBO_DIR)/dev /mnt/onboard/.adds/nm && cat > $(KOBO_DIR)/dev/ssh.sh' < reader/kobo/dev/ssh.sh && \
-	  $(KOBO_SSH) 'cat > /mnt/onboard/.adds/nm/ssh' < reader/kobo/dev/nm-ssh && \
-	  echo "Toggle SSH installed on $(KOBO): in NickelMenu (its menu reread at Nickel's next start)"; \
+	  $(KOBO_SSH) 'mkdir -p $(KOBO_DIR)/dev' && \
+	  for f in $(DEV_FILES); do \
+	    $(KOBO_SSH) "cat > $(KOBO_DIR)/dev/.new && mv $(KOBO_DIR)/dev/.new $(KOBO_DIR)/dev/$$(basename $$f)" < $$f || exit 1; \
+	  done && \
+	  { [ -z "$(KOBO_KEY)" ] || $(KOBO_SSH) 'cat > $(KOBO_DIR)/dev/authorized_keys' < "$(KOBO_KEY)"; } && \
+	  $(KOBO_SSH) 'chmod 755 $(KOBO_DIR)/dev/dropbear $(KOBO_DIR)/dev/dropbearkey' && \
+	  echo "SSH (development) installed on $(KOBO)"; \
 	fi
+
+kobo-dropbear out/kobo/dropbear:
+	@sh reader/kobo/dev/build-dropbear.sh
 
 kobo-launcher:
 	@sh reader/kobo/launcher/build.sh
