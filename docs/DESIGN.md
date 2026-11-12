@@ -160,6 +160,12 @@ flowchart LR
   direction). Strings are a table per language (`{{t "contents"}}`, whole sentences with `%d`/`%s` slots; a test
   checks the tables have the same keys); Farsi digits; `dir` and `lang` on each panel; pointing icons mirrored
   (`.flip`). To check on the Kobo: the menu font (Parastoo), the Farsi wording, the opening screen at launch.
+  **A right-to-left book in a language with no table** (Hebrew, Arabic, Urdu, ...; the maintainer, 2026-11-12): the
+  interface is laid out as a Farsi book's, mirrored, its words and digits English (`ui.SetMirrored`, while following
+  the book; its direction is the way its pages turn, a book's set direction included). Each string is kept left to
+  right inside it by Unicode's isolate marks (`isolated`: a sentence's full stop stays at its end). The design
+  system's renders of a book's screens are kept in a third language, `en-rtl`; the reader logs the interface on
+  opening a book (`interface en-rtl`), and devtest holds the screens against those renders.
 
 ## 3. The engines
 

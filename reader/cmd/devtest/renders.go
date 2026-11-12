@@ -5,14 +5,14 @@ import (
 	"strings"
 )
 
-// bestRenderIn is the kept render of a screen in a language ("en", or "fa" for a book that reads right to left) that has
+// bestRenderIn is the kept render of a screen in a language ("en", "fa", or "en-rtl" for English mirrored) that has
 // the most buttons, with its boxes: the variant with every entry.
 func (d *dev) bestRenderIn(screen, lang string) (string, *boxes) {
 	files, _ := filepath.Glob(filepath.Join("reader", "design", "golden", d.name, screen+"-*-"+lang+".json"))
 	best, name := (*boxes)(nil), ""
 	for _, f := range files {
 		base := strings.TrimSuffix(filepath.Base(f), ".json")
-		if owner := strings.TrimPrefix(base, screen+"-"); strings.Count(owner, "-") > 1 {
+		if owner := strings.TrimPrefix(base, screen+"-"); strings.Count(owner, "-")-strings.Count(lang, "-") > 1 {
 			continue // a render of another screen whose name starts with this one's (menu-… and library-…)
 		}
 		r, err := d.boxes(base)

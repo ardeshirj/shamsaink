@@ -135,8 +135,8 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	} else {
 		s.showPage(device.WfGC16, true) // a clean page over KOReader's
 	}
-	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d)\n",
-		filepath.Base(path), s.r.doc, s.r.at, ms(t), s.r.restored, s.r.rtl, s.o.FontSize, s.o.LineHeight, s.o.Margin)
+	fmt.Printf("%s: document %d page %d shown in %.0f ms (cache %v, right to left %v; text %g px, lines %g, margin %d; interface %s)\n",
+		filepath.Base(path), s.r.doc, s.r.at, ms(t), s.r.restored, s.r.rtl, s.o.FontSize, s.o.LineHeight, s.o.Margin, ui.Interface())
 	s.ahead, s.rest = true, !s.r.restored
 	s.readCues()
 	return s, nil

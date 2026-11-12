@@ -10,6 +10,8 @@ is at the end, under "Versions and releases".
   showed as empty boxes. Farsi books are unchanged. The interface stays in English for these books.
 - **Pages turn the right way** in Urdu, Pashto, Yiddish and other right-to-left books that do not state their
   direction (before, only Arabic, Farsi and Hebrew did).
+- **Laid out right to left for right-to-left books:** in a Hebrew, Arabic or Urdu book the menus and panels are
+  mirrored as in a Farsi book, their words still English. "Follow book language" off keeps them left to right.
 
 ## 0.2.0-beta (2026-11-12)
 For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer

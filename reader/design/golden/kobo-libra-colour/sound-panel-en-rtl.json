@@ -1,0 +1,9 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "disconnect": [904, 388, 1224, 460],
+  "volume": [174, 316, 1090, 346],
+  "volume-dec": [1114, 294, 1224, 368],
+  "volume-inc": [40, 294, 150, 368]
+ }
+}

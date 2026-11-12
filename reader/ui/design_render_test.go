@@ -33,6 +33,19 @@ type renderCase struct {
 var en = []string{"en"}
 var enFa = []string{"en", "fa"}
 
+// enFaRtl: a screen of a book, also as a right-to-left book in another language has it: English, mirrored ("en-rtl").
+var enFaRtl = []string{"en", "fa", "en-rtl"}
+
+// setRenderLanguage sets the interface for a render's language: "en-rtl" is English mirrored (SetMirrored).
+func setRenderLanguage(l string) {
+	if l == "en-rtl" {
+		SetLanguage("en")
+		SetMirrored(true)
+		return
+	}
+	SetLanguage(l)
+}
+
 // designBooks are invented books (never a real book's text) for the library's renders.
 func designBooks() []Book {
 	books := []Book{
@@ -111,8 +124,11 @@ func screenOf(w, h int, draw func(img *image.Gray)) *image.Gray {
 
 // chapter is a chapter's title in the interface's language: a Farsi interface is for a Farsi book, whose titles are Farsi.
 func chapter() string {
-	if RTL() {
+	if Language() == "fa" {
 		return "فصل یکم"
+	}
+	if RTL() { // a right-to-left book in another language, its interface English mirrored: a Hebrew title
+		return "פרק ראשון"
 	}
 	return "Chapter one"
 }
@@ -136,15 +152,15 @@ var designRenders = map[string][]renderCase{
 	}}},
 	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
 		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
-	"topbar": {{"battery-full", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"topbar": {{"battery-full", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 100, Menu: true, RTL: RTL()}, f, w))
-	}}, {"book", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"book", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, Menu: true, RTL: RTL()}, f, w))
-	}}, {"battery-medium", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"battery-medium", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 50, Menu: true, RTL: RTL()}, f, w))
-	}}, {"battery-low", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"battery-low", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 25, Menu: true, RTL: RTL()}, f, w))
-	}}, {"battery-warning", enFa, func(f *blitz.Fonts, w, h int) rendered { // red on a colour screen (Screen.SetTint): the colour picture is that
+	}}, {"battery-warning", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { // red on a colour screen (Screen.SetTint): the colour picture is that
 		p := DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 12, Menu: true, RTL: RTL()}, f, w)
 		r := pr(p)
 		r.rgba = image.NewRGBA(r.img.Rect)
@@ -160,47 +176,47 @@ var designRenders = map[string][]renderCase{
 			}
 		}
 		return r
-	}}, {"battery-charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"battery-charging", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true, RTL: RTL()}, f, w))
-	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"battery-open", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 82, BatteryOn: true, Menu: true, RTL: RTL()}, f, w))
 	}}, {"sound-open", en, func(f *blitz.Fonts, w, h int) rendered { // the headphones filled while the Sound panel is open
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), PhonesOn: true, Battery: 82, Menu: true, RTL: RTL()}, f, w))
 	}}},
-	"dock": {{"narrated", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"dock": {{"narrated", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Total: 300, Share: 0.25, Back: 7,
 			Ticks: []float64{0.2, 0.5}, Narrated: true, RTL: RTL()}, f, w, h))
-	}}, {"plain", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"plain", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, RTL: RTL()}, f, w, h))
-	}}, {"jumped", enFa, func(f *blitz.Fonts, w, h int) rendered { // a book with no narration after a jump: Back, where to tap it
+	}}, {"jumped", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { // a book with no narration after a jump: Back, where to tap it
 		return pr(DrawDock(Progress{Chapter: chapter(), At: 3, Of: 12, Page: 40, Share: 0.6, Back: 7, RTL: RTL()}, f, w, h))
 	}}},
-	"light": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"light": {{"panel", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLight(40, 7, 10, false, barHeight(f, w), f, w))
 	}},
 		{"dark", en, func(f *blitz.Fonts, w, h int) rendered {
 			return pr(DrawLight(40, 7, 10, true, barHeight(f, w), f, w))
 		}}},
-	"sound": {{"panel", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"sound": {{"panel", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawSound(Sound{Connected: true, Volume: 70}, barHeight(f, w), f, w))
-	}}, {"connect", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"connect", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawSound(Sound{Paired: true}, barHeight(f, w), f, w))
-	}}, {"connecting", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"connecting", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawSound(Sound{Paired: true, State: "connecting"}, barHeight(f, w), f, w))
-	}}, {"failed", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"failed", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawSound(Sound{Paired: true, State: "failed"}, barHeight(f, w), f, w))
-	}}, {"unpaired", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"unpaired", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawSound(Sound{}, barHeight(f, w), f, w))
 	}}},
-	"reading-settings": {{"settings", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"reading-settings": {{"settings", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawReadingSettings(ReadingSettings{CleanLight: 0, CleanDark: 5}, barHeight(f, w), f, w))
 	}}},
-	"text": {{"text", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"text": {{"text", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawText(Text{Tab: "text", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
-	}}, {"page", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"page", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawText(Text{Tab: "page", FontSize: 50, Lines: 1.16, Margin: 60}, f, w, h))
 	}}},
-	"contents": {{"list", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"contents": {{"list", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		entries := []Entry{{Title: "Chapter one"}, {Title: "Chapter two", Depth: 1}, {Title: "Chapter three"}, {Title: "Chapter four"}}
 		if RTL() { // a Farsi book's
 			entries = []Entry{{Title: "دیباچه"}, {Title: "بخش یکم: مرده‌خورها"}, {Title: "باران از صبح", Depth: 1}, {Title: "کوچهٔ خالی", Depth: 1}}
@@ -213,16 +229,16 @@ var designRenders = map[string][]renderCase{
 		defer cv.Close()
 		return rendered{img: screenOf(w, h, cv.Draw), boxes: cv.Boxes(), placement: "screen"}
 	}}},
-	"battery": {{"level", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"battery": {{"level", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(82, "", barHeight(f, w), batteryBox(f, w), f, w))
-	}}, {"charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"charging", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(45, BatteryState(45, true, false), barHeight(f, w), batteryBox(f, w), f, w))
-	}}, {"full", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"full", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(100, BatteryState(100, false, true), barHeight(f, w), batteryBox(f, w), f, w))
-	}}, {"low", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	}}, {"low", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawBattery(12, BatteryState(12, false, false), barHeight(f, w), batteryBox(f, w), f, w))
 	}}},
-	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "reading", f, w)) }},
+	"menu": {{"book", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "reading", f, w)) }},
 		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "device", f, w)) }}},
 	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
 		lib := NewLibrary(designBooks(), "shamsaink/books", libraryHead(f, w), f, w, h)
@@ -272,9 +288,9 @@ var designRenders = map[string][]renderCase{
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
 	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, f, w)) }}},
-	"notice":              {{"listen", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", f, w)) }}},
-	"highlight-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
-		{"made", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
+	"notice":              {{"listen", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", f, w)) }}},
+	"highlight-menu": {{"new", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
+		{"made", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
 }
 
 func slicesIndex(a []string, s string) int {
@@ -334,7 +350,7 @@ func TestScreenRenders(t *testing.T) {
 		for _, screen := range names {
 			for _, c := range designRenders[screen] {
 				for _, lang := range c.langs {
-					SetLanguage(lang)
+					setRenderLanguage(lang)
 					name := fmt.Sprintf("%s-%s-%s", screen, c.name, lang)
 					r := c.draw(fonts, d.Screen.Width, d.Screen.Height)
 					path := filepath.Join("..", "design", "golden", d.Name, name)
@@ -414,7 +430,7 @@ func TestControlsAreWhatIsDrawn(t *testing.T) {
 			var found []string
 			for _, c := range cases {
 				for _, lang := range c.langs {
-					SetLanguage(lang)
+					setRenderLanguage(lang)
 					found = append(found, c.draw(fonts, d.Screen.Width, d.Screen.Height).ids()...)
 				}
 			}

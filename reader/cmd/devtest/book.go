@@ -12,7 +12,7 @@ import (
 type book struct {
 	d         *dev
 	lib       *boxes
-	lang      string // "fa" for a right-to-left book, else "en": the renders its screens are held against
+	lang      string // the interface as the reader logs it ("en", "fa", "en-rtl"): the renders its screens are held against
 	rtl       bool
 	doc, page int
 	w         int
@@ -20,7 +20,7 @@ type book struct {
 	bar, dock *boxes
 }
 
-var reOpened = regexp.MustCompile(`document (\d+) page (\d+) shown in .*right to left (true|false)`)
+var reOpened = regexp.MustCompile(`document (\d+) page (\d+) shown in .*right to left (true|false)(?:.*interface ([a-z-]+))?`)
 
 // openFirst taps the library's first row (the book read last) and waits for it: its place and its direction.
 func (d *dev) openFirst(lib *boxes) (*book, error) {
@@ -56,7 +56,10 @@ func (d *dev) opened(lib *boxes) (*book, error) {
 	b.doc, _ = strconv.Atoi(m[1])
 	b.page, _ = strconv.Atoi(m[2])
 	b.rtl = m[3] == "true"
-	b.lang = map[bool]string{true: "fa", false: "en"}[b.rtl]
+	b.lang = m[4]
+	if b.lang == "" { // a reader from before the interface was logged: a right-to-left book's was Farsi
+		b.lang = map[bool]string{true: "fa", false: "en"}[b.rtl]
+	}
 	b.bar, _ = d.boxes("topbar-book-" + b.lang)
 	b.dock, _ = d.boxes("dock-narrated-" + b.lang)
 	if b.bar == nil || b.dock == nil {
