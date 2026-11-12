@@ -203,11 +203,6 @@ func (s *session) inMenu(g device.Gesture) {
 			s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
 			return
 		}
-		if id == "leave" {
-			s.rd.quit = true
-			s.leave()
-			return
-		}
 		if s.kind == "sound" && id != "" { // the volume changed, or Connect tapped; the panel stays open
 			if id == "disconnect" {
 				s.rd.disconnectTap(s.phones)

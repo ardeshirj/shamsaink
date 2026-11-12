@@ -95,9 +95,10 @@ You can find public-domain Farsi books, ready for e-ink, on FarsiEPUB.
 
 # Leaving
 
-In the bar, tap the menu (the three lines), then **Leave**, to go back to your device's own screens. Your place in each book is kept.
+In the library, tap the menu (the three lines), then **Leave**, to go back to your device's own screens. From a book, the
+arrow at the start of the bar takes you to the library first. Your place in each book is kept.
 
-![](menu-book-en.png){.small}
+![](menu-library-en.png){.small}
 
 How to update or uninstall ShamsaInk is on FarsiEPUB's website.
 

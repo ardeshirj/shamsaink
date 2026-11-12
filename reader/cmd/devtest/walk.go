@@ -52,11 +52,13 @@ func (r route) String() string {
 }
 
 // walkable are the gestures the walk can make; automatic, the ways in it waits for rather than makes (the screens they
-// open are shown while the reader starts or opens a book, or while the device sleeps, and close themselves; no-player: a
-// notice the reader shows where the device has no player of ours, which the simulated Kobo has).
+// open are shown while the reader starts or opens a book, while the device sleeps, or as the reader ends (leave: the
+// leaving screen, left to the device's own interface), and close themselves; no-player: a notice the reader shows where
+// the device has no player of ours, which the simulated Kobo has).
 var (
 	walkable  = map[string]bool{"tap": true, "tap-top-tenth": true, "hold-row": true, "hold-word": true}
-	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true}
+	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true,
+		"leave": true}
 )
 
 // devOnly says whether a control is dev mode's (requires development): devtest runs the reader with dev mode off

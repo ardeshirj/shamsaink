@@ -47,7 +47,6 @@ type reader struct {
 	dir   string
 	pages drawnPages
 	over  *image.Gray
-	quit  bool // Leave chosen in a book's ≡: out of the library too
 	lib   bool // books are opened from the library: a slow one shows the loading screen, not the opening one
 
 	splashUntil time.Time // the opening screen shown at the start stays at least until then (ui.SplashFor)
@@ -111,6 +110,15 @@ func main() {
 	rd.dev.Usage("stop", "")
 	if found != nil {
 		rd.dev.Screen.Restore(found)
+	} else if err == nil {
+		// the leaving screen (the mark and "Exiting…"), up until the device's own interface draws over it: Kobo's
+		// home screen comes 8 to 10 s after the reader ends, the screen blank or still the library meanwhile
+		// (2026-11-12). Not where the screen found is put back (the Kindle's): its interface is back at once.
+		t := time.Now()
+		showOpening(rd.dev.Screen, ui.Leaving(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H, rd.dev.Colour()),
+			device.WfGC16, true)
+		rd.dev.Screen.Wait()
+		fmt.Printf("leaving screen shown in %.0f ms\n", ms(t))
 	}
 	check(err)
 }

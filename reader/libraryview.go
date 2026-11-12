@@ -31,10 +31,6 @@ func (rd *reader) browse(t time.Time) error {
 		if err := rd.read(map[string]string{"book": path}, time.Now()); err != nil {
 			fmt.Fprintln(os.Stderr, "shamsaink:", err)
 		}
-		if rd.quit {
-			fmt.Println("library: left from the book")
-			return nil
-		}
 		t = time.Now()
 	}
 }

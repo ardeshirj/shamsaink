@@ -1,0 +1,11 @@
+{{/* The screen as the reader is left (splash.go, Leaving): ShamsaInk's mark and a line, until the device's own interface
+draws over it. Top: the space above it, px. */ -}}
+{{template "head" ""}}<style>
+html { font-size: 40px; }
+body { padding-top: {{.Top}}px; text-align: center; }
+.mark { display: block; margin: 0 auto 1.2em; }
+p { font-size: 1em; color: #555; margin: 0; }
+</style></head><body>
+<img class="mark" id="mark" src="brand/shamsaink.png" width="240" height="240">
+<p>{{t "leaving"}}</p>
+</body></html>

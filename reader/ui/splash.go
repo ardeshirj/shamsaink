@@ -46,6 +46,12 @@ func Loading(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
 	return opening("loading", dir, fonts, w, h, colour)
 }
 
+// Leaving is the screen drawn as the reader is left (templates/leaving.html): the mark and "Exiting…", kept like Splash. It stays until the device's own interface draws over it: on the Kobo, Nickel's home screen 8 to 10 s later
+// (2026-11-12), where the screen was blank or still the library before.
+func Leaving(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
+	return opening("leaving", dir, fonts, w, h, colour)
+}
+
 // The logos, in brand/, from FarsiEPUB's brand folder, in colour, one set for every screen (our Blitz draws no SVG): ShamsaInk's
 // mark from brand/shamsaink/mark.svg (rsvg-convert -w 240 -h 240 -b white), for the Loading screen, and the stacked logo
 // (the mark, the name and "by FarsiEPUB") from brand/shamsaink/logo-stack.svg (rsvg-convert -w 400 -b white), for the

@@ -3,12 +3,12 @@ layer: panel
 templates: [library-menu.html]
 buttons: panel
 status: built
-purpose: "A narrow list hanging from the bar's menu button: Leave to Kobo's interface, with Settings above it in the library (and in dev mode Developer under Settings) and Reading settings above it in a book."
+purpose: "A narrow list hanging from the bar's menu button: in the library Settings (in dev mode Developer under it) and Leave to the device's interface, the only way out (the leaving screen after it); in a book Reading settings."
 enter: [{gesture: tap, control: topbar-menu, from: topbar}, {gesture: tap, control: topbar-menu, from: library}]
 controls:
   - {id: settings, component: menu-item, action: replace, to: library-settings, when: "in the library"}
   - {id: developer, component: menu-item, action: replace, to: library-developer, when: "in the library, in dev mode", requires: [development]}
   - {id: reading-settings, component: menu-item, action: replace, to: reading-settings, when: "in a book"}
-  - {id: leave, component: menu-item, action: act, does: "leaves to Kobo's interface", emits: "library: left", walk: "never: ends the reader"}
+  - {id: leave, component: menu-item, action: act, does: "leaves to the device's interface", emits: "library: left", when: "in the library", walk: "never: ends the reader"}
 dismiss: tap-outside
 words: [device-settings, reading-settings, leave, developer]
