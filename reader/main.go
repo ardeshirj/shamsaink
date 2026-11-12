@@ -8,8 +8,8 @@
 //	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
 //	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //
-// DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set (any value): dev mode, a flask
-// after the library's title and a Developer entry in its menu (devssh.go).
+// DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set: dev mode, a flask after the
+// library's title and a Developer entry in its menu (devssh.go); SHAMSAINK_DEV=0 keeps it off, dev/ or not.
 package main
 
 import (
@@ -68,7 +68,13 @@ func main() {
 	ui.Build = version
 	exe, _ := os.Executable()
 	rd := &reader{dir: env("SHAMSAINK_DIR", filepath.Dir(exe))}
-	ui.DevMode = os.Getenv("SHAMSAINK_DEV") != "" || isDir(filepath.Join(rd.dir, "dev"))
+	switch os.Getenv("SHAMSAINK_DEV") {
+	case "": // dev mode while dev/ is there
+		ui.DevMode = isDir(filepath.Join(rd.dir, "dev"))
+	case "0": // off all the same: devtest's runs, which hold the screens to the readers' kept renders
+	default:
+		ui.DevMode = true
+	}
 	var err error
 	rd.dev, err = device.Open()
 	check(err)

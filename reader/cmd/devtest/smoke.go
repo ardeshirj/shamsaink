@@ -462,7 +462,9 @@ func (d *dev) start() (stop func(), line string, err error) {
 		return nil, "", fmt.Errorf("the reader is already running on the device: leave it first")
 	}
 	d.mark = d.logLines()
-	if _, err := d.sh("cd "+d.a.Dir+" && nohup env "+d.env+" sh launch.sh "+d.book+" >/dev/null 2>&1 </dev/null &", nil); err != nil {
+	// dev mode off (SHAMSAINK_DEV=0, before the scenario's env, which may turn it on): the screens are the readers', as the
+	// kept renders are, on a device with dev/ too
+	if _, err := d.sh("cd "+d.a.Dir+" && nohup env SHAMSAINK_DEV=0 "+d.env+" sh launch.sh "+d.book+" >/dev/null 2>&1 </dev/null &", nil); err != nil {
 		return nil, "", err
 	}
 	stop = func() {
