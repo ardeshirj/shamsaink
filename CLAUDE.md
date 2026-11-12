@@ -184,6 +184,8 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
 - **Everything runs in Docker** (Go included): `experiments/01-renderers/go.sh` runs a command in the `eink-go` image
   with cached modules (Docker volumes `eink-gomod`, `eink-gocache`); `experiments/02-crengine-go/go.sh` the same in
   `eink-cre` (Go and crengine, Debian trixie); `experiments/01-renderers/koreader/run.sh` in `eink-koreader`.
+- **Claude's sandbox** (2026-11-11): on, from the committed `.claude/settings.json` (Docker's socket, the hosts allowed, key folders denied, `git push` asks; `ssh`, `scp` and `diskutil` run outside it, for the devices). A repository's file cannot open paths in the home folder, so on a new Mac add once to `~/.claude/settings.json` (merged with what is there; the repositories side by side in `~/Github/`):
+  `{"sandbox": {"filesystem": {"allowRead": ["~/.docker", "~/Github/shamsaink", "/Volumes/KOBOeReader", "/Volumes/Kindle"], "allowWrite": ["~/.docker/buildx", "~/.docker/contexts", "~/Github/shamsaink", "/Volumes/KOBOeReader", "/Volumes/Kindle"]}}}`
 - **Never commit books, book text or pages drawn from them** (`.gitignore` covers `book/`, `out/`, `*.epub`,
   `index.html`). Test books are copied in locally; FarsiEPUB's are under `~/Github/farsiepub/pipeline/.work/books/`.
   **Exceptions (the maintainer, 2026-11-02), pages of *Buried Alive*, a public-domain book published on FarsiEPUB:**
