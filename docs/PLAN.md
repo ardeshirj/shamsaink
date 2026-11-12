@@ -105,6 +105,10 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] go-toolkit's trim, to Readium; go-text's justification fix
   - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn
   - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
+  - [ ] Right-to-left languages for a book with no stated direction, to Readium (an issue on readium-css first, its
+    "missing page-progression-direction" rule, then the toolkits): only `ar`, `fa`, `he` now, so Urdu, Pashto, Sindhi,
+    Sorani, Uyghur, Yiddish, Dhivehi and Syriac open backwards; better, the tag's script (`-Arab`, `-Hebr`). Ours:
+    `readsRTL` in `reader/lang.go` (experiment 15)
 
 **9. The Kindle** (in the beta since 2026-11-07, read-along on it after)
 - [x] KOReader's plugin and the reader's `-serve` mode removed, now the launcher replaces them (2026-11-07)

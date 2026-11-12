@@ -2,6 +2,9 @@ package main
 
 import (
 	"slices"
+	"strings"
+
+	"github.com/readium/go-toolkit/pkg/manifest"
 
 	"shamsainkreader/library"
 	"shamsainkreader/ui"
@@ -31,4 +34,24 @@ func bookLanguage(langs []string, title string) string {
 		first = langs[0]
 	}
 	return library.Lang(library.Book{Lang: first, Title: title})
+}
+
+// rtlLanguages are the languages written right to left, by primary subtag: Readium's rule for a book with no stated
+// direction knows only Arabic, Farsi and Hebrew (readium-css, "missing page-progression-direction"), so an Urdu or
+// Yiddish book would turn its pages the wrong way.
+var rtlLanguages = []string{"ar", "fa", "per", "fas", "he", "iw", "yi", "ur", "ps", "sd", "ckb", "ug", "dv", "syr"}
+
+// readsRTL says whether a book's pages turn right to left: its stated direction, else Readium's rule (one language
+// given, and written right to left) with rtlLanguages.
+func readsRTL(m manifest.Metadata) bool {
+	if m.ReadingProgression != manifest.None {
+		return m.ReadingProgression == manifest.RTL
+	}
+	if m.EffectiveReadingProgression() == manifest.RTL {
+		return true
+	}
+	if len(m.Languages) != 1 {
+		return false
+	}
+	return slices.Contains(rtlLanguages, strings.ToLower(strings.SplitN(m.Languages[0], "-", 2)[0]))
 }

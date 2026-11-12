@@ -8,6 +8,8 @@ is at the end, under "Versions and releases".
 - **Hebrew, Arabic, Urdu and more:** books in Hebrew and Yiddish now read in Frank Ruhl Libre, and books in Arabic,
   Urdu, Pashto, Sindhi, Sorani Kurdish and Uyghur in Noto Naskh Arabic. Before, Hebrew letters and some of Urdu's
   showed as empty boxes. Farsi books are unchanged. The interface stays in English for these books.
+- **Pages turn the right way** in Urdu, Pashto, Yiddish and other right-to-left books that do not state their
+  direction (before, only Arabic, Farsi and Hebrew did).
 
 ## 0.2.0-beta (2026-11-12)
 For Kobo's new firmware: ShamsaInk now runs on Kobo firmware 5 and 6, which Kobos install by themselves, and no longer

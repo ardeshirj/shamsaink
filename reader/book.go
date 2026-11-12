@@ -48,7 +48,7 @@ type reading struct {
 	book     *blitz.Book
 	key      string // the book's name, size and date
 	lang     string // the book's language (bookLanguage): which fallback fonts come first
-	bookRTL  bool   // as go-toolkit says (its stated direction, else its language; neither: left to right, as Readium)
+	bookRTL  bool   // readsRTL: its stated direction, else its language (neither: left to right, as Readium)
 	rtl      bool   // as the pages turn: the book's, or as set for it
 	doc, at  int
 	cache    string // DIR/cache/: by the book's name, size and date; safe to delete (laid out again)
@@ -100,7 +100,7 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		key:      key,
 		anchorAt: [2]int{-1, -1},
 		lang:     bookLanguage(p.Manifest.Metadata.Languages, p.Manifest.Metadata.Title()),
-		bookRTL:  p.Manifest.Metadata.EffectiveReadingProgression() == manifest.RTL,
+		bookRTL:  readsRTL(p.Manifest.Metadata),
 		cache:    filepath.Join(dir, "cache", key+".cache"),
 		place:    filepath.Join(dir, "places", key+".place"),
 		marks:    loadHighlights(dir, key),

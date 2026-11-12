@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/readium/go-toolkit/pkg/manifest"
 )
 
 // The interface's language: following the book (a table for it, else English) or English only.
@@ -82,6 +84,24 @@ func TestNextLines(t *testing.T) {
 	} {
 		if got := nextLines(c.set, c.book, c.wider); got != c.want {
 			t.Errorf("nextLines(%g, %g, %v) = %g, want %g", c.set, c.book, c.wider, got, c.want)
+		}
+	}
+}
+
+// A book's direction: stated, else from its one language, Urdu and Yiddish included (Readium's rule has only ar, fa, he).
+func TestReadsRTL(t *testing.T) {
+	for _, c := range []struct {
+		prog  manifest.ReadingProgression
+		langs []string
+		want  bool
+	}{
+		{manifest.None, []string{"fa"}, true}, {manifest.None, []string{"ur"}, true}, {manifest.None, []string{"yi"}, true},
+		{manifest.None, []string{"ps-AF"}, true}, {manifest.None, []string{"he"}, true}, {manifest.None, []string{"en"}, false},
+		{manifest.None, nil, false}, {manifest.None, []string{"ur", "en"}, false},
+		{manifest.LTR, []string{"ur"}, false}, {manifest.RTL, []string{"en"}, true},
+	} {
+		if got := readsRTL(manifest.Metadata{ReadingProgression: c.prog, Languages: c.langs}); got != c.want {
+			t.Errorf("readsRTL(%q, %v) = %v, want %v", c.prog, c.langs, got, c.want)
 		}
 	}
 }
