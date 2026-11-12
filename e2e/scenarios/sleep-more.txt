@@ -1,0 +1,38 @@
+# More sleeps on the Kobo than sleep.txt's one, with the same switches (docs/devices/kobo/README.md, "Sleep"), each
+# woken by the clock's alarm (WAKE_AFTER): from the library, twice in a row in a book, and the reader left at once after
+# a wake, before Wi-Fi is back (left 7 s after waking on 2026-11-12, Wi-Fi was not back in Nickel). Then the Kobo must
+# still be on its network with its chip without errors (expect-online). During a narration: sleep-narration.txt.
+# Each expect after a press power waits out the sleep: Wi-Fi is off from just before the "asleep" line until the wake.
+# The Kobo must be unplugged, with Wi-Fi on.
+#     make e2e SCENARIO=e2e/scenarios/sleep-more.txt
+on: kobo                           # the simulator does not suspend
+env WAKE_AFTER=15
+open
+# from the library
+tap page-top                       # the bar and the dock
+expect menu drawn
+tap topbar topbar-start            # back to the library
+expect library: .* shown in
+press power
+expect-in 90 asleep: sleep screen shown
+expect woken by the test's alarm
+expect-in 15 awake: page back
+expect-in 30 Wi-Fi back in
+tap 632 446                        # the book again, the first row (library-reading-en's e0)
+expect document \d+ page \d+ shown in
+# twice in a row, in the book
+press power
+expect-in 90 asleep: sleep screen shown
+expect woken by the test's alarm
+expect-in 30 Wi-Fi back in
+press power
+expect-in 90 asleep: sleep screen shown
+expect woken by the test's alarm
+expect-in 30 Wi-Fi back in
+# left at once after a wake, Wi-Fi not back yet
+press power
+expect-in 90 asleep: sleep screen shown
+expect woken by the test's alarm
+expect-in 15 awake: page back
+close
+expect-online 60

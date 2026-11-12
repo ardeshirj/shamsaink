@@ -57,6 +57,8 @@ import (
 //	title TITLE               the same: the words beside the screen from here on, with no card
 //	resume                    the same: the video goes on from here after the last card, what came between left out
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
+//	expect-online SECONDS     the Kobo on its network (SSH, wlan0's address) 10 s or more on, SECONDS at most, its
+//	                          Wi-Fi/Bluetooth chip without errors since the scenario began: after a sleep, a close
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored); their hashes are, in e2e/refs.sum (refs.go).
 
@@ -76,6 +78,7 @@ type player struct {
 	hlSeen     bool
 	stop       func()
 	closedBook bool
+	chipBefore int // the Wi-Fi/Bluetooth chip's errors in the kernel's log when the scenario began (expect-online)
 }
 
 var reMenuAt = regexp.MustCompile(`highlight menu: .* at (\d+),(\d+)`)
@@ -131,6 +134,9 @@ func scenario(name, path string, save bool) bool {
 		return false
 	}
 	fmt.Printf("ok       %-50.50s %7s  %s\n", "fixture: "+s.fixture, "", truncate(said, 70))
+	if place == "kobo" && d.a.Local == "" {
+		p.chipBefore = d.chipErrors()
+	}
 	defer func() {
 		if p.stop != nil {
 			p.stop()
@@ -422,6 +428,12 @@ func (p *player) step(a []string) (string, error) {
 		}
 		s, _ := strconv.ParseFloat(a[1], 64)
 		return p.expectNickel(s)
+	case "expect-online":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		sec, _ := strconv.ParseFloat(a[1], 64)
+		return p.expectOnline(sec)
 	case "expect-in":
 		if err := need(2); err != nil {
 			return "", err
@@ -571,6 +583,36 @@ func (p *player) expectNickel(seconds float64) (string, error) {
 		time.Sleep(2 * time.Second)
 	}
 	return "", fmt.Errorf("Kobo's interface did not come back in %.0f s", seconds)
+}
+
+// expectOnline wants the Kobo on its network after a sleep and a close: SSH answering, wlan0 with an address, and no
+// error of the Wi-Fi/Bluetooth chip in the kernel's log since the scenario began. Asked every 2 s (SSH may drop while
+// Kobo's interface starts): a chip error fails at once, the network passes once seen 10 s or more into the step
+// (Nickel's start, where Wi-Fi broke), SECONDS at most. On firmware 6 every failure seen showed within seconds of the
+// wake: the chip's link timing out in the sleep, "wake up failed" on waking, wlan0 gone (2026-11-12).
+func (p *player) expectOnline(seconds float64) (string, error) {
+	start := time.Now()
+	end := start.Add(time.Duration(seconds * float64(time.Second)))
+	for ; ; time.Sleep(2 * time.Second) {
+		if n := p.d.chipErrors(); n > p.chipBefore {
+			return "", fmt.Errorf("the Wi-Fi/Bluetooth chip failed (%d new errors in the kernel's log: firmware assert, "+
+				"chip reset, its link timing out or a failed wake)", n-p.chipBefore)
+		}
+		out, err := p.d.sh("ifconfig wlan0 2>/dev/null | sed -n 's/.*inet addr:\\([0-9.]*\\).*/\\1/p'", nil)
+		if ip := strings.TrimSpace(string(out)); err == nil && ip != "" && time.Since(start) >= 10*time.Second {
+			return fmt.Sprintf("on its network (%s) after %.0f s, the chip without errors", ip, time.Since(start).Seconds()), nil
+		}
+		if time.Now().After(end) {
+			return "", fmt.Errorf("the Kobo is not on its network after %.0f s (no SSH, or wlan0 without an address)", seconds)
+		}
+	}
+}
+
+// chipErrors counts the Wi-Fi/Bluetooth chip's failures in the kernel's log (MediaTek's WMT and STP).
+func (d *dev) chipErrors() int {
+	out, _ := d.sh("dmesg | grep -cE 'firmware assert|Whole chip reset|stp_do_tx_timeout|wake up failed'", nil)
+	n, _ := strconv.Atoi(strings.TrimSpace(string(out)))
+	return n
 }
 
 // fetch puts the file at url on the device at path (under the device's folder), checked by its SHA-256 either way: a

@@ -31,6 +31,8 @@ const (
 	lightFile  = "/sys/class/backlight/mxc_msp430.0/brightness"
 	lightLevel = "/sys/class/backlight/mxc_msp430.0/actual_brightness"
 	wifiState  = "/sys/class/net/wlan0/operstate"
+	// the clock's wake alarm (bd70528-rtc), set only by the tests
+	rtcAlarm = "/sys/class/rtc/rtc0/wakealarm"
 	// the charge light: the kernel switches it on when a charger goes in, Nickel off when it comes out
 	chargeLED = "/sys/class/leds/LED/brightness"
 )
@@ -236,6 +238,11 @@ func online() bool {
 	return false
 }
 
+// testWake, for the end-to-end tests only (WAKE_AFTER=SECONDS, set by a scenario's env): a suspend ends by the clock's
+// alarm that many seconds on, taken as the press that wakes the Kobo, so a sleep and its wake run with nobody there
+// (e2e/scenarios/sleep.txt). Unset, nothing changes.
+var testWake, _ = strconv.Atoi(os.Getenv("WAKE_AFTER"))
+
 // chargeLight switches the charge light off on battery, as Nickel does while it runs: with Nickel stopped it stayed on
 // after a charger was taken out, and came back on with each wake from a suspend (firmware 6, 2026-11-12). On a charger
 // it is left as the kernel set it.
@@ -348,6 +355,11 @@ func (d *Device) doze(pic image.Image) {
 			break
 		}
 		syscall.Sync()
+		if testWake > 0 {
+			// for the end-to-end tests (e2e/scenarios/sleep.txt): the RTC's alarm wakes the Kobo, as a press would
+			sysfs(rtcAlarm, "0")
+			sysfs(rtcAlarm, "+"+strconv.Itoa(testWake))
+		}
 		s := time.Now().Round(0) // the wall clock: Go's own stops while the Kobo is suspended
 		err := sysfs("/sys/power/state", "mem")
 		sysfs("/sys/power/state-extended", "0")
@@ -366,6 +378,10 @@ func (d *Device) doze(pic image.Image) {
 		}
 		refused = 0
 		fmt.Printf("  suspended for %.0f s\n", time.Now().Round(0).Sub(s).Seconds())
+		if testWake > 0 {
+			fmt.Println("  woken by the test's alarm")
+			break
+		}
 		select {
 		case <-power:
 		case <-time.After(15 * time.Second):

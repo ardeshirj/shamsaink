@@ -91,7 +91,7 @@ func (s *script) runsOn(place string) bool {
 }
 
 // koboOnly are the steps the simulator cannot do: the watchdog (the simulated launcher has none) and Kobo's own interface.
-var koboOnly = map[string]bool{"freeze": true, "expect-nickel": true}
+var koboOnly = map[string]bool{"freeze": true, "expect-nickel": true, "expect-online": true}
 
 var reSHA256 = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
@@ -178,7 +178,7 @@ func (s *script) check(d *dev) error {
 			} else {
 				re(strings.Join(a[1:args], " "))
 			}
-		case "expect-nickel", "wait":
+		case "expect-nickel", "expect-online", "wait":
 			if args != 1 || !isNum(a[1]) {
 				fail(l, "%s SECONDS", a[0])
 			}

@@ -1,0 +1,20 @@
+# A real sleep and wake on the Kobo, then the reader left and the Kobo still on its network: the reader's suspend with
+# Wi-Fi and Bluetooth switched off and on through the chip's own switches (docs/devices/kobo/README.md, "Sleep"). On
+# firmware 6 the way 4.x did it left Wi-Fi dead in Kobo's interface after the reader was closed, the chip's firmware
+# crashed after Nickel started (2026-11-12), its first errors logged at the wake: expect-online looks for them.
+# Nobody needs to be there: the reader, started with WAKE_AFTER, has the clock's alarm wake the Kobo as a press would
+# (reader/device/kobo.go).
+# The Kobo must be unplugged (plugged in, it stays awake behind the sleep screen and never suspends), with Wi-Fi on.
+#     make e2e SCENARIO=e2e/scenarios/sleep.txt
+on: kobo                           # the simulator does not suspend
+env WAKE_AFTER=20
+open
+press power                        # to sleep; SSH goes with Wi-Fi until the alarm wakes it
+expect usage: sleep at=\S+ battery=\d+ plugged=false
+expect-in 90 asleep: sleep screen shown  # read once the alarm has woken it: Wi-Fi is off before this line
+expect suspended for
+expect woken by the test's alarm
+expect-in 15 awake: page back
+expect-in 30 Wi-Fi back in
+close
+expect-online 60

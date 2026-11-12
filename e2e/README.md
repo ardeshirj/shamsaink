@@ -72,7 +72,14 @@ expect menu drawn
   expectation or a setting changed for a moment), so it is known to catch something.
 - References are updated only after the changed pages have been looked at: `SAVE=1` rewrites the scenario's lines in
   `e2e/refs.sum` and its pages in `e2e/out/`; `git diff e2e/refs.sum` shows which changed.
-- Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`) need `on: kobo` (or `kindle`, whose
+- **Sleep on the Kobo** (2026-11-12): `sleep` (one sleep in a book, then the reader left) and `sleep-more` (from the
+  library, twice in a row, the reader left at once after a wake) and `sleep-narration` (during a narration, on
+  Moby-Dick, then read aloud again after the wake). The reader, started with
+  `WAKE_AFTER=SECONDS`, has the clock's alarm wake the Kobo as a press would; SSH drops while it sleeps, so each `expect`
+  after a `press power` is an `expect-in` long enough for the sleep. `expect-online SECONDS` then wants the Kobo on its network
+  (10 s or more into the step, SECONDS at most) and its Wi-Fi/Bluetooth chip without errors, failing at the first
+  (every failure seen on 2026-11-12 logged its first error within seconds of the wake). The Kobo unplugged: on a charger it never suspends.
+- Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`, `expect-online`) need `on: kobo` (or `kindle`, whose
   launcher has the watchdog; there `expect-nickel` waits for Amazon's framework resumed); `make check` says so. The
   Kindle has no page buttons: a scenario with `press forward|back` is not `on: kindle`.
 - On the Kindle (2026-11-07): `basics`, `walk`, `walk-moby-dick` and `watchdog-freeze`. Not `readalong-granularity` (no
