@@ -11,6 +11,12 @@ kobo-libra-colour:
   framebuffer: {stride: 5056, bits: 32}       # /sys/class/graphics/fb0
   fonts_local: reader/fonts               # the folder the renders are drawn with; the device's must be the same files
   reader_local: reader/out/shamsaink          # the latest local build (make reader); the device's may be an older one
+  kobo:                                       # firmware 5.x/6.x beside Kobo's interface (devtest's kobo.go, 2026-11-11)
+    min_firmware: 5
+    launcher: /usr/local/Kobo/imageformats/libshamsaink-launcher.so
+    conf: /mnt/onboard/.kobo/Kobo/Kobo eReader.conf
+    exclude_sync_folders: '(\\.(?!kobo|adobe).+|([^.][^/]*/)+\\..+)'   # as in that file, both backslashes doubled
+    database: /mnt/onboard/.kobo/KoboReader.sqlite
 kindle-paperwhite-11:
   ssh: kindle                                 # a host of ~/.ssh/config (docs/devices/kindle/setup.md)
   dir: /mnt/us/shamsaink

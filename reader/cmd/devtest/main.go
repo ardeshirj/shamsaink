@@ -51,6 +51,18 @@ type Access struct {
 	} `yaml:"framebuffer"`
 	FontsLocal  string `yaml:"fonts_local"`
 	ReaderLocal string `yaml:"reader_local"`
+	// Kobo is what a Kobo with Kobo's own interface (Nickel) beside the reader must have (docs/devices/kobo/README.md);
+	// nil for the other devices.
+	Kobo *KoboAccess `yaml:"kobo"`
+}
+
+// KoboAccess: the Kobo facts make kobo-check holds the device to.
+type KoboAccess struct {
+	MinFirmware        int    `yaml:"min_firmware"`         // the oldest firmware's first number launch.sh runs on
+	Launcher           string `yaml:"launcher"`             // the launcher's library, where Nickel loads it
+	Conf               string `yaml:"conf"`                 // Kobo's own settings file
+	ExcludeSyncFolders string `yaml:"exclude_sync_folders"` // its line keeping Kobo's library out of ours, as written there
+	Database           string `yaml:"database"`             // Kobo's library
 }
 
 func main() {
@@ -134,7 +146,8 @@ func check(name string) bool {
 	// the screen: size and stride, against the profile and the access facts
 	// The size shown is the mode's (U:1236x1648p-0 on the Kindle, U:1680x1264p-0 on the Kobo, turned): the virtual size
 	// can be larger (the Kindle's: 1248 × 3296, its lines padded and two screens tall)
-	out, _ := ssh(a, "cat /sys/class/graphics/fb0/modes /sys/class/graphics/fb0/stride /sys/class/graphics/fb0/bits_per_pixel")
+	// (Kobo firmware 6.0 lists two modes, portrait and landscape: the first is read)
+	out, _ := ssh(a, "head -n 1 /sys/class/graphics/fb0/modes; cat /sys/class/graphics/fb0/stride /sys/class/graphics/fb0/bits_per_pixel")
 	var w, h, stride, bits int
 	fmt.Sscanf(strings.NewReplacer("U:", "", "x", " ", "p-0", "", "\n", " ").Replace(out), "%d %d %d %d", &w, &h, &stride, &bits)
 	pw, ph := profile.Screen.Width, profile.Screen.Height
@@ -188,6 +201,10 @@ func check(name string) bool {
 				report(false, "font "+f, "on the device, not in the renders' folder")
 			}
 		}
+	}
+
+	if a.Kobo != nil {
+		koboCheck(a, report)
 	}
 
 	// the reader: installed, and the same file as the latest local build (a note, not a failure: an old one is a choice)
