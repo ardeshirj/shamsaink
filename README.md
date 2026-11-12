@@ -13,20 +13,23 @@
 </p>
 
 ## Install
-On a Kobo with firmware 5 or newer, plugged into a Mac or Linux computer over USB with Connect tapped:
+On a **Kobo** with firmware 5 or newer (Connect tapped), or a jailbroken **Kindle**, plugged into a Mac or Linux computer
+over USB:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ardeshirj/shamsaink/main/install.sh | sh
 ```
 
-It downloads the newest [release](https://github.com/ardeshirj/shamsaink/releases), checks it and copies it onto the Kobo,
-which installs it and restarts. Then More → ShamsaInk; after a Kobo firmware update, run it again. Installing by hand and removing it:
-[`docs/devices/install.md`](docs/devices/install.md); building it yourself:
-[`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md).
+It downloads the newest [release](https://github.com/ardeshirj/shamsaink/releases), checks it and copies it onto the
+device. On a Kobo, which then installs it and restarts: More → ShamsaInk (after a Kobo firmware update, run it again).
+On a Kindle (jailbroken with the [Kindle Modding Community](https://kindlemodding.org/)'s tools): ShamsaInk is in the
+library, as a book. Installing by hand and removing it: [`docs/devices/install.md`](docs/devices/install.md); building
+it yourself: [`docs/devices/kobo/setup.md`](docs/devices/kobo/setup.md), [`docs/devices/kindle/setup.md`](docs/devices/kindle/setup.md).
 
-**Not for everyone yet:** until the beta the releases are pre-releases, tried on a **Kobo Libra Colour** (firmware
-6.0) only, and the reader stops Kobo's own interface while a book is open. A guide for readers comes with the beta
-([`ROADMAP.md`](ROADMAP.md)).
+**A beta:** tried on a **Kobo Libra Colour** (firmware 6.0) and a **Kindle Paperwhite** (11th generation, firmware
+5.19.2). ShamsaInk takes over the screen while it is open (Kobo's interface stopped, the Kindle's paused) and gives it
+back when you leave. What works where, and the known limits: [`docs/devices/README.md`](docs/devices/README.md); what
+comes next: [`ROADMAP.md`](ROADMAP.md).
 
 ## Why it exists
 An e-ink device is made for reading: easy on the eyes, free of distraction, with a charge that lasts. Farsi, though, is
@@ -107,20 +110,17 @@ What is our own is the screen (refresh, touch, sleep, sound) and the reader on t
 library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts fit and what each one depends on.
 
 ## What it does
-- **Reads right-to-left text properly.** Farsi shaping and direction come out right, with no `dir` attributes needed in
+- **Reads right-to-left text properly.** Farsi, Arabic, Urdu and Hebrew shaping and direction come out right, with no `dir` attributes needed in
   the book. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
 - **Is quick.** As fast as KOReader's engine (crengine) on these devices, and a cache file per book so a reopened
   book comes up quickly.
-- **Reads along (experimental).** For books with narration (EPUB media overlays), it plays the voice through Bluetooth
-  headphones and marks each word as it is spoken. Leaving ShamsaInk after using Bluetooth returns to Kobo's home
-  screen like any other time: the headphones drop for a moment and reconnect. (A bug in Kobo's firmware crashes the
-  Kobo when its interface starts again after Bluetooth,
-  [koreader/koreader#12739](https://github.com/koreader/koreader/issues/12739); ShamsaInk steps around it, and once
-  it has been opened, KOReader's and Plato's exits are covered too until the Kobo restarts.) The headphones' own delay
-  is a setting we have not built yet.
+- **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones and
+  marks each word as it is spoken, on the Kobo (on the Kindle, not yet: Amazon's software drops headphones it is not
+  playing to). The headphones' own delay is a setting we have not built yet.
 - **Is made for the screen.** Page turns without flashes, partial refreshes for panels and menus, a dark mode, the
   front light and its warmth, touch and the Kobo's page buttons, contents, highlights, sleep and wake, and a sleep
-  screen from your own pictures. The interface is in English or Farsi.
+  screen from your own pictures. The interface is in English or Farsi, laid out right to left for a book in Farsi,
+  Arabic, Hebrew, Urdu and the other right-to-left languages.
 
 ## Where things are
 | | |
