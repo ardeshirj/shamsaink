@@ -40,6 +40,11 @@ esac
 # /tmp/nickel-log's lock (its pipe kept open by the other two), so the new one quits and the new Nickel dies writing
 # to it (12, step 2, 2026-11-11). None of 4.x's workarounds: 6.0 runs no wmt_loader and has no mtkbtd, its Bluetooth
 # did not panic (12, step 3), and the Wi-Fi loader each start of Nickel adds sleeps harmlessly (2026-11-11).
+# The reader's own settings (read from its environment, mostly by tests: e2e's env steps, devtest): never passed on to
+# Nickel, nor kept in nickel.env. Passed on, they stayed in every later Nickel and so in every reader started from the
+# row in More: after an e2e run, WAKE_AFTER had ShamsaInk's every sleep woken by the clock after 20 s (2026-11-12).
+OURS="WAKE_AFTER SHAMSAINK_DEV SHAMSAINK_DIR SHAMSAINK_CLOCK SHAMSAINK_RECORD SHAMSAINK_SIM HEARTBEAT HEARTBEAT_EVERY
+WATCH_EVERY MARK_LOG FONT_SIZE LINE_HEIGHT MARGIN LEAD_MS TOUCH KOBO_VERSION RESTORE_SCREEN"
 start_nickel() {
   rm -f /mnt/onboard/.kobo/sickel_frozen
   udev_unstick
@@ -49,6 +54,8 @@ start_nickel() {
   sync
   (
     cd / || exit 1
+    # the reader's own settings, given to this launch by a test (WAKE_AFTER, SHAMSAINK_DEV=0, ...), not passed on
+    unset $OURS
     while IFS= read -r line; do export "$line"; done < "$D"/nickel.env
     /usr/local/Kobo/hindenburg &
     /usr/local/Kobo/memorylogger &
@@ -113,7 +120,7 @@ BOOK=$1
 [ -z "$BOOK" ] || [ -f "$BOOK" ] || { log "no book $BOOK"; exit 1; }
 # all of Nickel's environment, to start it again with (rc.local's, from nickel-env.sh); the reader is given what it
 # needs of it: the session bus, the Wi-Fi interface and module, the platform
-tr '\0' '\n' < /proc/"$N"/environ | grep -v -E '^(_|SHLVL|PWD)=' > nickel.env
+tr '\0' '\n' < /proc/"$N"/environ | grep -v -E "^(_|SHLVL|PWD|$(echo $OURS | tr ' ' '|'))=" > nickel.env
 for v in DBUS_SESSION_BUS_ADDRESS INTERFACE WIFI_MODULE PLATFORM PRODUCT; do
   line=$(grep "^$v=" nickel.env) && export "$line"
 done
