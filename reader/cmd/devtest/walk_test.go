@@ -7,8 +7,8 @@ import (
 	"shamsainkreader/design"
 )
 
-// Every built screen of the spec is walked, or shown by the reader itself (a screen added with no way the walk can
-// make to it fails here, in make check); every route's gesture is one the walk can make.
+// Every built screen of the spec is walked, or shown by the reader itself, or dev mode's (a screen added with no way the
+// walk can make to it fails here, in make check); every route's gesture is one the walk can make.
 func TestWalkPlan(t *testing.T) {
 	spec, err := design.Load()
 	if err != nil {
@@ -16,7 +16,7 @@ func TestWalkPlan(t *testing.T) {
 	}
 	routes, left := plan(spec)
 	for n, why := range left {
-		if !strings.HasPrefix(why, "shown by the reader itself") {
+		if !strings.HasPrefix(why, "shown by the reader itself") && !strings.HasPrefix(why, "dev mode only") {
 			t.Errorf("%s: %s", n, why)
 		}
 	}

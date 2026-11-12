@@ -59,7 +59,18 @@ var (
 	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true}
 )
 
-// edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each.
+// devOnly says whether a control is dev mode's (requires development): devtest runs the reader with dev mode off
+// (SHAMSAINK_DEV=0), so it is never there, and the walk takes no way through it.
+func devOnly(c design.Control) bool {
+	for _, r := range c.Requires {
+		if r == "development" {
+			return true
+		}
+	}
+	return false
+}
+
+// edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each, but dev mode's.
 func edges(spec *design.Spec) []edge {
 	seen := map[string]bool{}
 	var out []edge
@@ -78,7 +89,7 @@ func edges(spec *design.Spec) []edge {
 	for _, n := range names {
 		sc := spec.Screens[n]
 		for _, c := range sc.Controls {
-			if c.Action == "goto" || c.Action == "replace" {
+			if (c.Action == "goto" || c.Action == "replace") && !devOnly(c) {
 				add(edge{from: n, to: c.To, gesture: "tap", control: c.ID, when: c.When})
 			}
 		}
@@ -88,13 +99,16 @@ func edges(spec *design.Spec) []edge {
 			if en.From == "" {
 				continue
 			}
-			when := ""
+			when, dev := "", false
 			if en.Control != "" { // the control's own condition (menu's settings: in the library)
 				for _, c := range spec.Screens[en.From].Controls {
 					if c.ID == en.Control {
-						when = c.When
+						when, dev = c.When, devOnly(c)
 					}
 				}
+			}
+			if dev {
+				continue
 			}
 			add(edge{from: en.From, to: n, gesture: en.Gesture, control: en.Control, when: when})
 		}
@@ -147,6 +161,13 @@ func plan(spec *design.Spec) (routes []route, left map[string]string) {
 		for _, en := range sc.Enter {
 			if automatic[en.Gesture] {
 				why = "shown by the reader itself (" + en.Gesture + ")"
+			}
+			if from := spec.Screens[en.From]; from != nil {
+				for _, c := range from.Controls {
+					if c.ID == en.Control && devOnly(c) {
+						why = "dev mode only (off in devtest's runs, SHAMSAINK_DEV=0)"
+					}
+				}
 			}
 		}
 		left[n] = why
