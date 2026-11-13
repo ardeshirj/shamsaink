@@ -1,13 +1,15 @@
 # Every push (docs/TESTING.md, section 1), on arm64 runners: the same architecture as the Mac the simulator's references
 # are drawn on (2026-11-06: ubuntu-24.04-arm starts for this private repository, an Arm Neoverse-N2).
 #   check  make check (reader/scripts/check.sh): gofmt, vet, the tests that need no engine; a minute
-#   test   the engine built (cached: rebuilt only when engine/ changes) and the simulated Kobo's scenarios (make e2e-sim's
-#          run.sh), in four groups at once, each on its own runner, so a run takes about as long as its longest walk
-#          (2026-11-13; one after another it was 5.5 minutes of scenarios): walk-fa, walk-en, reading (make test too: every
-#          Go test, the renders compared with the kept ones; then read-along, rtl-fa, follow-language) and languages (the other
-#          right-to-left languages, e2e/scenarios/languages/: our own Arabic, Hebrew and Urdu books). A failure's folder
-#          (step, log, screen, reference, difference) attached to the run, named by its group
-#   release  on a pushed version tag only, after check and every group of test: the Kobo's and the Kindle's packages built and published as a GitHub release
+#   build  at the same time as check: the engine (cached: rebuilt only when engine/ changes), make test (every Go test,
+#          the renders compared with the kept ones), and the reader and devtest for the simulated Kobo (make e2e-sim's
+#          run.sh), handed to test as an artifact (2026-11-13: built once, not in each group)
+#   test   after build, the simulated Kobo's scenarios on that build, in four groups at once, each on its own runner,
+#          so it takes about as long as its longest walk (one after another it was 5.5 minutes of scenarios): walk-fa,
+#          walk-en, reading (read-along, rtl-fa, follow-language) and languages (the other right-to-left languages,
+#          e2e/scenarios/languages/: our own Arabic, Hebrew, Urdu and mixed books; make e2e-sim-all plays the same groups
+#          on the Mac). A failure's folder (step, log, screen, reference, difference) attached to the run, named by its group
+#   release  on a pushed version tag only, after check, build and every group of test: the Kobo's and the Kindle's packages built and published as a GitHub release
 #          (CHANGELOG.md, "How to release")
 # On our own books (e2e/books, 2026-11-13; built by the scenarios, nothing downloaded). Their pages are held against
 # their SHA-256 in e2e/refs.sum (docs/TESTING.md, section 4) and kept as pictures (e2e/refs/LANG/): a page that differs is attached with the old one and their difference.
@@ -32,22 +34,9 @@ jobs:
       - name: gofmt, vet, the tests that need no engine (reader/scripts/check.sh, the same as make check)
         run: sh reader/scripts/check.sh
 
-  test:
-    name: test (${{ matrix.group }})
+  build:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
-    strategy:
-      fail-fast: false # every group to the end: a failure in one says nothing about the others
-      matrix:
-        include:
-          - group: walk-fa
-            scenarios: e2e/scenarios/walk-fa.txt
-          - group: walk-en
-            scenarios: e2e/scenarios/walk-en.txt
-          - group: reading
-            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt
-          - group: languages
-            scenarios: e2e/scenarios/languages/*.txt
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6
@@ -68,20 +57,61 @@ jobs:
           restore-keys: engine-arm64-
       - name: Blitz at its pinned commit, with our patches
         run: engine/fetch-blitz.sh
+      - name: go-toolkit trimmed, cached by the script that makes it
+        id: gotoolkit
+        uses: actions/cache@v5
+        with:
+          path: experiments/02-crengine-go/patched/go-toolkit
+          key: gotoolkit-${{ hashFiles('experiments/02-crengine-go/trim-gotoolkit.sh') }}
       - name: go-toolkit, trimmed (reader/go.mod points at it)
+        if: steps.gotoolkit.outputs.cache-hit != 'true'
         run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the engine
         working-directory: engine
         run: cargo build --release --features parallel --lib
       - name: make test (every Go test with the engine, the renders compared with the kept ones)
-        if: matrix.group == 'reading'
         working-directory: reader
         run: FONTS=$PWD/fonts go test -count=1 -tags blitz ./...
+      - name: the reader and devtest for the simulated Kobo (run.sh with no scenario only builds)
+        run: |
+          mkdir -p out/sim-books
+          sh e2e/sim/run.sh out/sim-books
+          tar -cf sim-build.tar -C reader/out sim  # a tar keeps the files executable
+      - uses: actions/upload-artifact@v6
+        with:
+          name: sim-build
+          path: sim-build.tar
+          retention-days: 1
+
+  test:
+    name: ${{ matrix.group }}
+    needs: build
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false # every group to the end: a failure in one says nothing about the others
+      matrix:
+        include:
+          - group: walk-fa
+            scenarios: e2e/scenarios/walk-fa.txt
+          - group: walk-en
+            scenarios: e2e/scenarios/walk-en.txt
+          - group: reading
+            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt
+          - group: languages
+            scenarios: e2e/scenarios/languages/*.txt
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v7
+        with:
+          name: sim-build
+      - name: the build from build, in reader/out/sim
+        run: mkdir -p reader/out && tar -xf sim-build.tar -C reader/out
       - name: the simulated Kobo, the scenarios of ${{ matrix.group }} on our own books (e2e/books)
         run: |
           sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
           mkdir -p out/sim-books
-          sh e2e/sim/run.sh out/sim-books ${{ matrix.scenarios }}
+          SIM_BUILT=1 sh e2e/sim/run.sh out/sim-books ${{ matrix.scenarios }}
       - name: a failed scenario's folder
         if: failure()
         uses: actions/upload-artifact@v6
@@ -98,7 +128,7 @@ jobs:
   # CHANGELOG.md, else the tag's message. Before 1.0 and with a suffix (-beta) a pre-release.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [check, test]
+    needs: [check, build, test]
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
     permissions:
@@ -133,7 +163,14 @@ jobs:
           restore-keys: engine-armv7-
       - name: Blitz at its pinned commit, with our patches
         run: engine/fetch-blitz.sh
+      - name: go-toolkit trimmed, cached by the script that makes it
+        id: gotoolkit
+        uses: actions/cache@v5
+        with:
+          path: experiments/02-crengine-go/patched/go-toolkit
+          key: gotoolkit-${{ hashFiles('experiments/02-crengine-go/trim-gotoolkit.sh') }}
       - name: go-toolkit, trimmed (reader/go.mod points at it)
+        if: steps.gotoolkit.outputs.cache-hit != 'true'
         run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the reader, static ARMv7 (reader/scripts/build-armv7.sh)
         run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
