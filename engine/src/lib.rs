@@ -5,7 +5,7 @@
 
 use anyrender::{ImageRenderer as _, PaintScene as _};
 use anyrender_vello_cpu::VelloCpuImageRenderer;
-use blitz_dom::{BaseDocument, DocumentConfig};
+use blitz_dom::{BaseDocument, DocumentConfig, UserAgentStylesheet};
 use blitz_html::HtmlDocument;
 use blitz_paint::paint_scene;
 use blitz_traits::net::{NetHandler, NetProvider, Request};
@@ -39,6 +39,18 @@ pub use epub::Epub;
 
 /// Documents get URLs under this root, so that relative links resolve to paths in the book.
 const ROOT: &str = "file:///book/";
+
+/// Our browser defaults after Blitz's own: `dir="auto"` takes its direction from the text, as in a browser (HTML's
+/// "auto" directionality: the first strong letter). Blitz's defaults keep only its isolation, so such a paragraph
+/// was laid out in the book's direction; `unicode-bidi: plaintext` has Parley find each paragraph's direction from
+/// its first strong letter instead. Parsed once, so every chapter shares Stylo's cascade data for them.
+const OUR_UA_CSS: &str = r#"[dir="auto" i] { unicode-bidi: plaintext; }"#;
+
+fn ua_stylesheets() -> Vec<UserAgentStylesheet> {
+    static OURS: std::sync::LazyLock<UserAgentStylesheet> =
+        std::sync::LazyLock::new(|| UserAgentStylesheet::parse(OUR_UA_CSS));
+    vec![UserAgentStylesheet::default_sheet(), OURS.clone()]
+}
 
 /// Gives Blitz the book's files (stylesheets, fonts, images) from the Source, at once; adds the time spent, Blitz's
 /// handling of each file included (parsing a stylesheet, decoding a font), to the counter in microseconds.
@@ -349,6 +361,7 @@ impl Book {
                 net_provider: Some(Arc::new(Files(Arc::clone(&self.src), Arc::clone(&self.fetched))) as _),
                 viewport: Some(Viewport::new(opts.width, opts.height, 1.0, ColorScheme::Light)),
                 font_ctx: self.fctx.clone(),
+                ua_stylesheets: ua_stylesheets(),
                 ..Default::default()
             },
         );
