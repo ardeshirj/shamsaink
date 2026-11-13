@@ -1,0 +1,189 @@
+diff --git a/src/layout/data.rs b/src/layout/data.rs
+index e6ab383..7c73361 100644
+--- a/src/layout/data.rs
++++ b/src/layout/data.rs
+@@ -495,11 +495,6 @@ impl ContentWidthsMeasurer {
+                 LayoutItemKind::TextRun => {
+                     let slice = layout_data.shaped_text.run_slice(item.index as u32);
+                     let run_spacing = layout_data.runs[item.index].spacing;
+-                    // Trailing whitespace can only hang if it ends up at the line's end edge after
+-                    // bidi reordering. We don't currently apply UAX #9 L1 (resetting trailing
+-                    // whitespace to paragraph level), so only logically-last items that match the
+-                    // paragraph level are guaranteed to be at that edge.
+-                    let can_hang = item.bidi_level == layout_data.base_level;
+                     let is_rtl = item.bidi_level.is_rtl();
+ 
+                     if run_spacing.is_zero() {
+@@ -507,7 +502,6 @@ impl ContentWidthsMeasurer {
+                             &layout_data.styles,
+                             slice,
+                             run_spacing,
+-                            can_hang,
+                             is_rtl,
+                         );
+                     } else {
+@@ -515,7 +509,6 @@ impl ContentWidthsMeasurer {
+                             &layout_data.styles,
+                             slice,
+                             run_spacing,
+-                            can_hang,
+                             is_rtl,
+                         );
+                     }
+@@ -578,7 +571,6 @@ impl ContentWidthsMeasurer {
+         styles: &[Style<B>],
+         slice: ShapedSlice<'_>,
+         spacing: Spacing,
+-        can_hang: bool,
+         is_rtl: bool,
+     ) {
+         let clusters = slice.shaped_clusters();
+@@ -636,9 +628,10 @@ impl ContentWidthsMeasurer {
+             self.running_max_width += advance;
+ 
+             // A cluster hangs if all of its characters hang. Its first character is checked via the
+-            // cached flags so the common case never touches `characters`.
+-            let hangs = can_hang
+-                && whitespace_hangs(whitespace, style)
++            // cached flags so the common case never touches `characters`. Trailing whitespace is
++            // reset to the paragraph level (UAX #9 rule L1), so it ends up at the line's end edge
++            // whatever the run's level.
++            let hangs = whitespace_hangs(whitespace, style)
+                 && (cluster.char_len() == 1
+                     || slice
+                         .characters_in(cluster.chars_range())
+diff --git a/src/layout/line_break.rs b/src/layout/line_break.rs
+index 3c3798c..b43efd4 100644
+--- a/src/layout/line_break.rs
++++ b/src/layout/line_break.rs
+@@ -1773,6 +1773,9 @@ fn commit_line<B: Brush>(
+             }
+         }
+     }
++
++    reset_trailing_whitespace_levels(layout, &mut lines.line_items, start_item_idx);
++
+     // let end_run_idx = lines.line_items.last().map(|item| item.index).unwrap_or(0);
+     let end_item_idx = lines.line_items.len();
+ 
+@@ -1895,9 +1898,9 @@ fn hanging_whitespace<B: Brush>(
+             }
+             LayoutItemKind::TextRun => {
+                 // Trailing whitespace can only hang if it ends up at the line's end edge after bidi
+-                // reordering. We don't currently apply UAX #9 L1 (resetting trailing whitespace to
+-                // paragraph level), so only logically-last items that match the paragraph level are
+-                // guaranteed to be at that edge.
++                // reordering. That's the case for whitespace reset to the paragraph level (see
++                // `reset_trailing_whitespace_levels`), but not for whitespace in an atom that isn't
++                // entirely whitespace.
+                 if line_item.bidi_level != layout.data.base_level {
+                     break;
+                 }
+@@ -1968,6 +1971,88 @@ fn hanging_whitespace<B: Brush>(
+     )
+ }
+ 
++/// Resets the bidi level of the trailing whitespace of the line made up of `line_items[start..]` to
++/// the paragraph level, following UAX #9 rule L1. That puts the whitespace at the line's end edge
++/// after reordering, so it can hang.
++///
++/// Where the whitespace ends a text run at another level, the run's line item is split in two.
++/// Whitespace is only split off in whole atoms.
++///
++/// `line_items[start..]` must be in logical order.
++///
++/// See <https://www.unicode.org/reports/tr9/#L1>.
++fn reset_trailing_whitespace_levels<B: Brush>(
++    layout: &Layout<B>,
++    line_items: &mut Vec<LineItemData>,
++    start: usize,
++) {
++    let base_level = layout.data.base_level;
++    for idx in (start..line_items.len()).rev() {
++        let line_item = &line_items[idx];
++        match line_item.kind {
++            LayoutItemKind::InlineBox => {
++                let item = &layout.data.inline_boxes[line_item.index].inline_box;
++
++                // Inline boxes aren't whitespace, but out-of-flow boxes take up no space.
++                if item.kind == InlineBoxKind::InFlow {
++                    return;
++                }
++            }
++            LayoutItemKind::TextRun => {
++                let slice = layout
++                    .data
++                    .shaped_text
++                    .run_slice(line_item.index as u32)
++                    .narrow(line_item.shaped_cluster_range.clone());
++
++                // The shaped cluster and source text byte at which the trailing whitespace starts.
++                let mut whitespace_start = None;
++                for atom in slice.atoms_end().rev() {
++                    // The whitespace that can hang, all of which is of bidi class WS, S or B.
++                    let is_whitespace = atom.characters().iter().all(|character| {
++                        matches!(
++                            character.whitespace,
++                            Whitespace::Space
++                                | Whitespace::IdeographicSpace
++                                | Whitespace::Tab
++                                | Whitespace::Newline
++                        )
++                    });
++                    if !is_whitespace {
++                        break;
++                    }
++                    whitespace_start = Some((
++                        atom.shaped_clusters_range().start,
++                        atom.characters()[0].text_byte_start as usize,
++                    ));
++                }
++
++                match whitespace_start {
++                    // The whole item is whitespace, so whitespace before it is trailing as well.
++                    Some((cluster, _)) if cluster == line_item.shaped_cluster_range.start => {
++                        line_items[idx].bidi_level = base_level;
++                    }
++                    Some((cluster, text)) => {
++                        if line_item.bidi_level != base_level {
++                            let mut whitespace = line_item.clone();
++                            whitespace.bidi_level = base_level;
++                            whitespace.shaped_cluster_range.start = cluster;
++                            whitespace.text_range.start = text;
++                            line_items[idx].shaped_cluster_range.end = cluster;
++                            line_items[idx].text_range.end = text;
++                            line_items.insert(idx + 1, whitespace);
++                        }
++                        return;
++                    }
++                    // An empty item doesn't end the trailing whitespace.
++                    None if slice.shaped_clusters_range().is_empty() => {}
++                    None => return,
++                }
++            }
++        }
++    }
++}
++
+ /// Reorder items within line according to the bidi levels of the items
+ fn reorder_line_items(runs: &mut [LineItemData]) {
+     let run_count = runs.len();
+diff --git a/src/layout/run.rs b/src/layout/run.rs
+index 852bc48..32a7192 100644
+--- a/src/layout/run.rs
++++ b/src/layout/run.rs
+@@ -154,8 +154,13 @@ impl<'a, B: Brush> Run<'a, B> {
+     }
+ 
+     /// Returns `true` if the run has right-to-left directionality.
++    ///
++    /// For a run scoped to a line, this is the direction on that line: trailing whitespace takes
++    /// the paragraph's direction (see UAX #9 rule L1).
+     pub fn is_rtl(&self) -> bool {
+-        self.shaped.bidi_level.is_rtl()
++        self.line_data
++            .map_or(self.shaped.bidi_level, |line_data| line_data.bidi_level)
++            .is_rtl()
+     }
+ 
+     /// Returns the cluster range for the run.

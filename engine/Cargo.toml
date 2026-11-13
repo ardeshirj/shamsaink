@@ -44,3 +44,8 @@ strip = true
 phase-times = ["blitz-dom/log-phase-times"]
 # Blitz builds the paragraphs' text layouts on several threads, and ours a page's new glyph masks (rayon)
 parallel = ["blitz-dom/parallel-construct", "dep:rayon"]
+
+# Parley (Blitz's text layout) with our patch: engine/parley, fetched by fetch-blitz.sh (its crates.io release with
+# patches/parley-*.patch applied)
+[patch.crates-io]
+parley = { path = "parley" }

@@ -13,7 +13,9 @@ It uses:
 - Blitz (https://github.com/DioxusLabs/blitz), under the MIT License, with Parley, HarfRust and ICU4X (MIT, Apache
   License 2.0 or the Unicode License), for laying out and drawing pages. Blitz is built with two changes of ours, in
   engine/patches/: lines outside the page skipped when painting (blitz-cull-lines.patch), and pictures decoded when
-  drawn, at the size drawn (blitz-lazy-images.patch).
+  drawn, at the size drawn (blitz-lazy-images.patch). Parley 0.12.0 is built with one change, in engine/patches/: a
+  line's trailing space moved to the line's end, Unicode's bidi rule L1 (parley-trailing-whitespace.patch, taken from
+  https://github.com/linebender/parley/pull/907, not yet merged there).
 - Stylo, Firefox's CSS engine, inside Blitz, and Symphonia, for decoding narration's audio, under the Mozilla Public
   License 2.0, unchanged: their source is on crates.io and at https://github.com/servo/stylo and
   https://github.com/pdeljanov/Symphonia.

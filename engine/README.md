@@ -6,7 +6,11 @@ pagination (`lib.rs`), glyph layer between Blitz's painter and vello_cpu (`glyph
 `blitz_engine.h`; the cgo binding is `engine/go`, module `shamsainkengine`). Crate `blitz-engine`, library `blitz_engine`.
 
 Blitz is not in git: `engine/fetch-blitz.sh` clones it into `engine/blitz/` at the pinned commit (21edc92) and applies
-`patches/` (line culling, pictures sized from their headers). Safe to run again; stops if `blitz/` is in another state.
+`patches/blitz-*.patch` (line culling, pictures sized from their headers). It also fetches Parley 0.12.0, Blitz's text
+layout, from crates.io into `engine/parley/` (its checksum checked) and applies `patches/parley-*.patch` (a line's
+trailing space moved to its end, linebender/parley#907, open upstream); `Cargo.toml`'s `[patch.crates-io]` builds that
+copy. Safe to run again; stops if `blitz/` or `parley/` is in another state. When #907 is in a Parley release Blitz
+uses, the patch and the `[patch]` entry go.
 
 Everything builds in Docker, in the `eink-rust` image (Rust 1.95, arm64 and ARMv7 musl targets, zig, Go;
 `experiments/04-rust-engine/docker`), with the registry in the volume `eink-cargo`, from the repo root:

@@ -12,6 +12,8 @@ patched/
 target/
 experiments/04-rust-engine/probes/blitz/
 engine/blitz/
+engine/parley/
+engine/parley.tmp/
 experiments/04-rust-engine/probes/cgo-probe/lib/
 experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*
 # ...but Rust keeps sources for its programs in src/bin
