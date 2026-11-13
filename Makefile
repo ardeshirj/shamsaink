@@ -94,9 +94,11 @@ check:
 #   make kobo-import     books (re)imported: the Kobo, connected over USB, is cleaned of `._` files and ejected
 #   make e2e-sim         the scenarios on the simulated Kobo (e2e/README.md), in Docker: SCENARIO (every one marked on: sim by
 #                        default), each on a fresh device; SIM_BOOKS (out/sim-books) is the books/ folder it gets
+#   make e2e-sim-languages  the same for the other right-to-left languages (e2e/scenarios/languages/)
+#   make e2e-sim-all     every scenario CI runs, in its four groups at once after one build (no SAVE)
 #   make e2e             a scenario on the Kobo (e2e/README.md): SCENARIO (e2e/scenarios/basics.txt by default), by
-#                        control name, its pages compared with the references kept by a run with SAVE=1 (in e2e/out/, not
-#                        committed). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
+#                        control name, its pages compared with the references kept by a run with SAVE=1 (their hashes
+#                        in e2e/refs.sum). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
@@ -108,7 +110,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -158,19 +160,19 @@ e2e-sim-languages:
 # every scenario CI runs, in CI's four groups (.github/workflows/ci.yml: keep the two lists alike) at once, each in a
 # container of its own after one build: about as long as the longest walk. Each group's output in e2e/out/sim/GROUP.log.
 # Not with SAVE: the groups would write e2e/refs.sum at the same time (keep references with e2e-sim, one at a time).
+# A group is NAME=its scenarios, comma-separated (the shell expands a pattern).
 SIM_GROUPS = walk-fa=e2e/scenarios/walk-fa.txt walk-en=e2e/scenarios/walk-en.txt \
   reading=e2e/scenarios/readalong-granularity.txt,e2e/scenarios/rtl-fa.txt,e2e/scenarios/follow-language.txt \
-  languages=$(subst $(eval) ,$(comma),$(wildcard e2e/scenarios/languages/*.txt))
-comma = ,
+  languages=e2e/scenarios/languages/*.txt
 e2e-sim-all:
 	@[ -z "$(SAVE)" ] || { echo "e2e-sim-all does not keep references: make e2e-sim SAVE=1 SCENARIO=..." >&2; exit 2; }
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS)
-	@mkdir -p e2e/out/sim; for g in $(SIM_GROUPS); do \
+	@# a group that fails for any reason (a step, or docker itself) leaves GROUP.failed
+	@mkdir -p e2e/out/sim && rm -f e2e/out/sim/*.failed; for g in $(SIM_GROUPS); do \
 	  n=$${g%%=*}; s=$$(echo $${g#*=} | tr , ' '); \
 	  { $(subst --rm,--rm -e SIM_BUILT=1,$(DOCKER)) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $$s > e2e/out/sim/$$n.log 2>&1 \
-	    && echo "ok   $$n" || echo "FAIL $$n: e2e/out/sim/$$n.log"; } & \
-	done; wait
-	@! grep -l 'runs failed' $(foreach g,$(SIM_GROUPS),e2e/out/sim/$(firstword $(subst =, ,$(g))).log) 2>/dev/null | grep -q .
+	    && echo "ok   $$n" || { echo "FAIL $$n: e2e/out/sim/$$n.log"; touch e2e/out/sim/$$n.failed; }; } & \
+	done; wait; ! ls e2e/out/sim/*.failed >/dev/null 2>&1
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \
