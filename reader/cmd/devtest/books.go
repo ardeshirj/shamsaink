@@ -94,7 +94,7 @@ func buildBooks(dir string) bool {
 	}
 	os.MkdirAll(dir, 0o755)
 	for _, e := range entries {
-		if !e.IsDir() {
+		if !e.IsDir() || strings.HasPrefix(e.Name(), ".") { // a hidden folder (an editor's) is not a book
 			continue
 		}
 		data, err := buildBook(e.Name())

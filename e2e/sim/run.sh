@@ -13,7 +13,10 @@ SAVE=
 # the engine's library (native, as for make test), then the reader with it and devtest, for Linux
 (cd engine && cargo build -q --release --features parallel --lib 2>/dev/null)
 mkdir -p reader/out/sim
-(cd reader && CGO_ENABLED=1 go build -tags blitz -o out/sim/shamsaink . && go build -o out/sim/devtest ./cmd/devtest)
+# the library's hash in the link flags, as in reader/scripts/build-armv7.sh: Go does not see a new engine library itself
+LIB=$(md5sum engine/target/release/libblitz_engine.a | cut -c1-16)
+(cd reader && CGO_ENABLED=1 go build -tags blitz -ldflags "-X main.engineLib=$LIB" -o out/sim/shamsaink . &&
+  go build -o out/sim/devtest ./cmd/devtest)
 
 failed=0
 for s in "$@"; do

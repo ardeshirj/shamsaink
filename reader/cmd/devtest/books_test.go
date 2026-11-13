@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"shamsainkreader/library"
@@ -19,7 +20,7 @@ func TestBooks(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, e := range entries {
-		if !e.IsDir() {
+		if !e.IsDir() || strings.HasPrefix(e.Name(), ".") { // a hidden folder (an editor's) is not a book
 			continue
 		}
 		a, err := buildBook(e.Name())
