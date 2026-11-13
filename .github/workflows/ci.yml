@@ -56,7 +56,9 @@ jobs:
           key: engine-arm64-${{ hashFiles('engine/Cargo.toml', 'engine/Cargo.lock', 'engine/fetch-blitz.sh', 'engine/patches/**', 'engine/src/**') }}
           restore-keys: engine-arm64-
       - name: Blitz at its pinned commit, with our patches
-        run: engine/fetch-blitz.sh
+        # a cache restored from an older key (restore-keys) can hold Blitz or Parley with other patches, which
+        # fetch-blitz.sh leaves alone and stops on: here there is nothing to keep, so they are fetched anew
+        run: engine/fetch-blitz.sh || { rm -rf engine/blitz engine/parley && engine/fetch-blitz.sh; }
       - name: go-toolkit trimmed, cached by the script that makes it
         id: gotoolkit
         uses: actions/cache@v5
@@ -162,7 +164,9 @@ jobs:
           key: engine-armv7-${{ hashFiles('engine/Cargo.toml', 'engine/Cargo.lock', 'engine/fetch-blitz.sh', 'engine/patches/**', 'engine/src/**') }}
           restore-keys: engine-armv7-
       - name: Blitz at its pinned commit, with our patches
-        run: engine/fetch-blitz.sh
+        # a cache restored from an older key (restore-keys) can hold Blitz or Parley with other patches, which
+        # fetch-blitz.sh leaves alone and stops on: here there is nothing to keep, so they are fetched anew
+        run: engine/fetch-blitz.sh || { rm -rf engine/blitz engine/parley && engine/fetch-blitz.sh; }
       - name: go-toolkit trimmed, cached by the script that makes it
         id: gotoolkit
         uses: actions/cache@v5
