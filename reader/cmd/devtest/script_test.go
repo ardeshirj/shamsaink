@@ -16,7 +16,7 @@ func TestScenarios(t *testing.T) {
 		t.Fatal(err)
 	}
 	files, _ := filepath.Glob("e2e/scenarios/*.txt")
-	more, _ := filepath.Glob("e2e/scenarios/languages/*.txt") // the other languages' scenarios, a CI job of their own
+	more, _ := filepath.Glob("e2e/scenarios/languages/*.txt") // the other languages' scenarios, CI's languages group
 	files = append(files, more...)
 	if len(files) == 0 {
 		t.Fatal("no scenarios in e2e/scenarios")

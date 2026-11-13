@@ -152,7 +152,7 @@ e2e: devtest
 SIM_BOOKS ?= out/sim-books
 e2e-sim:
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/*.txt)))
-# the other right-to-left languages (Arabic, Hebrew, Urdu, ...), apart so the main run stays quick: a CI job of their own
+# the other right-to-left languages (Arabic, Hebrew, Urdu, ...), apart so the main run stays quick: a group of their own in CI's test (run at once with the others)
 e2e-sim-languages:
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/languages/*.txt)))
 

@@ -31,8 +31,8 @@ with another screen (the Kindle) is held by its hashes, its difference drawn fro
 (a panic, a fatal signal, an exit other than 0) ends the run at the step it happened in.
 
 **Our own books first** (2026-11-13): every scenario in CI runs on them, nothing downloaded; Farsi and English in
-`e2e/scenarios/`, the other right-to-left languages in `e2e/scenarios/languages/` (`make e2e-sim-languages`, a CI job of
-their own, so the main run stays quick). `basics` on FarsiEPUB's *Buried Alive* stays, by hand only. `forget` needs
+`e2e/scenarios/`, the other right-to-left languages in `e2e/scenarios/languages/` (`make e2e-sim-languages`; in CI a
+group of their own, run at the same time as walk, walk-en and reading: `.github/workflows/ci.yml`). `basics` on FarsiEPUB's *Buried Alive* stays, by hand only. `forget` needs
 `head -c`, which the Kobo's BusyBox has not: on the Kobo it removes nothing (to mend before it is used again).
 
 **Books** of others are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo. A
