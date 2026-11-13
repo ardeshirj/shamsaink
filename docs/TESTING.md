@@ -62,7 +62,8 @@ as Nickel coming back.
   moment), so it is known to catch something.
 - **A crash ends the run at once:** the reader's exit or panic, with its last log lines, not a time-out ten steps later.
 - **A failure explains itself:** `e2e/out/SCENARIO/failure/` holds the step, the log's last lines, the screen, the
-  reference and a picture of their difference; CI attaches the folder to the run.
+  reference and a picture of their difference; CI attaches the folder to the run. It stays until the next failure of
+  that scenario replaces it, so the runs that chase a rare one do not erase it (`step.txt` says when it failed).
 - **Fast:** each scenario on the simulator has its own `DIR`, so they run side by side; the whole suite in a few minutes.
 
 ## 4. References: hashes committed, pages not

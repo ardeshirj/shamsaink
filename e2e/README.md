@@ -20,8 +20,8 @@ and on the **Kobo** and the **Kindle** themselves (by hand, for what only hardwa
 control's name or a regular expression mistyped fails there, at its line.
 
 **A failure** stops the scenario at that step and says what it waited for and what the log said. `out/NAME/failure/`
-keeps what is needed to understand it: `step.txt`, the log's last lines (`log.txt`), the screen (`screen.pgm`) and, for a
-snapshot, the reference and `difference.png` (the screen faded, each pixel that differs in red). A snapshot is held
+(kept until the scenario's next failure replaces it: a passing run leaves it alone) keeps what is needed to understand
+it: `step.txt`, the log's last lines (`log.txt`), the screen (`screen.pgm`) and, for a snapshot, the reference and `difference.png` (the screen faded, each pixel that differs in red). A snapshot is held
 against its SHA-256 in `e2e/refs.sum` (committed; the pages stay out of git); the reference and the difference are drawn
 only where the local copy of that reference is (the Mac that kept it), elsewhere (CI) the screen alone. A scenario on our
 own books (`refs: images LANG` in its header) also commits its pages, `e2e/refs/LANG/HASH.png` (a folder for the book's language,

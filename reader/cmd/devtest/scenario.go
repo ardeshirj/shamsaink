@@ -118,8 +118,11 @@ func scenario(name, path string, save bool) bool {
 		p.out = filepath.Join("e2e", "out", place, base)
 	}
 	p.refs = filepath.Join(p.out, "refs")
-	p.failure = filepath.Join(p.out, "failure")
+	// what this run sees as it fails goes in failure.new, which replaces failure/ only if it does fail: a run that passes
+	// leaves the last failure's folder alone (a rare failure was lost to the reruns that chased it, 2026-11-13)
+	p.failure = filepath.Join(p.out, "failure.new")
 	os.RemoveAll(p.failure)
+	defer os.RemoveAll(p.failure)
 	os.MkdirAll(p.refs, 0o755)
 
 	for _, b := range s.books {
@@ -160,7 +163,10 @@ func scenario(name, path string, save bool) bool {
 		if err != nil {
 			fmt.Printf("FAIL %3d %s\n         %v\n", l.n, l.text, err)
 			p.explain(l, err)
-			fmt.Println("stopped at the first failure; what was seen is in " + p.failure)
+			kept := filepath.Join(p.out, "failure")
+			os.RemoveAll(kept)
+			os.Rename(p.failure, kept)
+			fmt.Println("stopped at the first failure; what was seen is in " + kept)
 			return false
 		}
 		fmt.Printf("ok   %3d %-50.50s %5.1f s  %s\n", l.n, l.text, time.Since(t).Seconds(), truncate(said, 70))
@@ -172,7 +178,8 @@ func scenario(name, path string, save bool) bool {
 // the screen (a failed snap has also put its reference and their difference there).
 func (p *player) explain(l line, err error) {
 	os.MkdirAll(p.failure, 0o755)
-	os.WriteFile(filepath.Join(p.failure, "step.txt"), []byte(fmt.Sprintf("line %d: %s\n%v\n", l.n, l.text, err)), 0o644)
+	os.WriteFile(filepath.Join(p.failure, "step.txt"), []byte(fmt.Sprintf("line %d: %s\n%v\n%s\n", l.n, l.text, err,
+		time.Now().Format(time.RFC3339))), 0o644)
 	if out, e := p.d.sh("tail -n 80 "+p.d.a.Log, nil); e == nil {
 		os.WriteFile(filepath.Join(p.failure, "log.txt"), out, 0o644)
 	}
