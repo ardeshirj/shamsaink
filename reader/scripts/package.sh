@@ -11,7 +11,8 @@
 #     launcher/Kobo.tgz, to .kobo/Kobo.tgz, which the firmware unpacks under /usr/local/Kobo at its restart
 #   - over SSH: unpacked beside the reader and moved in, the launcher put in imageformats/ (reader/kobo/install.sh,
 #     make kobo-package-install, make kobo-release-install)
-# In it: the reader, launch.sh and fonts in .adds/shamsaink, the fonts' and our licences, VERSION, the getting-started
+# In it: the reader, launch.sh and fonts in .adds/shamsaink, the fonts' and our licences, the third-party licences of what
+# is built into the reader (reader/scripts/licenses.sh), VERSION, the getting-started
 # guide beside the reader (reader/scripts/welcome.sh; the reader copies it into books/ on its first start only,
 # library.Welcome, so an upgrade does not bring back a guide that was removed), and the launcher
 # (reader/kobo/launcher, out/kobo/Kobo.tgz: make kobo-launcher). The fonts' licences are .md: Kobo's firmware 6 turns
@@ -33,6 +34,7 @@ OUT=${OUT:-out/release}
 BRAND=${BRAND:-kobo}
 [ -f reader/out/shamsaink ] || { echo "reader/out/shamsaink is not built: make reader" >&2; exit 1; }
 [ -f reader/out/welcome/getting-started.epub ] || { echo "the guide is not built: make welcome" >&2; exit 1; }
+[ -f out/licenses/THIRD-PARTY-LICENSES.md ] || { echo "the third-party licences are not made: make licenses" >&2; exit 1; }
 [ "${BRAND:-kobo}" != kobo ] || [ -f out/kobo/Kobo.tgz ] || { echo "the launcher is not built: make kobo-launcher" >&2; exit 1; }
 stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
@@ -47,6 +49,8 @@ cp reader/out/shamsaink reader/$BRAND/launch.sh "$d/"
 cp reader/fonts/*.ttf "$d/fonts/"
 for f in reader/fonts/LICENSE-*.txt; do cp "$f" "$d/licenses/$(basename "$f" .txt).md"; done
 cp LICENSE NOTICE BRAND.md "$d/licenses/"
+# every library built into the reader, with its licence (reader/scripts/licenses.sh)
+cp out/licenses/THIRD-PARTY-LICENSES.md "$d/licenses/"
 echo "$VERSION" > "$d/VERSION"
 chmod 755 "$d/shamsaink" "$d/launch.sh"
 if [ "$BRAND" = kobo ]; then

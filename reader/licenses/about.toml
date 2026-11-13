@@ -1,0 +1,7 @@
+# cargo-about's settings for the third-party licences shipped in every package (reader/scripts/licenses.sh): the crates
+# linked into the reader on the devices (ARMv7, musl), not those only used to build it or test it.
+accepted = ["MIT", "Apache-2.0", "MPL-2.0", "Unicode-3.0", "Zlib", "BSD-3-Clause", "BSD-2-Clause", "Unlicense", "0BSD", "ISC", "BSL-1.0"]
+targets = ["armv7-unknown-linux-musleabihf"]
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
+private = { ignore = true }

@@ -18,13 +18,15 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #   make kobo-package    the reader built and packed for the Kobo (reader/scripts/package.sh): out/release/shamsaink-VERSION-kobo.tgz
 #                        and its .sha256, VERSION git's description of this commit; the same package a release has
 #   make kindle-package  the same for the Kindle: out/release/shamsaink-VERSION-kindle.tgz and its .sha256
+#   make licenses        the third-party licences of what is built into the reader (reader/scripts/licenses.sh, cargo-about
+#                        and go list): out/licenses/THIRD-PARTY-LICENSES.md, in both packages' licenses/
 #   make tag V=0.0.1 NOTE="…"  tag a release on a clean main (reader/scripts/release.sh); push it yourself, and CI
 #                        builds and publishes it (CHANGELOG.md, "How to release")
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
 #                        committing (docs/DESIGN-SYSTEM.md)
 
-.PHONY: reader welcome engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag
+.PHONY: reader welcome licenses engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag
 
 reader:
 	@sh reader/scripts/build.sh
@@ -36,10 +38,13 @@ VERSION = $(shell git describe --tags --match 'v[0-9]*' --dirty --always)
 welcome:
 	@sh reader/scripts/welcome.sh
 
-kobo-package: reader welcome kobo-launcher
+licenses:
+	@$(DOCKER) sh -c 'cd /r && sh reader/scripts/licenses.sh'
+
+kobo-package: reader welcome licenses kobo-launcher
 	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) sh reader/scripts/package.sh'
 
-kindle-package: reader welcome
+kindle-package: reader welcome licenses
 	@$(DOCKER) sh -c 'cd /r && VERSION=$(VERSION) BRAND=kindle sh reader/scripts/package.sh'
 
 tag:

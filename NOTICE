@@ -5,12 +5,21 @@ Licensed under the Apache License, Version 2.0 (LICENSE).
 
 The names ShamsaInk and FarsiEPUB and their logos are not covered by the license: see BRAND.md.
 
-It uses, and does not change:
+It uses:
 
-- Readium's Go toolkit (https://github.com/readium/go-toolkit), BSD 3-Clause, for EPUB.
-- Blitz (https://github.com/DioxusLabs/blitz) with Parley, HarfRust and ICU4X (MIT, Apache License 2.0 or the Unicode
-  License), for laying out and drawing pages, and Stylo, Firefox's CSS engine, under the Mozilla Public License 2.0.
-- The fonts Parastoo (copyright 2015 Saber Rastikerdar), Vazirmatn (copyright 2015 The Vazirmatn Project Authors),
+- Readium's Go toolkit (https://github.com/readium/go-toolkit), BSD 3-Clause, for EPUB: v0.16.1 with its remote
+  archives, fetchers and assets (S3, Google Cloud Storage, HTTP) left out, files removed and none changed
+  (experiments/02-crengine-go/trim-gotoolkit.sh).
+- Blitz (https://github.com/DioxusLabs/blitz), under the MIT License, with Parley, HarfRust and ICU4X (MIT, Apache
+  License 2.0 or the Unicode License), for laying out and drawing pages. Blitz is built with two changes of ours, in
+  engine/patches/: lines outside the page skipped when painting (blitz-cull-lines.patch), and pictures decoded when
+  drawn, at the size drawn (blitz-lazy-images.patch).
+- Stylo, Firefox's CSS engine, inside Blitz, and Symphonia, for decoding narration's audio, under the Mozilla Public
+  License 2.0, unchanged: their source is on crates.io and at https://github.com/servo/stylo and
+  https://github.com/pdeljanov/Symphonia.
+- Every library built into the reader, with its licence and copyright notices: licenses/THIRD-PARTY-LICENSES.md in
+  each package, made by reader/scripts/licenses.sh.
+- The fonts, unchanged: Parastoo (copyright 2015 Saber Rastikerdar), Vazirmatn (copyright 2015 The Vazirmatn Project Authors),
   Frank Ruhl Libre (copyright 2015 The Frank Ruhl Libre Project Authors) and Noto Naskh Arabic (copyright 2022 The
   Noto Project Authors), SIL Open Font License 1.1, and DejaVu (copyright 2003 Bitstream, Inc., and the DejaVu changes in the public domain),
   the Bitstream Vera licence: in reader/fonts, each with its licence.
@@ -20,6 +29,4 @@ row painting are adapted from NickelModManager (https://github.com/nicoverbrugge
 Verbruggen, MIT License: its licence is in licenses/LICENSE-NickelModManager.md in the Kobo package, and in
 reader/kobo/launcher/LICENSE-NickelModManager.txt).
 
-On a Kindle it is started by a launcher of ours from the Kindle's own library; KOReader
-(https://github.com/koreader/koreader, AGPL-3.0) is used only for its SSH server while developing. KOReader is a
-separate program and none of its code is copied here.
+On a Kindle it is started by a launcher of ours from the Kindle's own library.

@@ -2,6 +2,7 @@
 name = "blitz-engine"
 version = "0.1.0"
 edition = "2024"
+publish = false # ShamsaInk's own (Apache-2.0, the repository's licence): left out of the third-party licences (reader/licenses)
 
 # Blitz from its repository (engine/blitz, fetched by fetch-blitz.sh at a pinned commit with patches/ applied; its
 # crates.io releases lag behind), without system fonts (fontconfig, C), accessibility or the network layer: files only.

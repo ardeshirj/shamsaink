@@ -12,6 +12,10 @@ is at the end, under "Versions and releases".
   direction (before, only Arabic, Farsi and Hebrew did).
 - **Laid out right to left for right-to-left books:** in a Hebrew, Arabic or Urdu book the menus and panels are
   mirrored as in a Farsi book, their words still English. "Follow book language" off keeps them left to right.
+- **Every library's licence in the package:** `licenses/THIRD-PARTY-LICENSES.md` has the licence and copyright notices of
+  each of the 204 Rust crates and 15 Go modules built into the reader, and of Go's, Rust's and musl's own libraries,
+  made from the build itself (cargo-about and `go list`). NOTICE now says that Blitz is built with two changes of
+  ours (`engine/patches/`), that go-toolkit is trimmed, and that Symphonia (narration's audio) is MPL-2.0 as Stylo.
 
 ## 0.3.0-beta (2026-11-12)
 Sleep fixed on Kobo firmware 6, and books in Hebrew, Urdu and more of the right-to-left languages.

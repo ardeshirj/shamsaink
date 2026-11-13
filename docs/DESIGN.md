@@ -314,13 +314,17 @@ was found and measured: 06, 07 and 08's NOTES.md.
 
 The reader is to be one static binary: what is linked into it is what its licence has to live with. Rust crates
 counted from `cargo metadata` of `blitz-engine` for the ARMv7 target (2026-10-25): 215 crates, none GPL; the only
-copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published; we change none).
+copyleft is MPL-2.0 (file by file: a changed file of theirs has to be published; we change none). Since 2026-11-12
+the packages carry every one of their licences, made from the build (`make licenses`, `reader/scripts/licenses.sh`:
+cargo-about for the crates actually linked, 204 then, 21 of them MPL-2.0 with Symphonia; `go list` for the 15 Go
+modules; Go's, musl's and Rust's own libraries): `licenses/THIRD-PARTY-LICENSES.md`.
 
 | Dependency | For | Licence | In the reader |
 |---|---|---|---|
 | readium/go-toolkit | EPUB, positions, SMIL timings | BSD-3 | yes (trimmed, 02) |
 | Blitz: blitz-dom, blitz-html, blitz-paint | HTML, CSS, layout, painting | MIT / Apache-2.0 | yes, with our two patches (section 6) |
 | Stylo, cssparser, selectors, and small crates with them (app_units, dtoa-short, to_shmem, uluru) | Firefox's CSS engine, inside Blitz | **MPL-2.0** (14 crates) | yes, unchanged |
+| Symphonia | narration's MP3 and AAC decoded for read-along | **MPL-2.0** (7 crates) | yes, unchanged |
 | Parley, fontique, HarfRust, skrifa | text: fonts, shaping, lines | MIT / Apache-2.0 | yes |
 | Taffy | boxes (flex, grid, block) | MIT | yes |
 | vello_cpu, anyrender | drawing what is not text | MIT / Apache-2.0 | yes |
