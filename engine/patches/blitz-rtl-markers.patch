@@ -1,0 +1,34 @@
+diff --git a/packages/blitz-paint/src/render.rs b/packages/blitz-paint/src/render.rs
+--- a/packages/blitz-paint/src/render.rs
++++ b/packages/blitz-paint/src/render.rs
+@@ -997,13 +997,25 @@
+                 Marker::Char(_) => 8.0,
+                 Marker::String(_) => 0.0,
+             };
+-            // Outside markers are placed outside the list item's border box
++            // Outside markers are placed outside the list item's border box, on its start side:
++            // the left in a left-to-right item, the right in a right-to-left one
+             // (`pos` is the origin of its content box)
+             let item_layout = self.node.final_layout();
+-            let x_offset = -(layout.full_width() / layout.scale()
+-                + x_padding
+-                + item_layout.padding.left
+-                + item_layout.border.left);
++            let is_rtl = self.style.get_inherited_box().direction
++                == style::computed_values::direction::T::Rtl;
++            let x_offset = if is_rtl {
++                let content_width = item_layout.size.width
++                    - item_layout.padding.left
++                    - item_layout.padding.right
++                    - item_layout.border.left
++                    - item_layout.border.right;
++                content_width + item_layout.padding.right + item_layout.border.right + x_padding
++            } else {
++                -(layout.full_width() / layout.scale()
++                    + x_padding
++                    + item_layout.padding.left
++                    + item_layout.border.left)
++            };
+ 
+             // Align the marker with the baseline of the first line of text in the list item
+             let y_offset = if let Some((text_layout, first_text_line)) = &self

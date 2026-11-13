@@ -1,15 +1,16 @@
 #!/bin/sh
-# Fetches Blitz into engine/blitz/ (not in git): a clone of DioxusLabs/blitz at the commit we build against, with our two
-# patches in patches/ applied (line culling, then pictures decoded when drawn). And Parley, Blitz's text layout, into
-# engine/parley/ (not in git): its crates.io release, checked against Cargo.lock, with patches/parley-*.patch applied
-# (Cargo.toml's [patch.crates-io] points there). Run it once before building:
+# Fetches Blitz into engine/blitz/ (not in git): a clone of DioxusLabs/blitz at the commit we build against, with our
+# patches in patches/ applied (line culling, pictures decoded when drawn, list markers on the right of right-to-left
+# items). And Parley, Blitz's text layout, into engine/parley/ (not in git): its crates.io release, checked against
+# Cargo.lock, with patches/parley-*.patch applied (Cargo.toml's [patch.crates-io] points there). Run it once before
+# building:
 #   engine/fetch-blitz.sh
 # Safe to run again: what is already fetched with its patches on is left as it is; anything in another state stops it
 # and is left alone.
 set -e
 cd "$(dirname "$0")"
 COMMIT=21edc92d90d8f8bedadd3f9ecb14b1ad950952eb
-PATCHES="patches/blitz-cull-lines.patch patches/blitz-lazy-images.patch"
+PATCHES="patches/blitz-cull-lines.patch patches/blitz-lazy-images.patch patches/blitz-rtl-markers.patch"
 # Parley 0.12.0, Blitz's, with linebender/parley#907 (a line's trailing space after text of the other direction moved
 # to the line's end, UAX #9 rule L1; open upstream) taken as it is, its source part only
 PARLEY=0.12.0
