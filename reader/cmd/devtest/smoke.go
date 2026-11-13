@@ -111,7 +111,10 @@ func (d *dev) knownStart(fixture string) (string, error) {
 		}
 		said = "a copy left by an earlier run put back first; "
 	}
-	if _, err := d.sh("cd "+d.a.Dir+" && mkdir "+savedDir+" && for f in "+stateFiles+"; do [ ! -e $f ] || cp -Rp $f "+savedDir+"/; done", nil); err != nil {
+	// Then the places and highlights go for the run, so only the fixture's are there: a book read by hand on the device
+	// (one of our test books, say) would otherwise open at its own place, and mark it in Contents (2026-11-13: rtl-ur's
+	// contents on the Kobo). They are put back after with the rest.
+	if _, err := d.sh("cd "+d.a.Dir+" && mkdir "+savedDir+" && for f in "+stateFiles+"; do [ ! -e $f ] || cp -Rp $f "+savedDir+"/; done && rm -rf places highlights", nil); err != nil {
 		return "", fmt.Errorf("saving the reader's files: %v", err)
 	}
 	// The Kindle's own Dark Mode (its window manager's epdcMode Y8INV) off for the run, kept to be put back with the
