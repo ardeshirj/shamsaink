@@ -59,6 +59,10 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   Kobo, the Farsi wording reviewed by the maintainer
 - [ ] The interface in the other right-to-left languages (Arabic, Hebrew and more; today English laid out right to
   left): promised as "planned" on FarsiEPUB's ShamsaInk page (2026-11-12)
+- [ ] A book with no stated direction, read right to left (`ur-basics`, 2026-11-13: its pages turn right to left but its
+  paragraphs are laid out left to right; `LANGUAGES.md`, "Known gaps"): the reader giving the engine `direction: rtl`
+- [ ] A highlight across a change of direction (`mixed`, chapter 1, 2026-11-13): its band also shades part of "Prince"
+  in the English title next to it; cosmetic, left for later
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [ ] The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
@@ -114,8 +118,14 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] Controls' effects in the spec (`emits:`, `press:`, `undo:` started 2026-11-06), scenarios moved to it
   - [ ] Scenarios for read aloud and sleep; page-button presses in the harness; the Kindle
 - Upstream (any time; the maintainer posts; "Upstream to Blitz" below):
-  - [ ] go-toolkit's trim, to Readium; go-text's justification fix
-  - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn
+  - [ ] go-toolkit's trim, to Readium: a `readium_nocloud` build tag, which Readium invited as a PR (2026-11-13; prepared
+    in its own session, go-toolkit-44). Once in a release, `trim-gotoolkit.sh` goes and `go.mod` takes the tag. go-text's justification fix
+  - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn; a right-to-left list's bullets on
+    its right (`blitz-rtl-markers.patch`, 2026-11-13)
+  - [ ] Parley: linebender/parley#907 (a line's trailing space at its end, Unicode's rule L1), carried as
+    `engine/patches/parley-trailing-whitespace.patch` since 2026-11-13; the maintainer commented on it with our pages. Check on
+    it now and then: once a Parley release with it (or another fix) is Blitz's, the patch and `Cargo.toml`'s
+    `[patch.crates-io]` go, and `mixed`'s pages are held unchanged
   - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
   - [ ] Right-to-left languages for a book with no stated direction, to Readium (an issue on readium-css first, its
     "missing page-progression-direction" rule, then the toolkits): only `ar`, `fa`, `he` now, so Urdu, Pashto, Sindhi,
@@ -250,6 +260,8 @@ Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259
   slack: see first whether Parley gives a line's ink bounds) and #809. Numbers: 04's NOTES.md.
 - **Pictures decoded when drawn** (`blitz-lazy-images.patch`, our `pictures.rs`): an issue first, the design theirs
   (decoding in blitz-paint or anyrender, a bounded cache). Next to #1221, #896, #795, #286. Numbers: a scan's 76 MB (08).
+- **A right-to-left list's bullets on its right** (`blitz-rtl-markers.patch`, 2026-11-13, a few lines in blitz-paint's
+  `draw_marker`): a small PR; still so on Blitz's main. `mixed`'s list page shows it.
 - Paginated layout is in Blitz's backlog (#119): if it comes, ours could move into Blitz.
 
 ## Why this order
