@@ -155,6 +155,22 @@ e2e-sim:
 # the other right-to-left languages (Arabic, Hebrew, Urdu, ...), apart so the main run stays quick: a group of their own in CI's test (run at once with the others)
 e2e-sim-languages:
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/languages/*.txt)))
+# every scenario CI runs, in CI's four groups (.github/workflows/ci.yml: keep the two lists alike) at once, each in a
+# container of its own after one build: about as long as the longest walk. Each group's output in e2e/out/sim/GROUP.log.
+# Not with SAVE: the groups would write e2e/refs.sum at the same time (keep references with e2e-sim, one at a time).
+SIM_GROUPS = walk-fa=e2e/scenarios/walk-fa.txt walk-en=e2e/scenarios/walk-en.txt \
+  reading=e2e/scenarios/readalong-granularity.txt,e2e/scenarios/rtl-fa.txt,e2e/scenarios/follow-language.txt \
+  languages=$(subst $(eval) ,$(comma),$(wildcard e2e/scenarios/languages/*.txt))
+comma = ,
+e2e-sim-all:
+	@[ -z "$(SAVE)" ] || { echo "e2e-sim-all does not keep references: make e2e-sim SAVE=1 SCENARIO=..." >&2; exit 2; }
+	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS)
+	@mkdir -p e2e/out/sim; for g in $(SIM_GROUPS); do \
+	  n=$${g%%=*}; s=$$(echo $${g#*=} | tr , ' '); \
+	  { $(subst --rm,--rm -e SIM_BUILT=1,$(DOCKER)) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $$s > e2e/out/sim/$$n.log 2>&1 \
+	    && echo "ok   $$n" || echo "FAIL $$n: e2e/out/sim/$$n.log"; } & \
+	done; wait
+	@! grep -l 'runs failed' $(foreach g,$(SIM_GROUPS),e2e/out/sim/$(firstword $(subst =, ,$(g))).log) 2>/dev/null | grep -q .
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \

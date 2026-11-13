@@ -2,6 +2,8 @@
 # Builds the reader and devtest for the simulated Kobo and plays scenarios on it (docs/TESTING.md, section 2): each on a
 # fresh device (setup.sh), from the repository's root, inside the eink-rust container (`make e2e-sim`).
 #     sh e2e/sim/run.sh BOOKS [--save] SCENARIO...
+# With no scenario it only builds; with SIM_BUILT=1 it builds nothing, the build already there (make e2e-sim-all: one
+# build, then the groups each in a container of its own at once).
 set -e
 cd "$(dirname "$0")/../.."
 BOOKS=$1
@@ -11,12 +13,14 @@ SAVE=
 [ -d "$BOOKS" ] || { echo "no books folder $BOOKS (the scenarios' books, as books/ on the Kobo)" >&2; exit 2; }
 
 # the engine's library (native, as for make test), then the reader with it and devtest, for Linux
-(cd engine && cargo build -q --release --features parallel --lib 2>/dev/null)
-mkdir -p reader/out/sim
-# the library's hash in the link flags, as in reader/scripts/build-armv7.sh: Go does not see a new engine library itself
-LIB=$(md5sum engine/target/release/libblitz_engine.a | cut -c1-16)
-(cd reader && CGO_ENABLED=1 go build -tags blitz -ldflags "-X main.engineLib=$LIB" -o out/sim/shamsaink . &&
-  go build -o out/sim/devtest ./cmd/devtest)
+if [ -z "$SIM_BUILT" ]; then
+  (cd engine && cargo build -q --release --features parallel --lib 2>/dev/null)
+  mkdir -p reader/out/sim
+  # the library's hash in the link flags, as in reader/scripts/build-armv7.sh: Go does not see a new engine library itself
+  LIB=$(md5sum engine/target/release/libblitz_engine.a | cut -c1-16)
+  (cd reader && CGO_ENABLED=1 go build -tags blitz -ldflags "-X main.engineLib=$LIB" -o out/sim/shamsaink . &&
+    go build -o out/sim/devtest ./cmd/devtest)
+fi
 
 failed=0
 for s in "$@"; do
