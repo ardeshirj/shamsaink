@@ -13,7 +13,7 @@ pictures (`e2e/refs/LANG/`, a scenario's `refs: images LANG`); other people's bo
 
 | Book | Language | Tests | Scenario |
 |---|---|---|---|
-| `fa-basics` | Farsi | Farsi pages, the bar and dock in Farsi, contents, pages turned, a highlight; read-along by a tone (chapter 3: words, sentences, a paragraph); every scenario's default fixture | `rtl-fa`, `walk`, `language`, `readalong-granularity`, `watchdog-quiet`, the sleeps |
+| `fa-basics` | Farsi | Farsi pages, the bar and dock in Farsi, contents, pages turned, a highlight; read-along by a tone (chapter 3: words, sentences, a paragraph); every scenario's default fixture | `rtl-fa`, `walk-fa`, `follow-language`, `readalong-granularity`, `watchdog-quiet`, the sleeps |
 | `en-basics` | English | the walk on a left-to-right book (in place of Moby-Dick) | `walk-en` |
 | `he-basics` | Hebrew | Frank Ruhl Libre with vowel points, the interface in English mirrored, pages turned right to left, a highlight, `close` by the mirrored bar | `languages/rtl-he` |
 | `ar-basics` | Arabic | Noto Naskh Arabic, the same paths | `languages/rtl-ar` |

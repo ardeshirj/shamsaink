@@ -171,7 +171,7 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
   components, one set used everywhere): the design system, `docs/DESIGN-SYSTEM.md` (spec in `reader/design/spec`, checks `go test ./design`,
-  renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: `docs/DESIGN.md`, "The reader's panels".
+  renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk-fa.txt`; its page `docs/design/system.html`); what is designed but not built yet in `docs/design/unbuilt-screens.md`. More: `docs/DESIGN.md`, "The reader's panels".
 - **One reader, the same on every device** (the maintainer, 2026-11-06): the same behaviour, timings, screens and
   settings on the Kobo and the Kindle (the opening screen's minimum, sleep screens, dark mode, the light, the battery,
   ...); a difference only where a device lacks something or forces it, and then written in its

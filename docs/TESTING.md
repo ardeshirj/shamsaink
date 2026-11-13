@@ -15,7 +15,7 @@ left: `PLAN.md`, "Alongside", end-to-end tests.
 | `make e2e-sim` | minutes | the reader, whole, on the simulated Kobo (section 2): the walk and the scenarios | navigation broken anywhere (the walk); behaviour broken on a real book (the scenarios) |
 | `make e2e` | minutes | the same files on the Kobo, and those `on: kobo`; `DEVICE=kindle` on the Kindle, those `on: kindle` | what only hardware shows: device code, the watchdog, timing |
 
-- **`make e2e-sim` runs two kinds of test.** The walk (`e2e/scenarios/walk.txt`) is generated from the spec: every screen
+- **`make e2e-sim` runs two kinds of test.** The walk (`e2e/scenarios/walk-fa.txt`) is generated from the spec: every screen
   opened the way the spec says, held against its kept render, closed; a screen added to the spec is walked the next time.
   Scenarios are written by hand: journeys on a book, pages compared byte for byte with references.
 - **When:** `make check` always (the pre-push hook runs it); `make test` before committing a change to the reader;
@@ -107,7 +107,7 @@ copy of the books is not decided yet.
 ## 6. The spec says what the reader does
 
 The design spec already says where each control goes (`action: goto, to: contents`) and how each screen is reached and
-closed (`enter:`, `dismiss:`); the walk (`e2e/scenarios/walk.txt`) is generated from it. It grows to behaviour:
+closed (`enter:`, `dismiss:`); the walk (`e2e/scenarios/walk-fa.txt`) is generated from it. It grows to behaviour:
 
 - **Events:** one list of the reader's events (`reader/spec/events.yaml`: `highlight-made`, `went-to`, `dark-mode`, ...,
   each with its fields). The reader logs them through one function; devtest waits for them by name

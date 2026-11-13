@@ -32,7 +32,7 @@ with another screen (the Kindle) is held by its hashes, its difference drawn fro
 
 **Our own books first** (2026-11-13): every scenario in CI runs on them, nothing downloaded; Farsi and English in
 `e2e/scenarios/`, the other right-to-left languages in `e2e/scenarios/languages/` (`make e2e-sim-languages`; in CI a
-group of their own, run at the same time as walk, walk-en and reading: `.github/workflows/ci.yml`). `basics` on FarsiEPUB's *Buried Alive* stays, by hand only. `forget` needs
+group of their own, run at the same time as walk-fa, walk-en and reading: `.github/workflows/ci.yml`). `basics` on FarsiEPUB's *Buried Alive* stays, by hand only. `forget` needs
 `head -c`, which the Kobo's BusyBox has not: on the Kobo it removes nothing (to mend before it is used again).
 
 **Books** of others are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo. A
@@ -96,7 +96,7 @@ expect menu drawn
 - Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`, `expect-online`) need `on: kobo` (or `kindle`, whose
   launcher has the watchdog; there `expect-nickel` waits for Amazon's framework resumed); `make check` says so. The
   Kindle has no page buttons: a scenario with `press forward|back` is not `on: kindle`.
-- On the Kindle (2026-11-07): `basics`, `walk`, `walk-en` (before 2026-11-13 `walk-moby-dick`), `rtl-fa`, the
+- On the Kindle (2026-11-07): `basics`, `walk-fa` (before 2026-11-13 `walk`), `walk-en` (before 2026-11-13 `walk-moby-dick`), `rtl-fa`, the
   languages' scenarios and `watchdog-freeze`. Not `readalong-granularity` (no
-  sound on it yet) nor `language` (its taps are the Kobo's pixels, until devtest finds the library's controls in the
+  sound on it yet) nor `follow-language` (its taps are the Kobo's pixels, until devtest finds the library's controls in the
   language it is drawn in).

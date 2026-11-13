@@ -3,8 +3,8 @@
 #   check  make check (reader/scripts/check.sh): gofmt, vet, the tests that need no engine; a minute
 #   test   the engine built (cached: rebuilt only when engine/ changes) and the simulated Kobo's scenarios (make e2e-sim's
 #          run.sh), in four groups at once, each on its own runner, so a run takes about as long as its longest walk
-#          (2026-11-13; one after another it was 5.5 minutes of scenarios): walk, walk-en, reading (make test too: every
-#          Go test, the renders compared with the kept ones; then read-along, rtl-fa, language) and languages (the other
+#          (2026-11-13; one after another it was 5.5 minutes of scenarios): walk-fa, walk-en, reading (make test too: every
+#          Go test, the renders compared with the kept ones; then read-along, rtl-fa, follow-language) and languages (the other
 #          right-to-left languages, e2e/scenarios/languages/: our own Arabic, Hebrew and Urdu books). A failure's folder
 #          (step, log, screen, reference, difference) attached to the run, named by its group
 #   release  on a pushed version tag only, after check and every group of test: the Kobo's and the Kindle's packages built and published as a GitHub release
@@ -35,12 +35,12 @@ jobs:
       fail-fast: false # every group to the end: a failure in one says nothing about the others
       matrix:
         include:
-          - group: walk
-            scenarios: e2e/scenarios/walk.txt
+          - group: walk-fa
+            scenarios: e2e/scenarios/walk-fa.txt
           - group: walk-en
             scenarios: e2e/scenarios/walk-en.txt
           - group: reading
-            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/language.txt
+            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt
           - group: languages
             scenarios: e2e/scenarios/languages/*.txt
     steps:

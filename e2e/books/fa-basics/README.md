@@ -10,7 +10,7 @@ beep where each cue starts). The overlay has all three granularities EPUB allows
 begins on the chapter's second page, so the narration turns a page. The other chapters have none.
 
 Tests: `rtl-fa.txt` (Farsi pages in the reader's own fonts, the bar and dock in Farsi, contents, pages turned right to
-left, a highlight made and removed), `walk.txt` and `language.txt` (from its fixture, `e2e/fixtures/fa-basics`), and the
+left, a highlight made and removed), `walk-fa.txt` and `follow-language.txt` (from its fixture, `e2e/fixtures/fa-basics`), and the
 read-aloud scenarios.
 
 The text is ours, written for these tests (Apache-2.0, as the repository).

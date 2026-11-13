@@ -2,7 +2,7 @@
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
 //	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go); the
-//	                         walk of every screen the spec reaches is one of its steps (walk.go, e2e/scenarios/walk.txt)
+//	                         walk of every screen the spec reaches is one of its steps (walk.go, e2e/scenarios/walk-fa.txt)
 //	devtest usage DEVICE     the reader's usage lines from its log: each stretch awake and asleep, the battery it used, the rate
 //	                         per hour (read-only)
 //

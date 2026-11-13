@@ -50,12 +50,12 @@ are drawn with, the reader installed (and whether it is the latest local build).
 must be, the tool how to reach it. First run on the Kobo Libra Colour (2026-10-31): all agree, and the fonts on it are the
 renders' files.
 
-**The walk** (`e2e/scenarios/walk.txt`, `reader/cmd/devtest/walk.go`; 2026-11-06) holds the device against the design
+**The walk** (`e2e/scenarios/walk-fa.txt`, `reader/cmd/devtest/walk.go`; 2026-11-06) holds the device against the design
 from the spec itself: every built screen the spec reaches (its `enter:` gestures, the controls' `goto` and `replace`,
 `when:`, `dismiss:`), from the library and from a book's page, opened, its kept render's buttons checked for ink where
 the render says they are, closed the way the spec says, and the screen as it was. Nothing in it names a screen: one added
 to the spec is walked the next time, and `make check` fails if the walk has no way to it. It runs on the simulated Kobo
-(`make e2e-sim`) and on the Kobo (`make e2e SCENARIO=e2e/scenarios/walk.txt`): 17 routes, 16 screens. Before it (2026-11-01
+(`make e2e-sim`) and on the Kobo (`make e2e SCENARIO=e2e/scenarios/walk-fa.txt`): 17 routes, 16 screens. Before it (2026-11-01
 to 11-05) a smoke test and a flow walked by hand-written Go did the same in part (`make kobo-smoke`, `kobo-flow`,
 `kobo-flow-book`, removed 2026-11-06). How it fits with the scenarios: `docs/TESTING.md`, section 6.
 
