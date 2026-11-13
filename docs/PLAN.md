@@ -57,6 +57,8 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
 - [ ] Interface language, "Follow book language" (built 2026-10-31, `DESIGN.md` "The reader's panels"): tried on the
   Kobo, the Farsi wording reviewed by the maintainer
+- [ ] The interface in the other right-to-left languages (Arabic, Hebrew and more; today English laid out right to
+  left): promised as "planned" on FarsiEPUB's ShamsaInk page (2026-11-12)
 - [ ] Components: icon button, slider, tabs, list, battery
 - [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - [ ] The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
