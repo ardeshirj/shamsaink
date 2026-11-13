@@ -77,7 +77,17 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 **7. A library**
 - [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
   from stage 6's list component; covers after, with a cache of them
-- [ ] A keyboard (English and Farsi) for search; not designed yet (`unbuilt-screens.md`, "The keyboard")
+- [ ] A keyboard (English and Farsi) for search; not designed yet (`unbuilt-screens.md`, "The keyboard"). **A digit
+  keypad first** (for Get a book, below): ten big keys and a delete, the code drawn again from Go at each key, with
+  `Panel.At` as today; the full keyboard grows from it. Kobo's own keyboard can't be used: it is part of Nickel, which
+  is stopped while we run (only our launcher, inside Nickel, could open one, and only before the reader starts), and
+  the Kindle and PocketBook would need theirs too (2026-11-12)
+- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, after OPDS; FarsiEPUB's `docs/PLAN.md`, "Visitors' books by
+  code"): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and get 8 digits, alive
+  15 minutes, one use; in the library's menu, Get a book, the digits on the keypad, then one request
+  (`GET /api/v1/codes/{code}/book`): the EPUB saved into the library and opened. Refusals in plain words: expired
+  (press the button again), too many tries (wait an hour), shared too widely. Wi-Fi and the download into the library
+  are the OPDS work's
 - [ ] Books over the air, **OPDS** (2026-11-02; right after the beta, decided 2026-11-10): the aim is one tap from a
   list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's address
   ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any OPDS
