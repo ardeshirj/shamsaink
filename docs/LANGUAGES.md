@@ -11,6 +11,11 @@ FarsiEPUB's ShamsaInk page.
   book asking for Noto Naskh Arabic gets it by name).
 - **Right to left:** a book's stated direction (`page-progression-direction` in its OPF) is followed. With none
   stated, a book whose one language is written right to left turns its pages right to left (the list below).
+- **Mixed directions in a paragraph** (an English title in a Farsi sentence): Unicode's bidi algorithm, as in a
+  browser, Chromium's lines included: a line broken inside the other direction's words keeps its last space at the
+  line's end (Unicode's rule L1, a Parley patch: `engine/patches/parley-trailing-whitespace.patch`, 2026-11-13). A
+  paragraph marked `dir="auto"` takes its direction from its first strong letter, as in a browser (`engine/src/lib.rs`,
+  `OUR_UA_CSS`, 2026-11-13; before, it took the book's).
 - **The interface** has words in English and Farsi. A Farsi book's menus are in Farsi, right to left; another
   right-to-left book's are in English laid out right to left (mirrored); every other book's in English. The library is
   always in English. Settings → "Follow book language" off: English, left to right, everywhere.
@@ -28,6 +33,7 @@ FarsiEPUB's ShamsaInk page.
 | Hebrew | `he`, `iw` | Frank Ruhl Libre (vowel points included) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `he-basics` (`languages/rtl-he`: vowel points, the mirrored bar's back arrow) |
 | Yiddish | `yi` | Frank Ruhl Libre | right to left | English, mirrored | unit tests (direction) |
 | Dhivehi, Syriac | `dv`, `syr` | no font of ours (the book's own, else boxes) | right to left | English, mirrored | unit tests (direction) |
+| Several, Farsi among them | `fa` with others | as each language above (`lang` on the words) | the book's stated direction, else left to right | Farsi | e2e on our own `mixed` (`languages/rtl-mixed`: English, numbers, an email and a URL inside Farsi sentences; Arabic, Hebrew and Urdu words quoted; Farsi inside an English paragraph; `dir="auto"`; a highlight across a change of direction) |
 | English and other left-to-right languages | anything else | DejaVu Serif or Sans, as the book's CSS asks | left to right | English | everything else; e2e on our own `en-basics` (`walk-en`) |
 
 A book listing more than one language has no direction from them (Readium's rule): its stated direction, else left to
@@ -52,8 +58,8 @@ The lists are in several places and nothing yet checks them against each other: 
   twice as tall; experiment 15).
 - **The Kindle:** the Hebrew, Arabic and Urdu books not tried on it yet (same binary and fonts as the Kobo; their scenarios are `on: kindle`).
 - **Tests:** our own books (`e2e/books/`, 2026-11-13) cover Farsi (narrated), English, Arabic, Hebrew and Urdu (no
-  direction stated); a paragraph mixing right to left and left to right is still to come. Their Arabic, Hebrew and Urdu
-  text is not yet checked by a reader of those languages.
+  direction stated) and several languages in one book (`mixed`, 2026-11-13: both directions in one paragraph). Their
+  Arabic, Hebrew and Urdu text is not yet checked by a reader of those languages.
 - **Found (2026-11-13, `ur-basics`): a book with no direction stated has its paragraphs laid out left to right.** Its
   pages turn right to left (`readsRTL`) and each line's letters run right to left, but a paragraph's short last line sits
   at the left: the engine's base direction stays left to right. To decide: the reader giving the engine `direction: rtl`

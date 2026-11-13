@@ -18,5 +18,6 @@ pictures (`e2e/refs/LANG/`, a scenario's `refs: images LANG`); other people's bo
 | `he-basics` | Hebrew | Frank Ruhl Libre with vowel points, the interface in English mirrored, pages turned right to left, a highlight, `close` by the mirrored bar | `languages/rtl-he` |
 | `ar-basics` | Arabic | Noto Naskh Arabic, the same paths | `languages/rtl-ar` |
 | `ur-basics` | Urdu | **no direction stated anywhere**: pages turned right to left from `dc:language` alone; Urdu's own letters | `languages/rtl-ur` |
+| `mixed` | Farsi, English, Arabic, Hebrew | several languages, Farsi first, pages right to left: English, numbers, an email and a URL inside Farsi sentences; Arabic, Hebrew and Urdu words quoted; Farsi inside an English paragraph; `dir="auto"`; a highlight across a change of direction | `languages/rtl-mixed` |
 
 The Arabic, Hebrew and Urdu text is not yet checked by a reader of those languages (each book's README says so).

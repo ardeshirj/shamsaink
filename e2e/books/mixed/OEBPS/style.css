@@ -1,0 +1,11 @@
+/* As fa-basics (rtlbook's books): the direction stated, the text justified, headings centred; a list and an English
+   paragraph as such books have them. */
+html { direction: rtl; }
+body { margin: 0; }
+h1 { text-align: center; margin: 1em 0; }
+p { text-align: justify; margin: 0; text-indent: 1.5em; }
+h1 + p { text-indent: 0; }
+ul { margin: 0.5em 0; padding-inline-start: 1.5em; }
+p[dir="ltr"] { text-align: left; }
+.title { text-align: center; margin-top: 30%; }
+.title p { text-align: center; text-indent: 0; }

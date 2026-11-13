@@ -1,0 +1,40 @@
+# Our own book of several languages (e2e/books/mixed): Farsi with English, numbers, a URL and an email inside its
+# sentences; Arabic, Hebrew and Urdu words quoted in a Farsi sentence; an English paragraph with Farsi inside it; dir="auto".
+# Stated fa, en, ar and he, right to left: its interface in Farsi (Farsi is among its languages, docs/LANGUAGES.md).
+on: sim kobo kindle
+refs: images fa
+book mixed
+open books/test/mixed.epub
+tap page-top
+expect menu drawn in .*, in fa\)
+tap dock contents
+expect contents: 2 entries
+snap contents
+tap contents e0
+expect went to document 1 page 0
+snap chapter
+tap 100 840
+expect document 1 page 1: drawn
+snap next
+tap 1164 840
+expect document 1 page 0: drawn
+hold 1160 480 to 600 480
+expect highlight menu: words chosen
+tap-menu hl-make
+expect highlight \d+ made: 1 lines
+snap highlight
+hold 1160 480
+expect highlight menu: a highlight
+tap-menu hl-remove
+expect highlight \d+ removed
+tap page-top
+expect menu drawn in .*, in fa\)
+tap dock contents
+expect contents: 2 entries
+tap contents e1
+expect went to document 2 page 0
+snap signs
+tap 100 840
+expect document 2 page 1: drawn
+snap signs-next
+close
