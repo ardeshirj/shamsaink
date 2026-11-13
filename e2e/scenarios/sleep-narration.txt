@@ -1,14 +1,15 @@
 # A sleep during a narration on the Kobo: the narration stopped first, then Bluetooth and Wi-Fi switched off through the
 # chip's own switches with Kobo's sound service just in use (docs/devices/kobo/README.md, "Sleep"; on 2026-11-12 the
 # sound and speech services timing out on the chip's link, Bluetooth switched off under them, crashed its firmware).
-# Moby-Dick with media overlays (fetched, checked against its SHA-256, never committed), opened by name; its sound to
-# the sink with or without headphones. Woken by the clock's alarm (WAKE_AFTER), then read aloud once more, the book left,
+# Our own fa-basics, opened at its narrated bridge (e2e/fixtures/fa-basics); its tone to the sink with or without
+# headphones. Woken by the clock's alarm (WAKE_AFTER), then read aloud once more, the book left,
 # and the Kobo on its network with its chip without errors. The Kobo unplugged, with Wi-Fi on.
 #     make e2e SCENARIO=e2e/scenarios/sleep-narration.txt
 on: kobo                           # the simulator does not suspend
-fetch https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub books/idpf/moby-dick-mo.epub 749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c
+fixture: fa-basics
+book fa-basics
 env WAKE_AFTER=15
-open books/idpf/moby-dick-mo.epub
+open
 tap page-top
 expect menu drawn
 tap dock read-aloud

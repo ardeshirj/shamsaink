@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<smil xmlns="http://www.w3.org/ns/SMIL" xmlns:epub="http://www.idpf.org/2007/ops" version="3.0">
+<!-- The bridge, read by a tone (tone.sh): a word at a time in the first paragraph (w1..), a sentence at a time in the
+     second (s1..), the third as one paragraph (p3); a beep where each starts. -->
+<body>
+<seq id="seq-c3" epub:textref="c3.xhtml">
+<par id="par-w1"><text src="c3.xhtml#w1"/><audio src="c3.mp3" clipBegin="0.500s" clipEnd="0.850s"/></par>
+<par id="par-w2"><text src="c3.xhtml#w2"/><audio src="c3.mp3" clipBegin="0.850s" clipEnd="1.200s"/></par>
+<par id="par-w3"><text src="c3.xhtml#w3"/><audio src="c3.mp3" clipBegin="1.200s" clipEnd="1.550s"/></par>
+<par id="par-w4"><text src="c3.xhtml#w4"/><audio src="c3.mp3" clipBegin="1.550s" clipEnd="1.900s"/></par>
+<par id="par-w5"><text src="c3.xhtml#w5"/><audio src="c3.mp3" clipBegin="1.900s" clipEnd="2.250s"/></par>
+<par id="par-w6"><text src="c3.xhtml#w6"/><audio src="c3.mp3" clipBegin="2.250s" clipEnd="2.600s"/></par>
+<par id="par-w7"><text src="c3.xhtml#w7"/><audio src="c3.mp3" clipBegin="2.600s" clipEnd="2.950s"/></par>
+<par id="par-w8"><text src="c3.xhtml#w8"/><audio src="c3.mp3" clipBegin="2.950s" clipEnd="3.300s"/></par>
+<par id="par-w9"><text src="c3.xhtml#w9"/><audio src="c3.mp3" clipBegin="3.300s" clipEnd="3.650s"/></par>
+<par id="par-w10"><text src="c3.xhtml#w10"/><audio src="c3.mp3" clipBegin="3.650s" clipEnd="4.000s"/></par>
+<par id="par-w11"><text src="c3.xhtml#w11"/><audio src="c3.mp3" clipBegin="4.000s" clipEnd="4.350s"/></par>
+<par id="par-w12"><text src="c3.xhtml#w12"/><audio src="c3.mp3" clipBegin="4.350s" clipEnd="4.700s"/></par>
+<par id="par-w13"><text src="c3.xhtml#w13"/><audio src="c3.mp3" clipBegin="4.700s" clipEnd="5.050s"/></par>
+<par id="par-w14"><text src="c3.xhtml#w14"/><audio src="c3.mp3" clipBegin="5.050s" clipEnd="5.400s"/></par>
+<par id="par-w15"><text src="c3.xhtml#w15"/><audio src="c3.mp3" clipBegin="5.400s" clipEnd="5.750s"/></par>
+<par id="par-w16"><text src="c3.xhtml#w16"/><audio src="c3.mp3" clipBegin="5.750s" clipEnd="6.100s"/></par>
+<par id="par-w17"><text src="c3.xhtml#w17"/><audio src="c3.mp3" clipBegin="6.100s" clipEnd="6.450s"/></par>
+<par id="par-w18"><text src="c3.xhtml#w18"/><audio src="c3.mp3" clipBegin="6.450s" clipEnd="6.800s"/></par>
+<par id="par-w19"><text src="c3.xhtml#w19"/><audio src="c3.mp3" clipBegin="6.800s" clipEnd="7.150s"/></par>
+<par id="par-w20"><text src="c3.xhtml#w20"/><audio src="c3.mp3" clipBegin="7.150s" clipEnd="7.500s"/></par>
+<par id="par-w21"><text src="c3.xhtml#w21"/><audio src="c3.mp3" clipBegin="7.500s" clipEnd="7.850s"/></par>
+<par id="par-w22"><text src="c3.xhtml#w22"/><audio src="c3.mp3" clipBegin="7.850s" clipEnd="8.200s"/></par>
+<par id="par-w23"><text src="c3.xhtml#w23"/><audio src="c3.mp3" clipBegin="8.200s" clipEnd="8.550s"/></par>
+<par id="par-w24"><text src="c3.xhtml#w24"/><audio src="c3.mp3" clipBegin="8.550s" clipEnd="8.900s"/></par>
+<par id="par-w25"><text src="c3.xhtml#w25"/><audio src="c3.mp3" clipBegin="8.900s" clipEnd="9.250s"/></par>
+<par id="par-w26"><text src="c3.xhtml#w26"/><audio src="c3.mp3" clipBegin="9.250s" clipEnd="9.600s"/></par>
+<par id="par-w27"><text src="c3.xhtml#w27"/><audio src="c3.mp3" clipBegin="9.600s" clipEnd="9.950s"/></par>
+<par id="par-w28"><text src="c3.xhtml#w28"/><audio src="c3.mp3" clipBegin="9.950s" clipEnd="10.300s"/></par>
+<par id="par-w29"><text src="c3.xhtml#w29"/><audio src="c3.mp3" clipBegin="10.300s" clipEnd="10.650s"/></par>
+<par id="par-w30"><text src="c3.xhtml#w30"/><audio src="c3.mp3" clipBegin="10.650s" clipEnd="11.000s"/></par>
+<par id="par-w31"><text src="c3.xhtml#w31"/><audio src="c3.mp3" clipBegin="11.000s" clipEnd="11.350s"/></par>
+<par id="par-w32"><text src="c3.xhtml#w32"/><audio src="c3.mp3" clipBegin="11.350s" clipEnd="11.700s"/></par>
+<par id="par-w33"><text src="c3.xhtml#w33"/><audio src="c3.mp3" clipBegin="11.700s" clipEnd="12.050s"/></par>
+<par id="par-w34"><text src="c3.xhtml#w34"/><audio src="c3.mp3" clipBegin="12.050s" clipEnd="12.400s"/></par>
+<par id="par-w35"><text src="c3.xhtml#w35"/><audio src="c3.mp3" clipBegin="12.400s" clipEnd="12.750s"/></par>
+<par id="par-w36"><text src="c3.xhtml#w36"/><audio src="c3.mp3" clipBegin="12.750s" clipEnd="13.100s"/></par>
+<par id="par-w37"><text src="c3.xhtml#w37"/><audio src="c3.mp3" clipBegin="13.100s" clipEnd="13.450s"/></par>
+<par id="par-w38"><text src="c3.xhtml#w38"/><audio src="c3.mp3" clipBegin="13.450s" clipEnd="13.800s"/></par>
+<par id="par-w39"><text src="c3.xhtml#w39"/><audio src="c3.mp3" clipBegin="13.800s" clipEnd="14.150s"/></par>
+<par id="par-w40"><text src="c3.xhtml#w40"/><audio src="c3.mp3" clipBegin="14.150s" clipEnd="14.500s"/></par>
+<par id="par-w41"><text src="c3.xhtml#w41"/><audio src="c3.mp3" clipBegin="14.500s" clipEnd="14.850s"/></par>
+<par id="par-w42"><text src="c3.xhtml#w42"/><audio src="c3.mp3" clipBegin="14.850s" clipEnd="15.200s"/></par>
+<par id="par-w43"><text src="c3.xhtml#w43"/><audio src="c3.mp3" clipBegin="15.200s" clipEnd="15.550s"/></par>
+<par id="par-w44"><text src="c3.xhtml#w44"/><audio src="c3.mp3" clipBegin="15.550s" clipEnd="15.900s"/></par>
+<par id="par-w45"><text src="c3.xhtml#w45"/><audio src="c3.mp3" clipBegin="15.900s" clipEnd="16.250s"/></par>
+<par id="par-w46"><text src="c3.xhtml#w46"/><audio src="c3.mp3" clipBegin="16.250s" clipEnd="16.600s"/></par>
+<par id="par-w47"><text src="c3.xhtml#w47"/><audio src="c3.mp3" clipBegin="16.600s" clipEnd="16.950s"/></par>
+<par id="par-s1"><text src="c3.xhtml#s1"/><audio src="c3.mp3" clipBegin="16.950s" clipEnd="19.050s"/></par>
+<par id="par-s2"><text src="c3.xhtml#s2"/><audio src="c3.mp3" clipBegin="19.050s" clipEnd="22.050s"/></par>
+<par id="par-s3"><text src="c3.xhtml#s3"/><audio src="c3.mp3" clipBegin="22.050s" clipEnd="25.350s"/></par>
+<par id="par-s4"><text src="c3.xhtml#s4"/><audio src="c3.mp3" clipBegin="25.350s" clipEnd="29.250s"/></par>
+<par id="par-s5"><text src="c3.xhtml#s5"/><audio src="c3.mp3" clipBegin="29.250s" clipEnd="34.650s"/></par>
+<par id="par-p3"><text src="c3.xhtml#p3"/><audio src="c3.mp3" clipBegin="34.650s" clipEnd="50.850s"/></par>
+</seq>
+</body>
+</smil>

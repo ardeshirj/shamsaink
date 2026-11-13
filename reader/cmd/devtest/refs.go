@@ -71,21 +71,24 @@ func keepRef(key, hash string) error {
 
 // refImages holds the references of scenarios on our own books (refs: images) as pictures, committed beside their hashes
 // so a changed page shows in a diff and CI's failure folder has the old page: e2e/refs/LANG/HASH.png, a folder for the
-// book's language (the scenario's refs: images LANG), named by the hash refs.sum gives the snapshot, so a page drawn
-// alike on several targets (the simulator's and the Kobo's) is kept once.
+// book's language (the scenario's refs: images LANG), named by the hash refs.sum gives the snapshot. Only the
+// simulator's (what CI runs): a device whose pages are the same (the Kobo's) shares its files by their hash; a device
+// with another screen (the Kindle) is held by its hashes, its difference drawn from the local copy where it was kept.
 const refImages = "e2e/refs"
 
 func refImage(lang, hash string) string { return filepath.Join(refImages, lang, hash+".png") }
 
-// pruneRefImages removes the pictures no line of refs.sum names any more (a reference kept anew).
+// pruneRefImages removes the pictures no simulator's line of refs.sum names any more (a reference kept anew).
 func pruneRefImages() error {
 	refs, err := readRefs()
 	if err != nil {
 		return err
 	}
 	used := map[string]bool{}
-	for _, h := range refs {
-		used[h] = true
+	for k, h := range refs {
+		if strings.HasPrefix(k, "sim/") {
+			used[h] = true
+		}
 	}
 	files, _ := filepath.Glob(filepath.Join(refImages, "*", "*.png"))
 	for _, f := range files {

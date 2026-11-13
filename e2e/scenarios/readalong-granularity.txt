@@ -1,23 +1,24 @@
 # Read-along marks a narrated unit in every line of it, whatever the overlay's granularity (EPUB 3.3: the SMIL may point
-# at words, sentences or whole paragraphs). IDPF's Moby-Dick sample (CC-BY-SA 3.0; the download is checked against its
-# SHA-256, never committed) has all three in its first chapter: words (c01w00001..3), a sentence (c01s0002) and
-# paragraphs (c01p0002..). A cue must be marked in one box a line: a word in 1, a sentence over several lines in several,
-# a paragraph in several. The paragraph's single box was the bug of 2026-11-05 (a bar only under its last line: the
-# engine's find gave a block one box). The reader logs each mark when MARK_LOG is set. No headphones needed. The first
-# paragraph is read about 76 s after the sentence before it: the scenario takes about two minutes.
+# at words, sentences or whole paragraphs). Our own fa-basics narrates its bridge (chapter 3) by a tone with all three
+# (e2e/books/fa-basics/README.md): a word at a time (w1..), a sentence at a time (s1..), one paragraph (p3). A cue must
+# be marked in one box a line: a word in 1, a sentence over two lines in 2, the paragraph in several. The paragraph's
+# single box was the bug of 2026-11-05 (a bar only under its last line: the engine's find gave a block one box). The
+# paragraph begins on the chapter's second page: the narration turns the page to it. The reader logs each mark when
+# MARK_LOG is set, its page counted from the book's start (the bridge's pages are the book's 5 and 6, at the fixture's
+# settings, on the Kobo's screen). No headphones needed; the beeps can be heard on the Kobo. About 45 s.
 #     make e2e SCENARIO=e2e/scenarios/readalong-granularity.txt
-on: sim kobo
-fetch https://github.com/IDPF/epub3-samples/releases/download/20230704/moby-dick-mo.epub books/idpf/moby-dick-mo.epub 749a9de094c26bc79351722a2bf320845dc5f6af2d5bf41a96d720d723b29a4c
-forget books/idpf/moby-dick-mo.epub
+on: sim kobo                       # the Kindle has no sound of ours yet
+fixture: fa-basics                 # the book opens at the bridge's first page
+book fa-basics
 env MARK_LOG=1
-open books/idpf/moby-dick-mo.epub
+open
 tap page-top
 expect menu drawn
 tap dock read-aloud
 expect read aloud from word 0
-expect mark c01w00001: document \d+ page \d+, 1 boxes
-expect mark c01s0002: document \d+ page \d+, ([2-9]|\d\d) boxes
-expect-in 100 mark c01p0002: document \d+ page \d+, ([2-9]|\d\d) boxes
+expect mark w1: document 3 page 5, 1 boxes
+expect-in 30 mark s2: document 3 page 5, 2 boxes      # the second sentence, over two lines
+expect-in 30 mark p3: document 3 page 6, ([3-9]|\d\d) boxes  # the third paragraph, on the next page
 tap page-top
 expect read aloud: stopped
 close

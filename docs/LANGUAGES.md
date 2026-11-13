@@ -21,7 +21,7 @@ FarsiEPUB's ShamsaInk page.
 
 | Language | Codes (`dc:language`) | Book text in | Pages, with no stated direction | Interface | Tested |
 |---|---|---|---|---|---|
-| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on *Buried Alive* (Kobo, simulator); e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; Kobo, simulator, its pages committed as pictures) |
+| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on *Buried Alive* (Kobo, simulator); e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; `walk`, `language`; read-along by a tone at word, sentence and paragraph, `readalong-granularity`; simulator, Kobo, Kindle; the simulator's pages committed as pictures) |
 | Arabic | `ar` | Noto Naskh Arabic | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; by hand on the Kobo (experiment 15) |
 | Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English, mirrored | the same |
 | Pashto, Sindhi, Sorani Kurdish, Uyghur | `ps`, `sd`, `ckb`, `ug` | Noto Naskh Arabic | right to left | English, mirrored | unit tests (direction); fonts' coverage checked (experiment 15) |

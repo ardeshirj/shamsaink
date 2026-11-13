@@ -26,7 +26,8 @@ against its SHA-256 in `e2e/refs.sum` (committed; the pages stay out of git); th
 only where the local copy of that reference is (the Mac that kept it), elsewhere (CI) the screen alone. A scenario on our
 own books (`refs: images LANG` in its header) also commits its pages, `e2e/refs/LANG/HASH.png` (a folder for the book's language,
 each page named by its hash in `refs.sum`, so the simulator's and the Kobo's identical pages are one file): the reference and
-the difference then come from there, CI included. The reader's crash
+the difference then come from there, CI included. Only the simulator's pages are kept as pictures (what CI runs): a device
+with another screen (the Kindle) is held by its hashes, its difference drawn from the Mac's local copy. The reader's crash
 (a panic, a fatal signal, an exit other than 0) ends the run at the step it happened in.
 
 **Books** of others are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo. A
@@ -79,7 +80,7 @@ expect menu drawn
   `e2e/refs.sum` and its pages in `e2e/out/`; `git diff e2e/refs.sum` shows which changed.
 - **Sleep on the Kobo** (2026-11-12): `sleep` (one sleep in a book, then the reader left) and `sleep-more` (from the
   library, twice in a row, the reader left at once after a wake) and `sleep-narration` (during a narration, on
-  Moby-Dick, then read aloud again after the wake). The reader, started with
+  our own fa-basics, then read aloud again after the wake). The reader, started with
   `WAKE_AFTER=SECONDS`, has the clock's alarm wake the Kobo as a press would; SSH drops while it sleeps, so each `expect`
   after a `press power` is an `expect-in` long enough for the sleep. `expect-online SECONDS` then wants the Kobo on its network
   (10 s or more into the step, SECONDS at most) and its Wi-Fi/Bluetooth chip without errors, failing at the first

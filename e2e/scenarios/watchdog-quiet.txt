@@ -2,7 +2,10 @@
 # playing (to a sink with no headphones: the loop and the clock, not the sound), then the book left the normal way. Not
 # covered: sleep and wake (sleep.txt, sleep-more.txt, sleep-narration.txt), the library list left alone.
 #     make e2e SCENARIO=e2e/scenarios/watchdog-quiet.txt
+# On our own fa-basics, opened at its narrated bridge (e2e/fixtures/fa-basics): its 51 s of tone outlast the 40 s watched.
 on: kobo                           # the simulated launcher has no watchdog
+fixture: fa-basics
+book fa-basics
 env HEARTBEAT_EVERY=1s WATCH_EVERY=4
 open
 expect-none watchdog: 30

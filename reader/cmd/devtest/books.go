@@ -22,7 +22,8 @@ const booksDir = "e2e/books"
 // testBooks is where the step `book NAME` puts a book, under the device's folder.
 const testBooks = "books/test"
 
-// buildBook zips e2e/books/NAME into an EPUB: mimetype first, then every other file but README.md, by name.
+// buildBook zips e2e/books/NAME into an EPUB: mimetype first, then META-INF/ and OEBPS/, by name; what is beside them (the
+// README, a script that made a file) stays out.
 func buildBook(name string) ([]byte, error) {
 	root := filepath.Join(booksDir, name)
 	if _, err := os.Stat(filepath.Join(root, "mimetype")); err != nil {
@@ -34,7 +35,8 @@ func buildBook(name string) ([]byte, error) {
 			return err
 		}
 		rel, _ := filepath.Rel(root, p)
-		if rel = filepath.ToSlash(rel); rel != "mimetype" && rel != "README.md" && !strings.HasPrefix(e.Name(), ".") {
+		rel = filepath.ToSlash(rel)
+		if (strings.HasPrefix(rel, "META-INF/") || strings.HasPrefix(rel, "OEBPS/")) && !strings.HasPrefix(e.Name(), ".") {
 			files = append(files, rel)
 		}
 		return nil

@@ -517,7 +517,7 @@ func (p *player) snap(name string) (string, error) {
 		if err := os.WriteFile(ref, data, 0o644); err != nil {
 			return "", err
 		}
-		if p.images != "" {
+		if p.images != "" && p.target == "sim" {
 			if err := writeRefImage(refImage(p.images, hash), s.w, s.h, s.pix); err != nil {
 				return "", err
 			}

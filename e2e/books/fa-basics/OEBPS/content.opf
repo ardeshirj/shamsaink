@@ -7,13 +7,18 @@
     <dc:language>fa</dc:language>
     <dc:rights>Apache-2.0</dc:rights>
     <meta property="dcterms:modified">2026-01-01T00:00:00Z</meta>
+    <meta property="media:duration" refines="#c3-mo">0:00:50.850</meta>
+    <meta property="media:duration">0:00:50.850</meta>
+    <meta property="media:active-class">-epub-media-overlay-active</meta>
   </metadata>
   <manifest>
     <item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/>
     <item id="title" href="title.xhtml" media-type="application/xhtml+xml"/>
     <item id="c1" href="c1.xhtml" media-type="application/xhtml+xml"/>
     <item id="c2" href="c2.xhtml" media-type="application/xhtml+xml"/>
-    <item id="c3" href="c3.xhtml" media-type="application/xhtml+xml"/>
+    <item id="c3" href="c3.xhtml" media-type="application/xhtml+xml" media-overlay="c3-mo"/>
+    <item id="c3-mo" href="c3.smil" media-type="application/smil+xml"/>
+    <item id="c3-audio" href="c3.mp3" media-type="audio/mpeg"/>
     <item id="c4" href="c4.xhtml" media-type="application/xhtml+xml"/>
     <item id="css" href="style.css" media-type="text/css"/>
   </manifest>

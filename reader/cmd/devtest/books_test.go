@@ -38,8 +38,8 @@ func TestBooks(t *testing.T) {
 			t.Errorf("%s: the first file is %s, method %d: not mimetype, stored", e.Name(), f.Name, f.Method)
 		}
 		for _, f := range z.File {
-			if f.Name == "README.md" {
-				t.Errorf("%s: its README is in the EPUB", e.Name())
+			if f.Name == "README.md" || f.Name == "tone.sh" {
+				t.Errorf("%s: its %s is in the EPUB", e.Name(), f.Name)
 			}
 		}
 		// a fixture named after the book keeps its place under the book's key: an edit to the book changes the key,

@@ -16,8 +16,8 @@ import (
 //	                       the first step, so a missing book is said as such (one line each)
 //	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: default)
 //	refs: images LANG      its references kept as pictures too, committed (e2e/refs/LANG/HASH.png, by refs.sum's hash,
-//	                       LANG the book's language: fa, ar, he, ...): only for
-//	                       scenarios on our own books (e2e/books), never on another's
+//	                       LANG the book's language: fa, ar, he, ...), the simulator's only (what CI runs): only
+//	                       for scenarios on our own books (e2e/books), never on another's
 //
 // The steps are listed in scenario.go. check holds every step against the design spec's kept renders without a device:
 // go test ./cmd/devtest checks every scenario, so a step or control name mistyped fails in make check, not on the Kobo.
