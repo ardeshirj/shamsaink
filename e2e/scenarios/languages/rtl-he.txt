@@ -1,0 +1,31 @@
+# Our own he book (e2e/books/he-basics), built and opened by name: the bar and the dock in English mirrored (en-rtl),
+# Contents (to its second entry), pages turned right to left, a highlight made and removed, the book left by the
+# mirrored bar's back arrow. The highlight's words are the book's, with e2e/fixtures/fa-basics's settings (text 50 px, line
+# height 1.75, margin 60).
+on: sim kobo kindle
+refs: images he
+book he-basics
+open books/test/he-basics.epub
+tap page-top
+expect menu drawn in .*, in en\)  # the dock in English, laid out right to left (open logs interface en-rtl)
+tap dock contents
+expect contents: 3 entries
+snap contents
+tap contents e1                    # the second entry
+expect went to document 2 page 0
+snap chapter
+tap 100 840                        # the page's left edge: forward, in a book read right to left
+expect document 3 page 0: drawn
+snap next
+tap 1164 840                       # the right edge: back
+expect document 2 page 0: drawn
+hold 1180 555 to 700 555           # the second line, from its start at the right to its middle
+expect highlight menu: words chosen
+tap-menu hl-make
+expect highlight \d+ made: 1 lines
+snap highlight
+hold 1180 555                      # held on the highlight: its menu
+expect highlight menu: a highlight
+tap-menu hl-remove
+expect highlight \d+ removed
+close

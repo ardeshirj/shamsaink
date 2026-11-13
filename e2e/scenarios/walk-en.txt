@@ -1,0 +1,9 @@
+# The walk (walk.txt) on a left-to-right book: our own English en-basics (e2e/books/en-basics), so the screens are held
+# against the English renders laid out left to right. Its fixture (e2e/fixtures/en-basics) opens it at the market's
+# first page, where the walk holds a word on the second line, from its start at the left to its middle. Nothing here
+# names a screen: they come from the design spec.
+on: sim kobo kindle
+fixture: en-basics
+book en-basics
+walk word 84 555 600 555
+close

@@ -6,7 +6,6 @@
 # On our own Farsi book (e2e/books/fa-basics), opened by its fixture at the bridge's first page (e2e/fixtures/fa-basics):
 # the word held for the highlight's menu is on its third line, from its start at the right to its middle.
 on: sim kobo kindle
-fixture: fa-basics
 book fa-basics
 walk word 1180 657 700 657
 close

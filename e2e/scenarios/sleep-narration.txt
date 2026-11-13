@@ -6,7 +6,6 @@
 # and the Kobo on its network with its chip without errors. The Kobo unplugged, with Wi-Fi on.
 #     make e2e SCENARIO=e2e/scenarios/sleep-narration.txt
 on: kobo                           # the simulator does not suspend
-fixture: fa-basics
 book fa-basics
 env WAKE_AFTER=15
 open

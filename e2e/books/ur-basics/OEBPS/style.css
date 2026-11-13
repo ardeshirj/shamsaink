@@ -1,0 +1,7 @@
+/* No direction stated anywhere (OPF, CSS, dir): the reader must find it from dc:language alone. */
+body { margin: 0; }
+h1 { text-align: center; margin: 1em 0; }
+p { text-align: justify; margin: 0; text-indent: 1.5em; }
+h1 + p { text-indent: 0; }
+.title { text-align: center; margin-top: 30%; }
+.title p { text-align: center; text-indent: 0; }

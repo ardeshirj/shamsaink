@@ -30,6 +30,11 @@ the difference then come from there, CI included. Only the simulator's pages are
 with another screen (the Kindle) is held by its hashes, its difference drawn from the Mac's local copy. The reader's crash
 (a panic, a fatal signal, an exit other than 0) ends the run at the step it happened in.
 
+**Our own books first** (2026-11-13): every scenario in CI runs on them, nothing downloaded; Farsi and English in
+`e2e/scenarios/`, the other right-to-left languages in `e2e/scenarios/languages/` (`make e2e-sim-languages`, a CI job of
+their own, so the main run stays quick). `basics` on FarsiEPUB's *Buried Alive* stays, by hand only. `forget` needs
+`head -c`, which the Kobo's BusyBox has not: on the Kobo it removes nothing (to mend before it is used again).
+
 **Books** of others are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo. A
 scenario fetches a public book itself (`fetch URL PATH SHA256`). **Our own test books** are committed as source,
 `e2e/books/NAME/` (`e2e/books/README.md`: what each tests): `book NAME` builds one into an EPUB (the same bytes every
@@ -48,10 +53,13 @@ watchdog and no Nickel: those scenarios are `on: kobo`.
 
 Before the first step devtest saves the reader's own files on the device (`settings.json`, the library's, `places/`,
 `highlights/`, with their times: the library orders the books being read by them) into `.e2e-saved/`, and lays the
-fixture's files over them (`fixtures/default/`: the `settings.json` the references were drawn with, and where
-*Buried Alive* opens; each file and what depends on it: `fixtures/README.md`). After the last
+fixture's files over them (`fixtures/fa-basics/` unless the scenario names another: the `settings.json` the references
+were drawn with, and where our own Farsi book opens; each file and what depends on it: `fixtures/README.md`). After the last
 step, or a failure, it puts them back. A copy left by a run that never finished is put back at the next run's start.
-With the same settings the simulator draws the Kobo's pages byte for byte (2026-11-05, `basics`).
+With the same settings the simulator draws the Kobo's pages byte for byte (2026-11-05, `basics`). Not quite for Arabic
+(2026-11-13, `languages/rtl-ar`): 2 pixels of a page at letters' edges, rounding between the simulator's 64-bit ARM and
+the Kobo's ARMv7 in Noto Naskh Arabic's curves; the Kobo keeps its own hashes for those pages, and the pictures are the
+simulator's.
 
 ## Writing a scenario
 
@@ -64,7 +72,7 @@ A header, then the steps (listed at the top of `reader/cmd/devtest/scenario.go`)
 ```
 on: sim kobo                       # where it runs: sim, kobo, kindle, any of them
 book: books/farsiepub/buried-alive-narrated.epub   # a book it needs (checked first; one line each)
-fixture: default                   # e2e/fixtures/NAME (default if left out)
+fixture: en-basics                 # e2e/fixtures/NAME (fa-basics if left out)
 open
 tap page-top
 expect menu drawn
@@ -88,6 +96,7 @@ expect menu drawn
 - Steps the simulator cannot do (`freeze` with the watchdog, `expect-nickel`, `expect-online`) need `on: kobo` (or `kindle`, whose
   launcher has the watchdog; there `expect-nickel` waits for Amazon's framework resumed); `make check` says so. The
   Kindle has no page buttons: a scenario with `press forward|back` is not `on: kindle`.
-- On the Kindle (2026-11-07): `basics`, `walk`, `walk-moby-dick` and `watchdog-freeze`. Not `readalong-granularity` (no
+- On the Kindle (2026-11-07): `basics`, `walk`, `walk-en` (before 2026-11-13 `walk-moby-dick`), `rtl-fa`, the
+  languages' scenarios and `watchdog-freeze`. Not `readalong-granularity` (no
   sound on it yet) nor `language` (its taps are the Kobo's pixels, until devtest finds the library's controls in the
   language it is drawn in).

@@ -8,7 +8,6 @@
 # settings, on the Kobo's screen). No headphones needed; the beeps can be heard on the Kobo. About 45 s.
 #     make e2e SCENARIO=e2e/scenarios/readalong-granularity.txt
 on: sim kobo                       # the Kindle has no sound of ours yet
-fixture: fa-basics                 # the book opens at the bridge's first page
 book fa-basics
 env MARK_LOG=1
 open

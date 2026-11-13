@@ -1,6 +1,6 @@
 # Our own Farsi book (e2e/books/fa-basics: a day in Isfahan, four chapters, stated Farsi and right to left), built and
 # opened by name: the bar and the dock in Farsi, Contents (to its third entry), pages turned right to left, a highlight
-# made and removed, the book left. Only the highlight's word places are the book's, with e2e/fixtures/default's settings
+# made and removed, the book left. Only the highlight's word places are the book's, with e2e/fixtures/fa-basics's settings
 # (text 50 px, line height 1.75, margin 60): the chapter's second line, from its start at the right to its middle.
 on: sim kobo kindle
 refs: images fa                     # our own book: its pages committed as pictures (e2e/refs/)

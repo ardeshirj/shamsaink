@@ -7,6 +7,7 @@
 # The Kobo must be unplugged (plugged in, it stays awake behind the sleep screen and never suspends), with Wi-Fi on.
 #     make e2e SCENARIO=e2e/scenarios/sleep.txt
 on: kobo                           # the simulator does not suspend
+book fa-basics                     # the last book read (the default fixture opens it at its bridge)
 env WAKE_AFTER=20
 open
 press power                        # to sleep; SSH goes with Wi-Fi until the alarm wakes it

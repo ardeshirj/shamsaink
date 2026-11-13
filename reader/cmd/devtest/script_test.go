@@ -16,6 +16,8 @@ func TestScenarios(t *testing.T) {
 		t.Fatal(err)
 	}
 	files, _ := filepath.Glob("e2e/scenarios/*.txt")
+	more, _ := filepath.Glob("e2e/scenarios/languages/*.txt") // the other languages' scenarios, a CI job of their own
+	files = append(files, more...)
 	if len(files) == 0 {
 		t.Fatal("no scenarios in e2e/scenarios")
 	}
@@ -62,7 +64,7 @@ func TestScenarioMistakes(t *testing.T) {
 			t.Errorf("%q: got %v, want %q", c.text, err, c.says)
 		}
 	}
-	s := parse(t, "on: kobo # the Kobo only\nbook: books/a.epub\nfixture: default\n# a comment\nopen books/a.epub   # by name\nclose")
+	s := parse(t, "on: kobo # the Kobo only\nbook: books/a.epub\nfixture: fa-basics\n# a comment\nopen books/a.epub   # by name\nclose")
 	if !s.runsOn("kobo") || s.runsOn("sim") || len(s.books) != 1 || len(s.steps) != 2 || s.steps[0].n != 5 {
 		t.Errorf("header or steps read wrong: %+v", s)
 	}

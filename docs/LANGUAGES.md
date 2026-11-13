@@ -21,14 +21,14 @@ FarsiEPUB's ShamsaInk page.
 
 | Language | Codes (`dc:language`) | Book text in | Pages, with no stated direction | Interface | Tested |
 |---|---|---|---|---|---|
-| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on *Buried Alive* (Kobo, simulator); e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; `walk`, `language`; read-along by a tone at word, sentence and paragraph, `readalong-granularity`; simulator, Kobo, Kindle; the simulator's pages committed as pictures) |
-| Arabic | `ar` | Noto Naskh Arabic | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; by hand on the Kobo (experiment 15) |
-| Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English, mirrored | the same |
+| Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; `walk`, `language`; read-along by a tone at word, sentence and paragraph, `readalong-granularity`; simulator, Kobo, Kindle; the simulator's pages committed as pictures) |
+| Arabic | `ar` | Noto Naskh Arabic | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `ar-basics` (`languages/rtl-ar`: pages, contents, a highlight, the mirrored bar; simulator, CI's languages job) |
+| Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `ur-basics`, with **no direction stated** (`languages/rtl-ur`: pages turn right to left from the language alone) |
 | Pashto, Sindhi, Sorani Kurdish, Uyghur | `ps`, `sd`, `ckb`, `ug` | Noto Naskh Arabic | right to left | English, mirrored | unit tests (direction); fonts' coverage checked (experiment 15) |
-| Hebrew | `he`, `iw` | Frank Ruhl Libre (vowel points included) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; by hand on the Kobo (experiment 15) |
+| Hebrew | `he`, `iw` | Frank Ruhl Libre (vowel points included) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `he-basics` (`languages/rtl-he`: vowel points, the mirrored bar's back arrow) |
 | Yiddish | `yi` | Frank Ruhl Libre | right to left | English, mirrored | unit tests (direction) |
 | Dhivehi, Syriac | `dv`, `syr` | no font of ours (the book's own, else boxes) | right to left | English, mirrored | unit tests (direction) |
-| English and other left-to-right languages | anything else | DejaVu Serif or Sans, as the book's CSS asks | left to right | English | everything else; e2e on *Moby-Dick* |
+| English and other left-to-right languages | anything else | DejaVu Serif or Sans, as the book's CSS asks | left to right | English | everything else; e2e on our own `en-basics` (`walk-en`) |
 
 A book listing more than one language has no direction from them (Readium's rule): its stated direction, else left to
 right. Farsi among them still makes its interface Farsi.
@@ -50,10 +50,15 @@ The lists are in several places and nothing yet checks them against each other: 
 - **Interface words** in Farsi only besides English: Arabic, Urdu and Hebrew readers get English, mirrored.
 - **Urdu in Nastaliq**, what its readers expect: waits for a timing on the Kobo (the slowest script to shape, lines
   twice as tall; experiment 15).
-- **The Kindle:** the Hebrew, Arabic and Urdu books not tried on it yet (same binary and fonts as the Kobo).
-- **Tests:** right-to-left languages other than Farsi are tried by hand only; our own test books (`e2e/books/`, Farsi's
-  `fa-basics` since 2026-11-12) bring Arabic, Urdu, Hebrew, a book with no stated direction, a mixed paragraph and a narrated Farsi book
-  to e2e, after which this table's last column changes.
+- **The Kindle:** the Hebrew, Arabic and Urdu books not tried on it yet (same binary and fonts as the Kobo; their scenarios are `on: kindle`).
+- **Tests:** our own books (`e2e/books/`, 2026-11-13) cover Farsi (narrated), English, Arabic, Hebrew and Urdu (no
+  direction stated); a paragraph mixing right to left and left to right is still to come. Their Arabic, Hebrew and Urdu
+  text is not yet checked by a reader of those languages.
+- **Found (2026-11-13, `ur-basics`): a book with no direction stated has its paragraphs laid out left to right.** Its
+  pages turn right to left (`readsRTL`) and each line's letters run right to left, but a paragraph's short last line sits
+  at the left: the engine's base direction stays left to right. To decide: the reader giving the engine `direction: rtl`
+  for a book it reads right to left.
 - **Found, not changed** (experiment 15): a Farsi book asking for `sans-serif` gets DejaVu Sans's Arabic letters
   before Parastoo's; the library marks every Arabic-script title as Farsi (`textLang`).
-- devtest's `close` on a right-to-left book with the interface in English taps the bar's menu, not the back arrow.
+- ~~devtest's `close` on a right-to-left book with the interface in English taps the bar's menu~~: gone by 2026-11-13,
+  `close` leaves the Hebrew, Arabic and Urdu books by the mirrored bar's back arrow.

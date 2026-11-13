@@ -14,7 +14,7 @@ import (
 //	on: sim kobo kindle    where it runs (required): the simulated Kobo (make e2e-sim), the Kobo or the Kindle (make e2e)
 //	book: PATH             a book it needs, by its path under the reader's folder (books/farsiepub/...); checked before
 //	                       the first step, so a missing book is said as such (one line each)
-//	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: default)
+//	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: fa-basics, our own Farsi book's)
 //	refs: images LANG      its references kept as pictures too, committed (e2e/refs/LANG/HASH.png, by refs.sum's hash,
 //	                       LANG the book's language: fa, ar, he, ...), the simulator's only (what CI runs): only
 //	                       for scenarios on our own books (e2e/books), never on another's
@@ -44,7 +44,7 @@ func parseScenario(path string) (*script, error) {
 	if err != nil {
 		return nil, err
 	}
-	s := &script{path: path, fixture: "default"}
+	s := &script{path: path, fixture: "fa-basics"}
 	for n, raw := range strings.Split(string(data), "\n") {
 		text := strings.TrimSpace(strings.SplitN(raw, " #", 2)[0])
 		if strings.HasPrefix(text, "#") || text == "" {

@@ -1,7 +1,7 @@
 # fa-basics
 
 A day in Isfahan, in Persian: a title page and four short chapters (morning, the square, the bridge, night), each about
-two pages at the default fixture's text size, and a contents. Stated as Farsi (`dc:language fa`), pages turning right to
+two pages at its fixture's text size (`e2e/fixtures/fa-basics`, every scenario's default), and a contents. Stated as Farsi (`dc:language fa`), pages turning right to
 left (`page-progression-direction="rtl"`), the direction also in its CSS, as rtlbook's books. No pictures.
 
 **Narrated: chapter 3 (the bridge) only**, by a tone, not a voice (`tone.sh` makes `OEBPS/c3.mp3` from `OEBPS/c3.smil`: a

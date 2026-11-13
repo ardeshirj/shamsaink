@@ -7,7 +7,6 @@
 # interface's language, which it takes to be the last book's (fa), while the library is always in English; to mend in
 # devtest (script.go, scenario.go). On the simulator only snapped: on the Kobo the bar's clock and battery change.
 on: sim kobo
-fixture: fa-basics
 refs: images fa                     # our own book: its pages committed as pictures (e2e/refs/)
 book fa-basics
 open

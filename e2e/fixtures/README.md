@@ -1,18 +1,24 @@
 # Fixtures: the reader's files a scenario starts from
 
 A fixture is a folder of the reader's own files (`NAME/`), laid over the reader's folder on the device before a
-scenario's first step (`fixture: NAME` in its header; `default` if none). Everything in the folder is copied, at the same
+scenario's first step (`fixture: NAME` in its header; `fa-basics` if none). Everything in the folder is copied, at the same
 path; this README is outside them for that reason. On the Kobo the reader's own files are saved first, with their times,
 and put back after the run (`e2e/README.md`, "A known start"), so a fixture never changes the device for good.
 
 Change a fixture only with the references it was drawn with: they are drawn from it, on both devices.
 
-## `default/`
+## `fa-basics/` (the default)
+
+Our own Farsi book (`e2e/books/fa-basics`), the last book read: every scenario with no `fixture:` line starts from it
+(since 2026-11-13; before, `default/`, Buried Alive's place and these settings). A scenario that opens "the last book
+read" (`open` with no path) has the book put on the device first (`book fa-basics`); one that opens a book by name starts
+it at its own place, or its start.
 
 ### `settings.json`
 
-The Kobo's settings when the references were first kept (2026-11-05), copied from it; the text size 50, the reader's default, since 2026-11-06. The pages in `e2e/out/*/refs/` and the
-pixel places in the scenarios (the words `basics` holds) are drawn at these values; one of them changed moves every line.
+The Kobo's settings when the references were first kept (2026-11-05), copied from it; the text size 50, the reader's
+default, since 2026-11-06. Every reference and every pixel place in the scenarios (the words they hold) is drawn at these
+values; one of them changed moves every line.
 
 | Field | Value | What it is |
 |---|---|---|
@@ -24,53 +30,26 @@ pixel places in the scenarios (the words `basics` holds) are drawn at these valu
 | `clean_light`, `clean_dark` | 3, 5 | page turns between full cleanings of the screen, day and night |
 | `light`, `warmth` | 30, 7 | the light's level and warmth |
 
-### `places/c71646d6a630.place`
+### `places/f7411c884975.place`
 
-Where *Buried Alive* opens (FarsiEPUB's sample, as `farsiepub.org/api/v1/samples/buried-alive/download` serves it,
-without narration; the scenarios fetch it to `books/farsiepub-sample/buried-alive.epub`): one line,
-`DOCUMENT PAGE SHARE` (`reader/book.go`, `keep`).
+`3 0 0.5000`: the book opens at document 3 (the bridge, its narrated chapter), page 0, a page of text, where the walk
+holds a word on its third line for the highlight's menu and read aloud starts. The name is the built book's key
+(`library.Key`, `reader/library/scan.go`: the first 12 hex digits of the SHA-256 of the file's size, a newline, its first
+64 KB and its last 64 KB, or the whole file at 128 KB or less). An edit to the book changes it, and the place would be
+ignored without a word: `go test ./cmd/devtest` (`TestBooks`) then names the new key to rename the file to.
 
-```
-4 3 0.4015
-```
+## `en-basics/`
 
-- **The page:** document 4 (the spine's fifth file), page 3 of it, at `settings.json`'s text size. It is the Kobo's own
-  place for the book when the references were kept; the walk (`scenarios/walk.txt`) holds a word on it to open the
-  highlight's menu (at 884,700, dragged to 505,700: `walk.go`, `hold`), and `basics` starts and ends there.
-- **The share:** how much of the book is read (40%), shown in the library's progress bar: the Kobo's for its narrated
-  copy, read from it 2026-11-06 (the pages are the same).
-- **The name** is the book's key, as the reader makes it (`library.Key`, `reader/library/scan.go`): the first 12 hex
-  digits of the SHA-256 of the file's size in bytes, a newline, its first 64 KB and its last 64 KB (a book of 128 KB or
-  less: the whole file). It belongs to that one file: another copy of
-  the book (exported again, another voice) has another key, and the place is then ignored without a word; the book opens
-  at its start, and the walk's hold finds no word there. The key of a book on the device:
+Our own English book (`e2e/books/en-basics`), for the walk on a left-to-right book (`scenarios/walk-en.txt`; before
+2026-11-13, IDPF's Moby-Dick, downloaded).
 
-  ```
-  f=books/farsiepub-sample/buried-alive.epub; s=$(stat -c %s $f)
-  { echo $s; head -c 65536 $f; tail -c 65536 $f; } | sha256sum | cut -c1-12
-  ```
-
-## `moby-dick/`
-
-For the walk in CI on a public book (`scenarios/walk-moby-dick.txt`): IDPF's Moby-Dick sample, which the scenario fetches
-and checks by its SHA-256 (CC-BY-SA 3.0, never committed).
-
-- `settings.json`: the default fixture's, the same text size and spacing.
-- `places/bd9f02217356.place`, `5 1 0.0100`: the book opens at document 5 (its first chapter, Loomings), page 1, a page of
-  text, where the walk holds a word for the highlight's menu (at 884,700, dragged to 505,700). The key is that file's
-  (`library.Key`, as above).
-
-## `fa-basics/`
-
-For our own Farsi book (`e2e/books/fa-basics`), the book `walk.txt` and `language.txt` open from the library.
-
-- `settings.json`: the default fixture's, the same text size and spacing.
-- `places/f7411c884975.place`, `3 0 0.5000`: the book opens at document 3 (the bridge), page 0, a page of text, where
-  the walk holds a word on its third line for the highlight's menu. The key is the built book's (`library.Key`); an edit
-  to the book changes it, and `go test ./cmd/devtest` (`TestBooks`) then names the new key to rename the file to.
+- `settings.json`: the default's.
+- `places/575342b3f604.place`, `2 0 0.5000`: the book opens at document 2 (the market), page 0, where the walk holds a
+  word on its second line. The key is checked as `fa-basics`'s.
 
 ## A new fixture
 
-A folder beside `default/`, with only the files the scenario needs different (the rest is the device's own, or the
-simulator's fresh state): a book's place to start at, its highlights (`highlights/KEY.json`), a library's view
-(`library-view.json`). Say in this README what each file is for and what depends on it.
+A folder beside `fa-basics/`, named after the book it opens when it is for one of ours (then `TestBooks` checks its
+place's key), with `settings.json` and only the files the scenario needs different: a book's place to start at, its
+highlights (`highlights/KEY.json`), a library's view (`library-view.json`). Say in this README what each file is for
+and what depends on it.

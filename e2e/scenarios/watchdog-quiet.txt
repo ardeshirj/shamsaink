@@ -4,7 +4,6 @@
 #     make e2e SCENARIO=e2e/scenarios/watchdog-quiet.txt
 # On our own fa-basics, opened at its narrated bridge (e2e/fixtures/fa-basics): its 51 s of tone outlast the 40 s watched.
 on: kobo                           # the simulated launcher has no watchdog
-fixture: fa-basics
 book fa-basics
 env HEARTBEAT_EVERY=1s WATCH_EVERY=4
 open

@@ -108,7 +108,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -152,6 +152,9 @@ e2e: devtest
 SIM_BOOKS ?= out/sim-books
 e2e-sim:
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/*.txt)))
+# the other right-to-left languages (Arabic, Hebrew, Urdu, ...), apart so the main run stays quick: a CI job of their own
+e2e-sim-languages:
+	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/languages/*.txt)))
 
 kobo-reader-log:
 	@$(KOBO_SSH) 'tail -n 40 $(KOBO_DIR)/logs/reader.log; echo "last up while reading:"; \
