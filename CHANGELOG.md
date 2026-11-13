@@ -4,18 +4,19 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
-## Unreleased
-- **Hebrew, Arabic, Urdu and more:** books in Hebrew and Yiddish now read in Frank Ruhl Libre, and books in Arabic,
-  Urdu, Pashto, Sindhi, Sorani Kurdish and Uyghur in Noto Naskh Arabic. Before, Hebrew letters and some of Urdu's
-  showed as empty boxes. Farsi books are unchanged. The interface stays in English for these books.
-- **Pages turn the right way** in Urdu, Pashto, Yiddish and other right-to-left books that do not state their
-  direction (before, only Arabic, Farsi and Hebrew did).
-- **Laid out right to left for right-to-left books:** in a Hebrew, Arabic or Urdu book the menus and panels are
-  mirrored as in a Farsi book, their words still English. "Follow book language" off keeps them left to right.
+## 0.3.1-beta (2026-11-12)
+Fixes to 0.3.0-beta: the leaving screen, and every library's licence in the package.
+- **Leaving always in English:** "Exiting…" now shows in English whatever book was read last, as the library is; after
+  a Farsi book it showed in Farsi.
 - **Every library's licence in the package:** `licenses/THIRD-PARTY-LICENSES.md` has the licence and copyright notices of
   each of the 204 Rust crates and 15 Go modules built into the reader, and of Go's, Rust's and musl's own libraries,
   made from the build itself (cargo-about and `go list`). NOTICE now says that Blitz is built with two changes of
   ours (`engine/patches/`), that go-toolkit is trimmed, and that Symphonia (narration's audio) is MPL-2.0 as Stylo.
+- **Tried on:** a Kobo Libra Colour (firmware 6.0) and a Kindle Paperwhite 11th gen (firmware 5.19.2, jailbroken).
+- **For development:** our own test books, written for the tests (Farsi with a narration by a tone, English, Hebrew,
+  Arabic and Urdu; `e2e/books/`), so every scenario in CI runs with nothing downloaded; CI runs them in four groups at
+  once; the Kindle's development SSH is our own (KOReader no longer needed); `docs/LANGUAGES.md`, what the reader
+  does for each language.
 
 ## 0.3.0-beta (2026-11-12)
 Sleep fixed on Kobo firmware 6, and books in Hebrew, Urdu and more of the right-to-left languages.
