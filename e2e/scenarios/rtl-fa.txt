@@ -3,7 +3,7 @@
 # made and removed, the book left. Only the highlight's word places are the book's, with e2e/fixtures/default's settings
 # (text 50 px, line height 1.75, margin 60): the chapter's second line, from its start at the right to its middle.
 on: sim kobo kindle
-refs: images                       # our own book: its pages committed as pictures (e2e/refs/)
+refs: images fa                     # our own book: its pages committed as pictures (e2e/refs/)
 book fa-basics
 open books/test/fa-basics.epub
 tap page-top                       # the bar and the dock, in Farsi

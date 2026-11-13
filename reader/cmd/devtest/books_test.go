@@ -4,7 +4,10 @@ import (
 	"archive/zip"
 	"bytes"
 	"os"
+	"path/filepath"
 	"testing"
+
+	"shamsainkreader/library"
 )
 
 // Every book of e2e/books builds to the same bytes each time (its key, and a fixture's place for it, depend on them),
@@ -37,6 +40,19 @@ func TestBooks(t *testing.T) {
 		for _, f := range z.File {
 			if f.Name == "README.md" {
 				t.Errorf("%s: its README is in the EPUB", e.Name())
+			}
+		}
+		// a fixture named after the book keeps its place under the book's key: an edit to the book changes the key,
+		// and the place would be ignored without a word (e2e/fixtures/README.md)
+		if _, err := os.Stat(filepath.Join("e2e", "fixtures", e.Name())); err == nil {
+			tmp := filepath.Join(t.TempDir(), e.Name()+".epub")
+			os.WriteFile(tmp, a, 0o644)
+			key, err := library.Key(tmp)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := os.Stat(filepath.Join("e2e", "fixtures", e.Name(), "places", key+".place")); err != nil {
+				t.Errorf("%s: its fixture has no places/%s.place, the book's key now: rename the place file", e.Name(), key)
 			}
 		}
 	}

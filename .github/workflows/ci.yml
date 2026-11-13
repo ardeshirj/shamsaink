@@ -61,7 +61,7 @@ jobs:
           sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
           mkdir -p out/sim-books
           sh e2e/sim/run.sh out/sim-books e2e/scenarios/readalong-granularity.txt e2e/scenarios/walk-moby-dick.txt \
-            e2e/scenarios/walk.txt e2e/scenarios/basics.txt e2e/scenarios/rtl-fa.txt
+            e2e/scenarios/walk.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/language.txt
       - name: a failed scenario's folder
         if: failure()
         uses: actions/upload-artifact@v6

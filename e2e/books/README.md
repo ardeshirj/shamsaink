@@ -8,7 +8,7 @@ bytes every time: the reader names a book by its bytes) and puts it on the devic
 `devtest books DIR` builds them all, to open by hand.
 
 The text is ours, written for these tests, under the repository's licence (Apache-2.0). Their pages are committed as
-pictures (`e2e/refs/`, a scenario's `refs: images`); other people's books and their pages never are (CLAUDE.md).
+pictures (`e2e/refs/LANG/`, a scenario's `refs: images LANG`); other people's books and their pages never are (CLAUDE.md).
 
 | Book | Language | Tests | Scenario |
 |---|---|---|---|

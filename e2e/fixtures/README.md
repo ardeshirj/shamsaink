@@ -60,6 +60,15 @@ and checks by its SHA-256 (CC-BY-SA 3.0, never committed).
   text, where the walk holds a word for the highlight's menu (at 884,700, dragged to 505,700). The key is that file's
   (`library.Key`, as above).
 
+## `fa-basics/`
+
+For our own Farsi book (`e2e/books/fa-basics`), the book `walk.txt` and `language.txt` open from the library.
+
+- `settings.json`: the default fixture's, the same text size and spacing.
+- `places/893a5034f8b7.place`, `3 0 0.5000`: the book opens at document 3 (the bridge), page 0, a page of text, where
+  the walk holds a word on its third line for the highlight's menu. The key is the built book's (`library.Key`); an edit
+  to the book changes it, and `go test ./cmd/devtest` (`TestBooks`) then names the new key to rename the file to.
+
 ## A new fixture
 
 A folder beside `default/`, with only the files the scenario needs different (the rest is the device's own, or the

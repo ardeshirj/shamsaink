@@ -63,7 +63,7 @@ import (
 //	                          Wi-Fi/Bluetooth chip without errors since the scenario began: after a sleep, a close
 //
 // The references are drawn from a book: never committed (e2e/out/ is ignored); their hashes are, in e2e/refs.sum (refs.go).
-// Those of a scenario on our own books (refs: images) are committed as pictures too, e2e/refs/ (refImage).
+// Those of a scenario on our own books (refs: images) are committed as pictures too, e2e/refs/LANG/HASH.png (refImage).
 
 // topRows are the rows of the clock's strip, left out of a comparison.
 const topRows = 60
@@ -77,8 +77,8 @@ type player struct {
 	scenario   string // and its SCENARIO
 	failure    string // out/failure: what a failed step left (explain)
 	save       bool
-	images     bool // refs: images: the references as pictures too, committed (refImage)
-	hlX, hlY   int  // where the highlight's menu was put, from the reader's log
+	images     string // refs: images LANG: the references as pictures too, committed in e2e/refs/LANG (refImage)
+	hlX, hlY   int    // where the highlight's menu was put, from the reader's log
 	hlSeen     bool
 	stop       func()
 	closedBook bool
@@ -517,11 +517,14 @@ func (p *player) snap(name string) (string, error) {
 		if err := os.WriteFile(ref, data, 0o644); err != nil {
 			return "", err
 		}
-		if p.images {
-			if err := writeRefImage(refImage(key), s.w, s.h, s.pix); err != nil {
+		if p.images != "" {
+			if err := writeRefImage(refImage(p.images, hash), s.w, s.h, s.pix); err != nil {
 				return "", err
 			}
-			return "kept as the reference (" + refsSum + ", " + refImage(key) + ")", keepRef(key, hash)
+			if err := keepRef(key, hash); err != nil {
+				return "", err
+			}
+			return "kept as the reference (" + refsSum + ", " + refImage(p.images, hash) + ")", pruneRefImages()
 		}
 		return "kept as the reference (" + refsSum + ")", keepRef(key, hash)
 	}
@@ -540,8 +543,8 @@ func (p *player) snap(name string) (string, error) {
 	os.MkdirAll(p.failure, 0o755)
 	os.WriteFile(filepath.Join(p.failure, "screen.pgm"), data, 0o644)
 	old, err := os.ReadFile(ref)
-	if err != nil && p.images { // no local copy: the committed picture is the reference (CI)
-		old, err = readRefImage(refImage(key), s.w, s.h)
+	if err != nil && p.images != "" { // no local copy: the committed picture is the reference (CI)
+		old, err = readRefImage(refImage(p.images, want), s.w, s.h)
 	}
 	if err != nil || len(old) != len(data) || pageHash(s.w, s.h, old[len(data)-len(s.pix):]) != want {
 		return "", fmt.Errorf("the page differs from its reference in %s (no local copy of that reference to compare with: "+

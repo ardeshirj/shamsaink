@@ -1,12 +1,15 @@
 # "Follow book language" (the library's Settings): with it on, a Farsi book's panels are in Farsi; with it off, in English.
-# The public sample of Buried Alive (FarsiEPUB's, fetched), its dock snapped both ways. The switch's own effect, on and off,
-# is in the design spec (library-settings, lang-follow: the walk presses it and its undo); this is the journey on a book.
-# The fixture's settings.json has no english_only: the switch is on at the start, and the reader's files are put back after.
+# Our own Farsi book (e2e/books/fa-basics, its fixture the last book read), its dock snapped both ways. The switch's own
+# effect, on and off, is in the design spec (library-settings, lang-follow: the walk presses it and its undo); this is the
+# journey on a book. The fixture's settings.json has no english_only: the switch is on at the start, and the reader's
+# files are put back after.
 # The library's controls are tapped at their kept places: devtest finds a screen's controls in the render of the
 # interface's language, which it takes to be the last book's (fa), while the library is always in English; to mend in
-# devtest (script.go, scenario.go) once the work there in progress is committed.
+# devtest (script.go, scenario.go). On the simulator only snapped: on the Kobo the bar's clock and battery change.
 on: sim kobo
-fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub-sample/buried-alive.epub ac3608ec09e11c29d21e17554ada66a9b0190b433540822ff5a9d720cc1a9475
+fixture: fa-basics
+refs: images fa                     # our own book: its pages committed as pictures (e2e/refs/)
+book fa-basics
 open
 tap page-top                       # the bar and the dock, in Farsi
 expect menu drawn in .*, in fa\)
@@ -15,11 +18,11 @@ tap topbar topbar-start            # back to the library
 expect library: .* shown in
 tap 1180 84                        # the library's ≡ (library-reading-en's box)
 tap 1076 207                       # its Settings (menu-library-en's box)
-tap 1169 262                       # Follow book language: off, English only (library-settings-follow-en's box)
+tap 1169 354                       # Follow book language: off, English only (library-settings-follow-en's box)
 expect interface language: English only
-tap 1169 262                       # on again: the undo the walk presses
+tap 1169 354                       # on again: the undo the walk presses
 expect interface language: follows the book
-tap 1169 262                       # off again, for the book
+tap 1169 354                       # off again, for the book
 expect interface language: English only
 tap 632 1500                       # off the panel, under the rows: it closes
 tap 632 446                        # the same book, the first row (library-reading-en's e0)

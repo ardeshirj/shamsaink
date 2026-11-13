@@ -24,7 +24,8 @@ keeps what is needed to understand it: `step.txt`, the log's last lines (`log.tx
 snapshot, the reference and `difference.png` (the screen faded, each pixel that differs in red). A snapshot is held
 against its SHA-256 in `e2e/refs.sum` (committed; the pages stay out of git); the reference and the difference are drawn
 only where the local copy of that reference is (the Mac that kept it), elsewhere (CI) the screen alone. A scenario on our
-own books (`refs: images` in its header) also commits its pages, `e2e/refs/TARGET/SCENARIO/NAME.png`: the reference and
+own books (`refs: images LANG` in its header) also commits its pages, `e2e/refs/LANG/HASH.png` (a folder for the book's language,
+each page named by its hash in `refs.sum`, so the simulator's and the Kobo's identical pages are one file): the reference and
 the difference then come from there, CI included. The reader's crash
 (a panic, a fatal signal, an exit other than 0) ends the run at the step it happened in.
 

@@ -70,10 +70,33 @@ func keepRef(key, hash string) error {
 }
 
 // refImages holds the references of scenarios on our own books (refs: images) as pictures, committed beside their hashes
-// so a changed page shows in a diff and CI's failure folder has the old page: e2e/refs/TARGET/SCENARIO/NAME.png.
+// so a changed page shows in a diff and CI's failure folder has the old page: e2e/refs/LANG/HASH.png, a folder for the
+// book's language (the scenario's refs: images LANG), named by the hash refs.sum gives the snapshot, so a page drawn
+// alike on several targets (the simulator's and the Kobo's) is kept once.
 const refImages = "e2e/refs"
 
-func refImage(key string) string { return filepath.Join(refImages, key+".png") }
+func refImage(lang, hash string) string { return filepath.Join(refImages, lang, hash+".png") }
+
+// pruneRefImages removes the pictures no line of refs.sum names any more (a reference kept anew).
+func pruneRefImages() error {
+	refs, err := readRefs()
+	if err != nil {
+		return err
+	}
+	used := map[string]bool{}
+	for _, h := range refs {
+		used[h] = true
+	}
+	files, _ := filepath.Glob(filepath.Join(refImages, "*", "*.png"))
+	for _, f := range files {
+		if !used[strings.TrimSuffix(filepath.Base(f), ".png")] {
+			if err := os.Remove(f); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
 // writeRefImage keeps a snapshot as a grey PNG.
 func writeRefImage(path string, w, h int, pix []byte) error {

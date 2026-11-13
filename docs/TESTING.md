@@ -74,7 +74,7 @@ below the clock's strip; the fixtures' text size 50, the reader's default, since
 themselves, drawn from books, stay out of git (CLAUDE.md): `make e2e-sim SAVE=1` writes them into `e2e/out/` and updates
 `refs.sum`; the maintainer looks at the changed pages before `refs.sum` is committed. A page that differs in CI is
 attached to the run, so the change can be seen. **Pages of our own books** (`e2e/books/`, since 2026-11-12) are
-committed too, as grey PNGs beside their hashes (`e2e/refs/TARGET/SCENARIO/NAME.png`, a scenario with `refs: images`):
+committed too, as grey PNGs beside their hashes (`e2e/refs/LANG/HASH.png`, a scenario with `refs: images LANG`; a page alike on two targets kept once):
 a changed page shows in the diff, and CI's failure folder has the old page and the difference.
 
 **Measured (2026-11-05): who draws the same bytes.** `blitz-pages` (the engine with `parallel`, the reader's fonts) drew

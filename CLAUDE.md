@@ -199,7 +199,7 @@ and tried on a device and stays in its stage; new work goes where it belongs as 
   read-along video's thumbnail there (a frame of «داود گوژپشت»). No other page.
   **Our own test books are the other exception (the maintainer, 2026-11-12):** the rule is about other people's books.
   The books we write for the tests (`e2e/books/`, our own text, Apache-2.0 as the repository) are committed as source,
-  and the pages drawn from them are committed as pictures beside their hashes (`e2e/refs/`, a scenario's `refs: images`).
+  and the pages drawn from them are committed as pictures beside their hashes (`e2e/refs/LANG/`, a scenario's `refs: images LANG`).
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
 - **The Kindle:** set up as in `docs/devices/kindle/setup.md` (ShamsaInk, then our development SSH from its Developer

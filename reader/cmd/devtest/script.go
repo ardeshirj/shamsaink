@@ -15,7 +15,8 @@ import (
 //	book: PATH             a book it needs, by its path under the reader's folder (books/farsiepub/...); checked before
 //	                       the first step, so a missing book is said as such (one line each)
 //	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: default)
-//	refs: images           its references kept as pictures too, committed (e2e/refs/TARGET/SCENARIO/NAME.png): only for
+//	refs: images LANG      its references kept as pictures too, committed (e2e/refs/LANG/HASH.png, by refs.sum's hash,
+//	                       LANG the book's language: fa, ar, he, ...): only for
 //	                       scenarios on our own books (e2e/books), never on another's
 //
 // The steps are listed in scenario.go. check holds every step against the design spec's kept renders without a device:
@@ -25,7 +26,7 @@ type script struct {
 	on      []string
 	books   []string
 	fixture string
-	images  bool // refs: images
+	images  string // refs: images LANG
 	steps   []line
 }
 
@@ -71,10 +72,10 @@ func parseScenario(path string) (*script, error) {
 			case "fixture:":
 				s.fixture = w[1]
 			case "refs:":
-				if len(w) != 2 || w[1] != "images" {
-					return nil, fmt.Errorf("%s:%d: refs: images (nothing else)", path, n+1)
+				if len(w) != 3 || w[1] != "images" || !regexp.MustCompile(`^[a-z]{2,3}$`).MatchString(w[2]) {
+					return nil, fmt.Errorf("%s:%d: refs: images LANG (the book's language: fa, ar, he, ...)", path, n+1)
 				}
-				s.images = true
+				s.images = w[2]
 			}
 			continue
 		}

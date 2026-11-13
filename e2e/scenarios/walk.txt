@@ -3,7 +3,10 @@
 # a row or a word, a tap in the page's top tenth), held against its kept render, closed the way the spec says, and the base
 # as it was. Nothing here names a screen: one added to the spec is walked the next time. What the controls do is not
 # tested here (the scenarios and, later, the spec's effects).
+# On our own Farsi book (e2e/books/fa-basics), opened by its fixture at the bridge's first page (e2e/fixtures/fa-basics):
+# the word held for the highlight's menu is on its third line, from its start at the right to its middle.
 on: sim kobo kindle
-fetch https://farsiepub.org/api/v1/samples/buried-alive/download books/farsiepub-sample/buried-alive.epub ac3608ec09e11c29d21e17554ada66a9b0190b433540822ff5a9d720cc1a9475
-walk
+fixture: fa-basics
+book fa-basics
+walk word 1180 657 700 657
 close
