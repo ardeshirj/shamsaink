@@ -6,7 +6,7 @@ pagination (`lib.rs`), glyph layer between Blitz's painter and vello_cpu (`glyph
 `blitz_engine.h`; the cgo binding is `engine/go`, module `shamsainkengine`). Crate `blitz-engine`, library `blitz_engine`.
 
 Blitz is not in git: `engine/fetch-blitz.sh` clones it into `engine/blitz/` at the pinned commit (21edc92) and applies
-`patches/blitz-*.patch` (line culling, pictures sized from their headers). It also fetches Parley 0.12.0, Blitz's text
+`patches/blitz-*.patch` (line culling, pictures sized from their headers, right-to-left list bullets on the right). It also fetches Parley 0.12.0, Blitz's text
 layout, from crates.io into `engine/parley/` (its checksum checked) and applies `patches/parley-*.patch` (a line's
 trailing space moved to its end, linebender/parley#907, open upstream); `Cargo.toml`'s `[patch.crates-io]` builds that
 copy. Safe to run again; stops if `blitz/` or `parley/` is in another state. When #907 is in a Parley release Blitz
