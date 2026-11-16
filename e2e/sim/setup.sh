@@ -21,8 +21,9 @@ N: Name="gpio-keys"
 H: Handlers=event0
 
 EOF
-# the battery, the light and its warmth; the Kobo Libra Colour's product id
-echo 80 > "$DIR"/sys/class/power_supply/bd71827_bat/capacity
+# the battery (SIM_BATTERY per cent, 80 unless set: 15 or less shows it low, in red in the bar), the light and its
+# warmth; the Kobo Libra Colour's product id
+echo "${SIM_BATTERY:-80}" > "$DIR"/sys/class/power_supply/bd71827_bat/capacity
 echo Discharging > "$DIR"/sys/class/power_supply/bd71827_bat/status
 echo 0 > "$DIR"/sys/class/backlight/mxc_msp430.0/brightness
 echo 30 > "$DIR"/sys/class/backlight/mxc_msp430.0/actual_brightness

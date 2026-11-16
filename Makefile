@@ -95,7 +95,7 @@ check:
 #   make e2e-sim         the scenarios on the simulated Kobo (e2e/README.md), in Docker: SCENARIO (every one marked on: sim by
 #                        default), each on a fresh device; SIM_BOOKS (out/sim-books) is the books/ folder it gets
 #   make e2e-sim-languages  the same for the other right-to-left languages (e2e/scenarios/languages/)
-#   make e2e-sim-all     every scenario CI runs, in its four groups at once after one build (no SAVE)
+#   make e2e-sim-all     every scenario CI runs, in its five groups at once after one build (no SAVE)
 #   make e2e             a scenario on the Kobo (e2e/README.md): SCENARIO (e2e/scenarios/basics.txt by default), by
 #                        control name, its pages compared with the references kept by a run with SAVE=1 (their hashes
 #                        in e2e/refs.sum). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
@@ -157,20 +157,21 @@ e2e-sim:
 # the other right-to-left languages (Arabic, Hebrew, Urdu, ...), apart so the main run stays quick: a group of their own in CI's test (run at once with the others)
 e2e-sim-languages:
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $(if $(SAVE),--save) $(call runs,$(or $(SCENARIO),$(wildcard e2e/scenarios/languages/*.txt)))
-# every scenario CI runs, in CI's four groups (.github/workflows/ci.yml: keep the two lists alike) at once, each in a
+# every scenario CI runs, in CI's five groups (.github/workflows/ci.yml: keep the two lists alike) at once, each in a
 # container of its own after one build: about as long as the longest walk. Each group's output in e2e/out/sim/GROUP.log.
 # Not with SAVE: the groups would write e2e/refs.sum at the same time (keep references with e2e-sim, one at a time).
-# A group is NAME=its scenarios, comma-separated (the shell expands a pattern).
+# A group is NAME=its scenarios, comma-separated (the shell expands a pattern); NAME@N runs them with the battery at N%
+# (e2e/sim/setup.sh's SIM_BATTERY; 80 otherwise).
 SIM_GROUPS = walk-fa=e2e/scenarios/walk-fa.txt walk-en=e2e/scenarios/walk-en.txt \
   reading=e2e/scenarios/readalong-granularity.txt,e2e/scenarios/rtl-fa.txt,e2e/scenarios/follow-language.txt \
-  languages=e2e/scenarios/languages/*.txt
+  languages=e2e/scenarios/languages/*.txt low-battery@10=e2e/scenarios/rtl-fa.txt
 e2e-sim-all:
 	@[ -z "$(SAVE)" ] || { echo "e2e-sim-all does not keep references: make e2e-sim SAVE=1 SCENARIO=..." >&2; exit 2; }
 	@$(DOCKER) sh /r/e2e/sim/run.sh $(SIM_BOOKS)
 	@# a group that fails for any reason (a step, or docker itself) leaves GROUP.failed
 	@mkdir -p e2e/out/sim && rm -f e2e/out/sim/*.failed; for g in $(SIM_GROUPS); do \
-	  n=$${g%%=*}; s=$$(echo $${g#*=} | tr , ' '); \
-	  { $(subst --rm,--rm -e SIM_BUILT=1,$(DOCKER)) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $$s > e2e/out/sim/$$n.log 2>&1 \
+	  n=$${g%%=*}; b=; case $$n in *@*) b=$${n#*@}; n=$${n%@*};; esac; s=$$(echo $${g#*=} | tr , ' '); \
+	  { $(subst --rm,--rm -e SIM_BUILT=1 -e SIM_BATTERY=$$b,$(DOCKER)) sh /r/e2e/sim/run.sh $(SIM_BOOKS) $$s > e2e/out/sim/$$n.log 2>&1 \
 	    && echo "ok   $$n" || { echo "FAIL $$n: e2e/out/sim/$$n.log"; touch e2e/out/sim/$$n.failed; }; } & \
 	done; wait; ! ls e2e/out/sim/*.failed >/dev/null 2>&1
 

@@ -16,8 +16,8 @@ and on the **Kobo** and the **Kindle** themselves (by hand, for what only hardwa
 | Needs | `make engine` once, `reader/fonts`, the books in `out/sim-books/` | the latest reader installed (`make kobo-reader-install`), the Kobo awake, the reader not running | the same with `make kindle-reader-install` (`make kindle-check` first) |
 | Snapshots, references, failure | `e2e/out/sim/NAME/` | `e2e/out/NAME/` | `e2e/out/kindle/NAME/` |
 
-**Every scenario CI runs, at once:** `make e2e-sim-all` builds once, then plays CI's four groups (walk-fa, walk-en,
-reading, languages) each in a container of its own, as CI's jobs do: about as long as the longest walk. Each group's
+**Every scenario CI runs, at once:** `make e2e-sim-all` builds once, then plays CI's five groups (walk-fa, walk-en,
+reading, languages, and low-battery: rtl-fa with the battery at 10%, `SIM_BATTERY`) each in a container of its own, as CI's jobs do: about as long as the longest walk. Each group's
 output is in `e2e/out/sim/GROUP.log`; it does not keep references (`SAVE=1`: `make e2e-sim`, one at a time).
 
 `make check` holds every scenario against the design spec without a device (`go test ./cmd/devtest`): a step, a

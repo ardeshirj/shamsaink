@@ -93,6 +93,11 @@ jobs:
             scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt
           - group: languages
             scenarios: e2e/scenarios/languages/*.txt
+          # the battery low (10%, off the charger: red in the bar on a colour screen), so nothing of it is left on the
+          # page once the bar has gone (2026-11-16: its red stayed on a word under the battery's box)
+          - group: low-battery
+            scenarios: e2e/scenarios/rtl-fa.txt
+            battery: 10
     steps:
       - uses: actions/checkout@v5
       - uses: actions/download-artifact@v7
@@ -104,7 +109,7 @@ jobs:
         run: |
           sudo mkdir /sim && sudo chown "$(id -u):$(id -g)" /sim
           mkdir -p out/sim-books
-          SIM_BUILT=1 sh e2e/sim/run.sh out/sim-books ${{ matrix.scenarios }}
+          SIM_BUILT=1 SIM_BATTERY=${{ matrix.battery }} sh e2e/sim/run.sh out/sim-books ${{ matrix.scenarios }}
       - name: a failed scenario's folder
         if: failure()
         uses: actions/upload-artifact@v6

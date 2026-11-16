@@ -52,8 +52,16 @@ func (s *session) compose(r image.Rectangle) *image.Gray {
 		fill(over, clip(s.nar.bars, r))
 	}
 	panels := []*ui.Panel{s.mn, s.nav, s.sheet}
-	if s.nav != nil || s.sheet != nil { // the bar over the dock or the sheet, and the bar's list
+	bar := s.nav != nil || s.sheet != nil
+	if bar { // the bar over the dock or the sheet, and the bar's list
 		panels = append(panels, s.topBar, s.list)
+	}
+	// the low battery's red (drawTopBar's barTint) goes with the bar: left on once the bar had gone, it turned the
+	// page's ink under the battery's box red (found 2026-11-16 by the Kobo's e2e at 15%, off the charger: a red word)
+	if bar {
+		s.scr.SetTint(s.barTint)
+	} else {
+		s.scr.SetTint(image.Rectangle{})
 	}
 	for _, m := range panels {
 		if m != nil && m.Rect().Overlaps(r) {

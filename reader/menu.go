@@ -107,7 +107,12 @@ func (s *session) drawTopBar() {
 	s.topBar = ui.DrawTopBar(ui.TopBar{Start: "arrow-left", Title: s.r.pub.Manifest.Metadata.Title(), Time: shownNow().Format("03:04"),
 		Phones: phones.On, Battery: s.dev.Battery(), Charging: s.dev.Charging(), Full: s.dev.Full(), Menu: true, MenuOn: s.list != nil && s.kind == "menu", LightOn: s.list != nil && s.kind == "light", PhonesOn: s.list != nil && s.kind == "sound",
 		BatteryOn: s.list != nil && s.kind == "level"}, s.rd.fonts, s.scr.W)
-	tintBattery(s.scr, s.topBar.Box("topbar-battery"), s.dev.Battery(), s.dev.Charging() || s.dev.Full())
+	// the battery's box red when low and off the charger (tintBattery's rule), on the screen while the bar is (compose)
+	s.barTint = image.Rectangle{}
+	if b := s.dev.Battery(); !(s.dev.Charging() || s.dev.Full()) && b >= 0 && b <= device.LowBattery {
+		s.barTint = s.topBar.Box("topbar-battery")
+	}
+	s.scr.SetTint(s.barTint)
 	s.barShown = barState(s.dev, phones)
 }
 
