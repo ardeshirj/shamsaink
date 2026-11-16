@@ -4,6 +4,14 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.3.3-beta (2026-11-16)
+A fix to 0.3.2-beta on the Kobo Libra Colour.
+- **A red word at low battery:** with the battery at 15% or less and off the charger, opening the menu (its bar shows
+  the battery in red) left the word under the battery's spot red once the menu had closed. The red now goes with
+  the bar.
+- **For development:** CI also plays a scenario with the battery low; every build, on the Mac and on CI, uses the same
+  Go (1.27.4).
+
 ## 0.3.2-beta (2026-11-16)
 FarsiEPUB's new logos, and fixes to text that mixes directions.
 - **FarsiEPUB's new logos:** the opening screen, the sleep screens' signature and the Kindle library's cover for
