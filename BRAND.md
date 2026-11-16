@@ -14,10 +14,10 @@ section 6). This file says what those are and how they may be used.
 - **How FarsiEPUB is credited** (FarsiEPUB's `brand/README.md`, "Credit: an endorsed brand"): ShamsaInk is the main brand and
   FarsiEPUB its endorser, as "by FarsiEPUB" in words, at 50% of the name's size, in ink, once per surface. The signature
   (`shamsaink-logo-by.svg`, never redrawn) is at the **top** of a surface people scroll (this README) and at the **foot** of a
-  surface seen at once, at least 48 px high with clear space (half the mark) round it (below that, the logo and the words
+  surface seen at once, at least 72 px high with clear space (half the mark) round it (below that, the logo and the words
   "by FarsiEPUB" after it). A large title surface (an opening screen,
   a splash, the one-screen read-along video) may stack it instead, centred: the mark, the name close under it, then "by FarsiEPUB"
-  under the name, spaced as the signature spaces them, from 105 px of mark (the by-line is too small below that), with no
+  under the name, spaced as the signature spaces them, from 96 px of mark (the by-line is too small below that), with no
   FarsiEPUB logo. The read-along video was made that way, and so is `splash.html`
   (brand/'s `logo-stack.svg`, one picture). FarsiEPUB's own logo is not shown beside the product's.
 - **Where they are here:** `reader/ui/templates/brand/` (`shamsaink.png`, the mark, for the loading screen; `shamsaink-stack.png`, the stacked credited logo) and the opening screen that shows

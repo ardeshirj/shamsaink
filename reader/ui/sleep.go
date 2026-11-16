@@ -123,7 +123,7 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
 	px := func(v float64) int { return int(v*u + 0.5) }
 	d := sleepData{Sleep: s, Size: px(float64(sleepSize(utf8.RuneCountInString(s.Text)))), Top: h * 3 / 10, Side: w / 10, H: h,
-		LogoW: px(289), LogoH: px(379)}
+		LogoW: px(289), LogoH: px(384)}
 	all := strings.Join(append([]string{s.Text, s.Credit, s.Poet, s.Gloss}, s.Verses...), " ")
 	if textLang(all) != "" {
 		d.Dir = "rtl"
@@ -139,8 +139,10 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 		d.RuleW, d.RuleH, d.RuleGap = px(120), max(px(2), 2), px(50)
 		d.GlossSize = px(42 * 1.15)
 		d.PadTop, d.PadSide, d.PadBottom = px(105), px(140), px(90)
-		d.SigGap, d.SigH = px(30), px(90)
-		d.SigW = d.SigH * 871 / 300 // logo-by.svg's width and height
+		// the signature's mark 78 px high, as it was (90 px of the old logo-by.svg's 30 units, its mark 26 of them), in
+		// the new one 64 of 68 units
+		d.SigGap, d.SigH = px(30), px(78*68.0/64)
+		d.SigW = d.SigH * 16623 / 6800 // logo-by.svg's width and height
 		d.Size = d.GlossSize
 	}
 	if s.Layout != "couplet" {
