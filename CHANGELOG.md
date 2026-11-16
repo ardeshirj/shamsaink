@@ -4,6 +4,15 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## Unreleased
+FarsiEPUB's logos on the golden ratio.
+- **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's new logos,
+  every size a step of the golden ratio (1.618) from the star, so the star leads: the stack's name smaller, the
+  credited logo's name smaller and its "by FarsiEPUB" a step under it.
+- **Couplet sleep screens:** the same ratio down from the poem: the poet and the explanation a little smaller, the
+  spaces between the verses, around the rule and above the signature tighter. Long explanations take a line less.
+  The signature's "by FarsiEPUB" stays 18 pixels high, the least that reads well on these screens.
+
 ## 0.3.3-beta (2026-11-16)
 A fix to 0.3.2-beta on the Kobo Libra Colour.
 - **A red word at low battery:** with the battery at 15% or less and off the charger, opening the menu (its bar shows
