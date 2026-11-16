@@ -81,7 +81,7 @@ flowchart TB
 
 | Step | Part | Whose | Notes |
 |---|---|---|---|
-| Read the book | readium/go-toolkit | Readium, BSD | trimmed of its cloud SDKs (02's `trim-gotoolkit.sh`) |
+| Read the book | readium/go-toolkit | Readium, BSD | v0.16.2 built with its tag `readium_nocloud`: no cloud SDKs |
 | Parse | html5ever, blitz-html, blitz-dom | Servo's parser; Blitz | XHTML into a tree |
 | Style | Stylo | Firefox's CSS engine (MPL-2.0) | the books' real CSS; why Blitz matches Chromium on 383 of 388 pages (05) |
 | Boxes | Taffy | Dioxus Labs | block, flex, grid; not text |
@@ -310,7 +310,7 @@ was found and measured: 06, 07 and 08's NOTES.md.
 | a line's trailing space at its end | Parley 0.12.0 | it kept a line's last space inside text of the other direction (Unicode's bidi rule L1 not applied): an English phrase broken in a Farsi line showed a word-wide gap before its quote mark; Chromium's lines now | `engine/patches/parley-trailing-whitespace.patch`, linebender/parley#907 as it is (open upstream) |
 | measuring switches | Blitz | `BLITZ_NO_HINT`, `BLITZ_NO_GLYPHS`, for one profiling build only | `experiments/06-device-timing/blitz-knobs.patch` |
 | justification fix | go-text | one line; lines ended a gap short | experiment 01 (to report upstream) |
-| trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | `experiments/02-crengine-go/trim-gotoolkit.sh` (to propose upstream) |
+| trim | readium/go-toolkit | drops the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory) | upstream since v0.16.2 as the build tag `readium_nocloud` (ours, readium/go-toolkit#338); `reader/nocloud.go` stops a build without it |
 
 ## 7. What ShamsaInk depends on, and the licences
 
@@ -323,7 +323,7 @@ modules; Go's, musl's and Rust's own libraries): `licenses/THIRD-PARTY-LICENSES.
 
 | Dependency | For | Licence | In the reader |
 |---|---|---|---|
-| readium/go-toolkit | EPUB, positions, SMIL timings | BSD-3 | yes (trimmed, 02) |
+| readium/go-toolkit | EPUB, positions, SMIL timings | BSD-3 | yes (tag `readium_nocloud`) |
 | Blitz: blitz-dom, blitz-html, blitz-paint | HTML, CSS, layout, painting | MIT / Apache-2.0 | yes, with our three patches (section 6) |
 | Stylo, cssparser, selectors, and small crates with them (app_units, dtoa-short, to_shmem, uluru) | Firefox's CSS engine, inside Blitz | **MPL-2.0** (14 crates) | yes, unchanged |
 | Symphonia | narration's MP3 and AAC decoded for read-along | **MPL-2.0** (7 crates) | yes, unchanged |

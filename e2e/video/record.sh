@@ -11,7 +11,7 @@ BOOKS=$1 OUT=$2 SCENARIO=${3:-e2e/video/tour.txt}
 [ -d "$BOOKS" ] || { echo "no books folder $BOOKS" >&2; exit 2; }
 (cd engine && cargo build -q --release --features parallel --lib 2>/dev/null)
 mkdir -p reader/out/sim
-(cd reader && CGO_ENABLED=1 go build -tags blitz -o out/sim/shamsaink . && go build -o out/sim/devtest ./cmd/devtest)
+(cd reader && CGO_ENABLED=1 go build -tags blitz,readium_nocloud -o out/sim/shamsaink . && go build -o out/sim/devtest ./cmd/devtest)
 sh e2e/sim/setup.sh /sim reader/out/sim/shamsaink reader/fonts "$BOOKS"
 [ -z "$SLEEP" ] || cp "$SLEEP" /sim/mnt/onboard/.adds/shamsaink/sleep/
 reader/out/sim/devtest scenario sim-kobo-libra-colour "$SCENARIO" >&2 || {

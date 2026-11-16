@@ -22,14 +22,13 @@ cargo about generate -m engine/Cargo.toml --features parallel \
   -c reader/licenses/about.toml reader/licenses/about.hbs -o "$f" 2>/dev/null
 
 # the Go modules, each with the files its licence asks to be shipped
-mods=$(cd reader && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 go list -tags blitz -deps \
+mods=$(cd reader && CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 go list -tags blitz,readium_nocloud -deps \
   -f '{{with .Module}}{{.Path}}|{{.Version}}|{{.Dir}}{{end}}' . | sort -u | grep -v '^shamsaink')
 {
   printf '## The Go modules\n\n'
-  printf 'readium/go-toolkit (v0.16.1) is built with its remote archives, fetchers and assets (S3, Google Cloud Storage,\n'
-  printf 'HTTP) left out: files removed, none changed (experiments/02-crengine-go/trim-gotoolkit.sh in ShamsaInk'"'"'s repository).\n\n'
+  printf 'readium/go-toolkit is built with its build tag readium_nocloud: its S3 and Google Cloud Storage archives,\n'
+  printf 'fetchers and assets left out.\n\n'
   echo "$mods" | while IFS='|' read -r path version dir; do
-    [ "$path" = github.com/readium/go-toolkit ] && version=v0.16.1
     files=$(cd "$dir" && ls | grep -E -i '^(licen[cs]e|copying|notice|patents)' || true)
     [ -n "$files" ] || { echo "licenses.sh: no licence file in $path ($dir)" >&2; exit 1; }
     printf '### %s %s\n\n' "$path" "$version"

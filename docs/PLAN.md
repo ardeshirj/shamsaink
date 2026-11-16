@@ -118,8 +118,10 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   - [ ] Controls' effects in the spec (`emits:`, `press:`, `undo:` started 2026-11-06), scenarios moved to it
   - [ ] Scenarios for read aloud and sleep; page-button presses in the harness; the Kindle
 - Upstream (any time; the maintainer posts; "Upstream to Blitz" below):
-  - [ ] go-toolkit's trim, to Readium: a `readium_nocloud` build tag, which Readium invited as a PR (2026-11-13; prepared
-    in its own session, go-toolkit-44). Once in a release, `trim-gotoolkit.sh` goes and `go.mod` takes the tag. go-text's justification fix
+  - [x] go-toolkit's trim, to Readium: a `readium_nocloud` build tag, which Readium invited as a PR (readium/go-toolkit#338,
+    merged 2026-11-13, in v0.16.2). The reader and bench build v0.16.2 with the tag since 2026-11-15 (`reader/nocloud.go`
+    stops a build without it); `trim-gotoolkit.sh` stays for experiments 02 and 03 only.
+  - [ ] go-text's justification fix
   - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn; a right-to-left list's bullets on
     its right (`blitz-rtl-markers.patch`, 2026-11-13)
   - [ ] Parley: linebender/parley#907 (a line's trailing space at its end, Unicode's rule L1), carried as

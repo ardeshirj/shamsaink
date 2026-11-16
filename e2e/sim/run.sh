@@ -18,7 +18,7 @@ if [ -z "$SIM_BUILT" ]; then
   mkdir -p reader/out/sim
   # the library's hash in the link flags, as in reader/scripts/build-armv7.sh: Go does not see a new engine library itself
   LIB=$(md5sum engine/target/release/libblitz_engine.a | cut -c1-16)
-  (cd reader && CGO_ENABLED=1 go build -tags blitz -ldflags "-X main.engineLib=$LIB" -o out/sim/shamsaink . &&
+  (cd reader && CGO_ENABLED=1 go build -tags blitz,readium_nocloud -ldflags "-X main.engineLib=$LIB" -o out/sim/shamsaink . &&
     go build -o out/sim/devtest ./cmd/devtest)
 fi
 

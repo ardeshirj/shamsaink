@@ -15,7 +15,7 @@ cd reader && mkdir -p out
 # hash in the link flags makes a new engine a new link (found 2026-11-03: a font loader change never reached the Kobo)
 LIB=$(md5sum ../engine/target/armv7-unknown-linux-musleabihf/release/libblitz_engine.a | cut -c1-16)
 CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 CC="zig cc -target arm-linux-musleabihf" \
-  go build -tags blitz -trimpath \
+  go build -tags blitz,readium_nocloud -trimpath \
   -ldflags "-s -w -linkmode external -extldflags -static -X main.engineLib=$LIB -X main.version=${VERSION:-dev}" \
   -o out/shamsaink .
 strip out/shamsaink

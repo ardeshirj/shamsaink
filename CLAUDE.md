@@ -71,7 +71,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   both devices after 07–08; one static musl binary; no GPL among its 215 crates. The Go engine stays as the
   reference (rtlbook's books, `compare.sh`); crengine stays the bar. webrender is dropped.
 - **go-toolkit, trimmed:** as published it links the AWS and Google Cloud SDKs (+27 MB binary, +26 MB memory);
-  experiment 02's `trim-gotoolkit.sh` removes them. Worth proposing upstream.
+  experiment 02's `trim-gotoolkit.sh` removed them; since 2026-11-15 upstream's own build tag `readium_nocloud` (our PR, in v0.16.2) does, every build takes `-tags blitz,readium_nocloud`.
 - **Devices:** **the Kobo Libra Colour is the primary target (the maintainer, 2026-10-30), read-along included:**
   experiment 13 played sound through Kobo's own Bluetooth sink from our side (the Kindle's goes around Amazon's
   tools, 12), and Kobo has the most readers (NickelMenu, KOReader's tools FBInk and koxtoolchain). PocketBook only

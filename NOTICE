@@ -7,9 +7,8 @@ The names ShamsaInk and FarsiEPUB and their logos are not covered by the license
 
 It uses:
 
-- Readium's Go toolkit (https://github.com/readium/go-toolkit), BSD 3-Clause, for EPUB: v0.16.1 with its remote
-  archives, fetchers and assets (S3, Google Cloud Storage, HTTP) left out, files removed and none changed
-  (experiments/02-crengine-go/trim-gotoolkit.sh).
+- Readium's Go toolkit (https://github.com/readium/go-toolkit), BSD 3-Clause, for EPUB, built with its tag
+  readium_nocloud (its S3 and Google Cloud Storage archives, fetchers and assets left out).
 - Blitz (https://github.com/DioxusLabs/blitz), under the MIT License, with Parley, HarfRust and ICU4X (MIT, Apache
   License 2.0 or the Unicode License), for laying out and drawing pages. Blitz is built with three changes of ours, in
   engine/patches/: lines outside the page skipped when painting (blitz-cull-lines.patch), pictures decoded when

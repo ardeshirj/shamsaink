@@ -59,21 +59,12 @@ jobs:
         # a cache restored from an older key (restore-keys) can hold Blitz or Parley with other patches, which
         # fetch-blitz.sh leaves alone and stops on: here there is nothing to keep, so they are fetched anew
         run: engine/fetch-blitz.sh || { rm -rf engine/blitz engine/parley && engine/fetch-blitz.sh; }
-      - name: go-toolkit trimmed, cached by the script that makes it
-        id: gotoolkit
-        uses: actions/cache@v5
-        with:
-          path: experiments/02-crengine-go/patched/go-toolkit
-          key: gotoolkit-${{ hashFiles('experiments/02-crengine-go/trim-gotoolkit.sh') }}
-      - name: go-toolkit, trimmed (reader/go.mod points at it)
-        if: steps.gotoolkit.outputs.cache-hit != 'true'
-        run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the engine
         working-directory: engine
         run: cargo build --release --features parallel --lib
       - name: make test (every Go test with the engine, the renders compared with the kept ones)
         working-directory: reader
-        run: FONTS=$PWD/fonts go test -count=1 -tags blitz ./...
+        run: FONTS=$PWD/fonts go test -count=1 -tags blitz,readium_nocloud ./...
       - name: the reader and devtest for the simulated Kobo (run.sh with no scenario only builds)
         run: |
           mkdir -p out/sim-books
@@ -167,15 +158,6 @@ jobs:
         # a cache restored from an older key (restore-keys) can hold Blitz or Parley with other patches, which
         # fetch-blitz.sh leaves alone and stops on: here there is nothing to keep, so they are fetched anew
         run: engine/fetch-blitz.sh || { rm -rf engine/blitz engine/parley && engine/fetch-blitz.sh; }
-      - name: go-toolkit trimmed, cached by the script that makes it
-        id: gotoolkit
-        uses: actions/cache@v5
-        with:
-          path: experiments/02-crengine-go/patched/go-toolkit
-          key: gotoolkit-${{ hashFiles('experiments/02-crengine-go/trim-gotoolkit.sh') }}
-      - name: go-toolkit, trimmed (reader/go.mod points at it)
-        if: steps.gotoolkit.outputs.cache-hit != 'true'
-        run: sh experiments/02-crengine-go/trim-gotoolkit.sh
       - name: the reader, static ARMv7 (reader/scripts/build-armv7.sh)
         run: VERSION="$GITHUB_REF_NAME" sh reader/scripts/build-armv7.sh
       - name: the third-party licences of what is built into it (reader/scripts/licenses.sh, cargo-about installed first)
