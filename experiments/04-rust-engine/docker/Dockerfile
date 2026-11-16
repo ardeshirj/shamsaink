@@ -1,6 +1,6 @@
 # Rust, its 32-bit ARM (ARMv7, musl: static) and arm64 targets, zig as the cross C compiler and linker, and Go (for
 # a Go program calling Rust through cgo). Image: eink-rust.
-FROM golang:1.27-bookworm AS go
+FROM golang:1.27.4-bookworm AS go
 FROM rust:1.95-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends xz-utils file time fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*

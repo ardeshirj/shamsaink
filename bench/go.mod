@@ -2,6 +2,9 @@ module einkengine
 
 go 1.27
 
+// one Go for every build, the Mac's and CI's alike
+toolchain go1.27.4
+
 require (
 	einkcre v0.0.0
 	einklayout v0.0.0

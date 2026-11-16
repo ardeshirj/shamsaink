@@ -2,6 +2,9 @@ module shamsainkreader
 
 go 1.27
 
+// one Go for every build, the Mac's and CI's alike
+toolchain go1.27.4
+
 require (
 	github.com/readium/go-toolkit v0.16.2
 	golang.org/x/image v0.47.0
