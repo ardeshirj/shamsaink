@@ -11,11 +11,14 @@ section 6). This file says what those are and how they may be used.
   "by FarsiEPUB" in words under the name, in one fixed file (`shamsaink-logo-by.svg`, `shamsaink-logo-by-dark.svg`), made
   by FarsiEPUB's `brand/make.py`. It is never redrawn, and FarsiEPUB's own logo (its star and wordmark) is not shown beside it.
 - **FarsiEPUB's logo:** its star, with one saffron dot, and the wordmark "FarsiEPUB".
-- **How FarsiEPUB is credited** (FarsiEPUB's `brand/README.md`, "Credit: an endorsed brand"): ShamsaInk is the main brand and
+- **How FarsiEPUB is credited** (FarsiEPUB's `brand/overview.html`, "How to credit FarsiEPUB"): ShamsaInk is the main brand and
   FarsiEPUB its endorser, as "by FarsiEPUB" in words, at 50% of the name's size, in ink, once per surface. The signature
   (`shamsaink-logo-by.svg`, never redrawn) is at the **top** of a surface people scroll (this README) and at the **foot** of a
-  surface seen at once, at least 72 px high with clear space (half the mark) round it (below that, the logo and the words
-  "by FarsiEPUB" after it). A large title surface (an opening screen,
+  surface seen at once, at least 72 px high with clear space (half the mark) round it. Below 72 px there is no credit and
+  no drawn logo: the mark alone (FarsiEPUB's `mark.svg`, `mark-1bit.svg` on e-ink) with the name ShamsaInk as ordinary text
+  beside it, unless the surface already shows the name; an icon is the mark alone. (The drawn plain logo, star and name, is
+  FarsiEPUB's own small form only.) A cover (the Kindle library's, `reader/kindle/cover.png`) is the stack below, centred,
+  with half the mark of clear space round it. A large title surface (an opening screen,
   a splash, the one-screen read-along video) may stack it instead, centred: the mark, the name close under it, then "by FarsiEPUB"
   under the name, spaced as the signature spaces them, from 96 px of mark (the by-line is too small below that), with no
   FarsiEPUB logo. The read-along video was made that way, and so is `splash.html`
