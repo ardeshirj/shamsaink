@@ -5,10 +5,10 @@ packages and puts them on GitHub's Releases page. A version's section here is it
 is at the end, under "Versions and releases".
 
 ## 0.3.5-beta (2026-11-16)
-FarsiEPUB's logos, spaced by eye.
+FarsiEPUB's logos, every gap on the golden ratio from the star's points.
 - **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's latest
-  logos: every space measured from the star's points to the letters, the name a little closer to the star in the
-  stack, "by FarsiEPUB" a little closer to the name in the signature.
+  logos: every space is still a golden step, now measured from the star's points to the letters, so the name sits a
+  little closer to the star in the stack and "by FarsiEPUB" a little closer to the name in the signature.
 
 ## 0.3.4-beta (2026-11-16)
 FarsiEPUB's logos on the golden ratio.
