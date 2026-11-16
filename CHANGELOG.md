@@ -4,6 +4,12 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.3.5-beta (2026-11-16)
+FarsiEPUB's logos, spaced by eye.
+- **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's latest
+  logos: every space measured from the star's points to the letters, the name a little closer to the star in the
+  stack, "by FarsiEPUB" a little closer to the name in the signature.
+
 ## 0.3.4-beta (2026-11-16)
 FarsiEPUB's logos on the golden ratio.
 - **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's new logos,
