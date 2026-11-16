@@ -118,6 +118,11 @@ func DrawSleep(s Sleep, fonts *blitz.Fonts, w, h int) *image.Gray {
 	return img
 }
 
+// sigBy is the sleep screens' signature's by-line ("by FarsiEPUB") in px at a width of 1236: 18, the least the
+// maintainer wants on these screens (2026-11-15). 24, as the old logo drew it, pushed the signature to the screen's edge
+// under FarsiEPUB's fullest couplets (long glosses); at 18 two of its 30 still push it 29-37 px into the bottom margin.
+const sigBy = 18.0
+
 // drawSleepFit is DrawSleep, and says whether a verse is still on more than two lines at the smallest size.
 func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
@@ -139,9 +144,8 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 		d.RuleW, d.RuleH, d.RuleGap = px(120), max(px(2), 2), px(50)
 		d.GlossSize = px(42 * 1.15)
 		d.PadTop, d.PadSide, d.PadBottom = px(105), px(140), px(90)
-		// the signature's mark 78 px high, as it was (90 px of the old logo-by.svg's 30 units, its mark 26 of them), in
-		// the new one 64 of 68 units
-		d.SigGap, d.SigH = px(30), px(78*68.0/64)
+		// the signature's by-line ("by FarsiEPUB") is 9 of logo-by.svg's 68 units high, the name 18, the star 64
+		d.SigGap, d.SigH = px(30), px(sigBy*68.0/9)
 		d.SigW = d.SigH * 16623 / 6800 // logo-by.svg's width and height
 		d.Size = d.GlossSize
 	}
