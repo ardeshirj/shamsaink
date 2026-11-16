@@ -1,9 +1,11 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"html/template"
 	"image"
+	"image/png"
 	"math"
 	"regexp"
 	"strings"
@@ -126,12 +128,28 @@ const sigBy = 18.0
 // phi is the golden ratio: FarsiEPUB's logos (brand/make.py) and the couplet's sizes are steps down by it.
 var phi = (1 + math.Sqrt(5)) / 2
 
+// The logos' proportions, read from their PNGs (brand/), so a new logo from FarsiEPUB needs no number changed here.
+var (
+	stackW, stackH = pngSize("shamsaink-stack.png")
+	sigW, sigH     = pngSize("shamsaink-by.png")
+)
+
+// pngSize is the width and height of a picture in brand/, from its PNG's header.
+func pngSize(name string) (float64, float64) {
+	b, _ := files.ReadFile("templates/brand/" + name)
+	c, err := png.DecodeConfig(bytes.NewReader(b))
+	if err != nil {
+		panic("brand/" + name + ": " + err.Error())
+	}
+	return float64(c.Width), float64(c.Height)
+}
+
 // drawSleepFit is DrawSleep, and says whether a verse is still on more than two lines at the smallest size.
 func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
 	px := func(v float64) int { return int(v*u + 0.5) }
 	d := sleepData{Sleep: s, Size: px(float64(sleepSize(utf8.RuneCountInString(s.Text)))), Top: h * 3 / 10, Side: w / 10, H: h,
-		LogoW: px(289), LogoH: px(381)}
+		LogoW: px(289), LogoH: px(289 * stackH / stackW)}
 	all := strings.Join(append([]string{s.Text, s.Credit, s.Poet, s.Gloss}, s.Verses...), " ")
 	if textLang(all) != "" {
 		d.Dir = "rtl"
@@ -153,7 +171,7 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 		// the signature's by-line ("by FarsiEPUB") is 64/φ⁴ (9.34) of logo-by.svg's 68 units high (the star 64, the
 		// name 64/φ³), so a by-line of sigBy px makes it sigBy × 68 / 9.34 high
 		d.SigGap, d.SigH = px(96/phi/phi/phi), px(sigBy*68/(64/math.Pow(phi, 4)))
-		d.SigW = d.SigH * 15307 / 6800 // logo-by.svg's width and height (its viewBox, 153.07 × 68)
+		d.SigW = int(float64(d.SigH)*sigW/sigH + 0.5) // logo-by's proportions, from its PNG
 		d.Size = d.GlossSize
 	}
 	if s.Layout != "couplet" {
