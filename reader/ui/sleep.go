@@ -144,10 +144,26 @@ func pngSize(name string) (float64, float64) {
 	return float64(c.Width), float64(c.Height)
 }
 
+// noWidow joins the last two words of each line of t (its paragraphs: a quote's lines are kept, white-space: pre-line)
+// with a no-break space, so the last line of a wrapped paragraph never holds one word alone: the word before it comes
+// down with it (FarsiEPUB, 2026-11-16: a gloss ended on one word). A line of one word is left as it is.
+func noWidow(t string) string {
+	lines := strings.Split(t, "\n")
+	for i, l := range lines {
+		l = strings.TrimRight(l, " ")
+		if j := strings.LastIndex(l, " "); j > 0 && strings.TrimSpace(l[:j]) != "" {
+			l = l[:j] + "\u00a0" + l[j+1:]
+		}
+		lines[i] = l
+	}
+	return strings.Join(lines, "\n")
+}
+
 // drawSleepFit is DrawSleep, and says whether a verse is still on more than two lines at the smallest size.
 func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
 	px := func(v float64) int { return int(v*u + 0.5) }
+	s.Text, s.Gloss = noWidow(s.Text), noWidow(s.Gloss)
 	d := sleepData{Sleep: s, Size: px(float64(sleepSize(utf8.RuneCountInString(s.Text)))), Top: h * 3 / 10, Side: w / 10, H: h,
 		LogoW: px(289), LogoH: px(289 * stackH / stackW)}
 	all := strings.Join(append([]string{s.Text, s.Credit, s.Poet, s.Gloss}, s.Verses...), " ")
@@ -192,6 +208,11 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	}
 }
 
+// sleepLaidOut, when set (by a test), is given each sleep page once laid out, to look at its lines.
+var sleepLaidOut func(b interface {
+	FindLines(spine int, id string) (int, []image.Rectangle)
+})
+
 // drawSleepOnce draws d, and says whether a verse is on more than two lines.
 func drawSleepOnce(d sleepData, fonts *blitz.Fonts, w, h int) (img *image.Gray, tall bool) {
 	html, _ := render("sleep.html", d)
@@ -205,6 +226,9 @@ func drawSleepOnce(d sleepData, fonts *blitz.Fonts, w, h int) (img *image.Gray, 
 	b := blitz.New([]string{"sleep.html"}, read, blitz.Options{Width: w, Height: h, FontSize: float32(d.Size)}, fonts)
 	defer b.Close()
 	b.Layout(0)
+	if sleepLaidOut != nil {
+		sleepLaidOut(b)
+	}
 	for i := range d.Lines {
 		pg, rs := b.Find(0, fmt.Sprintf("v%d", i))
 		if pg == 0 && float64(union(rs).Dy()) > 2.1*1.4*float64(d.Poem) {

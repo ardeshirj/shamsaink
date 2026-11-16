@@ -23,7 +23,7 @@ body { margin: 0; }
 <div class="mid">
 <div class="poem"{{.TextLang}}>{{range $i, $l := .Lines}}<p class="v" id="v{{$i}}">{{$l}}</p>{{end}}</div>
 {{if .Poet}}<div class="poet"{{.PoetLang}}>{{.Poet}}</div>{{end}}
-{{if .Gloss}}<div class="rule"></div><p class="gloss"{{.GlossLang}}>{{.Gloss}}</p>{{end}}
+{{if .Gloss}}<div class="rule"></div><p class="gloss" id="gloss"{{.GlossLang}}>{{.Gloss}}</p>{{end}}
 </div>
 <img class="sig" id="sig" src="brand/shamsaink-by.png" width="{{.SigW}}" height="{{.SigH}}">
 </div>
@@ -35,7 +35,7 @@ body { padding: {{.Top}}px {{.Side}}px 0; text-align: center; }
 .credit { margin: 0.8em 0 0; font-size: 0.7em; color: #555; }
 </style></head><body>
 <img class="logo" id="logo" src="brand/shamsaink-stack.png" width="{{.LogoW}}" height="{{.LogoH}}">
-<p class="text"{{.TextLang}}>{{.Text}}</p>
+<p class="text" id="text"{{.TextLang}}>{{.Text}}</p>
 {{if .Credit}}<p class="credit"{{.CreditLang}}>{{if eq .Layout "quote"}}— {{end}}{{.Credit}}</p>{{end}}
 </body></html>
 {{- end}}

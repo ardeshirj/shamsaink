@@ -3,6 +3,7 @@
 package ui
 
 import (
+	"image"
 	"image/png"
 	"os"
 	"path/filepath"
@@ -147,5 +148,69 @@ func TestSleepSets(t *testing.T) {
 	}
 	if _, errs := ParseSleeps([]byte("text: a\n---\nverses: [x\n")); len(errs) != 1 || !strings.Contains(errs[0].Error(), "line 3") {
 		t.Errorf("a broken screen's error does not say where it starts: %v", errs)
+	}
+}
+
+// noWidow joins each line's last two words, and leaves a line of one word alone.
+func TestNoWidow(t *testing.T) {
+	for in, want := range map[string]string{
+		"one":           "one",
+		"two words":     "two words",
+		"a b c ":        "a b c",
+		"a b\nc d e":    "a b\nc d e",
+		"first\nsecond": "first\nsecond",
+		"":              "",
+	} {
+		if got := noWidow(in); got != want {
+			t.Errorf("noWidow(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// No sleep screen's paragraph ends on a line of one word (FarsiEPUB, 2026-11-16: Hafez's gloss ended on one word
+// alone): its last line is wider than its last word drawn alone, at both devices' sizes and the site's example's.
+func TestSleepNoWidow(t *testing.T) {
+	var fonts *blitz.Fonts
+	if d := os.Getenv("FONTS"); d != "" {
+		fonts = blitz.LoadFonts(d)
+	}
+	gloss := "شاعر می‌گوید اگر آن معشوقِ شیرازی دلم را به دست آورد، سمرقند و بخارا، دو شهر بزرگ و ثروتمند، را در برابر خال سیاه او می‌بخشم. ترک: معشوق زیباروی. خال هندو: خال سیاه."
+	verses := "verses:\n  - اگر آن تُرکِ شیرازی به‌‌ دست‌ آرَد دلِ ما را\n  - به خال هِندویَش بَخشَم سَمَرقند و بُخارا را\npoet: حافظ\n"
+	// inked is how wide the ink is within r (its darker pixels: the gloss is #333 on white)
+	inked := func(img *image.Gray, r image.Rectangle) int {
+		x0, x1 := r.Max.X, r.Min.X
+		for y := r.Min.Y; y < r.Max.Y; y++ {
+			for x := r.Min.X; x < r.Max.X; x++ {
+				if img.GrayAt(x, y).Y < 160 {
+					x0, x1 = min(x0, x), max(x1, x+1)
+				}
+			}
+		}
+		return max(x1-x0, 0)
+	}
+	lines := func(g string, w, h int) ([]image.Rectangle, *image.Gray) {
+		var rs []image.Rectangle
+		sleepLaidOut = func(b interface {
+			FindLines(int, string) (int, []image.Rectangle)
+		}) {
+			_, rs = b.FindLines(0, "gloss")
+		}
+		defer func() { sleepLaidOut = nil }()
+		s, err := ParseSleep([]byte(verses + "gloss: \"" + g + "\"\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rs, DrawSleep(s, fonts, w, h)
+	}
+	words := strings.Fields(gloss)
+	for _, sz := range [][2]int{{1264, 1680}, {1236, 1648}, {1264, 1684}} {
+		all, img := lines(gloss, sz[0], sz[1])
+		alone, img1 := lines(words[len(words)-1], sz[0], sz[1])
+		if len(all) < 2 || len(alone) != 1 {
+			t.Fatalf("%v: the gloss on %d lines, its last word on %d: want several, and one", sz, len(all), len(alone))
+		}
+		if last, word := inked(img, all[len(all)-1]), inked(img1, alone[0]); last <= word+5 {
+			t.Errorf("%v: the gloss's last line is %d px of ink, its last word alone %d: one word on its own line", sz, last, word)
+		}
 	}
 }
