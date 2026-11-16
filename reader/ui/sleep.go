@@ -128,7 +128,7 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
 	px := func(v float64) int { return int(v*u + 0.5) }
 	d := sleepData{Sleep: s, Size: px(float64(sleepSize(utf8.RuneCountInString(s.Text)))), Top: h * 3 / 10, Side: w / 10, H: h,
-		LogoW: px(289), LogoH: px(384)}
+		LogoW: px(289), LogoH: px(379)}
 	all := strings.Join(append([]string{s.Text, s.Credit, s.Poet, s.Gloss}, s.Verses...), " ")
 	if textLang(all) != "" {
 		d.Dir = "rtl"
