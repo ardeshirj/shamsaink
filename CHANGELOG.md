@@ -4,6 +4,11 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.3.6-beta (2026-11-16)
+Sleep screens without a lone last word.
+- **Sleep screens:** an explanation, a title or a quote never ends on a line of one word: the word before it comes
+  down with it.
+
 ## 0.3.5-beta (2026-11-16)
 FarsiEPUB's logos, every gap on the golden ratio from the star's points.
 - **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's latest
