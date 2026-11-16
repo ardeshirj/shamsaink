@@ -4,6 +4,19 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.3.2-beta (2026-11-16)
+FarsiEPUB's new logos, and fixes to text that mixes directions.
+- **FarsiEPUB's new logos:** the opening screen, the sleep screens' signature and the Kindle library's cover for
+  ShamsaInk are drawn from FarsiEPUB's new brand files.
+- **Mixed directions:** where a line breaks inside an English phrase in a Farsi paragraph (or a Farsi phrase in an
+  English one), the space at the break no longer opens a gap inside the line; it goes to the line's end, as in a
+  browser. Paragraphs marked `dir="auto"` take their direction from their own text.
+- **Lists in right-to-left books:** the bullets and numbers are on the right, where the items start.
+- **Readium's go-toolkit 0.16.2,** built with its new `readium_nocloud` tag (contributed from ShamsaInk), in place of
+  our own trimmed copy: the same size, nothing else changes.
+- **For development:** every simulator scenario at once (`make e2e-sim-all`); a device test run starts from its own
+  places and highlights and puts the owner's back after; CI builds once beside the checks, then tests on that build.
+
 ## 0.3.1-beta (2026-11-12)
 Fixes to 0.3.0-beta: the leaving screen, and every library's licence in the package.
 - **Leaving always in English:** "Exiting…" now shows in English whatever book was read last, as the library is; after
