@@ -54,7 +54,8 @@ func Leaving(dir string, fonts *blitz.Fonts, w, h int, colour bool) *Opening {
 
 // The logos, in brand/, from FarsiEPUB's brand folder, in colour, one set for every screen (our Blitz draws no SVG): ShamsaInk's
 // mark from brand/shamsaink/mark.svg (rsvg-convert -w 240 -h 240 -b white), for the Loading screen, and the stacked logo
-// (the mark, the name and "by FarsiEPUB") from brand/shamsaink/logo-stack.svg (rsvg-convert -w 400 -b white), for the
+// (the mark, the name and "by FarsiEPUB") from brand/shamsaink/logo-stack.svg (rsvg-convert -w 289 -b white: the mark 272 px, as
+// when the name was wider than it), for the
 // opening screen. A grey screen shows them in grey, as the engine draws them; a colour screen has each put
 // over the box of the image with its id in the page, in its colours.
 // Build is the reader's version (main sets it), part of the opening screens' cache key: a new build may draw them
