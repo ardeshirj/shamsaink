@@ -4,7 +4,7 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
-## Unreleased
+## 0.3.4-beta (2026-11-16)
 FarsiEPUB's logos on the golden ratio.
 - **Logos:** the opening screen, the Kindle library's cover and the sleep screens' signature use FarsiEPUB's new logos,
   every size a step of the golden ratio (1.618) from the star, so the star leads: the stack's name smaller, the
