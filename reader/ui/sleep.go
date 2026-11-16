@@ -81,7 +81,7 @@ type sleepData struct {
 }
 
 // sleepSize is the type's size for a text of n letters (title, quote): large for a few words, smaller as it grows, never
-// under 40 px (the reading text's size is 50).
+// under 40 px (the reading text's size is 50). A couplet's sizes are its own (drawSleepFit).
 func sleepSize(n int) int {
 	switch {
 	case n <= 30:
@@ -118,17 +118,20 @@ func DrawSleep(s Sleep, fonts *blitz.Fonts, w, h int) *image.Gray {
 	return img
 }
 
-// sigBy is the sleep screens' signature's by-line ("by FarsiEPUB") in px at a width of 1236: 18, the least the
-// maintainer wants on these screens (2026-11-15). 24, as the old logo drew it, pushed the signature to the screen's edge
-// under FarsiEPUB's fullest couplets (long glosses); at 18 two of its 30 still push it 29-37 px into the bottom margin.
+// sigBy is the sleep screens' signature's by-line ("by FarsiEPUB") in px at a width of 1236: 18, the least that reads
+// well on 300 ppi e-ink (the maintainer, 2026-11-15; one golden step smaller, 11, was tried on 2026-11-16 and judged
+// too small). The signature is then about 131 px high, and none of FarsiEPUB's 30 couplets reaches the bottom margin.
 const sigBy = 18.0
+
+// phi is the golden ratio: FarsiEPUB's logos (brand/make.py) and the couplet's sizes are steps down by it.
+var phi = (1 + math.Sqrt(5)) / 2
 
 // drawSleepFit is DrawSleep, and says whether a verse is still on more than two lines at the smallest size.
 func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 	u := float64(w) / 1236
 	px := func(v float64) int { return int(v*u + 0.5) }
 	d := sleepData{Sleep: s, Size: px(float64(sleepSize(utf8.RuneCountInString(s.Text)))), Top: h * 3 / 10, Side: w / 10, H: h,
-		LogoW: px(289), LogoH: px(379)}
+		LogoW: px(289), LogoH: px(381)}
 	all := strings.Join(append([]string{s.Text, s.Credit, s.Poet, s.Gloss}, s.Verses...), " ")
 	if textLang(all) != "" {
 		d.Dir = "rtl"
@@ -139,23 +142,27 @@ func drawSleepFit(s Sleep, fonts *blitz.Fonts, w, h int) (*image.Gray, bool) {
 		for _, v := range s.Verses {
 			d.Lines = append(d.Lines, twoLines(v))
 		}
+		// the golden ratio, as FarsiEPUB's logos (2026-11-16): each size a step down from the poem's 96, ÷ φ a step:
+		// between the verses 96/φ (59.3; 70 before), the poet and the gloss 96/φ² (36.7, at Parastoo's 1.15 like the
+		// poem; 40 and 42), above the poet and round the rule 96/φ² (40 and 50), above the signature 96/φ³ (22.7; 30)
 		d.Poem = px(96 * 1.15)
-		d.Gap, d.PoetSize, d.PoetGap = px(70), px(40*1.15), px(40)
-		d.RuleW, d.RuleH, d.RuleGap = px(120), max(px(2), 2), px(50)
-		d.GlossSize = px(42 * 1.15)
+		d.Gap, d.PoetSize, d.PoetGap = px(96/phi), px(96/phi/phi*1.15), px(96/phi/phi)
+		d.RuleW, d.RuleH, d.RuleGap = px(120), max(px(2), 2), px(96/phi/phi)
+		d.GlossSize = px(96 / phi / phi * 1.15)
 		d.PadTop, d.PadSide, d.PadBottom = px(105), px(140), px(90)
-		// the signature's by-line ("by FarsiEPUB") is 9 of logo-by.svg's 68 units high, the name 18, the star 64
-		d.SigGap, d.SigH = px(30), px(sigBy*68.0/9)
-		d.SigW = d.SigH * 16623 / 6800 // logo-by.svg's width and height
+		// the signature's by-line ("by FarsiEPUB") is 64/φ⁴ (9.34) of logo-by.svg's 68 units high (the star 64, the
+		// name 64/φ³), so a by-line of sigBy px makes it sigBy × 68 / 9.34 high
+		d.SigGap, d.SigH = px(96/phi/phi/phi), px(sigBy*68/(64/math.Pow(phi, 4)))
+		d.SigW = d.SigH * 15307 / 6800 // logo-by.svg's width and height (its viewBox, 153.07 × 68)
 		d.Size = d.GlossSize
 	}
 	if s.Layout != "couplet" {
 		return drawSleepOnce(d, fonts, w, h)
 	}
-	// FarsiEPUB's sizes (from its old renders: poem 96 at Parastoo's scale 1.15, gloss 42, poet 40), for a 1236 px wide
-	// page, scaled with the width. The couplet starts at its full size and shrinks only when a verse is measured on a third
-	// line, 2 px at a width of 1236 a step, down to 50% rather than show a third line (FarsiEPUB's old renders stopped
-	// at 70% and rejected the poem; they are gone, so the fit is ours). No estimate from the letters: it counted the
+	// The poem's 96 at Parastoo's scale 1.15 is FarsiEPUB's (its old renders), the rest steps down from it (above), all
+	// for a 1236 px wide page, scaled with the width. The couplet starts at its full size and shrinks only when a verse
+	// is measured on a third line, 2 px at a width of 1236 a step, down to 50% rather than show a third line
+	// (FarsiEPUB's old renders stopped at 70% and rejected the poem; they are gone, so the fit is ours). No estimate from the letters: it counted the
 	// vowel marks and shrank couplets that fit at full size (Hafez's 71 px of 112).
 	floor := int(0.5 * 96 * 1.15 * u)
 	for {
