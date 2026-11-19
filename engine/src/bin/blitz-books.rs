@@ -1,5 +1,5 @@
-//! blitz-books: memory over a reader's life, one process opening book after book (the plan's stage 2 keeps the
-//! reader running). ROUNDS times, each BOOK in turn: opened as the reader would (the EPUB file, at document DOC, its
+//! blitz-books: memory over a reader's life, one process opening book after book (the reader stays
+//! running between books). ROUNDS times, each BOOK in turn: opened as the reader would (the EPUB file, at document DOC, its
 //! first page drawn), read through (the rest laid out, every page drawn), then closed (the `Book` dropped). Prints the
 //! resident memory after each step and the peak so far (Linux), and after a close how much of it is allocated memory
 //! and how much the program's own code and files mapped, so it shows whether closing a book gives its memory

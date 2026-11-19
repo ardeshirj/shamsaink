@@ -88,7 +88,7 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   KOReader on the Kobo and 4.x's workarounds are gone (`docs/devices/kobo/README.md`, "Firmware 4.x").
 - **Licence (2026-10-30): Apache-2.0** (`LICENSE`, `NOTICE`), the brand reserved (`BRAND.md`: the names ShamsaInk
   and FarsiEPUB and their marks, in `reader/ui/templates/brand/` and the opening screen). So code from KOReader, Plato
-  (AGPL-3.0) or FBInk (GPL) is read, never copied. The plan's "Releases" has what a first release needs (the notices, the fonts' licences).
+  (AGPL-3.0) or FBInk (GPL) is read, never copied. The packages carry every licence (`licenses/THIRD-PARTY-LICENSES.md`, the fonts' licences) since 0.3.1-beta.
 - **Thorium/EDRLab:** on EDRLab's Discord (2026-10-22) they said Thorium Web's Read along gets TTS in October and
   media overlays in November, and offered to test multi-granularity overlays (sentence and word in one SMIL). That's
   FarsiEPUB's web reader; this project is the e-ink counterpart and a possible demo for their community later.
@@ -146,16 +146,18 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 - **Not built yet:** the reader app (Go with go-toolkit; the Go interface and C API, `capi.rs`, still open the whole
   book: none of 08's opening or the cache), input, sound on the device.
 
-## Next steps: `docs/PLAN.md`
-Its **Progress** list (near the top) is one checklist, kept current: stages 0 to 4 done, in the order they were done
-(the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
-rest **in order of priority**: since 2026-11-19, after the betas, **"Over Wi-Fi" first** (Wi-Fi on demand on the
-Kobo, then updates installed over it), then stage 7's OPDS and the keyboard (its digit layout first, for Get a book;
-then English and Farsi), then the Kindle's Wi-Fi; (5) daily use on the Kobo alongside; then (6) the layout
-(`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers, interface language, components, the dock); the rest of (7)
-a library; (8) read-along on the Kobo; alongside, end-to-end tests and upstream (the maintainer posts from their GitHub
-account); (9) the Kindle, in the betas since 2026-11-07 (read-along on it after). An item is checked once done
-and tried on a device and stays in its stage; new work goes where it belongs as it is decided.
+## Next steps: `docs/ROADMAP.md`
+One file (since 2026-11-19, `docs/PLAN.md` and the top-level `ROADMAP.md` merged, as rtlbook has it): where it stands,
+**Next** (the order decided), then the stages' open items **in order of priority**: since 2026-11-19, after the
+betas, **"Over Wi-Fi" first** (Wi-Fi on demand on the Kobo, then updates installed over it), then stage 7's OPDS and
+the keyboard (its digit layout first, for Get a book; then English and Farsi), then the Kindle's Wi-Fi; (5) daily use
+on the Kobo alongside; then (6) the layout (`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers, interface
+language, components, the dock); the rest of (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests and
+upstream (the maintainer posts from their GitHub account); (9) the Kindle, in the betas since 2026-11-07 (read-along on
+it after). Stages 0 to 4 are done (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the
+Kobo's own host, the reader's code). **An item leaves the file once done and tried on a device**, its design going to
+`docs/DESIGN.md` (or `DESIGN-SYSTEM.md`, `TESTING.md`, `docs/devices/`) and what a reader sees to `CHANGELOG.md`; new
+work goes where it belongs as it is decided.
 
 ## Working with the maintainer
 - Plain language; explain trade-offs and recommend one option; measure before building, build only on an explicit yes.

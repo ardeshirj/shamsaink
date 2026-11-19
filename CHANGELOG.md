@@ -176,10 +176,10 @@ in the tag; the build writes it into the binary (`shamsaink -version`, the first
 
 - **Before the beta, `v0.0.x`:** a build worth keeping or installing from a release (on the maintainer's devices).
   Every one is a pre-release on GitHub.
-- **`v0.1.0-beta`** is reserved for the public beta (`docs/PLAN.md`, "Releases"); fixes to it `v0.1.0-beta.2`, ...
+- **`v0.1.0-beta`** was the first public beta (2026-11-11); the betas since are `vX.Y.Z-beta`.
 - **After it**, a new middle number (0.1.0 → 0.2.0) for something a reader notices: a feature, a screen, a setting, a
   device; a new last number (0.1.0 → 0.1.1) for a fix that changes none of that. **No release** for docs and tidying.
-- **`v1.0.0`** is the stable release (the plan's "After the beta, toward stable").
+- **`v1.0.0`** is the stable release (`docs/ROADMAP.md`, "Toward 1.0").
 
 ### How to release
 

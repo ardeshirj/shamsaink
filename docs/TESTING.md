@@ -3,7 +3,7 @@
 How ShamsaInk is tested, so a change that breaks the reader is caught before it reaches a device: what each level
 catches, the simulated device, what makes a run trustworthy, and how a new feature gets its tests. The design system
 (`DESIGN-SYSTEM.md`) is the model: one spec says what the reader is and does, and the tests are drawn from it. Work
-left: `PLAN.md`, "Alongside", end-to-end tests.
+left: `ROADMAP.md`, "Alongside", end-to-end tests.
 
 ## 1. The levels
 
@@ -37,6 +37,8 @@ The reader built for Linux (x86 in CI, arm64 in Docker on the Mac), started with
   charging and sleep are testable.
 - **Clock:** `SHAMSAINK_CLOCK=2026-01-01T10:00` fixes the bar's clock, so no strip of the screen is left out of a
   comparison on the simulator.
+- **Dev mode:** `SHAMSAINK_DEV=1` turns it on (a `dev/` folder beside the reader does on a device), `0` keeps it off;
+  never in a release (`reader/main.go`).
 - **Sound:** a silent sink that consumes the audio at real speed, so read-along's clock and marks run as on the Kobo.
 - **Storage:** the reader's folder (books, settings, places, highlights, cache) is `DIR/onboard`, made fresh for each
   scenario.

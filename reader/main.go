@@ -1,4 +1,4 @@
-// shamsaink: the minimal reader (experiment 11; docs/PLAN.md, stage 2). Opens an EPUB at its place, turns pages by
+// shamsaink: the minimal reader (experiment 11). Opens an EPUB at its place, turns pages by
 // tap or swipe (in the book's direction: a right-to-left book turns forward on the left), keeps its place and the
 // book's cache in DIR/places and DIR/cache, and lays the rest of the book out between touches. A tap on the top tenth
 // of the screen opens the menu: the settings (DIR/settings.json) and a way back. Started by each device's launcher

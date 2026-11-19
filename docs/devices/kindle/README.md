@@ -103,6 +103,8 @@ What we do: `make kindle-reader-install` stops an open reader first.
 ## Findings log
 Newest last; each a dated entry. The bugs above are the settled ones.
 
+- 2026-11-06, measured: **the library is 0.46 s from a book, 0.7 s behind the opening screen on a start.** The opening
+  screen's minimum made 1 s (it was 2: 2.8 s to the library, now ~1.8); the same minimum on the Kobo.
 - 2026-11-07, found by the first end-to-end run here: **a tap could land at 0,0 after the reader moved between the library
   and a book.** Each opens the touch screen afresh, and the kernel sends a coordinate only when it changes: a tap at
   the same x or y as the last one before (in a Farsi book the back arrow is where the library's menu is) arrived
