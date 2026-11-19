@@ -11,8 +11,9 @@ decisions. The order of work across FarsiEPUB's projects is set by [FarsiEPUB](h
 reader this is; this file follows it.
 
 ## 1. Vision
-ShamsaInk is an EPUB reader for Linux e-ink devices that gets right-to-left books right, Farsi first, and reads along
-with narrated books, each word marked as it is spoken.
+ShamsaInk is an EPUB reader for e-ink devices that reads any book, in English or any other language, and gets
+right-to-left books right too: Farsi first, then Arabic, Urdu and Hebrew. It reads along with narrated books, each word
+marked as it is spoken.
 
 ## 2. Where it stands
 - In beta since 11 November 2026 (`v0.3.6-beta` the latest): one command over USB installs, upgrades or removes it

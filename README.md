@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  An EPUB reader for e-ink devices, Farsi first.
+  An EPUB reader for e-ink devices that reads any book, in English or any other language, and gets right-to-left books right too: Farsi first, then Arabic, Urdu and Hebrew.
 </p>
 
 <p align="center">
@@ -110,8 +110,8 @@ What is our own is the screen (refresh, touch, sleep, sound) and the reader on t
 library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts fit and what each one depends on.
 
 ## What it does
-- **Reads right-to-left text properly.** Farsi, Arabic, Urdu and Hebrew shaping and direction come out right, with no `dir` attributes needed in
-  the book. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
+- **Reads any book, and right-to-left text properly.** Any EPUB, in English or any other language; Farsi, Arabic, Urdu
+  and Hebrew shaping and direction come out right, with no `dir` attributes needed in the book. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
 - **Is quick.** As fast as KOReader's engine (crengine) on these devices, and a cache file per book so a reopened
   book comes up quickly.
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones and
