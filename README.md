@@ -4,7 +4,7 @@
 </p>
 
 <p align="center">
-  An EPUB reader for e-ink devices, for right-to-left languages, English and many other languages: Farsi first, Arabic, Urdu and Hebrew set right to left properly, and narrated books read along word by word.
+  An EPUB reader for e-ink devices, for right-to-left languages, English and many others: Farsi first, Arabic, Urdu and Hebrew set right to left properly, and narrated books read along word by word.
 </p>
 
 <p align="center">
