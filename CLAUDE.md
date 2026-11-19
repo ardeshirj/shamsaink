@@ -9,8 +9,8 @@ since 2026-10-30. Renamed 2026-10-30: the reader's binary (`shamsaink`), KOReade
 folders on the devices (`/mnt/us/shamsaink`). Go modules renamed 2026-10-31 (`shamsainkengine`, `shamsainkreader`); staying:
 Docker image names (`einkengine`, `eink-*`), and old paths in the experiments' notes.
 
-Started 2026-10-22; since 2026-10-23 a **private** GitHub remote, now `ardeshirj/shamsaink` (public or not decided
-once it does something). A side project
+Started 2026-10-22; a GitHub remote since 2026-10-23, now `ardeshirj/shamsaink`, **public** since the first beta
+(`v0.1.0-beta`, 2026-11-11). A side project
 of the maintainer of **FarsiEPUB** (`~/Github/farsiepub`, private: a website converting Farsi PDFs to EPUB and a
 library of public-domain Farsi classics) and **rtlbook** (`~/Github/rtlbook`, public: the engine that makes those
 EPUBs). It overlaps with them but is neither: don't add it to **rtlbook** or its docs, and ask before mentioning it
@@ -149,9 +149,12 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
 ## Next steps: `docs/PLAN.md`
 Its **Progress** list (near the top) is one checklist, kept current: stages 0 to 4 done, in the order they were done
 (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the Kobo's own host, the reader's code), then the
-rest **in order of priority** (2026-10-30): (5) daily use on the Kobo, next; (6) the layout (`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers,
-interface language, components, the dock); (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests
-and upstream (the maintainer posts from their GitHub account); (9) the Kindle, in the beta since 2026-11-07 (read-along on it after). An item is checked once done
+rest **in order of priority**: since 2026-11-19, after the betas, **"Over Wi-Fi" first** (Wi-Fi on demand on the
+Kobo, then updates installed over it), then stage 7's OPDS and the keyboard (its digit layout first, for Get a book;
+then English and Farsi), then the Kindle's Wi-Fi; (5) daily use on the Kobo alongside; then (6) the layout
+(`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers, interface language, components, the dock); the rest of (7)
+a library; (8) read-along on the Kobo; alongside, end-to-end tests and upstream (the maintainer posts from their GitHub
+account); (9) the Kindle, in the betas since 2026-11-07 (read-along on it after). An item is checked once done
 and tried on a device and stays in its stage; new work goes where it belongs as it is decided.
 
 ## Working with the maintainer

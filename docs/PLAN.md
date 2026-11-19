@@ -7,11 +7,17 @@ checked once done and tried on a device and stays in its stage; new work goes wh
 is built before the maintainer says yes. How things work lives in `DESIGN.md`, `DESIGN-SYSTEM.md`, `TESTING.md` and
 `devices/`; here only what is left and why.
 
-**Next: daily use on the Kobo** (stage 5), done when it is the reader picked for Farsi books.
+**Next (2026-11-19, the maintainer; after the betas 0.1.0 to 0.3.6): the reader over Wi-Fi, updates first**, so the
+beta testers get every later feature and fix without a computer. In this order: (1) Wi-Fi on demand on the Kobo, stage
+5's crash on opening after a long sleep fixed first; (2) updates installed over Wi-Fi; (3) OPDS; (4) the keyboard
+designed once, its digit layout built first for Get a book; (5) its English and Farsi layouts; (6) the Kindle's Wi-Fi.
+Steps 1, 2 and 6 are in "Over Wi-Fi", 3 to 5 in stage 7. **Daily use on the Kobo** (stage 5) carries on alongside, done
+when it is the reader picked for Farsi books.
 
 ## Progress
 
-Stages 0–4 are done, in the order they were done; from stage 5 on, in order of priority.
+Stages 0–4 are done, in the order they were done; from stage 5 on, in order of priority (since 2026-11-19 "Over Wi-Fi"
+and stage 7's OPDS and keyboard come before stage 6: "Next").
 
 **0. Proof of concept** (experiments 01–09)
 - [x] The engines compared against crengine and Chromium (01–05): Blitz the one engine, the Go engine the reference
@@ -40,8 +46,9 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [x] One `session` for the open book and one event loop (the Kobo; the Kindle: stage 9)
 - [x] `dioxus-native-dom` tried; the panels stay Go templates (experiment 14)
 
-**5. Daily use on the Kobo** (next)
-- [ ] A night asleep on battery (and the crash seen on opening after a long sleep)
+**5. Daily use on the Kobo** (alongside "Over Wi-Fi" since 2026-11-19)
+- [ ] A night asleep on battery (and the crash seen on opening after a long sleep: fixed before Wi-Fi on demand, which
+  adds to the sleep and wake path; "Over Wi-Fi")
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
 - [ ] The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
@@ -52,6 +59,34 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 - [x] Done (2026-10-31 to 11-05): sleep after idle minutes; dark mode (to judge in use); the page buttons (a hold for the
   chapter, "Reverse page buttons"); no blinks (GL16 for parts, REAGL page turns); the light kept; the watchdog (a
   frozen reader killed in 22 s, Nickel back in 25)
+
+**Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Next"; stage 7 has 3 to 5)
+- [ ] **Wi-Fi on demand, the Kobo** (step 1): no Wi-Fi switch in the reader. It brings Wi-Fi up when something needs it
+  (updates, the catalogue, Get a book), on the network Kobo saved (Nickel's `wpa_supplicant` and `dhcpcd`, as `doze()`
+  in `reader/device/kobo.go` already relies on), and takes it down about a minute after the last request, and always
+  on sleep. With no saved network, or on a device where that is too much work, a plain message: turn on Wi-Fi in the
+  device's own settings and join a network, then open ShamsaInk again. To find out in the trial: Wi-Fi off in Kobo's
+  settings before ShamsaInk started (its daemons may not run; where Kobo keeps the saved networks), TLS's memory, the
+  battery. Stage 5's crash on opening after a long sleep fixed first. Only what updates need here; the catalogue's
+  screens come with OPDS (stage 7)
+- [ ] **Updates over Wi-Fi** (step 2, early: the beta testers get every later feature and fix without a computer).
+  Settings, Check for updates: the reader reads a `latest.json` on FarsiEPUB (version, package URL, size, ed25519
+  signature; static, from Hugo or the router, no API container; maybe the packages mirrored in R2, reachable from Iran;
+  FarsiEPUB's side is the maintainer's). The `.sha256` is not enough over the network: CI signs each release with a key
+  in GitHub's secrets, the reader carries the public key. Install: downloaded to a temporary folder, verified,
+  Restarting..., swapped in place with `reader/kobo/install.sh`'s whole-file moves, the old version kept; if the new one
+  does not reach the library (the watchdog), the launcher goes back to the old one and says so. The first
+  self-updating version still goes on by USB; the Kindle updates over USB until step 6
+- [ ] Before the first such release: (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
+  PNG) and name from `.adds/shamsaink/`, its built-in ones as fallback, so brand changes ride with the reader; after
+  that the launcher changes only when Kobo's firmware forces it, and then the reader places `Kobo.tgz` and says it
+  takes effect after the Kobo restarts; (b) tried: whether a Kobo firmware update removes the launcher from
+  `/usr/local/Kobo/imageformats/`
+- [ ] An upgrade keeps the user's data: effectively done (`devices/install.md`: a package never holds settings, places,
+  highlights, the cache or books); confirmed on the device with the first update. The cache format versioned, an old
+  one dropped cleanly
+- [ ] **The Kindle's Wi-Fi** (step 6) through Amazon's `lipc`; until then the Kindle gets the turn-Wi-Fi-on message or no
+  network features
 
 **6. The layout** (`design/system.html`; `design/unbuilt-screens.md` for what is not built)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
@@ -79,28 +114,31 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
   (2026-11-06; the spec's `panel` map); the sleep screen from a YAML file in `sleep/` (2026-11-05)
 
 **7. A library**
-- [ ] A list to choose the book, text rows first (title, author, source folder, progress; the book being read on top),
-  from stage 6's list component; covers after, with a cache of them
-- [ ] A keyboard (English and Farsi) for search; not designed yet (`unbuilt-screens.md`, "The keyboard"). **A digit
-  keypad first** (for Get a book, below): ten big keys and a delete, the code drawn again from Go at each key, with
-  `Panel.At` as today; the full keyboard grows from it. Kobo's own keyboard can't be used: it is part of Nickel, which
-  is stopped while we run (only our launcher, inside Nickel, could open one, and only before the reader starts), and
-  the Kindle and PocketBook would need theirs too (2026-11-12)
-- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, after OPDS; FarsiEPUB's `docs/PLAN.md`, "Visitors' books by
-  code"): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and get 8 digits, alive
-  15 minutes, one use; in the library's menu, Get a book, the digits on the keypad, then one request
-  (`GET /api/v1/codes/{code}/book`): the EPUB saved into the library and opened. Refusals in plain words: expired
-  (press the button again), too many tries (wait an hour), shared too widely. Wi-Fi and the download into the library
-  are the OPDS work's
-- [ ] Books over the air, **OPDS** (2026-11-02; right after the beta, decided 2026-11-10): the aim is one tap from a
-  list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's address
-  ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any OPDS
-  feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header, a
-  two-part choice (On this Kobo | FarsiEPUB), not a setting (2026-11-06). Order: FarsiEPUB's feed first (OPDS 1.2,
-  its repo), then this. go-toolkit has an OPDS package: check it first. Needs the catalogue and download screens and
-  Wi-Fi from the reader (today it is Nickel's); measure the downloads' memory and TLS on the device first. Narrated
-  books, large and hard to copy by hand, gain the most
-- [x] Done: a book's key from its content (`library.Key`, 2026-11-05); the two layouts decided (text rows, covers)
+- [ ] Covers in the list, with a cache of them (`unbuilt-screens.md`)
+- [ ] Books over the air, **OPDS** (2026-11-02; step 3 of "Next" since 2026-11-19, after updates): the aim is one tap
+  from a list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's
+  address ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any
+  OPDS feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header,
+  a two-part choice (On this Kobo | FarsiEPUB), not a setting (2026-11-06); the list, and downloads into the library.
+  Order: FarsiEPUB's feed first (OPDS 1.2, FarsiEPUB's side), then this. go-toolkit has an OPDS package: check it
+  first. Needs the catalogue and download screens; Wi-Fi from "Over Wi-Fi" (step 1); measure the downloads' memory and
+  TLS on the device first. Narrated books, large and hard to copy by hand, gain the most
+- [ ] **The keyboard, designed once as one component** (step 4, 2026-11-19): its layouts, how taps reach it (Blitz's
+  events, or `Panel.At` with big keys and the field drawn again from Go at each key), the keys' sizes
+  (`unbuilt-screens.md`, "The keyboard"); then **its digit layout built first**, for Get a book (not a separate keypad
+  to throw away). Kobo's own keyboard can't be used: it is part of Nickel, which is stopped while we run (only our
+  launcher, inside Nickel, could open one, and only before the reader starts), and the Kindle and PocketBook would need
+  theirs too (2026-11-12)
+- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, with the keyboard's digit layout; FarsiEPUB's `docs/PLAN.md`,
+  "Visitors' books by code"): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and
+  get 8 digits, alive 15 minutes, one use; in the library's menu, Get a book, the digits on the keyboard, then one
+  request (`GET /api/v1/codes/{code}/book`): the EPUB saved into the library and opened. Refusals in plain words:
+  expired (press the button again), too many tries (wait an hour), shared too widely. Wi-Fi is "Over Wi-Fi"'s, the
+  download into the library the OPDS work's
+- [ ] The keyboard's **English and Farsi layouts** (step 5): the library's search, catalogues added on the device,
+  maybe joining a Wi-Fi network without the device's settings
+- [x] Done: a book's key from its content (`library.Key`, 2026-11-05); the two layouts decided (text rows, covers); the
+  list in text rows (title, author, progress; sort, a book's menu, details and removal), in the betas
 
 **8. Read-along on the Kobo** (how it plays: `DESIGN.md`, section 4, sound)
 - [ ] The hour: no drop-outs or drift over an hour, Nickel stopped
@@ -155,61 +193,45 @@ Stages 0–4 are done, in the order they were done; from stage 5 on, in order of
 ## Releases (2026-11-02)
 What must be true for each release; the stages say how. Checked once done and tried on a device.
 
-**Beta, `v0.1.0-beta`** (the Kobo Libra Colour, firmware 4.46, and the jailbroken Kindle Paperwhite 11th gen, firmware
-5.19.2, added 2026-11-07 (the maintainer: it is looking good): a user can install it, choose a book, read for a week
-and remove it)
+**The betas** (`v0.1.0-beta` 2026-11-11, the first public one, on the Kobo Libra Colour (firmware 4.46, then 6.0
+from 0.2.0-beta) and the jailbroken Kindle Paperwhite 11th gen (firmware 5.19.2); `v0.3.6-beta` the latest,
+2026-11-16; each release's notes in `CHANGELOG.md`). A user can install it, choose a book, read and remove it.
+- [x] Done for the first beta: the repository public; `LICENSE` (Apache-2.0), `NOTICE`, `BRAND.md`; the README (the
+  logo, install, status, the tour video); every library's licence in the packages (`licenses/THIRD-PARTY-LICENSES.md`,
+  0.3.1-beta); an install package for each device and `install.sh` (install, upgrade, uninstall over USB,
+  `devices/install.md`); the getting-started guide in the library on a fresh install (`reader/welcome`); releases by
+  tag (`CHANGELOG.md`, "How to release"), the version in Settings; our test books and their scenarios on CI
+  (`e2e/books/`); stage 7's text rows
 
-*The repository, public (first, untagged: the audit, then the flip)*
-- [ ] History audit: no book, book text, drawn page, key, IP or hostname anywhere in git history
+Left from the beta's list, carried on in the betas:
+- [ ] History audit (the repository went public without one on record): no book, book text, drawn page, key, IP or
+  hostname anywhere in git history
 - [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out.
   Then this plan and `ROADMAP.md` become one `docs/ROADMAP.md`, as rtlbook has (2026-11-06): the public summary on
   top, the stages below, the private parts trimmed; the top-level one goes or links to it
-- [ ] The README: the mark (SVG copies of FarsiEPUB's `mark.svg`, `mark-dark.svg` in `docs/brand/`), what it is, honest
-  status, a screenshot from our own test EPUB, a map of the repository, the link to FarsiEPUB's page, licence and brand
-- [ ] Third-party notices: the crates (`cargo-about`), the Go modules (`go-licenses`), the fonts (Parastoo, Vazirmatn, Frank Ruhl Libre, Noto Naskh Arabic, DejaVu)
-- [ ] The tour video (https://youtu.be/zfsITJZmzdE) made viewable when the repository is
-- [x] `LICENSE` (Apache-2.0), `NOTICE`, `BRAND.md` (2026-10-30)
-
-*The reader, steady enough*
 - [ ] Stage 5 done
-- [ ] Stage 7's text rows (covers, search and the keyboard are not in the beta)
 - [ ] The interface language tried on the Kobo (stage 6)
-- [ ] A failsafe: a crash or hang gets the Kobo back to Nickel on its own, checked by killing it in every state (a book
-  open, asleep, narrating); the watchdog covers the hang (stage 5)
+- [ ] A failsafe: a crash or hang gets the device back to its own interface on its own, checked by killing it in every
+  state (a book open, asleep, narrating); the watchdog covers the hang (stage 5)
 - [ ] Words chosen by accident (2026-11-07: three of four holds in a day on the left edge, while going back): the holds
   and long taps logged since (`touch: hold|long tap at X,Y, N ms down`, `held at X,Y: word ..., N px from it`) read
   after a few days of use on both devices, then decided: holds selecting only on the text, not in the margins, or not
   (`holdTime` stays 1000 ms)
-
-*Read-along, **experimental** in the beta* (decided 2026-11-05: voice timing after the beta; the Kobo's restart on
-leaving after Bluetooth gone since 2026-11-08)
-- [ ] Stage 8's open items
-- [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL (also
-  the tests' narrated scenario); FarsiEPUB's narrated books work as well
-- [ ] Headphones tried: a short list, in the release notes
-- [ ] Not in the beta, said in its notes: Opus, clips without `clipEnd`, text-to-speech, speed
-
-*The Kindle* (2026-11-07; read-along on it is not in the beta: its notes say Listen is not there yet)
-- [x] Stage 9's open items but Listen: its end-to-end tests, its install package and `install.sh`'s branch (2026-11-07)
-- [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
-  Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
-- [ ] Its notes in `devices/kindle/`: the jailbreak and KOReader's SSH it needs (not ours to give), the firmware tried,
-  its limits (no page buttons, no Listen, its own Dark Mode kept apart)
-
-*The release*
-- [ ] A getting-started guide in the library on a fresh install (`reader/welcome`, built by pandoc with each package,
-  beside the reader, and copied into `books/` on the reader's first start only, so a removed guide stays removed; 2026-11-07)
-- [ ] An install package (our folder and the launcher as `Kobo.tgz` since 0.2.0-beta; `KoboRoot.tgz` with NickelMenu's line for 4.x before), its notes in `devices/kobo/`, the readers'
-  guide on FarsiEPUB following them; uninstall in one line; all followed from a clean start. The Kindle's the same
-  (its package, `devices/install.md`)
-- [ ] Releases by tag (built 2026-11-06, `CHANGELOG.md` "How to release"): a first tag pushed, its package installed on
-  the Kobo over USB from a clean start and over SSH; the version in Settings
-- [ ] Our test EPUB's scenarios committed, `make e2e` passing
-- [ ] Release notes: the known limits (two devices and their firmware, read-along's headphones, the Kobo's
+- [ ] The Kindle: a week of daily reading on it, as on the Kobo (sleep and wake, the battery over a night, a crash back
+  to the Kindle's home screen on its own, checked by killing it with a book open and asleep); its notes in
+  `devices/kindle/` checked (the jailbreak it needs, not ours to give; the firmware tried; its limits: no page buttons,
+  no Listen, its own Dark Mode kept apart)
+- [ ] Release notes gathered: the known limits (the devices and their firmware, read-along's headphones, the Kobo's
   bugs, no Listen on the Kindle) from `devices/README.md` and each device's README, and how to report a problem
-- [ ] The tag `v0.1.0-beta`, a GitHub release with both packages and their checksums
 
-**After the beta, toward `v1.0`**
+*Read-along, **experimental** in the betas* (decided 2026-11-05: voice timing after the betas)
+- [ ] Stage 8's open items
+- [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL (the
+  tests' narrated book has a tone, not a voice); FarsiEPUB's narrated books work as well
+- [ ] Headphones tried: a short list, in the release notes
+- [ ] Not in the betas, said in their notes: Opus, clips without `clipEnd`, text-to-speech, speed
+
+**Toward `v1.0`** (after "Over Wi-Fi" and stage 7: "Next")
 - [ ] Voice timing: every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) nothing on our side can measure;
   a stepper in the Listen tab, 50 ms steps, heard at once, remembered per Bluetooth address
 - [ ] Listen controls: volume (a gain in `sinkFormat`, a slider) and speed (a pitch-preserving stretch such as WSOLA,
@@ -218,16 +240,10 @@ leaving after Bluetooth gone since 2026-11-08)
 - [ ] Listen without read-along, like an audiobook (2026-11-09): no underline or page turns, the screen asleep, the
   place kept by the voice
 - [ ] Stages 6 and 7 finished: layers, the dock, components, the word panel, footnotes, the sleep screen's choice;
-  covers, search, OPDS
+  covers (OPDS, the keyboard and search come before: "Next")
 - [ ] A dictionary on a word held (2026-11-06), Farsi and English, the word panel's meaning: StarDict dictionaries, as
   KOReader reads them, dropped in a folder by the reader (no licence of ours to find); an English one (WordNet's
   licence is permissive) and a gloss of old Farsi words perhaps offered on FarsiEPUB's page
-- [ ] Updates over the air from FarsiEPUB (2026-11-06): the reader asks FarsiEPUB (or the GitHub releases) for the
-  latest version, downloads it, checks a signature (ed25519, in Go's standard library; a checksum is not enough from
-  the network) and installs it on the next start, the old one kept to fall back to. Needs Wi-Fi from the reader (as
-  OPDS), an endpoint on FarsiEPUB (the maintainer's) and the upgrade below
-- [ ] An upgrade that keeps settings, highlights, places and the cache (the cache format versioned, an old one dropped
-  cleanly), tried by upgrading from the beta
 - [ ] Tested on more than ours: Farsi and English, a picture-heavy book and a scan; a scenario for each feature
 - [ ] A month of daily use without a crash or a wrong page, memory flat over days
 - [ ] More devices: another Kobo model or firmware, read-along on the Kindle; each a tested line in the notes
@@ -242,7 +258,7 @@ device's parts are behind `reader/device`.
   Kindle's library starts `launch.sh`, which pauses Amazon's framework while reading and resumes it after (stopped,
   powerd ignores the power button). The library and its books in one process, so starting from `/mnt/us` (FUSE, ~0.64 s
   cold) is paid once. Sleep is powerd's, answered with our sleep screen. KOReader's plugin, the host before, went on
-  2026-11-07; KOReader stays installed on the Kindle for SSH (the Kobo has its own since 2026-11-11).
+  2026-11-07, KOReader itself on 2026-11-12 (the Kindle's development SSH is our own Dropbear since).
 - **The Kobo: our own host** (`devices/kobo/setup.md`): our row in Kobo's More tab (firmware 5 and 6, since 2026-11-11;
   NickelMenu on 4.x before) starts `launch.sh`, which stops Nickel while reading and starts it after (pausing it
   brought its watchdog's reboots); 4.x's crash on a second start after Bluetooth was avoided from 2026-11-08, and 6.0
@@ -271,6 +287,9 @@ Daily use decides what the reader needs before more is designed, so what blocks 
 layout comes before the library because every new screen is built from its layers and components. Read-along waits
 for steady daily reading, its sound running through the same session. The Kindle joined the beta
 (2026-11-07) once its launcher made it the same reader as the Kobo's; read-along on it waits for its own player.
+With the betas out (2026-11-19), updates over Wi-Fi come before the rest: every later feature and fix then reaches the
+testers without a computer. Wi-Fi on demand is the least they need; OPDS and the keyboard follow on the same Wi-Fi, the
+keyboard designed once so Get a book's digits are not thrown away.
 
 ## Not decided
 - **All Rust, without go-toolkit** (raised 2026-10-26). For: the Go reader starts in ~480 ms cold, 110 warm, against
