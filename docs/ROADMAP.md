@@ -1,14 +1,20 @@
 # ShamsaInk roadmap
 
-ShamsaInk is an EPUB reader for Linux e-ink devices that gets right-to-left books right, Farsi first, and reads along
-with narrated books, each word marked as it is spoken. This file holds what isn't built yet, in order of priority, and
-why; it is a plan, not a promise, and nothing here has a date. What is built and why is in [DESIGN.md](DESIGN.md),
-[DESIGN-SYSTEM.md](DESIGN-SYSTEM.md), [TESTING.md](TESTING.md) and [devices/](devices/); what each release brought, in
-[CHANGELOG.md](../CHANGELOG.md). An item leaves this file once it is done and tried on a device, its design going to
-those files, so the two never overlap. New work goes where it belongs as it is decided; nothing is built before the
-maintainer says yes.
+This file holds what isn't built yet, in order of priority, and why; it is a plan, not a promise, and nothing here has
+a date. What is built and why is in [DESIGN.md](DESIGN.md), [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md),
+[TESTING.md](TESTING.md) and [devices/](devices/); what each release brought, in [CHANGELOG.md](../CHANGELOG.md). An
+item leaves this file once it is done and tried on a device, its design going to those files, so the two never
+overlap. New work goes where it belongs as it is decided; nothing is built before the maintainer says yes.
 
-## Where it stands
+The sections follow the pattern FarsiEPUB's projects share: Vision · Where it stands · Now · Next · Later · Open
+decisions. The order of work across FarsiEPUB's projects is set by [FarsiEPUB](https://farsiepub.org), whose e-ink
+reader this is; this file follows it.
+
+## 1. Vision
+ShamsaInk is an EPUB reader for Linux e-ink devices that gets right-to-left books right, Farsi first, and reads along
+with narrated books, each word marked as it is spoken.
+
+## 2. Where it stands
 - In beta since 11 November 2026 (`v0.3.6-beta` the latest): one command over USB installs, upgrades or removes it
   ([the README](../README.md), [devices/install.md](devices/install.md)).
 - Works on the **Kobo Libra Colour** (firmware 6.0; 5 or newer), the primary device, as its own reader that takes over
@@ -21,7 +27,7 @@ maintainer says yes.
 - Reads aloud over Bluetooth headphones on the Kobo, marking each word of a narrated book as it is spoken
   (experimental).
 
-## Next
+## 3. Now
 **Decided 2026-11-19 (the maintainer): the reader over Wi-Fi, updates first**, so the beta testers get every later
 feature and fix without a computer. In this order:
 1. Wi-Fi on demand on the Kobo, the crash on opening after a long sleep (stage 5) fixed first
@@ -34,10 +40,20 @@ feature and fix without a computer. In this order:
 Steps 1, 2 and 6 are in "Over Wi-Fi" below. **Daily use on the Kobo** (stage 5) carries on alongside, done when
 ShamsaInk is the reader picked for Farsi books. Then stage 6, the rest of 7, 8, and the Kindle's (9).
 
-## The stages
+### Why this order
+Daily use decides what the reader needs before more is designed, so what blocks a week of reading comes first. With
+the betas out (2026-11-19), updates over Wi-Fi come before the rest: every later feature and fix then reaches the
+testers without a computer. Wi-Fi on demand is the least they need; OPDS and the keyboard follow on the same Wi-Fi, the
+keyboard designed once so Get a book's digits are not thrown away. The layout comes before the rest of the library
+because every new screen is built from its layers and components. Read-along waits for steady daily reading, its
+sound running through the same session. The Kindle joined the beta (2026-11-07) once its launcher made it the same
+reader as the Kobo's; read-along on it waits for its own player.
+
+## 4. Next
+### The stages
 Stages 0–4 are done (the proof of concept, experiments 01–09; refresh, 10; a minimal reader inside KOReader, 11–12; the
 Kobo's own host, 13; the reader's code). From stage 5 on, in order of priority, "Over Wi-Fi" and stage 7's OPDS and
-keyboard first (above).
+keyboard first ("Now").
 
 **5. Daily use on the Kobo** (alongside "Over Wi-Fi")
 - [ ] A night asleep on battery, and the crash seen on opening after a long sleep: fixed before Wi-Fi on demand, which
@@ -56,7 +72,7 @@ keyboard first (above).
   after a few days of use on both devices, then decided: holds selecting only on the text, not in the margins, or not
   (`holdTime` stays 1000 ms)
 
-**Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Next"; stage 7 has 3 to 5)
+**Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
 - [ ] **Wi-Fi on demand, the Kobo** (step 1): no Wi-Fi switch in the reader. It brings Wi-Fi up when something needs it
   (updates, the catalogue, Get a book), on the network Kobo saved (Nickel's `wpa_supplicant` and `dhcpcd`, as `doze()`
   in `reader/device/kobo.go` already relies on), and takes it down about a minute after the last request, and always
@@ -102,7 +118,7 @@ keyboard first (above).
 - [ ] The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
 
 **7. A library** (its text rows are in the betas)
-- [ ] Books over the air, **OPDS** (2026-11-02; step 3 of "Next" since 2026-11-19, after updates): the aim is one tap
+- [ ] Books over the air, **OPDS** (2026-11-02; step 3 of "Now" since 2026-11-19, after updates): the aim is one tap
   from a list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's
   address ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any
   OPDS feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header,
@@ -117,8 +133,8 @@ keyboard first (above).
   to throw away). Kobo's own keyboard can't be used: it is part of Nickel, which is stopped while we run (only our
   launcher, inside Nickel, could open one, and only before the reader starts), and the Kindle and PocketBook would need
   theirs too (2026-11-12)
-- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, with the keyboard's digit layout; FarsiEPUB's `docs/PLAN.md`,
-  "Visitors' books by code"): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and
+- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, with the keyboard's digit layout; FarsiEPUB's
+  side): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and
   get 8 digits, alive 15 minutes, one use; in the library's menu, Get a book, the digits on the keyboard, then one
   request (`GET /api/v1/codes/{code}/book`): the EPUB saved into the library and opened. Refusals in plain words:
   expired (press the button again), too many tries (wait an hour), shared too widely. Wi-Fi is "Over Wi-Fi"'s, the
@@ -163,14 +179,14 @@ keyboard first (above).
     Sorani, Uyghur, Yiddish, Dhivehi and Syriac open backwards; better, the tag's script (`-Arab`, `-Hebr`). Ours:
     `readsRTL` in `reader/lang.go` (experiment 15)
 
-## Left from the first beta's list
+### Left from the first beta's list
 - [ ] History audit (the repository went public without one on record): no book, book text, drawn page, key, IP or
   hostname anywhere in git history
 - [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
 - [ ] Release notes gathered: the known limits (the devices and their firmware, read-along's headphones, the Kobo's
   bugs, no Listen on the Kindle) from `devices/README.md` and each device's README, and how to report a problem
 
-## Toward 1.0
+### Toward 1.0
 - [ ] The stages above finished (5 to 9, "Over Wi-Fi", Alongside), the dictionary below
 - [ ] Voice timing: every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) nothing on our side can measure;
   a stepper in the Listen tab, 50 ms steps, heard at once, remembered per Bluetooth address
@@ -188,7 +204,8 @@ keyboard first (above).
 - [ ] A user guide on FarsiEPUB's ShamsaInk page
 - [ ] The tag `v1.0`
 
-## Ideas, not yet planned
+## 5. Later
+### Ideas, not yet planned
 - Smarter flashes: flashing the screen only when the ink changed enough for ghosting to show, not every few pages.
 - You were here: on reopening or after a reflow, the word you were at underlined for a moment; your place remembered by
   word, so it survives a change of text size.
@@ -197,7 +214,7 @@ keyboard first (above).
 - The light by a swipe along one edge; warmth that follows the time of day.
 - Kashida: Persian lines justified by stretching letters instead of spaces (whether Blitz can, to check first).
 
-## Upstream to Blitz (2026-10-29)
+### Upstream to Blitz (2026-10-29)
 Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259), and neither is e-ink only.
 - **Line culling** (`engine/patches/blitz-cull-lines.patch`, ~20 lines): a small PR. Blitz skips whole elements off the
   screen; ours skips a paragraph's lines off it. Mention #1012 (culling cuts descenders; ours keeps a line's height of
@@ -208,16 +225,7 @@ Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259
   `draw_marker`): a small PR; still so on Blitz's main. `mixed`'s list page shows it.
 - Paginated layout is in Blitz's backlog (#119): if it comes, ours could move into Blitz.
 
-## Why this order
-Daily use decides what the reader needs before more is designed, so what blocks a week of reading comes first. With
-the betas out (2026-11-19), updates over Wi-Fi come before the rest: every later feature and fix then reaches the
-testers without a computer. Wi-Fi on demand is the least they need; OPDS and the keyboard follow on the same Wi-Fi, the
-keyboard designed once so Get a book's digits are not thrown away. The layout comes before the rest of the library
-because every new screen is built from its layers and components. Read-along waits for steady daily reading, its
-sound running through the same session. The Kindle joined the beta (2026-11-07) once its launcher made it the same
-reader as the Kobo's; read-along on it waits for its own player.
-
-## Not decided
+## 6. Open decisions
 - **All Rust, without go-toolkit** (raised 2026-10-26). For: the Go reader starts in ~480 ms cold, 110 warm, against
   60–70 and 20 for Rust alone; 21 MB against ~13; one toolchain instead of Rust, Go, cgo and zig; symphonia decodes MP3
   70× real time on the Kindle, go-mp3 5× (12). Against: go-toolkit is the existing tool (contents, page lists,

@@ -147,8 +147,10 @@ narration, each word highlighted). FarsiEPUB's library books come from rtlbook, 
   book: none of 08's opening or the cache), input, sound on the device.
 
 ## Next steps: `docs/ROADMAP.md`
-One file (since 2026-11-19, `docs/PLAN.md` and the top-level `ROADMAP.md` merged, as rtlbook has it): where it stands,
-**Next** (the order decided), then the stages' open items **in order of priority**: since 2026-11-19, after the
+One file (since 2026-11-19, `docs/PLAN.md` and the top-level `ROADMAP.md` merged), in **the sections FarsiEPUB's
+projects share** (rtlbook and FarsiEPUB the same, 2026-11-19): Vision · Where it stands · Now · Next · Later · Open
+decisions. **The order of work across FarsiEPUB's projects is set by FarsiEPUB; this file follows it.** Now holds the
+order decided and why; Next the stages' open items **in order of priority**: since 2026-11-19, after the
 betas, **"Over Wi-Fi" first** (Wi-Fi on demand on the Kobo, then updates installed over it), then stage 7's OPDS and
 the keyboard (its digit layout first, for Get a book; then English and Farsi), then the Kindle's Wi-Fi; (5) daily use
 on the Kobo alongside; then (6) the layout (`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers, interface
