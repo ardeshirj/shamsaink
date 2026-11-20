@@ -73,7 +73,7 @@ for; it is in git, at `e4ba57e` and before, as `docs/design/sketches/`.
 | The page buttons' map | `buttons.yaml`, a map named on each screen (the reader does not read the buttons yet: design only) |
 | Screens that are built (library, reading and the dock, Contents, Text, Light, the bar, menus) | the spec and their renders, on the page |
 | `components.html` (states as drawn) | the components and the renders of each state, on the page |
-| Screens not built (the glance, word panel, footnotes, listening and its player, Sound, landscape, the keyboard, covers) | written down in `docs/design/unbuilt-screens.md`. A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design-update` says what is out of step |
+| Screens not built (the glance, word panel, footnotes, listening and its player, Sound, landscape, the keyboard, covers) | kept in `docs/design/TODO.md`, local and untracked (2026-11-20). A screen is specified when it is decided on and built: its spec first (purpose, how it is entered and left, controls), then its template, then `make design-update` says what is out of step |
 
 Actions are `goto` (another screen, a new level), `replace` (a panel swapped in place for another of the same layer: Settings in the menu's place, Details in a book's menu) and `act` (does something and stays). The app starts at the screen marked `entry` (the library); every way out of a panel lands on the one marked `page`.
 

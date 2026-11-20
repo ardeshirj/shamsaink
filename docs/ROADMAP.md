@@ -100,7 +100,7 @@ keyboard first ("Now").
 - [ ] **The Kindle's Wi-Fi** (step 6) through Amazon's `lipc`; until then the Kindle gets the turn-Wi-Fi-on message or no
   network features
 
-**6. The layout** (`design/system.html`; `design/unbuilt-screens.md` for what is not built)
+**6. The layout** (`design/system.html`)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
 - [ ] Interface language, "Follow book language" (built 2026-10-31, `DESIGN.md` "The reader's panels"): tried on the
   Kobo, the Farsi wording reviewed by the maintainer
@@ -129,7 +129,7 @@ keyboard first ("Now").
   gain the most
 - [ ] **The keyboard, designed once as one component** (step 4, 2026-11-19): its layouts, how taps reach it (Blitz's
   events, or `Panel.At` with big keys and the field drawn again from Go at each key), the keys' sizes
-  (`unbuilt-screens.md`, "The keyboard"); then **its digit layout built first**, for Get a book (not a separate keypad
+  (`docs/design/TODO.md`, "The keyboard"); then **its digit layout built first**, for Get a book (not a separate keypad
   to throw away). Kobo's own keyboard can't be used: it is part of Nickel, which is stopped while we run (only our
   launcher, inside Nickel, could open one, and only before the reader starts), and the Kindle and PocketBook would need
   theirs too (2026-11-12)
@@ -141,7 +141,7 @@ keyboard first ("Now").
   download into the library the OPDS work's
 - [ ] The keyboard's **English and Farsi layouts** (step 5): the library's search, catalogues added on the device,
   maybe joining a Wi-Fi network without the device's settings
-- [ ] Covers in the list, with a cache of them (`unbuilt-screens.md`)
+- [ ] Covers in the list, with a cache of them
 
 **8. Read-along on the Kobo** (experimental in the betas; how it plays: `DESIGN.md`, section 4, sound)
 - [ ] The hour: no drop-outs or drift over an hour, Nickel stopped
