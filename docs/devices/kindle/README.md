@@ -79,8 +79,13 @@ What we do: `make kindle-reader-install` stops an open reader first.
 - What: the Bluetooth service (`acsbtfd`) disconnects headphones `btfd.btpowersave.timeout` seconds (1200) after
   they connect unless Amazon's player manager is playing; our sound through `mplay` does not count, and the player
   manager plays only Audible and its speech voice.
-- What we do: nothing yet (with read-along: ask the user once to turn the timeout off, or reconnect when dropped). Changing
-  the setting reaches the service only when it restarts.
+- What we do: nothing yet. Turning the timeout off reaches the service only when it restarts, and a reader should not
+  quietly change a Kindle setting. With Amazon's software running, the only workaround: reconnect on purpose at a
+  paragraph break shortly before 20 minutes (the timer counts from the connection), narration and the word clock paused
+  a few seconds, and the same reconnect after an unexpected drop; a reconnect's time and whether every pair of
+  headphones comes back still to measure. Removed altogether by our own Bluetooth stack with Amazon's stopped (ShamsaOS
+  experiments 08–10: 40 minutes of narration, no drop); the route and its size in `docs/ROADMAP.md`, stage 9
+  (2026-11-19).
 - Found: experiment 12 (`experiments/12-sound/NOTES.md`).
 
 **No sound yet: no headphones on the bar, Listen a notice** (2026-11-08).

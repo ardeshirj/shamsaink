@@ -157,8 +157,24 @@ keyboard first ("Now").
   Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
 - [ ] Its notes in `devices/kindle/` checked: the jailbreak it needs (not ours to give), the firmware tried, its limits
   (no page buttons, no Listen, its own Dark Mode kept apart)
-- [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along through a
-  player of the Kindle's own (Amazon's `mplay`, experiment 12; its headphones dropped after 20 minutes)
+- [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along. Its sound
+  route (2026-11-19, with FarsiEPUB):
+  - With Amazon's software running (today's beta), through a player of the Kindle's own (Amazon's `mplay`, experiment
+    12): its Bluetooth service (`acsbtfd`) drops headphones 20 minutes after they connect, and the only workaround is
+    ours to do: reconnect on purpose at a paragraph break shortly before 20 minutes (the timer counts from the
+    connection), narration and the word clock paused a few seconds, and the same after an unexpected drop; measure a
+    reconnect's time and whether every pair comes back (`devices/kindle/README.md`).
+  - The route that removes the drop: ShamsaOS's own Bluetooth stack (Bumble over `/dev/stpbt`, Amazon's `btmanagerd`
+    and `acsbtfd` stopped; ShamsaOS experiments 08–10: 40 minutes of a narrated book, no drop). Ours is how narration
+    reaches that player: S16LE 48 kHz stereo, as `reader/sink.go` writes it, SBC through `libsbc` since Bumble has no
+    encoder (ShamsaOS 11's PLAN.md). The Kobo unchanged: firmware 6's own BlueZ and PulseAudio.
+  - Its size: Bumble's image is 26 MB compressed (Alpine, Python 3.12, cryptography, Bumble), ~3× the Kindle package's
+    ~12.7 MB; Python's memory not measured. In order: (a) an optional "Kindle sound" add-on, offered the first time
+    Listen is tapped, downloaded and signature-checked over Wi-Fi like updates (so after "Over Wi-Fi" and the Kindle's
+    Wi-Fi), the package staying ~12.7 MB; (b) the image trimmed to what Bumble imports, measured; (c) only if read-along
+    on the Kindle proves popular, the part needed rewritten in Go inside the reader (A2DP over AVDTP and L2CAP; no Go
+    library for classic Bluetooth audio known). Licences to the packages' third-party list (`reader/scripts/licenses.sh`) when shipped: Bumble
+    Apache-2.0, Python PSF, `libsbc` LGPL-2.1 as a separate library
 - [ ] `install.ps1` for Windows, once it can be tried there
 
 **Alongside**
