@@ -123,6 +123,26 @@ if [ "$1" = nickel ]; then
   exit 0
 fi
 
+# One launch at a time: a tap on the row in More can arrive twice (2026-11-14, two "tapped" in the same second): two
+# launches 0.2 s apart started two readers, the second failed on the grabbed touch screen ("device or resource busy")
+# and started Nickel again under the first, two Nickels, and the Kobo rebooted. mkdir is atomic; a lock whose launch is
+# gone (killed; /tmp goes with a reboot) is taken over. Its pid read again after a moment when not written yet (the
+# other launch between its mkdir and its echo), and taken as a launch only if that process is still a launch.sh (a pid
+# reused by something else must not keep ShamsaInk from starting until a reboot).
+LOCK=/tmp/shamsaink-launch.lock
+if ! mkdir "$LOCK" 2>/dev/null; then
+  O=$(cat "$LOCK"/pid 2>/dev/null)
+  [ -n "$O" ] || { usleep 200000; O=$(cat "$LOCK"/pid 2>/dev/null); }
+  if [ -n "$O" ] && tr '\0' ' ' < /proc/"$O"/cmdline 2>/dev/null | grep -q 'launch\.sh'; then
+    log "already started (launch $O): this start ignored"
+    exit 0
+  fi
+  rm -rf "$LOCK"
+  mkdir "$LOCK" || exit 1
+fi
+echo $$ > "$LOCK"/pid
+unlock() { rm -rf "$LOCK"; }
+trap unlock EXIT
 # this launch, the newest (nickel_back)
 ME="$$-$(cut -d' ' -f1 /proc/uptime)"
 echo "$ME" > /tmp/shamsaink-launch
@@ -177,6 +197,7 @@ L3=$!
 leave() {
   kill "$L1" "$L2" "$L3" "$L4" 2>/dev/null
   start_nickel
+  unlock
 }
 trap leave EXIT
 trap 'exit 1' HUP INT TERM
