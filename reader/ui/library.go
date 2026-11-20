@@ -283,19 +283,19 @@ func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w in
 	return m
 }
 
-// Developer is what the Developer panel shows (dev mode only): the development SSH's state, its script's line ("SSH on:
-// ADDRESS, port 2222" or "SSH off"; empty when the device has no dev/ssh.sh); and the last Wi-Fi check's line ("" before
-// one: "connecting..." while it runs, then its address or why not).
+// Developer is what the Developer panel shows (dev mode only): Wi-Fi's switch (WiFiOn: on or connecting) and its line
+// ("off", "connecting...", "on: ADDRESS"); the development SSH's state, its script's line ("SSH on: ADDRESS, port 2222"
+// or "SSH off"; empty when the device has no dev/ssh.sh).
 type Developer struct {
-	SSH, WiFi string
+	WiFiOn    bool
+	WiFi, SSH string
 }
 
 // SSHOn tells whether the development SSH is on, by its state's line.
 func (d Developer) SSHOn() bool { return strings.HasPrefix(d.SSH, "SSH on") }
 
 // DrawDeveloper draws the Developer panel (templates/library-developer.html) directly under the bar (under px from
-// the top), in place of the menu it was opened from: "SSH (development)" (dev-ssh) with its address while on, and
-// "Wi-Fi" with Check (dev-wifi), the last check's line under it.
+// the top), in place of the menu it was opened from: "Wi-Fi" (dev-wifi) with its state, then "SSH" (dev-ssh) with its address while on.
 func DrawDeveloper(d Developer, under int, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-developer.html", d)
 	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row

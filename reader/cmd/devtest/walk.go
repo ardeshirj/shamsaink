@@ -58,7 +58,7 @@ func (r route) String() string {
 // the device has no player of ours, which the simulated Kobo has).
 var (
 	walkable  = map[string]bool{"tap": true, "tap-top-tenth": true, "hold-row": true, "hold-word": true}
-	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true,
+	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true, "needs-network": true,
 		"leave": true}
 )
 

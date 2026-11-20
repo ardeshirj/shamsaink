@@ -3,11 +3,11 @@ layer: panel
 templates: [library-developer.html]
 buttons: ring
 status: built
-purpose: "Dev mode only (dev/ beside the reader, never in a release; 2026-11-11): rows as in Settings, SSH (development) with a switch, and under it, small and grey, the server's state (its address while on); Wi-Fi with Check, the last check's line under it (2026-11-20). English in every interface language: it is for us."
+purpose: "Dev mode only (dev/ beside the reader, never in a release; 2026-11-11): rows as in Settings: Wi-Fi with a switch, its state under it (2026-11-20: above SSH); then SSH with a switch, and under it, small and grey, the server's state (its address while on). English in every interface language: it is for us."
 enter: [{gesture: tap, control: developer, from: menu}]
 # reached only through the menu's Developer, which requires development: no requires of its own
 controls:
+  - {id: dev-wifi, component: toggle, action: act, does: "Wi-Fi on or off for development: on, it connects with no question (the switch is the yes) and stays on until switched off; off, Wi-Fi is turned off as the device's own switch does; its state under it (off, connecting..., on with its address)", walk: "never: switches the device's Wi-Fi"}
   - {id: dev-ssh, component: toggle, action: act, does: "the development SSH server on or off (the device's dev/ssh.sh; its address shown under the rows while on)"}
-  - {id: dev-wifi, component: button, action: replace, to: wifi-ask, does: "checks Wi-Fi: off, asks first (wifi-ask); on, connects at once, no question; then the address got under it, and Wi-Fi turned off again if it was off"}
 dismiss: tap-outside
-words: [ssh-dev, wifi-dev, check-dev]
+words: [wifi-dev, ssh-dev]

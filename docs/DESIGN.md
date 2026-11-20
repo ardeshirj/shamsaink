@@ -232,7 +232,7 @@ letters. Night mode driven by us is not tried yet.
 
 ### Wi-Fi on demand (2026-11-20, the Kobo)
 **Nothing turns Wi-Fi on without the person's yes, and the reader has no Wi-Fi switch** (the maintainer, 2026-11-20).
-Wi-Fi is left as the device has it. An action that needs the network (the Developer panel's check now; updates, the
+Wi-Fi is left as the device has it. An action that needs the network (updates first, step 2; the
 library's downloads later) asks `Device.WiFiState()`: on (Kobo's switch on: its `wpa_supplicant` running, `wlan0`
 there), it just runs, no question; off, the question first, the dialog component in the place of the panel that
 asked (`wifi-ask`: "Wi-Fi is off. Turn it on to ...?", Turn on with Wi-Fi's icon, Cancel), and Cancel changes nothing.
@@ -248,7 +248,10 @@ already on, never turning it on. The sleep keeps its own rule: Wi-Fi off for the
 up (`doze`, sharing the chip's helpers). Measured on the Kobo (firmware 6, 2026-11-20): Kobo's "off" stops both
 programs and the chip (the driver's module stays loaded); off to an address 2.7–2.8 s; Kobo's interface turns Wi-Fi
 on at its start only when its `wpa_supplicant` still runs (`devices/kobo/README.md`). The Kindle answers `WiFiNone`
-("not available on this device yet") until its own Wi-Fi (Now, step 6).
+("not available on this device yet") until its own Wi-Fi (Now, step 6). **For development** (dev mode only, never in a
+release): the Developer panel's Wi-Fi switch, above SSH, its state under it (off, connecting..., on with the address);
+on connects with no question (the switch is the yes) and Wi-Fi stays on, off turns it off as Kobo's own switch does
+(`TurnOffWiFi`).
 
 ### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
 

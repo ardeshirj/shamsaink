@@ -1,12 +1,12 @@
 {{/* The Developer panel under the bar (library.go, DrawDeveloper), opened from the library menu's Developer, in dev mode only
-(dev/ beside the reader, never in a release; 2026-11-11): rows as in Settings (div.set). SSH (development) switches the
-device's own dev/ssh.sh; while on, its address under it, small and grey. Wi-Fi's Check connects (asking first when
-Wi-Fi is off), shows the address got under it and turns off again what it turned on (2026-11-20). English in every interface language: it
-is for us. */ -}}
+(dev/ beside the reader, never in a release; 2026-11-11): rows as in Settings (div.set). Wi-Fi first: a
+switch, its state under it (off, connecting..., on with its address); on, it connects with no question (the switch is the
+yes) and Wi-Fi stays on until switched off, which turns Wi-Fi off (2026-11-20). Then SSH, the device's
+own dev/ssh.sh; while on, its address under it. English in every interface language: it is for us. */ -}}
 {{template "head" ""}}<style>
 p.ver { margin: 0.6em 0 0; font-size: 0.75em; color: #444; }
 </style></head><body>
+<div class="set">{{template "switch" pick "dev-wifi" (t "wifi-dev") .WiFiOn}}</div>
+<p class="ver"><span dir="ltr">{{.WiFi}}</span></p>
 <div class="set">{{template "switch" pick "dev-ssh" (t "ssh-dev") .SSHOn}}</div>
-<p class="ver"><span dir="ltr">{{if .SSH}}{{.SSH}}{{else}}no dev/ssh.sh{{end}}</span></p>
-<div class="set"><span class="name">{{t "wifi-dev"}}</span><span class="sw">{{template "button" (btn "dev-wifi" (t "check-dev"))}}</span></div>
-<p class="ver" id="panel-end"><span dir="ltr">{{if .WiFi}}{{.WiFi}}{{else}}not checked{{end}}</span></p></body></html>
+<p class="ver" id="panel-end"><span dir="ltr">{{if .SSH}}{{.SSH}}{{else}}no dev/ssh.sh{{end}}</span></p></body></html>

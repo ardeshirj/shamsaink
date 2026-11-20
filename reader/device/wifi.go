@@ -66,11 +66,44 @@ func (d *Device) WiFiState() WiFi {
 	return WiFiOff
 }
 
-// WiFiAddress is the address the last connection got ("" before one).
+// WiFiAddress is Wi-Fi's address now ("" without one; the simulated device's, the last connection's).
 func (d *Device) WiFiAddress() string {
+	if Sim() {
+		d.wifi.Lock()
+		defer d.wifi.Unlock()
+		if d.WiFiState() != WiFiOn {
+			return ""
+		}
+		return d.wifi.addr
+	}
+	return address()
+}
+
+// TurnOffWiFi turns Wi-Fi off whoever turned it on, as Kobo's own switch does: dhcpcd and wpa_supplicant stopped,
+// wlan0 down, the chip off. For the Developer panel's switch only (the person's own off); an action that turned Wi-Fi
+// on for itself uses ReleaseWiFi.
+func (d *Device) TurnOffWiFi() {
 	d.wifi.Lock()
 	defer d.wifi.Unlock()
-	return d.wifi.addr
+	switch {
+	case Sim():
+		os.WriteFile(hw("/sim/wifi"), []byte("off\n"), 0o644)
+	case d.Kind == Kobo:
+		exec.Command("dhcpcd", "-x").Run()
+		exec.Command("wpa_cli", "-i", "wlan0", "terminate").Run()
+		wifiChipOff()
+	default:
+		return
+	}
+	d.wifi.chip, d.wifi.wpa, d.wifi.dhcpd = false, false, false
+	fmt.Println("wi-fi: turned off")
+}
+
+// WiFiBusy says whether a connection is under way.
+func (d *Device) WiFiBusy() bool {
+	d.wifi.Lock()
+	defer d.wifi.Unlock()
+	return d.wifi.busy
 }
 
 // ConnectWiFi brings Wi-Fi up in the background if it is off (asked first: the caller's dialog), or waits for an address
