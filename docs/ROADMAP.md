@@ -30,7 +30,8 @@ Arabic, Urdu and Hebrew set right to left properly, and narrated books read alon
 ## 3. Now
 **Decided 2026-11-19 (the maintainer): the reader over Wi-Fi, updates first**, so the beta testers get every later
 feature and fix without a computer. In this order:
-1. Wi-Fi on demand on the Kobo, the crash on opening after a long sleep (stage 5) fixed first
+1. Wi-Fi on demand on the Kobo, the crash on opening after a long sleep (stage 5) fixed first: done 2026-11-20
+   (`DESIGN.md`, "Wi-Fi on demand"; the crash was a double tap, `devices/kobo/README.md`)
 2. Updates installed over Wi-Fi
 3. OPDS (stage 7)
 4. The keyboard designed once, its digit layout built first for Get a book (stage 7)
@@ -56,8 +57,7 @@ Kobo's own host, 13; the reader's code). From stage 5 on, in order of priority, 
 keyboard first ("Now").
 
 **5. Daily use on the Kobo** (alongside "Over Wi-Fi")
-- [ ] A night asleep on battery, and the crash seen on opening after a long sleep: fixed before Wi-Fi on demand, which
-  adds to the sleep and wake path
+- [ ] A night asleep on battery
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
 - [ ] The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
@@ -73,14 +73,6 @@ keyboard first ("Now").
   (`holdTime` stays 1000 ms)
 
 **Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
-- [ ] **Wi-Fi on demand, the Kobo** (step 1): no Wi-Fi switch in the reader. It brings Wi-Fi up when something needs it
-  (updates, the catalogue, Get a book), on the network Kobo saved (Nickel's `wpa_supplicant` and `dhcpcd`, as `doze()`
-  in `reader/device/kobo.go` already relies on), and takes it down about a minute after the last request, and always
-  on sleep. With no saved network, or on a device where that is too much work, a plain message: turn on Wi-Fi in the
-  device's own settings and join a network, then open ShamsaInk again. To find out in the trial: Wi-Fi off in Kobo's
-  settings before ShamsaInk started (its daemons may not run; where Kobo keeps the saved networks), TLS's memory, the
-  battery. Stage 5's crash on opening after a long sleep fixed first. Only what updates need here; the catalogue's
-  screens come with OPDS (stage 7)
 - [ ] **Updates over Wi-Fi** (step 2, early: the beta testers get every later feature and fix without a computer).
   Settings, Check for updates: the reader reads a `latest.json` on FarsiEPUB (version, package URL, size, ed25519
   signature; static, from Hugo or the router, no API container; maybe the packages mirrored in R2, reachable from Iran;
@@ -88,7 +80,10 @@ keyboard first ("Now").
   in GitHub's secrets, the reader carries the public key. Install: downloaded to a temporary folder, verified,
   Restarting..., swapped in place with `reader/kobo/install.sh`'s whole-file moves, the old version kept; if the new one
   does not reach the library (the watchdog), the launcher goes back to the old one and says so. The first
-  self-updating version still goes on by USB; the Kindle updates over USB until step 6
+  self-updating version still goes on by USB; the Kindle updates over USB until step 6. Wi-Fi as decided for step 1
+  (2026-11-20, `DESIGN.md`, "Wi-Fi on demand"): Check for updates asks before turning Wi-Fi on when it is off
+  ("Wi-Fi is off. Turn it on to check for updates?") and turns it off again after; **never in the background**: an
+  automatic check, if one comes, runs only when Wi-Fi is already on, never turning it on itself
 - [ ] Before the first such release: (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
   PNG) and name from `.adds/shamsaink/`, its built-in ones as fallback, so brand changes ride with the reader; after
   that the launcher changes only when Kobo's firmware forces it, and then the reader places `Kobo.tgz` and says it

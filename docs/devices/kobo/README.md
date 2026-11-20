@@ -85,8 +85,13 @@ runtime (by Nickel, we think), is not kept across boots. Not proved. What we do:
 silent for 20 to 30 s and brings Nickel back. Failing that, **hold the power button about 5 s**: the Kobo restarts,
 nothing of ours lost but the last page turn. For the release notes.
 
-**Wi-Fi while the reader is open:** nobody manages it. On 6.0 it stays up (`ssh kobo` answers) until the reader
-sleeps. A Settings switch can come with OPDS (stage 7).
+**Wi-Fi while the reader is open** (6.0, 2026-11-20): left as Kobo had it; turned on only when an action needs it and
+the person says yes, and off again after (`docs/DESIGN.md`, "Wi-Fi on demand"). What Kobo does around it, from the
+trial (findings log, 2026-11-20): with `ForceWifiOn=false` (Kobo's default) its interface switches Wi-Fi off about 2
+minutes after joining, by itself, a time no setting in `Kobo eReader.conf` holds; its "off" stops `wpa_supplicant`
+and `dhcpcd` and switches the chip off (`wlan0` gone; the driver's module, `wlan_drv_gen4m`, stays loaded). At each
+start it drops Wi-Fi for ~3 s and rejoins, and it turns Wi-Fi on only if its `wpa_supplicant` still runs: so the
+reader stops whatever it started, or Kobo comes back with Wi-Fi on that it had off.
 
 **Sleep: Wi-Fi and Bluetooth through the chip's own switches** (6.0, 2026-11-12). The reader suspends at once (Nickel,
 in 3½ minutes of its sleep screen, never suspended: it only switched Bluetooth off). Before the suspend: Bluetooth off
@@ -150,3 +155,14 @@ Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at 
 - **2026-11-12, sleep on 6.0** (above, "Sleep"): found from the reader's log, a logger writing every new process,
   `wlan0`'s state and the system log to the storage (it survives the restart a dead Wi-Fi needs), and one capture of
   Nickel's own sleep for reference.
+- **2026-11-14, a double tap on the row in More rebooted the Kobo** (the crash first taken for one after a long sleep).
+  Two "tapped" in the same second started two launches 0.2 s apart: two readers, the second failing on the grabbed
+  touch screen ("device or resource busy") and starting Nickel under the first; two Nickels, and the Kobo rebooted.
+  `launch.sh` takes a lock since (2026-11-20, `/tmp/shamsaink-launch.lock`, taken over only when its launch is gone):
+  two launches 0.2 s apart, one reader, "this start ignored". Long sleeps since (30, 17, 11 h) woke cleanly.
+- **2026-11-20, Wi-Fi on demand, the trial and the test** (above, "Wi-Fi while the reader is open"): a logger over
+  `wpa_supplicant`, `dhcpcd`, `wlan0` and the address every 2 s, with `ForceWifiOn` false for the trial and put back
+  after. ShamsaInk opened with Kobo's Wi-Fi fully off; the chip on, `wlan0` up, `wpa_supplicant` and `dhcpcd` started
+  as Kobo starts them: the saved network joined, an address in 2.8 s. Then the reader's own (b13f83a): Wi-Fi on, no
+  question; off, Cancel changed nothing; Turn on, an address in 2.7 s, then everything turned off again, and Kobo's
+  interface left Wi-Fi off, as it had it.

@@ -4,6 +4,11 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## Unreleased
+- **Opening ShamsaInk twice by accident** (Kobo): a double tap on ShamsaInk's row in More could start it twice, and the
+  Kobo restarted. The second tap is ignored now.
+- **Dialogs:** the main button has its icon before its word, Remove's a trash can.
+
 ## 0.3.6-beta (2026-11-16)
 Sleep screens without a lone last word.
 - **Sleep screens:** an explanation, a title or a quote never ends on a line of one word: the word before it comes

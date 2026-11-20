@@ -201,6 +201,7 @@ flowchart LR
 | the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by the row in More (Kobo: `reader/kobo/launcher`, a Qt 6 plugin Nickel loads, installed by Kobo from `.kobo/Kobo.tgz`; it parks itself until a start is confirmed and removes itself once ShamsaInk is deleted) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06; the Kobo's row since 2026-11-11, NickelMenu before) |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so the device's own interface does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
+| Wi-Fi | on demand, asked first: none of our own switch; an action that needs the network runs when Wi-Fi is on and asks before turning it on when it is off; what the reader turned on is turned off again (`device/wifi.go`; "Wi-Fi on demand" below). The Kindle: not yet | ours, over Kobo's own `wpa_supplicant` and `dhcpcd` (Kobo) | the Kobo (2026-11-20) |
 | sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
 | power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
 | sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` (firmware 6: BlueZ connects the headphones, PulseAudio in system mode carries the sound; 4.x: Kobo's `mtkbtmwrpcaudiosink`) kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
@@ -215,6 +216,7 @@ the Kindle, four on the Kobo). In `reader/device/` (about 1,770 lines of Go):
 |---|---|---|
 | `device.go`, `screen.go`, `touch.go`, `power.go`, `sleep.go`, `heartbeat.go`, most of `light.go` | ~1,020 | shared: events, the screen and its refreshes (each controller's ioctl), touches, power events, the sleep screen, the watchdog's heartbeat, the light panel's values |
 | `kobo.go` | ~340 | the Kobo: the power and page buttons, sleeping after idle minutes, suspend and Wi-Fi around it, not suspending on a charger |
+| `wifi.go` | ~220 | Wi-Fi on demand: its state, brought up and released (the Kobo; the Kindle answers "not yet") |
 | `kindle.go` | ~110 | the Kindle: `powerd`'s events answered, its idle timer kept going, the screen's own inversion |
 | `sim.go` | ~130 | the simulated device (`docs/TESTING.md`) |
 
@@ -227,6 +229,26 @@ loaders; `reader/kindle/launch.sh` ~90), the Kobo's `install.sh`, the Kindle's s
 **Waveforms** (10, by eye): page turns REAGL without a flash (they look alike in day mode; a flash shows most in night
 mode), a flash now and then (how often: in use); the read-along mark A2, an underline that never touches the
 letters. Night mode driven by us is not tried yet.
+
+### Wi-Fi on demand (2026-11-20, the Kobo)
+**Nothing turns Wi-Fi on without the person's yes, and the reader has no Wi-Fi switch** (the maintainer, 2026-11-20).
+Wi-Fi is left as the device has it. An action that needs the network (the Developer panel's check now; updates, the
+library's downloads later) asks `Device.WiFiState()`: on (Kobo's switch on: its `wpa_supplicant` running, `wlan0`
+there), it just runs, no question; off, the question first, the dialog component in the place of the panel that
+asked (`wifi-ask`: "Wi-Fi is off. Turn it on to ...?", Turn on with Wi-Fi's icon, Cancel), and Cancel changes nothing.
+On Turn on, `ConnectWiFi` brings it up in the background as Kobo's interface does: the chip's Wi-Fi on through its
+driver (`/dev/wmtWifi`), `wlan0` up, `wpa_supplicant` with the networks Kobo saved (`.kobo/wpa_supplicant.conf`) and
+`dhcpcd`, each started only if not running; its end is an `Event{WiFi}`, so the event loop and its heartbeat go on
+(the watchdog kills a reader silent for 20 s, and an address may take that long). `ReleaseWiFi` undoes only what it
+started (dhcpcd and wpa_supplicant stopped, `wlan0` down, the chip off), so Kobo's interface finds Wi-Fi as it left
+it. No network saved: a notice to join one once in the device's Wi-Fi settings, nothing changed; no address in 20 s:
+"Couldn't connect, try again later", what was turned on off again; both with a crossed-out Wi-Fi before the sentence.
+**Never in the background:** a check that runs by itself (an automatic look for updates, later) runs only when Wi-Fi is
+already on, never turning it on. The sleep keeps its own rule: Wi-Fi off for the suspend and back after only if it was
+up (`doze`, sharing the chip's helpers). Measured on the Kobo (firmware 6, 2026-11-20): Kobo's "off" stops both
+programs and the chip (the driver's module stays loaded); off to an address 2.7–2.8 s; Kobo's interface turns Wi-Fi
+on at its start only when its `wpa_supplicant` still runs (`devices/kobo/README.md`). The Kindle answers `WiFiNone`
+("not available on this device yet") until its own Wi-Fi (Now, step 6).
 
 ### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
 
