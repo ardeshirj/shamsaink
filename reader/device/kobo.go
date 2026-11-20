@@ -400,7 +400,7 @@ func (d *Device) doze(pic image.Image) {
 	setLight(lit)
 	chargeLight()
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
-	d.Usage("wake", fmt.Sprintf(" asleep=%d", int(time.Now().Round(0).Sub(slept).Seconds())))
+	d.Usage("wake", fmt.Sprintf(" asleep=%d wifi=%s", int(time.Now().Round(0).Sub(slept).Seconds()), map[bool]string{true: "on", false: "off"}[wifi]))
 }
 
 func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }

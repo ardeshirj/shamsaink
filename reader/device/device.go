@@ -217,8 +217,13 @@ func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) {
 }
 
 // Usage writes one line to the log for the usage table (`make kobo-usage`): the event (start, stop, sleep, wake), the time
-// in UTC, the battery's charge (per cent), whether it is on a charger, and extra (" asleep=SECONDS" on a wake).
+// in UTC, the battery's charge (per cent), whether it is on a charger, and extra (" asleep=SECONDS" on a wake). Where
+// the reader knows Wi-Fi (the Kobo), wifi=on|off, as it is (2026-11-20: to see what Wi-Fi left on while reading costs);
+// extra may give it instead (a wake: as Wi-Fi is coming back, it is still off when the line is written).
 func (d *Device) Usage(event, extra string) {
+	if st := d.WiFiState(); st != WiFiNone && !strings.Contains(extra, "wifi=") {
+		extra += map[bool]string{true: " wifi=on", false: " wifi=off"}[st == WiFiOn]
+	}
 	fmt.Printf("usage: %s at=%s battery=%d plugged=%t%s%s\n", event, time.Now().UTC().Format(time.RFC3339), d.Battery(), plugged(), batteryDetail(), extra)
 }
 
