@@ -98,7 +98,9 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event, t
 	slot := int32(0)
 	x, y := turn(tx, ty)
 	var down, started bool
+	var id int32 // the finger's tracking id: the Kobo repeats it in every report while the finger is down
 	var x0, y0 int
+	var lx, ly int       // where the finger was at the last complete report: the lift's own report may jump (the Kobo's goes back to where the finger came down)
 	var t0 time.Duration // the kernel's time of the finger's first report: how long it was down, read on lifting
 	var mu sync.Mutex    // the timer's goroutine sends the hold
 	var holding bool
@@ -121,8 +123,20 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event, t
 			ty = int(val)
 			x, y = turn(tx, ty)
 		case typ == evAbs && code == absMTTrackingID:
+			// a new finger only when its id is new: the Kobo Libra Colour repeats the id in each report (about 70 a
+			// second; captured 2026-11-20), and taking each as a new touch moved the touch's start along with the
+			// finger (a swipe measured from its last report looked like a tap), and started a hold's timer each time
+			// without stopping the last (a swipe longer than holdTime became a hold, choosing a word by accident)
 			if val >= 0 {
-				down, started = true, false
+				if !down || val != id {
+					mu.Lock()
+					if timer != nil {
+						timer.Stop()
+					}
+					holding = false
+					mu.Unlock()
+					down, started, id = true, false, val
+				}
 			} else if down {
 				mu.Lock()
 				down = false
@@ -138,15 +152,18 @@ func readTouches(f *os.File, turn func(x, y int) (int, int), out chan<- Event, t
 					fmt.Printf("touch: %s at %d,%d, %d ms down\n", map[bool]string{true: "hold", false: "long tap"}[h], x0, y0, ms)
 				}
 				if h {
-					out <- Event{Gesture: Gesture{X: x, Y: y, Hold: Dropped}}
+					out <- Event{Gesture: Gesture{X: lx, Y: ly, Hold: Dropped}}
 					continue
 				}
-				g := Gesture{X: x0, Y: y0, DX: x - x0, DY: y - y0}
+				g := Gesture{X: x0, Y: y0, DX: lx - x0, DY: ly - y0}
 				g.Swipe = g.DX*g.DX+g.DY*g.DY > swipeMin*swipeMin
 				out <- Event{Gesture: g}
 			}
 		case typ == evSyn && code == synReport:
 			mu.Lock()
+			if down {
+				lx, ly = x, y
+			}
 			switch {
 			case down && !started:
 				started, x0, y0, t0 = true, x, y, at
