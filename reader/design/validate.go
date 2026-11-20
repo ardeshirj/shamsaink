@@ -19,7 +19,7 @@ var (
 	reRoot    = regexp.MustCompile(`(?s):root\s*\{(.*?)\}`)
 	reVar     = regexp.MustCompile(`(--[\w-]+)\s*:\s*([^;/]+?)\s*;`)
 	reSlide   = regexp.MustCompile(`\bslide\s+\([^)]*\)\s+"([^"]+)"\s+"[^"]*"\s+\.\w+\s+"([^"]+)"\s+"([^"]+)"`)
-	reIcon    = regexp.MustCompile(`\bicon\s+"([^"]+)"|\bibtn\s+"[^"]+"\s+"([^"]+)"`)
+	reIcon    = regexp.MustCompile(`\bicon\s+"([^"]+)"|\b(?:ibtn|btni)\s+"[^"]+"\s+"([^"]+)"`)
 	reWord    = regexp.MustCompile(`\bt\s+"([^"]+)"`)
 	reRoom    = regexp.MustCompile(`const room = (\d+)`)
 )

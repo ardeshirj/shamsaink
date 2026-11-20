@@ -37,7 +37,8 @@ type Device struct {
 	phones     atomic.Pointer[Phones]     // the headphones as last seen (headphones.go)
 	phonesBusy atomic.Bool                // a look at the headphones under way
 	connecting atomic.Bool                // ConnectHeadphones at work
-	events     atomic.Pointer[chan Event] // Inputs' channel, for the headphones' events
+	events     atomic.Pointer[chan Event] // Inputs' channel, for the headphones' and Wi-Fi's events
+	wifi       wifiOurs                   // what ConnectWiFi turned on (wifi.go)
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
@@ -105,6 +106,8 @@ type Event struct {
 	Sound  bool // the headphones changed (connected, gone, Bluetooth on or off: Phones), or a connection asked for ended
 	// Connect, with Sound: the connection asked for (ConnectHeadphones) ended, 1 connected, -1 not
 	Connect int
+	// WiFi: a connection asked for (ConnectWiFi) ended: WiFiConnected, WiFiNoNetwork or WiFiNoAddress
+	WiFi int
 }
 
 // Inputs grabs the touch screen (TOUCH, /dev/input/event1 by default) and listens for sleep, sending both as events

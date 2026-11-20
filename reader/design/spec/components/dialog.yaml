@@ -1,8 +1,8 @@
 name: dialog
-purpose: "A question or a notice in a box: its sentence, a title in its own direction when there is one (a book's), a small note, then its buttons in a row: Close for a notice, the action then the way back for a question. One box wherever the reader asks or tells something (2026-11-06)."
+purpose: "A question or a notice in a box: its sentence, a title in its own direction when there is one (a book's), a small note, then its buttons in a row: Close for a notice, the action then the way back for a question. The action has its icon before its label (Remove's trash can, Turn on's Wi-Fi; the way back, Cancel, Keep or Close, words only), so every dialog's main button looks alike (2026-11-20). A notice that says something failed has an icon before its sentence (a crossed-out Wi-Fi). One box wherever the reader asks or tells something (2026-11-06)."
 role: dialog
 template: dialog     # {{define}} in ui/templates/components.html
-helper: dlg          # dlg "box-id" text title dir note (btn ...) (btn ...)
+helper: dlg          # dlg "box-id" text title dir note (btni "id" "icon" ...) (btn ...); dicon "icon" (dlg ...) for a notice's icon
 states: [off]
 rtl: the page's direction; the title its own
 refresh: {waveform: GL16, region: own-box}

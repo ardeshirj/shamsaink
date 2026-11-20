@@ -39,3 +39,5 @@ battery-full e0c0
 battery-charging e0ba
 battery-warning e0c8
 flask e79e
+wifi-high e4ea
+wifi-slash e4f2

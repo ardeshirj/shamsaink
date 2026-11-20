@@ -5,12 +5,14 @@ row with a minus and a plus): the id it is given is how the reader finds its box
 direction ("rtl", "ltr" or "" for the interface's language's: none in English, right to left in Farsi); the page's lang is the interface's. */}}
 {{define "head"}}<html{{if .}} dir="{{.}}"{{else if rtlui}} dir="rtl"{{end}}{{if uilang}} lang="{{uilang}}"{{end}}><head><style>{{template "ui.css"}}</style>{{end}}
 
-{{define "button"}}<span class="b" id="{{.ID}}">{{.Label}}</span>{{end}}
+{{/* A button: its label, after its icon when it has one (a dialog's main action: Remove's trash can, Turn on's Wi-Fi). */}}
+{{define "button"}}<span class="b" id="{{.ID}}">{{if .Icon}}{{icon .Icon}}{{end}}{{.Label}}</span>{{end}}
 
 {{/* A dialog (from dlg): a box with a question or a notice, a title under it in its own direction when there is one (a
 book's), a small note when there is one, then its buttons in a row: one (Close) for a notice, two (the action, then the
-way back) for a question. The same box wherever the reader asks or tells something. */}}
-{{define "dialog"}}<div class="dialog" id="{{.ID}}"><p>{{.Text}}</p>{{if .Title}}<p class="t" dir="{{.Dir}}"{{.Lang}}>{{.Title}}</p>{{end}}{{if .Note}}<p class="n">{{.Note}}</p>{{end}}<div class="row">{{range .Buttons}}{{template "button" .}}{{end}}</div></div>{{end}}
+way back) for a question, the action with its icon. A notice that says something failed has an icon before its
+sentence (dicon). The same box wherever the reader asks or tells something. */}}
+{{define "dialog"}}<div class="dialog" id="{{.ID}}">{{if .Icon}}<p class="ic">{{icon .Icon}}<span>{{.Text}}</span></p>{{else}}<p>{{.Text}}</p>{{end}}{{if .Title}}<p class="t" dir="{{.Dir}}"{{.Lang}}>{{.Title}}</p>{{end}}{{if .Note}}<p class="n">{{.Note}}</p>{{end}}<div class="row">{{range .Buttons}}{{template "button" .}}{{end}}</div></div>{{end}}
 
 {{/* A button that shows whether it is the one chosen, with a tick. */}}
 {{define "choice"}}<span class="b" id="{{.ID}}">{{if .On}}✓ {{end}}{{.Label}}</span>{{end}}

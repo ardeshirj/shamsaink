@@ -1,0 +1,7 @@
+{
+ "placement": "relative",
+ "boxes": {
+  "wifi-cancel": [311, 97, 488, 169],
+  "wifi-on": [35, 97, 292, 169]
+ }
+}

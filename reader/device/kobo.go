@@ -220,22 +220,25 @@ func plugged() bool {
 }
 
 // online says whether wlan0 is up with an IPv4 address.
-func online() bool {
+func online() bool { return address() != "" }
+
+// address is wlan0's IPv4 address while it is up, else "".
+func address() string {
 	state, _ := os.ReadFile(hw(wifiState))
 	if strings.TrimSpace(string(state)) != "up" {
-		return false
+		return ""
 	}
 	i, err := net.InterfaceByName("wlan0")
 	if err != nil {
-		return false
+		return ""
 	}
 	addrs, _ := i.Addrs()
 	for _, a := range addrs {
 		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil {
-			return true
+			return n.IP.String()
 		}
 	}
-	return false
+	return ""
 }
 
 // testWake, for the end-to-end tests only (WAKE_AFTER=SECONDS, set by a scenario's env): a suspend ends by the clock's
@@ -281,7 +284,7 @@ func (d *Device) doze(pic image.Image) {
 	// wpa_supplicant) failed after the wake ("wake up failed"), the chip was reset and Nickel found no network after.
 	wifi := online()
 	if wifi && !Sim() {
-		exec.Command("sh", "-c", "ifconfig wlan0 down; echo 0 > /dev/wmtWifi").Run()
+		wifiChipOff()
 	}
 	defer func() {
 		if !wifi || Sim() {
@@ -289,11 +292,12 @@ func (d *Device) doze(pic image.Image) {
 		}
 		go func() {
 			s := time.Now()
-			out, err := exec.Command("sh", "-c", "echo 1 > /dev/wmtWifi; i=0; "+
-				"while [ ! -e /sys/class/net/wlan0 ] && [ $i -lt 40 ]; do usleep 250000; i=$((i + 1)); done; "+
-				"ifconfig wlan0 up").CombinedOutput()
+			err := wifiChipOn()
+			if err == nil {
+				err = exec.Command("ifconfig", "wlan0", "up").Run()
+			}
 			if err != nil {
-				fmt.Printf("  Wi-Fi not back: %v: %s\n", err, strings.TrimSpace(string(out)))
+				fmt.Printf("  Wi-Fi not back: %v\n", err)
 				return
 			}
 			for time.Since(s) < 30*time.Second {

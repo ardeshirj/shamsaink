@@ -1,5 +1,5 @@
 {{/* Asking before a book is removed (DrawBookRemove), from its menu, in the middle of the screen: the dialog component, what is
-removed (the book's title in its own direction), then Remove and Keep. Removing deletes the book's file and all the
+removed (the book's title in its own direction), then Remove (its trash can) and Keep. Removing deletes the book's file and all the
 reader keeps for it; nothing else asks again. */ -}}
 {{template "head" "ltr"}}</head><body>
-{{template "dialog" (dlg "book-remove-box" (t "remove-book-q") .Title .Dir (t "remove-book-note") (btn "book-remove-yes" (t "remove")) (btn "book-remove-no" (t "keep")))}}</body></html>
+{{template "dialog" (dlg "book-remove-box" (t "remove-book-q") .Title .Dir (t "remove-book-note") (btni "book-remove-yes" "trash" (t "remove")) (btn "book-remove-no" (t "keep")))}}</body></html>

@@ -83,12 +83,14 @@ var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(f
 // dialog is the dialog component's (components.html): a question or a notice, an optional title and note, its buttons.
 type dialog struct {
 	ID, Text, Title, Dir, Note string
+	Icon                       string // drawn before the sentence, for a notice that says something failed (dicon)
 	Lang                       template.HTMLAttr
 	Buttons                    []button
 }
 
 type button struct {
 	ID, Label string
+	Icon      string // drawn before the label: on a dialog's main action only (btni)
 	On        bool
 	Count     string // shown after the label, smaller (segments)
 	Dir       string // the label's own direction, "" for the page's (segments)
@@ -143,8 +145,19 @@ func uiFuncs(ids *[]string) template.FuncMap {
 				Flip: pointing(name)}
 		},
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
+		"btni": func(id, icon, label string) button { // a dialog's main action: its icon, then its label
+			glyph(icon) // an unknown name found here, by the tests
+			return button{ID: add(id), Label: label, Icon: icon}
+		},
 		"dlg": func(id, text, title, dir, note string, buttons ...button) dialog { // the box's id is not a button's
 			return dialog{ID: id, Text: text, Title: title, Dir: dir, Lang: textLang(title), Note: note, Buttons: buttons}
+		},
+		"dicon": func(icon string, d dialog) dialog { // a notice's icon, before its sentence ("": none)
+			if icon != "" {
+				glyph(icon)
+			}
+			d.Icon = icon
+			return d
 		},
 		"pick": func(id, label string, on bool) button {
 			return button{ID: add(id), Label: label, On: on}

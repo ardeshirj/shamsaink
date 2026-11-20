@@ -184,6 +184,20 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 		}
 		left[n] = why
 	}
+	// a screen entered only from a dev-mode screen (the Developer panel's Wi-Fi question) is dev mode's too
+	for grew := true; grew; {
+		grew = false
+		for n, why := range left {
+			if why != "no walkable way in" {
+				continue
+			}
+			for _, en := range spec.Screens[n].Enter {
+				if strings.HasPrefix(left[en.From], "dev mode only") {
+					left[n], grew = "dev mode only (entered from "+en.From+")", true
+				}
+			}
+		}
+	}
 	return routes, left
 }
 

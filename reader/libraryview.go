@@ -125,6 +125,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	var panel *ui.Panel
 	langOpen := false  // the panel is the language panel, not the menu
 	devOpen := false   // the panel is the Developer panel (dev mode; devssh.go)
+	devDialog := ""    // over it, a dialog of its Wi-Fi check: "wifi-ask" (Turn on?) or "notice"
+	wifiLine := ""     // its Wi-Fi check's line ("" before one)
 	lightOpen := false // the panel is the Light panel (light.go)
 	soundOpen := false // the panel is the Sound panel (sound.go)
 	phones := ""       // its headphones' Bluetooth address ("" none connected)
@@ -145,7 +147,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		return rd.drawLight(v.TopBarHeight())
 	}
 	open := func(menu bool) {
-		langOpen, devOpen = false, false
+		langOpen, devOpen, devDialog = false, false, ""
 		lv.MenuOn, lv.SortOn = menu, !menu
 		setHead()
 		if menu {
@@ -197,10 +199,37 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// the Developer panel in the menu's place, or again after its switch (its address line comes or goes)
 	openDev := func() {
 		old := panel.Rect()
-		panel = ui.DrawDeveloper(developerView(rd.dir), v.TopBarHeight(), rd.fonts, scr.W)
+		dv := developerView(rd.dir)
+		dv.WiFi = wifiLine
+		panel = ui.DrawDeveloper(dv, v.TopBarHeight(), rd.fonts, scr.W)
 		v.Draw(rd.over)
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, old.Union(panel.Rect()).Max.Y), device.WfREAGL, false)
+	}
+	// a dialog of the Developer panel's Wi-Fi check in the middle of the screen, in the panel's place (kind: devDialog)
+	showDialog := func(p *ui.Panel, kind string) {
+		old := panel.Rect()
+		p.SetY((scr.H - p.Rect().Dy()) / 2)
+		fmt.Printf("library: dialog %s at %d,%d\n", kind, p.Rect().Min.X, p.Rect().Min.Y)
+		panel, devDialog = p, kind
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, scr.H).Intersect(old.Union(panel.Rect())), device.WfREAGL, false)
+	}
+	// the Wi-Fi check (Developer panel, dev-wifi): it runs at once when Wi-Fi is on, asks first when it is off, and
+	// is not there yet on a device without Wi-Fi of ours (the Kindle)
+	wifiCheck := func() {
+		switch rd.dev.WiFiState() {
+		case device.WiFiNone:
+			showDialog(ui.DrawNotice("wifi-not-here", "", rd.fonts, scr.W), "notice")
+		case device.WiFiOff:
+			fmt.Println("wi-fi check: Wi-Fi is off: asking")
+			showDialog(ui.DrawWiFiAsk("wifi-off-check", rd.fonts, scr.W), "wifi-ask")
+		default:
+			wifiLine = "connecting..."
+			rd.dev.ConnectWiFi()
+			openDev()
+		}
 	}
 	// the header again, and only it refreshed, if its battery, clock or headphones changed (a charger, a new minute, a
 	// wake, headphones connected or gone)
@@ -229,6 +258,29 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			e = ev
 		case <-beats:
 			rd.dev.Beat()
+			continue
+		}
+		if e.WiFi != 0 { // the Wi-Fi check's connection ended: what it turned on turned off again, its line shown
+			fail := ""
+			switch e.WiFi {
+			case device.WiFiConnected:
+				wifiLine = "connected: " + rd.dev.WiFiAddress()
+				if rd.dev.ReleaseWiFi() {
+					wifiLine += " (turned off again)"
+				}
+			case device.WiFiNoNetwork:
+				wifiLine, fail = "no network saved", "wifi-no-network"
+			default:
+				wifiLine, fail = "no address in 20 s", "wifi-no-address"
+			}
+			fmt.Println("wi-fi check:", wifiLine)
+			if devOpen && devDialog == "" {
+				if fail != "" {
+					showDialog(ui.DrawNotice(fail, "wifi-slash", rd.fonts, scr.W), "notice")
+				} else {
+					openDev()
+				}
+			}
 			continue
 		}
 		if e.Power || e.Clock || e.Sound { // a charger plugged or unplugged, a new minute, the headphones changed
@@ -325,6 +377,19 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					}
 				}
 				changed()
+			case devDialog == "wifi-ask" && id == "wifi-on":
+				fmt.Println("wi-fi check: turn on")
+				devDialog, wifiLine = "", "turning Wi-Fi on..."
+				rd.dev.ConnectWiFi()
+				openDev()
+			case devDialog != "": // Cancel, Close or a tap elsewhere: back to the Developer panel, nothing changed
+				if devDialog == "wifi-ask" {
+					fmt.Println("wi-fi check: cancelled")
+				}
+				devDialog = ""
+				openDev()
+			case id == "dev-wifi" && devOpen:
+				wifiCheck()
 			case id == "leave":
 				fmt.Println("library: left")
 				return "", nil
@@ -410,6 +475,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				held, bookPanel = -1, ""
 				panel, langOpen, devOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false, false
 				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
+				devDialog = ""
 				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)

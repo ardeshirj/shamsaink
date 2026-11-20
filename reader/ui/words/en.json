@@ -98,5 +98,13 @@
   "highlight": "Highlight",
   "listen-here": "Listen from here",
   "listen-not-here": "Listening is not possible on this device.",
-  "close": "Close"
+  "close": "Close",
+  "wifi-dev": "Wi-Fi",
+  "check-dev": "Check",
+  "wifi-off-check": "Wi-Fi is off. Turn it on to check the connection?",
+  "turn-on": "Turn on",
+  "cancel": "Cancel",
+  "wifi-no-network": "No Wi-Fi network is saved. Join one once in the device's Wi-Fi settings.",
+  "wifi-no-address": "Couldn't connect to Wi-Fi. Try again later.",
+  "wifi-not-here": "Wi-Fi is not available on this device yet."
 }

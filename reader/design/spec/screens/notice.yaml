@@ -3,10 +3,10 @@ layer: overlay
 templates: [notice.html]
 buttons: panel
 status: built
-purpose: "A notice in the middle of the screen, over the dock, the dialog component with a sentence and Close; any tap closes it. Now the one Listen shows where the device has no player of ours yet (the Kindle): Listening is not possible on this device."
-enter: [{gesture: no-player, from: dock}]
+purpose: "A notice in the middle of the screen, the dialog component with a sentence and Close; any tap closes it. Listen's where the device has no player of ours yet (the Kindle): Listening is not possible on this device. Wi-Fi's: not on this device yet (the Kindle), no network saved (join one once in the device's Wi-Fi settings), no address in 20 s (try again later); the last two, failures, with a crossed-out Wi-Fi before the sentence (2026-11-20)."
+enter: [{gesture: no-player, from: dock}, {gesture: wifi-failed, from: library-developer}]
 internal: [notice-box]
 controls:
   - {id: notice-close, component: button, action: act, does: closes the notice}
 dismiss: tap-outside
-words: [listen-not-here, close]
+words: [listen-not-here, wifi-not-here, wifi-no-network, wifi-no-address, close]

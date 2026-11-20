@@ -50,7 +50,7 @@ type LibraryView struct {
 func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
 	topBar.Title = word("library")
 	topBar.Dev = DevMode
-	topBar.MenuOn = v.MenuOn // no start icon: search comes back with a keyboard (docs/design/unbuilt-screens.md)
+	topBar.MenuOn = v.MenuOn // no start icon: search comes back with a keyboard
 	var fs []button
 	for i, name := range library.Filters {
 		fs = append(fs, button{ID: "filter-" + name, Label: word(filterWords[i]), Count: num(v.Counts[i]), On: i == v.Filter})
@@ -284,16 +284,18 @@ func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w in
 }
 
 // Developer is what the Developer panel shows (dev mode only): the development SSH's state, its script's line ("SSH on:
-// ADDRESS, port 2222" or "SSH off"; empty when the device has no dev/ssh.sh).
+// ADDRESS, port 2222" or "SSH off"; empty when the device has no dev/ssh.sh); and the last Wi-Fi check's line ("" before
+// one: "connecting..." while it runs, then its address or why not).
 type Developer struct {
-	SSH string
+	SSH, WiFi string
 }
 
 // SSHOn tells whether the development SSH is on, by its state's line.
 func (d Developer) SSHOn() bool { return strings.HasPrefix(d.SSH, "SSH on") }
 
 // DrawDeveloper draws the Developer panel (templates/library-developer.html) directly under the bar (under px from
-// the top), in place of the menu it was opened from: "SSH (development)" (dev-ssh) with its address while on.
+// the top), in place of the menu it was opened from: "SSH (development)" (dev-ssh) with its address while on, and
+// "Wi-Fi" with Check (dev-wifi), the last check's line under it.
 func DrawDeveloper(d Developer, under int, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-developer.html", d)
 	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
@@ -376,11 +378,19 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 	return drawPanelIn(html, ids, "book-details-box", fonts, w, 1200)
 }
 
-// DrawNotice draws a notice (templates/notice.html: the dialog component), the words of key and Close (its button
-// notice-close), w px wide at most; the caller places it (SetY).
-func DrawNotice(key string, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("notice.html", struct{ Key string }{key})
+// DrawNotice draws a notice (templates/notice.html: the dialog component), the words of key, after the icon named
+// icon when not "" (a crossed-out Wi-Fi when it failed), and Close (its button notice-close), w px wide at most; the
+// caller places it (SetY).
+func DrawNotice(key, icon string, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("notice.html", struct{ Key, Icon string }{key, icon})
 	return drawPanelIn(html, ids, "notice-box", fonts, w, 900)
+}
+
+// DrawWiFiAsk draws the question before Wi-Fi is turned on (templates/wifi-ask.html): the words of key (what it is for:
+// "Wi-Fi is off. Turn it on to ...?"), then its buttons wifi-on and wifi-cancel; the caller places it (SetY).
+func DrawWiFiAsk(key string, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("wifi-ask.html", struct{ Key string }{key})
+	return drawPanelIn(html, ids, "wifi-ask-box", fonts, w, 900)
 }
 
 // DrawBookRemove draws the question before a book is removed (templates/library-book-remove.html): its buttons

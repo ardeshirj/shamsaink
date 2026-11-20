@@ -274,7 +274,7 @@ var designRenders = map[string][]renderCase{
 			return pr(DrawLibrarySettings(LibrarySettings{SleepMin: 60, HasButtons: renderHas("buttons"), ReverseButtons: true, Version: "v0.0.1"}, barHeight(f, w), f, w))
 		}}},
 	"library-developer": {{"on", en, func(f *blitz.Fonts, w, h int) rendered { // an address from the documentation range
-		return pr(DrawDeveloper(Developer{SSH: "SSH on: 192.0.2.10, port 2222"}, barHeight(f, w), f, w))
+		return pr(DrawDeveloper(Developer{SSH: "SSH on: 192.0.2.10, port 2222", WiFi: "connected: 192.0.2.10 (turned off again)"}, barHeight(f, w), f, w))
 	}},
 		{"off", en, func(f *blitz.Fonts, w, h int) rendered {
 			return pr(DrawDeveloper(Developer{SSH: "SSH off"}, barHeight(f, w), f, w))
@@ -290,7 +290,11 @@ var designRenders = map[string][]renderCase{
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
 	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, f, w)) }}},
-	"notice":              {{"listen", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", f, w)) }}},
+	"notice": {{"listen", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", "", f, w)) }},
+		{"wifi-no-network", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-network", "wifi-slash", f, w)) }},
+		{"wifi-no-address", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-address", "wifi-slash", f, w)) }},
+		{"wifi-not-here", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-not-here", "", f, w)) }}},
+	"wifi-ask": {{"check", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawWiFiAsk("wifi-off-check", f, w)) }}},
 	"highlight-menu": {{"new", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
 		{"made", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
 }
