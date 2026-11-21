@@ -24,7 +24,7 @@ type settings struct {
 	LineHeight float32           `json:"line_height"`         // as CSS's unitless line-height over the book's own; 0: the book's
 	Margin     int               `json:"margin"`              // px
 	LeadMs     int               `json:"lead_ms"`             // read-along: the words underlined this much after the sound starts, for the headphones' own delay
-	Direction  map[string]string `json:"direction,omitempty"` // by book (its key, as its cache's name): "rtl" or "ltr"
+	Direction  map[string]string `json:"direction,omitempty"` // by book (its ID in the library): "rtl" or "ltr"
 	// The interface's language (lang.go): the menus follow the book's language unless this is set ("Follow book language"
 	// off: English everywhere). Stored as the opposite so that a file from before it, without the key, follows the book.
 	EnglishOnly bool `json:"english_only,omitempty"`

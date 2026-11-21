@@ -121,7 +121,7 @@ func TestLibraryOrder(t *testing.T) {
 	books := Scan(dir)
 	m := byPath(books)
 	place := func(path, body string, ago time.Duration) {
-		p := filepath.Join(dir, "places", m[path].Key+".place")
+		p := filepath.Join(dir, "places", m[path].ID+".place")
 		os.MkdirAll(filepath.Dir(p), 0o755)
 		os.WriteFile(p, []byte(body), 0o644)
 		os.Chtimes(p, now.Add(-ago), now.Add(-ago))

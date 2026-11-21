@@ -167,6 +167,32 @@ flowchart LR
   system's renders of a book's screens are kept in a third language, `en-rtl`; the reader logs the interface on
   opening a book (`interface en-rtl`), and devtest holds the screens against those renders.
 
+### The library's books: an ID each, and what is kept for it (2026-11-21)
+**Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one
+book) and their hash (`library.Hash`: size, first and last 64 KB; 10 ms a book on the Kindle). A new book's ID is its
+hash when first seen, so books from before kept their keys as IDs (no files renamed). The place, mark, highlights and
+`direction[ID]` are kept by ID; the cache by hash (`cache/HASH.cache`: pages from one file never shown for another).
+- **The scan matches each file** (`match` in `reader/library/ids.go`; `library.Find` for a book opened by path), logged
+  as `library: PATH: …`:
+
+  | the file found | means |
+  |---|---|
+  | a known path, the same hash | unchanged |
+  | a known path, a new hash | a new edition: the same book (a changed copy leaves its book instead) |
+  | a new path, a book's hash | moved (its file gone) or an identical copy (its file still there) |
+  | a new path, the hash in a place file no book holds | the book it was kept for (`library.json` lost, or moved meanwhile) |
+  | nothing | a new book, its hash as ID (taken: `-2`, ...) |
+- **Rebuildable:** a place file is `DOC AT SHARE`, then the file's hash and path (older readers read the first line
+  only), so a lost `library.json` is made again by the next scan. A book changed and moved in one go is a new book.
+- **A new edition, opened:** the place's hash differs, so it opens at the same share read (`atShare`); highlights whose
+  text is no longer where they were go to `highlights/ID.unplaced.json`, not drawn (found again by text: later).
+- **Copies:** the first by path is opened; the details show "Copies N", and Remove deletes them all.
+- **Later:** OPDS records its catalogue ID in the record (a book got again matched under any name); notes as a field
+  of a highlight, as Kobo's `Bookmark` rows.
+- **Considered:** the path as key (Kobo's and the Kindle's, checked on ours: copies separate, but a rename starts
+  again); folders beside each book (KOReader's `.sdr`: clutter, reading scattered); the modification time (FAT's moved
+  8 hours on the Kobo, 2026-11-05); the whole file hashed (6.4 s for a narrated book on the Kindle).
+
 ## 3. The engines
 
 | Engine | What it is | Use |

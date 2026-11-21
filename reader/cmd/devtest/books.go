@@ -16,7 +16,7 @@ import (
 // Our own test books (e2e/books/NAME/, the EPUB's files as they go in the zip; e2e/books/README.md): built here into
 // EPUBs, so the scenarios need no download for them. The same folder gives the same bytes every time (each file stored,
 // not compressed, in name order after mimetype, all dated 2026-01-01): the reader names a book by its bytes
-// (library.Key), and a fixture's place for it is kept under that name.
+// (a book.s ID is its hash, library.Hash, when first seen), and a fixture.s place for it is kept under that name.
 const booksDir = "e2e/books"
 
 // testBooks is where the step `book NAME` puts a book, under the device's folder.

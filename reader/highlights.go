@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	blitz "shamsainkengine"
@@ -76,6 +77,31 @@ func (h *highlights) add(hl highlight, text func(doc int, from, to [2]int) strin
 	}
 	h.list = append(h.list, hl)
 	return hl
+}
+
+// unplace sets aside the highlights whose text is no longer where they were (kept for another edition of the book):
+// added to DIR/highlights/ID.unplaced.json, not drawn (to be found again by their text: later). How many.
+func (h *highlights) unplace(text func(doc int, from, to [2]int) string) int {
+	var gone []highlight
+	h.list = slices.DeleteFunc(h.list, func(hl highlight) bool {
+		if text(hl.Doc, hl.From, hl.To) == hl.Text {
+			return false
+		}
+		gone = append(gone, hl)
+		return true
+	})
+	if len(gone) == 0 {
+		return 0
+	}
+	p := strings.TrimSuffix(h.path, ".json") + ".unplaced.json"
+	var kept []highlight
+	if b, err := os.ReadFile(p); err == nil {
+		json.Unmarshal(b, &kept)
+	}
+	b, _ := json.MarshalIndent(append(kept, gone...), "", "  ")
+	files.Write(p, append(b, '\n'))
+	h.save()
+	return len(gone)
 }
 
 // tidy takes in the highlights kept overlapping before add did; true if any were.

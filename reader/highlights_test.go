@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"image"
 	"os"
@@ -105,5 +106,36 @@ func TestBadHighlights(t *testing.T) {
 	}
 	if _, err := os.Stat(p); err == nil {
 		t.Error("bad file still in place")
+	}
+}
+
+// A new edition: the highlights whose text is no longer where they were are set aside, added to those set aside
+// before; the others stay.
+func TestUnplace(t *testing.T) {
+	dir := t.TempDir()
+	h := loadHighlights(dir, "k")
+	h.list = []highlight{{Doc: 0, From: [2]int{1, 0}, To: [2]int{1, 5}, Text: "still"},
+		{Doc: 0, From: [2]int{2, 0}, To: [2]int{2, 4}, Text: "gone"}, {Doc: 9, Text: "no such document"}}
+	text := func(doc int, from, to [2]int) string {
+		if doc == 0 && from[0] == 1 {
+			return "still"
+		}
+		return ""
+	}
+	os.MkdirAll(filepath.Join(dir, "highlights"), 0o755)
+	os.WriteFile(filepath.Join(dir, "highlights", "k.unplaced.json"), []byte(`[{"text":"earlier"}]`), 0o644)
+	if n := h.unplace(text); n != 2 || len(h.list) != 1 || h.list[0].Text != "still" {
+		t.Fatalf("%d set aside, left %+v", n, h.list)
+	}
+	var aside []highlight
+	b, _ := os.ReadFile(filepath.Join(dir, "highlights", "k.unplaced.json"))
+	if json.Unmarshal(b, &aside); len(aside) != 3 || aside[0].Text != "earlier" || aside[2].Text != "no such document" {
+		t.Errorf("set aside: %s", b)
+	}
+	if kept := loadHighlights(dir, "k"); len(kept.list) != 1 {
+		t.Errorf("saved: %+v", kept.list)
+	}
+	if n := h.unplace(text); n != 0 {
+		t.Errorf("again: %d", n)
 	}
 }

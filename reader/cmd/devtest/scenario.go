@@ -46,7 +46,7 @@ import (
 //	                          not there: a public sample book for a scenario, never committed
 //	book NAME                 our own test book e2e/books/NAME, built (books.go), on the device as books/test/NAME.epub,
 //	                          copied unless the same file is there: then open books/test/NAME.epub
-//	forget PATH               the book's saved place removed on the device (its key, as library.Key makes it: a shell
+//	forget PATH               the book's saved place removed on the device (its ID: library.Hash when first seen, a shell
 //	                          recipe, for books over 128 KB), so the book opens at its start
 //	freeze                    the reader stopped (SIGSTOP), as a hang that answers nothing
 //	expect-none REGEX SECONDS waits that long and fails if the log has a line like it

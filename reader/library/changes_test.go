@@ -13,7 +13,7 @@ import (
 func TestMarks(t *testing.T) {
 	dir := t.TempDir()
 	place := func(s string) { files.Write(filepath.Join(dir, "places", "k.place"), []byte(s)) }
-	book := func() Item { return Shelf([]Book{{Path: "books/k.epub", Key: "k"}}, dir)[0] }
+	book := func() Item { return Shelf([]Book{{Path: "books/k.epub", ID: "k"}}, dir)[0] }
 
 	// never opened, marked finished: Finished, not New; opened later, New's mark gone: Reading
 	if err := SetMark(dir, "k", true); err != nil {
@@ -57,15 +57,19 @@ func TestMarks(t *testing.T) {
 	}
 }
 
-// Removing a book deletes its file and all kept for it, and only its; the library drops it.
+// Removing a book deletes its files (its copies too) and all kept for it, and only its; the library drops it.
 func TestRemoveBook(t *testing.T) {
 	dir := libDir(t)
+	copyFile(t, dir, "books/farsiepub/c.epub", "books/c-copy.epub")
 	books := byPath(Scan(dir))
-	a, c := books["books/a.epub"], books["books/farsiepub/c.epub"]
+	a, c := books["books/a.epub"], books["books/c-copy.epub"]
+	if len(c.Copies) != 1 {
+		t.Fatalf("c: %+v", c)
+	}
 	var kept []string
-	for _, k := range []string{a.Key, c.Key} {
+	for _, k := range []string{a.ID, c.ID} {
 		for _, f := range []string{"places/" + k + ".place", "places/" + k + ".mark", "highlights/" + k + ".json",
-			"highlights/" + k + ".json.bad", "cache/" + k + ".cache"} {
+			"highlights/" + k + ".json.bad", "highlights/" + k + ".unplaced.json", "cache/" + k + ".cache"} {
 			files.Write(filepath.Join(dir, f), []byte("x"))
 			kept = append(kept, f)
 		}
@@ -75,14 +79,16 @@ func TestRemoveBook(t *testing.T) {
 	}
 	for i, f := range kept {
 		_, err := os.Stat(filepath.Join(dir, f))
-		if gone := err != nil; gone != (i >= 5) {
+		if gone := err != nil; gone != (i >= 6) {
 			t.Errorf("%s: gone %v", f, gone)
 		}
 	}
-	if _, err := os.Stat(filepath.Join(dir, c.Path)); err == nil {
-		t.Error("the book's file is still there")
+	for _, p := range append([]string{c.Path}, c.Copies...) {
+		if _, err := os.Stat(filepath.Join(dir, p)); err == nil {
+			t.Errorf("%s is still there", p)
+		}
 	}
-	if after := byPath(Scan(dir)); len(after) != len(books)-1 || after[c.Path].Key != "" {
+	if after := byPath(Scan(dir)); len(after) != len(books)-1 || after[c.Path].ID != "" {
 		t.Errorf("library after: %v", after)
 	}
 	// a second time: the file is gone, nothing else to do

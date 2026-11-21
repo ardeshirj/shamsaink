@@ -48,7 +48,7 @@ func TestBooks(t *testing.T) {
 		if _, err := os.Stat(filepath.Join("e2e", "fixtures", e.Name())); err == nil {
 			tmp := filepath.Join(t.TempDir(), e.Name()+".epub")
 			os.WriteFile(tmp, a, 0o644)
-			key, err := library.Key(tmp)
+			key, err := library.Hash(tmp)
 			if err != nil {
 				t.Fatal(err)
 			}

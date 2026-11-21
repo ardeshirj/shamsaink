@@ -33,8 +33,8 @@ type Item struct {
 func Shelf(books []Book, dir string) []Item {
 	out := make([]Item, len(books))
 	for i, b := range books {
-		w, s, ok := Place(dir, b.Key)
-		m, at := markOf(dir, b.Key, ok, s)
+		w, s, ok := Place(dir, b.ID)
+		m, at := markOf(dir, b.ID, ok, s)
 		out[i] = Item{b, ok, w, s, m, at}
 	}
 	return out

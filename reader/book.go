@@ -46,13 +46,15 @@ type reading struct {
 	read     blitz.ReadFunc
 	fonts    *blitz.Fonts
 	book     *blitz.Book
-	key      string // the book's name, size and date
+	key      string // the book's ID in the library (library.Book): what is kept for it is kept by it
+	hash     string // its file's (library.Hash)
+	rel      string // its file's path relative to DIR ("" outside it)
 	lang     string // the book's language (bookLanguage): which fallback fonts come first
 	bookRTL  bool   // readsRTL: its stated direction, else its language (neither: left to right, as Readium)
 	rtl      bool   // as the pages turn: the book's, or as set for it
 	doc, at  int
-	cache    string // DIR/cache/: by the book's name, size and date; safe to delete (laid out again)
-	place    string // DIR/places/: the same name; deleting it starts the book again
+	cache    string // DIR/cache/HASH.cache: the file's; safe to delete (laid out again)
+	place    string // DIR/places/ID.place: the book's; deleting it starts the book again
 	restored bool
 	saved    bool
 	marks    *highlights
@@ -63,8 +65,10 @@ type reading struct {
 	anchorAt [2]int // {doc, at} the last relayout left the place at; {-1, -1} for none
 }
 
-// openBook opens a book at its place; direction is the way set for it by its key ("rtl", "ltr", else the book's).
-func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *blitz.Fonts, direction func(key string) string) (*reading, error) {
+// openBook opens a book at its place; direction is the way set for it by its ID ("rtl", "ltr", else the book's). A
+// place kept for another file of the book (a new edition) gives only how far it was read, and its highlights are
+// shown only where their text still is.
+func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *blitz.Fonts, direction func(id string) string) (*reading, error) {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
@@ -88,7 +92,7 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		}
 		return data, nil
 	}
-	key, err := library.Key(abs)
+	id, hash, rel, err := library.Find(dir, abs)
 	if err != nil {
 		return nil, err
 	}
@@ -97,30 +101,60 @@ func openBook(ctx context.Context, path, dir string, o blitz.Options, fonts *bli
 		spine:    spine,
 		read:     read,
 		fonts:    fonts,
-		key:      key,
+		key:      id,
+		hash:     hash,
+		rel:      rel,
 		anchorAt: [2]int{-1, -1},
 		lang:     bookLanguage(p.Manifest.Metadata.Languages, p.Manifest.Metadata.Title()),
 		bookRTL:  readsRTL(p.Manifest.Metadata),
-		cache:    filepath.Join(dir, "cache", key+".cache"),
-		place:    filepath.Join(dir, "places", key+".place"),
-		marks:    loadHighlights(dir, key),
+		cache:    filepath.Join(dir, "cache", hash+".cache"),
+		place:    filepath.Join(dir, "places", id+".place"),
+		marks:    loadHighlights(dir, id),
 	}
-	r.direct(direction(key))
+	r.direct(direction(id))
 	r.make(o)
-	if b, err := os.ReadFile(r.place); err == nil {
+	// the place file: "DOC AT SHARE", then the hash of the file it was kept for and its path (none before 2026-11-21:
+	// kept by the hash, so for this file)
+	b, err := os.ReadFile(r.place)
+	placed := err == nil
+	other := false
+	if placed {
+		lines := strings.SplitN(string(b), "\n", 3)
 		var share float64 // the old form has none
-		if n, _ := fmt.Sscan(string(b), &r.doc, &r.at, &share); n < 2 {
+		n, _ := fmt.Sscan(lines[0], &r.doc, &r.at, &share)
+		if len(lines) > 1 {
+			h := strings.TrimSpace(lines[1])
+			other = h != "" && h != hash
+		}
+		switch {
+		case n < 2 || other && n < 3:
 			r.doc, r.at = 0, 0
+		case other:
+			r.doc, r.at = r.atShare(share)
+			fmt.Printf("book: a new edition: opened at %.0f%%, as far as it was read\n", share*100)
 		}
 	}
 	r.doc = min(max(r.doc, 0), len(spine)-1)
 	if !r.seek(r.doc, r.at) && !r.next() {
 		return nil, fmt.Errorf("%s: no pages", path)
 	}
+	if other || !placed && len(r.marks.list) > 0 { // highlights kept for another file (no place to say: checked)
+		if n := r.marks.unplace(r.text); n > 0 {
+			fmt.Printf("book: %d highlights no longer where they were: set aside\n", n)
+		}
+	}
 	if r.marks.tidy(r.text) {
 		r.marks.save()
 	}
 	return r, nil
+}
+
+// atShare is the page at share s of the book (0 to 1), by documents: the document s falls in, as far into it.
+func (r *reading) atShare(s float64) (doc, at int) {
+	n := float64(len(r.spine))
+	doc = min(max(int(s*n), 0), len(r.spine)-1)
+	first, last := r.book.Layout(doc)
+	return doc, int((s*n - float64(doc)) * float64(last-first))
 }
 
 // direct sets the way pages turn: "rtl" or "ltr", else the book's.
@@ -267,7 +301,7 @@ func (r *reading) share(rest bool) float64 {
 // keep writes the place with the share read, and the cache once every document is paginated (once). The caller says
 // whether the rest of the book is still being paginated: the session owns that, and the share depends on it.
 func (r *reading) keep(rest bool) {
-	files.Write(r.place, []byte(fmt.Sprintf("%d %d %.4f\n", r.doc, r.at, r.share(rest))))
+	files.Write(r.place, []byte(fmt.Sprintf("%d %d %.4f\n%s\n%s\n", r.doc, r.at, r.share(rest), r.hash, r.rel)))
 	if !r.saved {
 		if data := r.book.Save(); data != nil {
 			files.Write(r.cache, data)

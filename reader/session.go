@@ -94,7 +94,7 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	done := make(chan error, 1)
 	go func() {
 		t0 := time.Now()
-		r, err := openBook(context.Background(), path, rd.dir, s.o, rd.fonts, func(key string) string { return s.set.Direction[key] })
+		r, err := openBook(context.Background(), path, rd.dir, s.o, rd.fonts, func(id string) string { return s.set.Direction[id] })
 		if err != nil {
 			done <- err
 			return

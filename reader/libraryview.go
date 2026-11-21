@@ -434,14 +434,14 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			switch {
 			case bookPanel == "menu" && (id == "book-finish" || id == "book-unfinish"):
 				b := items[held]
-				if err := library.SetMark(rd.dir, b.Key, id == "book-finish"); err != nil {
+				if err := library.SetMark(rd.dir, b.ID, id == "book-finish"); err != nil {
 					fmt.Fprintln(os.Stderr, "shamsaink: mark:", err)
 				}
 				fmt.Printf("library: %s marked %s\n", b.Path, map[bool]string{true: "finished", false: "not finished"}[id == "book-finish"])
 				changed()
 			case bookPanel == "menu" && id == "book-again":
 				b := items[held]
-				if err := library.StartAgain(rd.dir, b.Key); err != nil {
+				if err := library.StartAgain(rd.dir, b.ID); err != nil {
 					fmt.Fprintln(os.Stderr, "shamsaink: start again:", err)
 				}
 				fmt.Printf("library: %s started again\n", b.Path)
@@ -472,8 +472,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					fmt.Fprintln(os.Stderr, "shamsaink: remove:", err)
 				} else {
 					fmt.Printf("library: %s removed\n", b.Path)
-					if _, ok := set.Direction[b.Key]; ok { // the page direction set for it
-						delete(set.Direction, b.Key)
+					if _, ok := set.Direction[b.ID]; ok { // the page direction set for it
+						delete(set.Direction, b.ID)
 						set.save(rd.dir)
 					}
 				}

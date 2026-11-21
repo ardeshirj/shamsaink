@@ -2,6 +2,7 @@ package library
 
 import (
 	"archive/zip"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -20,33 +21,39 @@ import (
 	"shamsainkreader/files"
 )
 
-// A book in the library: its file, what its metadata says, and how far it has been read.
+// A book in the library: its ID, its files, what its metadata says. What is kept for it (its place, mark, highlights,
+// page direction) is kept by its ID, which never changes; its cache by its hash (Scan; docs/DESIGN.md, "The library's
+// books").
 type Book struct {
-	Path     string `json:"path"` // relative to DIR
-	Key      string `json:"key"`  // as openBook's: see Key
-	Title    string `json:"title"`
-	Author   string `json:"author"`
-	Lang     string `json:"lang"`
-	Source   string `json:"source"`             // its folder under books/ ("farsiepub"), "" when directly in books/
-	Added    int64  `json:"added"`              // the file's modification time, Unix seconds
-	Narrated bool   `json:"narrated,omitempty"` // it has media overlays (SMIL in its manifest)
-	V        int    `json:"v,omitempty"`        // metaVersion when read; older entries are read again
+	ID       string   `json:"id"`
+	Path     string   `json:"path"`             // the file opened, relative to DIR: the first of its files by path
+	Copies   []string `json:"copies,omitempty"` // its other files, the same bytes, by path
+	Hash     string   `json:"hash"`             // its files' (Hash)
+	Key      string   `json:"key,omitempty"`    // library.json before IDs (until 2026-11-21): its ID and hash; read, never written
+	Title    string   `json:"title"`
+	Author   string   `json:"author"`
+	Lang     string   `json:"lang"`
+	Source   string   `json:"source"`             // its folder under books/ ("farsiepub"), "" when directly in books/
+	Added    int64    `json:"added"`              // the file's modification time, Unix seconds
+	Narrated bool     `json:"narrated,omitempty"` // it has media overlays (SMIL in its manifest)
+	V        int      `json:"v,omitempty"`        // metaVersion when read; older entries are read again
 }
 
 // metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too.
 const metaVersion = 1
 
-// keySample is how much of a book's start and end its key reads.
-const keySample = 64 << 10
+// hashSample is how much of a book's start and end its hash reads.
+const hashSample = 64 << 10
 
-// Key is a book's key, 12 hex digits of a SHA-256 over its size, its first 64 KB and its last 64 KB (the whole file
-// when it is under 128 KB), as openBook makes it. Not the name or the modification time: the Kobo's storage is FAT,
-// whose times the kernel turns into UTC with a timezone it may not have been given (every book's time was 8 hours
-// earlier after a reboot on 2026-11-05, and every book was new), and a renamed or moved book keeps its place. An EPUB
-// is a ZIP file whose central directory, at the end, lists the CRC of every file in it, so a changed book changes its
-// last 64 KB. To make it in a shell (docs/devices/kobo/README.md): { echo SIZE; head -c 65536 F; tail -c 65536 F; }
-// | sha256sum | cut -c1-12 (a small file: cat F instead of head and tail).
-func Key(path string) (string, error) {
+// Hash is a file's hash, 12 hex digits of a SHA-256 over its size, its first 64 KB and its last 64 KB (the whole file
+// when it is under 128 KB): which bytes it is, not which book (Book.ID). Not the name or the modification time: the
+// Kobo's storage is FAT, whose times the kernel turns into UTC with a timezone it may not have been given (every
+// book's time was 8 hours earlier after a reboot on 2026-11-05). An EPUB is a ZIP file whose central directory, at
+// the end, lists the CRC of every file in it, so a changed book changes its last 64 KB. 10 ms a book on the Kindle
+// whatever its size, against 6.4 s for the whole of a narrated one (2026-11-21). A book's ID is its hash when first
+// seen, so to make it in a shell (docs/devices/kobo/README.md): { echo SIZE; head -c 65536 F; tail -c 65536 F; } |
+// sha256sum | cut -c1-12 (a small file: cat F instead of head and tail).
+func Hash(path string) (string, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return "", err
@@ -58,11 +65,11 @@ func Key(path string) (string, error) {
 	}
 	h := sha256.New()
 	fmt.Fprintf(h, "%d\n", st.Size())
-	if st.Size() <= 2*keySample {
+	if st.Size() <= 2*hashSample {
 		_, err = io.Copy(h, f)
-	} else if _, err = io.CopyN(h, f, keySample); err == nil {
-		if _, err = f.Seek(-keySample, io.SeekEnd); err == nil {
-			_, err = io.CopyN(h, f, keySample)
+	} else if _, err = io.CopyN(h, f, hashSample); err == nil {
+		if _, err = f.Seek(-hashSample, io.SeekEnd); err == nil {
+			_, err = io.CopyN(h, f, hashSample)
 		}
 	}
 	if err != nil {
@@ -74,29 +81,25 @@ func Key(path string) (string, error) {
 // readMeta reads an EPUB's metadata; a variable so a test can count the books read.
 var readMeta = epubMeta
 
-// Scan lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub (hidden ones left out: see hidden) with their metadata: from DIR/library.json
-// when the book's key is there, else read from the EPUB. Books whose file is gone are dropped, and library.json is
-// written again only if anything changed.
+// Scan lists the EPUBs in DIR/books/*.epub and DIR/books/*/*.epub (hidden ones left out: see hidden) as the library's
+// books: each file matched to a book of DIR/library.json (match), the metadata read from the EPUB only for a book new
+// or changed. A book none of whose files is left is dropped; library.json is written again only if anything changed.
 func Scan(dir string) []Book {
 	t := time.Now()
+	raw, _ := os.ReadFile(filepath.Join(dir, "library.json"))
 	var old []Book
-	if b, err := os.ReadFile(filepath.Join(dir, "library.json")); err == nil {
-		if err := json.Unmarshal(b, &old); err != nil {
-			fmt.Printf("library: library.json does not parse (%v); read again\n", err)
+	if raw != nil {
+		if err := json.Unmarshal(raw, &old); err != nil {
+			fmt.Printf("library: library.json does not parse (%v); made again\n", err)
 			old = nil
 		}
-	}
-	known := map[string]Book{}
-	for _, b := range old {
-		known[b.Path+"\x00"+b.Key] = b
 	}
 	epubs, _ := filepath.Glob(filepath.Join(dir, "books", "*.epub"))
 	more, _ := filepath.Glob(filepath.Join(dir, "books", "*", "*.epub"))
 	epubs = append(epubs, more...)
 	slices.Sort(epubs)
 
-	var books []Book
-	read := 0
+	var found []file
 	for _, f := range epubs {
 		st, err := os.Stat(f)
 		if err != nil || st.IsDir() {
@@ -110,36 +113,35 @@ func Scan(dir string) []Book {
 		if hidden(rel) {
 			continue
 		}
-		key, err := Key(f)
+		hash, err := Hash(f)
 		if err != nil {
 			fmt.Printf("library: %s: %v\n", rel, err)
 			continue
 		}
-		if b, ok := known[rel+"\x00"+key]; ok && b.V == metaVersion {
-			books = append(books, b)
+		found = append(found, file{rel, hash, st.ModTime().Unix()})
+	}
+
+	books, fresh := match(dir, old, found)
+	read := 0
+	for i := range books {
+		b := &books[i]
+		if !fresh[b.ID] && b.V == metaVersion {
 			continue
-		}
-		b := Book{Path: rel, Key: key, Added: st.ModTime().Unix(), V: metaVersion}
-		if parts := strings.Split(rel, "/"); len(parts) == 3 {
-			b.Source = parts[1]
 		}
 		read++
-		m, err := readMeta(f)
+		m, err := readMeta(filepath.Join(dir, b.Path))
 		if err != nil {
-			fmt.Printf("library: %s: %v\n", rel, err)
+			fmt.Printf("library: %s: %v\n", b.Path, err)
 		}
 		b.Title, b.Author, b.Lang = strings.TrimSpace(m.Title), strings.TrimSpace(m.Author), strings.TrimSpace(m.Lang)
-		b.Narrated = m.Narrated
+		b.Narrated, b.V = m.Narrated, metaVersion
 		if b.Title == "" {
-			b.Title = tidyName(filepath.Base(f))
+			b.Title = tidyName(path.Base(b.Path))
 		}
-		books = append(books, b)
 	}
-	if read > 0 || len(books) != len(old) {
-		if b, err := json.MarshalIndent(books, "", "  "); err == nil {
-			if err := files.Write(filepath.Join(dir, "library.json"), append(b, '\n')); err != nil {
-				fmt.Printf("library: library.json not written: %v\n", err)
-			}
+	if out, err := json.MarshalIndent(books, "", "  "); err == nil && !bytes.Equal(append(out, '\n'), raw) {
+		if err := files.Write(filepath.Join(dir, "library.json"), append(out, '\n')); err != nil {
+			fmt.Printf("library: library.json not written: %v\n", err)
 		}
 	}
 	fmt.Printf("library: %d books, %d read from their files, %.0f ms\n", len(books), read, float64(time.Since(t).Microseconds())/1000)
@@ -257,8 +259,8 @@ func epubMeta(file string) (m meta, err error) {
 
 // Place reads a book's place file: when it was last kept, and the share of the book read (0 to 1, -1 if the old
 // form without one); ok false when the book was never opened.
-func Place(dir, key string) (when time.Time, share float64, ok bool) {
-	p := filepath.Join(dir, "places", key+".place")
+func Place(dir, id string) (when time.Time, share float64, ok bool) {
+	p := filepath.Join(dir, "places", id+".place")
 	st, err := os.Stat(p)
 	if err != nil {
 		return time.Time{}, 0, false
@@ -277,7 +279,7 @@ func Place(dir, key string) (when time.Time, share float64, ok bool) {
 // progress is how much of the book is read, 0 to 1: 0 if never opened, -1 if opened but not known (a place kept
 // before the share was).
 func progress(dir string, b Book) float64 {
-	if _, share, ok := Place(dir, b.Key); ok {
+	if _, share, ok := Place(dir, b.ID); ok {
 		return share
 	}
 	return 0

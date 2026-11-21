@@ -28,8 +28,8 @@ logs are kept only while it is open (`make kobo-reader-log`); Kobo's system log 
 ├── launcher.confirmed               the library and firmware build whose start was confirmed (the launcher's)
 ├── getting-started.epub             the guide, copied into books/ on the first start               [make kobo-reader-install]
 ├── books/                           by source: farsiepub/, rtlbook/, standard-ebooks/, archive-org/, test/   [scp]
-├── cache/                           KEY pages laid out, the opening screen; safe to delete
-├── places/  highlights/             KEY.place (the page left at), KEY.json (highlights)
+├── cache/                           HASH.cache pages laid out, the opening screen; safe to delete
+├── places/  highlights/             ID.place (the page left at), ID.mark, ID.json (highlights)
 ├── library.json  library-view.json  settings.json   written by the reader
 ├── sleep/                           sleep screens (FarsiEPUB's sleep-screens.yml); empty: the opening screen [by hand]
 ├── logs/                            reader.log, launcher.log, system.log, kernel.log, alive.log
@@ -41,10 +41,12 @@ logs are kept only while it is open (`make kobo-reader-log`); Kobo's system log 
 /tmp/shamsaink-dropbear(.pid), /tmp/shamsaink-ssh.log, /dev/shamsaink-ssh/   the development SSH server, all in RAM
 ```
 
-A *KEY* (since 2026-11-05, `library.Key` in `reader/library/scan.go`): 12 hex digits of a SHA-256 over the book's size,
-its first 64 KB and its last 64 KB (the whole file under 128 KB). A book moved, renamed, touched or copied again keeps
-its cache, place and highlights; a replaced one starts afresh, its old files left unused. In a shell:
-`{ echo SIZE; head -c 65536 F; tail -c 65536 F; } | sha256sum | cut -c1-12`.
+A *HASH* (since 2026-11-05, `library.Hash` in `reader/library/scan.go`): 12 hex digits of a SHA-256 over the file's
+size, its first 64 KB and its last 64 KB (the whole file under 128 KB). In a shell:
+`{ echo SIZE; head -c 65536 F; tail -c 65536 F; } | sha256sum | cut -c1-12`. A book's *ID* (since 2026-11-21, in
+`library.json`) is its hash when first seen and stays: a book moved, renamed, copied (identical copies are one book) or
+replaced by a new edition keeps its place and highlights (`docs/DESIGN.md`, "The library's books"). Until then a
+book's key was its hash, so books from before keep theirs as their ID.
 
 ## Limits and bugs
 **A firmware update removes ShamsaInk's row** (firmware 5 and 6). The launcher is a library in Kobo's own software,
