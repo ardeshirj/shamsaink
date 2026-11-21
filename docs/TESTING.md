@@ -150,14 +150,12 @@ as untested.
 5. References updated only after the maintainer has seen the changed pages.
 
 ### Updates over Wi-Fi, on the Kobo (2026-11-20)
-The network is not in the scenarios (the walk never taps Check). The parts are tested in Go (`reader/update`: versions'
-order, signatures, a download from a test server, cut, cancelled, too big, unsigned, the install's moves and what it
-refuses), the launcher's way back in busybox, and a whole update on the Kobo before any release, from the Mac:
-1. `make kobo-reader-install` (the build to update from), dev mode on the Kobo (`dev/` beside the reader).
-2. `make kobo-package VERSION=v0.9.0-test` (a version newer than the Kobo's), then `make update-serve` (leave it
-   running: the package signed with a test key, `out/update/`, served on port 8090) and `make kobo-update-dev`.
-3. On the Kobo: Settings, Updates, Check; Wi-Fi asked for if off; Update; the bar; the restart on the library, Settings
-   showing v0.9.0-test; `make kobo-reader-log` (`update:` lines). Wi-Fi off again if it was.
-4. The way back: the same with a test package whose reader fails to start, the old version back with its notice.
-5. `make kobo-reader-install` again to leave the Kobo on the normal build, `dev/update-url` and `dev/update-key`
-   removed.
+The parts are tested in Go on every push (`reader/update`: versions' order, signatures, a download from a test server,
+cut, cancelled, too big, unsigned, the install's moves and what it refuses). The whole journey on the Kobo, by hand like
+`basics.txt`, before a release and after a change to `reader/update`, `updates.go` or `launch.sh`:
+**`make kobo-update-e2e`** (`e2e/scenarios/update.txt`; the Kobo awake, ShamsaInk closed). It packs the latest build,
+devtest serves it from this computer as a newer version signed with a key made for the run, and the Kobo installs it
+itself over Wi-Fi, restarts on it and keeps it; then a broken one, which the launcher puts back with its notice. A run
+leaves the Kobo on the latest build. By hand instead (to watch it, or with the Wi-Fi question): `make kobo-package
+VERSION=v0.9.0-test`, `make update-serve` and `make kobo-update-dev`, then Settings, Updates, Check on the Kobo; `make
+kobo-reader-install` after, and `dev/update-url` and `dev/update-key` removed.
