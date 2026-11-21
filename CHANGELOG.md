@@ -4,6 +4,19 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.5.0-beta (2026-11-21)
+Your books keep their place: copied, moved, renamed or updated.
+- **Each book is remembered** (Kobo and Kindle): a book moved to another folder, renamed, or replaced by a new edition
+  (a fixed version of the same book) keeps its place, its highlights and its finished mark. A new edition opens about
+  where you were; a highlight whose words are no longer where they were is kept aside, not drawn in the wrong place.
+- **Identical copies are one book:** two copies of the same file show once in the library, and its details say how
+  many. Removing it removes every copy. Before, removing one copy also deleted the other's place and highlights.
+- **Dark mode follows the device** until you choose one in the Light panel: on the Kindle, its own Dark Mode at each
+  start; on the Kobo, light.
+- **Faster page turns in the Kindle's Dark Mode:** about 380 ms from your finger to the ink, from 900.
+- **Memory** (Kobo): leaving ShamsaInk no longer leaves Kobo's web view helpers behind (about 15 MB each time, until
+  the Kobo restarted).
+
 ## 0.4.0-beta (2026-11-20)
 Updates over Wi-Fi: the first version that can update itself.
 - **Updates over Wi-Fi** (Kobo and Kindle): Settings, Updates, Check looks for a newer version and, on Update, downloads
