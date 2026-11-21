@@ -32,7 +32,8 @@ Arabic, Urdu and Hebrew set right to left properly, and narrated books read alon
 feature and fix without a computer. In this order:
 1. Wi-Fi on demand on the Kobo, the crash on opening after a long sleep (stage 5) fixed first: done 2026-11-20
    (`DESIGN.md`, "Wi-Fi on demand"; the crash was a double tap, `devices/kobo/README.md`)
-2. Updates installed over Wi-Fi
+2. Updates installed over Wi-Fi: done 2026-11-20 (`DESIGN.md`, "Updates over Wi-Fi"): v0.4.0-beta, the first signed
+   release, installed itself on the Kobo and the Kindle from farsiepub.org's `latest.json`
 3. OPDS (stage 7)
 4. The keyboard designed once, its digit layout built first for Get a book (stage 7)
 5. Its English and Farsi layouts (stage 7)
@@ -74,23 +75,15 @@ keyboard first ("Now").
   (`holdTime` stays 1000 ms)
 
 **Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
-- [ ] **Updates over Wi-Fi** (step 2, early: the beta testers get every later feature and fix without a computer).
-  **Built and tried on the Kobo and the Kindle 2026-11-20** (`DESIGN.md`, "Updates over Wi-Fi"): with a test key, an update installed
-  and kept, and a broken one undone by the launcher; the release key made (`make signing-key`), CI signs every
-  release. Left: confirmed with the first two real releases (the first by USB, the next over Wi-Fi, from
-  farsiepub.org's `latest.json`); then this item leaves the file. To decide: an end-to-end scenario on the simulator
-  (a local server, the launcher's restart loop shared with it); a "Checking…" screen while Wi-Fi connects; whether
-  `previous/` stays after a good update (it does now, for a later "go back"); immutable releases on GitHub (the
-  maintainer's setting). **Never in the background:** an automatic check, if one comes, runs only when Wi-Fi is
-  already on, never turning it on itself
-- [ ] Before the first such release: (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
+- [ ] The launcher's row from the reader's folder (the first self-updating release, 0.4.0-beta, went without it; an
+  update still replaces the launcher's library when it differs, loaded when Nickel next starts): (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
   PNG) and name from `.adds/shamsaink/`, its built-in ones as fallback, so brand changes ride with the reader; after
   that the launcher changes only when Kobo's firmware forces it, and then the reader places `Kobo.tgz` and says it
   takes effect after the Kobo restarts; (b) tried: whether a Kobo firmware update removes the launcher from
   `/usr/local/Kobo/imageformats/`
 - [ ] An upgrade keeps the user's data: effectively done (`devices/install.md`: a package never holds settings, places,
-  highlights, the cache or books); confirmed on the device with the first update. The cache format versioned, an old
-  one dropped cleanly
+  highlights, the cache or books; the first update over Wi-Fi, 2026-11-20, moved only the package's 25 files). Left:
+  the cache format versioned, an old one dropped cleanly
 
 **6. The layout** (`design/system.html`)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
@@ -234,6 +227,10 @@ Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259
 - Paginated layout is in Blitz's backlog (#119): if it comes, ours could move into Blitz.
 
 ## 6. Open decisions
+- **Updates over Wi-Fi, the details left** (2026-11-20): a "Checking…" screen while Wi-Fi connects and the check runs
+  (now nothing shows for those few seconds); whether `previous/` stays after a good update (it does, for a later "go
+  back" in Settings); immutable releases on GitHub (the maintainer's setting); the update scenario on the simulator too,
+  on CI (a local server, and the launcher's restart loop in a script the simulator shares).
 - **All Rust, without go-toolkit** (raised 2026-10-26). For: the Go reader starts in ~480 ms cold, 110 warm, against
   60–70 and 20 for Rust alone; 21 MB against ~13; one toolchain instead of Rust, Go, cgo and zig; symphonia decodes MP3
   70× real time on the Kindle, go-mp3 5× (12). Against: go-toolkit is the existing tool (contents, page lists,
