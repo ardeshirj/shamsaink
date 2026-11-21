@@ -4,8 +4,6 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
-## Unreleased
-
 ## 0.4.0-beta (2026-11-20)
 Updates over Wi-Fi: the first version that can update itself.
 - **Updates over Wi-Fi** (Kobo and Kindle): Settings, Updates, Check looks for a newer version and, on Update, downloads
