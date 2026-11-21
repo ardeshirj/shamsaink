@@ -63,7 +63,9 @@ port 2222 in the Kindle's firewall (INPUT's policy is DROP) while it runs. A res
 **The Kindle's own Dark Mode inverts every pixel, ours too.**
 - What: it sets the window manager's `epdcMode` to `Y8INV`, and the screen's driver inverts whatever is drawn.
 - What we do: the reader draws its greys the other way when it is on (`KINDLE_EPDC` from the launcher), so its own
-  dark mode looks the same either way; the two stay separate, and Amazon's setting is never changed.
+  dark mode looks the same either way; the two stay separate, and Amazon's setting is never changed. Each row of greys
+  is inverted in the reader's own memory and then copied in: inverting it in the framebuffer read it back, uncached
+  memory, ~500 ms a page turn (experiment 17, 2026-11-21).
 
 **Each `lipc-get-prop` or `lipc-set-prop` costs 35 to 40 ms.**
 - What we do: the light is read from `powerd` once and kept in the reader; a tap changes the copy at once and the

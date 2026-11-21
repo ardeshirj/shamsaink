@@ -59,6 +59,7 @@ type Screen struct {
 	invert         bool            // every grey drawn is inverted on its way into the framebuffer: dark mode, unless the screen inverts already
 	dark           bool            // dark mode, as set (SetInvert)
 	hwInvert       bool            // the screen itself inverts every pixel: the Kindle with its own Dark Mode on (kindleInverts)
+	row            []byte          // a row inverted on its way in (ShowPart), so the framebuffer is never read back
 }
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
@@ -142,12 +143,20 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 		src := p.Pix[y*p.Stride+r.Min.X : y*p.Stride+r.Max.X]
 		at := (s.y0+y)*s.line + r.Min.X*s.bytes
 		if s.bytes == 1 {
-			copy(s.mem[at:], src)
+			// inverted in a row of our own, then copied in: the framebuffer is uncached memory, slow to read. Inverting
+			// it in place read every byte back: ~500 ms a page turn on the Kindle with its own Dark Mode on (measured
+			// with the driver's log, experiment 17, 2026-11-21)
 			if s.invert {
-				for i := range src {
-					s.mem[at+i] = ^s.mem[at+i]
+				if cap(s.row) < len(src) {
+					s.row = make([]byte, len(src))
 				}
+				row := s.row[:len(src)]
+				for i, g := range src {
+					row[i] = ^g
+				}
+				src = row
 			}
+			copy(s.mem[at:], src)
 			continue
 		}
 		row := unsafe.Slice((*uint32)(unsafe.Pointer(&s.mem[at])), len(src))
