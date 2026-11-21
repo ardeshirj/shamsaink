@@ -91,8 +91,6 @@ check:
 #   make kobo-package-install PKG=file  a package file installed the same way (its .sha256 beside it checked)
 #   make kobo-release-install V=0.0.1  a release's package downloaded from GitHub (into out/download; with `gh` while the
 #                        repository is private, curl once public), checked and installed the same way
-#   make kobo-update-e2e the latest build installed on the Kobo as an update over Wi-Fi, and a broken one undone
-#                        (e2e/scenarios/update.txt; dev mode on the Kobo)
 #   make kobo-update-dev dev/update-url and dev/update-key put on the Kobo, so it updates from make update-serve
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
 #   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
@@ -113,6 +111,8 @@ check:
 #   make e2e             a scenario on the Kobo (e2e/README.md): SCENARIO (e2e/scenarios/basics.txt by default), by
 #                        control name, its pages compared with the references kept by a run with SAVE=1 (their hashes
 #                        in e2e/refs.sum). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
+#   make update-e2e      updates over Wi-Fi on the Kobo (DEVICE=kindle: the Kindle), e2e/scenarios/update.txt: the latest
+#                        build packed, installed by the device itself as an update, and a broken one undone
 
 KOBO ?= kobo
 KOBO_SSH = ssh -o ConnectTimeout=10 $(KOBO)
@@ -124,7 +124,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev kobo-update-e2e kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev update-e2e kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -165,10 +165,12 @@ RUNS ?= 1
 runs = $(foreach i,$(shell seq $(RUNS)),$(1))
 # DEVICE=kindle runs them on the Kindle instead (its profile kindle-paperwhite-11); a scenario not on: it is skipped.
 E2E_DEVICE = $(if $(filter kindle,$(DEVICE)),kindle-paperwhite-11,kobo-libra-colour)
-# Updates over Wi-Fi on the Kobo (e2e/scenarios/update.txt): the latest build packed, then served by devtest as an update
-# and installed by the Kobo itself, and a broken one undone; the Kobo is left on the latest build
-kobo-update-e2e: kobo-package devtest
-	@UPDATE_PKG=out/release/shamsaink-$(VERSION)-kobo.tgz reader/out/devtest scenario kobo-libra-colour e2e/scenarios/update.txt
+# Updates over Wi-Fi (e2e/scenarios/update.txt), on the Kobo or with DEVICE=kindle the Kindle, as make e2e: the device's
+# package of the latest build made, then served by devtest as an update and installed by the device itself, and a
+# broken one undone; the device is left on the latest build
+UPDATE_BRAND = $(if $(filter kindle,$(DEVICE)),kindle,kobo)
+update-e2e: $(UPDATE_BRAND)-package devtest
+	@UPDATE_PKG=out/release/shamsaink-$(VERSION)-$(UPDATE_BRAND).tgz reader/out/devtest scenario $(E2E_DEVICE) e2e/scenarios/update.txt
 
 e2e: devtest
 	@for s in $(call runs,$(or $(SCENARIO),e2e/scenarios/basics.txt)); do \

@@ -1,11 +1,12 @@
-# Updates over Wi-Fi on the Kobo (docs/DESIGN.md, "Updates over Wi-Fi"), by hand like basics.txt, before a release and
-# after a change to reader/update, updates.go or launch.sh: `make kobo-update-e2e` (the latest build packed, then this).
+# Updates over Wi-Fi on the Kobo and the Kindle (docs/DESIGN.md, "Updates over Wi-Fi"), by hand like basics.txt, before
+# a release and after a change to reader/update, updates.go or a launch.sh: `make update-e2e`, on the Kindle `make
+# update-e2e DEVICE=kindle` (the latest build packed, then this).
 # The latest build is the update: devtest serves it from this computer, announced as newer (its version and ".e2e") and
-# signed with a key made for the run, which the Kobo in dev mode accepts through dev/update-key (removed after). Wi-Fi is
-# on (SSH), so Check asks nothing. First the update kept: downloaded, verified, installed, the reader restarted on it by
+# signed with a key made for the run, which the device in dev mode accepts through dev/update-key (removed after). Wi-Fi
+# is on (SSH), so Check asks nothing. First the update kept: downloaded, verified, installed, the reader restarted on it by
 # the launcher and the library reached. Then a broken one (its reader exits at once): the launcher puts the latest build
-# back and it says so. So a run leaves the Kobo on the latest build, as an install would.
-on: kobo
+# back and it says so. So a run leaves the device on the latest build, as an install would.
+on: kobo kindle
 env SHAMSAINK_DEV=1                # dev/update-url and dev/update-key are read in dev mode only
 update-serve latest
 library

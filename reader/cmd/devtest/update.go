@@ -24,8 +24,8 @@ import (
 // Updates over Wi-Fi on the device (e2e/scenarios/update.txt): devtest serves the update itself, from this computer on
 // the network the device reaches it by, as FarsiEPUB's latest.json and GitHub's release would.
 //
-//	update-serve latest|broken  the Kobo package of the latest build ($UPDATE_PKG, else the newest
-//	                            out/release/shamsaink-*-kobo.tgz), announced as its version with ".e2e" after it (newer
+//	update-serve latest|broken  the device's package of the latest build ($UPDATE_PKG, else the newest
+//	                            out/release/shamsaink-*-DEVICE.tgz: kobo or kindle), announced as its version with ".e2e" after it (newer
 //	                            than the same build installed) and signed with a key made for the run; broken: the same
 //	                            with a reader that exits at once (the launcher must put the old one back). The device
 //	                            reads it through dev/update-url and accepts the key through dev/update-key, both removed
@@ -43,9 +43,13 @@ type updateServer struct {
 // updateServe serves the update of kind (latest or broken) and points the device at it.
 func (p *player) updateServe(kind string) (string, error) {
 	d := p.d
+	dev := "kobo"
+	if strings.HasPrefix(d.name, "kindle") {
+		dev = "kindle"
+	}
 	pkgPath := os.Getenv("UPDATE_PKG")
 	if pkgPath == "" {
-		m, _ := filepath.Glob("out/release/shamsaink-*-kobo.tgz")
+		m, _ := filepath.Glob("out/release/shamsaink-*-" + dev + ".tgz")
 		var newest os.FileInfo
 		for _, f := range m {
 			if st, err := os.Stat(f); err == nil && (newest == nil || st.ModTime().After(newest.ModTime())) {
@@ -55,7 +59,7 @@ func (p *player) updateServe(kind string) (string, error) {
 	}
 	pkg, err := os.ReadFile(pkgPath)
 	if err != nil {
-		return "", fmt.Errorf("no Kobo package to serve (make kobo-package, or UPDATE_PKG): %v", err)
+		return "", fmt.Errorf("no %s package to serve (make %s-package, or UPDATE_PKG): %v", dev, dev, err)
 	}
 	built, err := packageVersion(pkg)
 	if err != nil {
@@ -104,11 +108,11 @@ func (p *player) updateServe(kind string) (string, error) {
 		})
 	}
 	sum := sha256.Sum256(pkg)
-	name := fmt.Sprintf("shamsaink-%s-kobo.tgz", version)
-	latest := fmt.Sprintf(`{"version":%q,"prerelease":true,"packages":{"kobo":{"url":%q,"size":%d,"sig":%q}}}`,
-		version, u.url+"/"+name, len(pkg), u.url+"/"+name+".sig")
+	name := fmt.Sprintf("shamsaink-%s-%s.tgz", version, dev)
+	latest := fmt.Sprintf(`{"version":%q,"prerelease":true,"packages":{%q:{"url":%q,"size":%d,"sig":%q}}}`,
+		version, dev, u.url+"/"+name, len(pkg), u.url+"/"+name+".sig")
 	u.Lock()
-	u.files = map[string][]byte{"latest.json": []byte(latest), name: pkg, name + ".sig": update.Sign(u.key, "kobo", version, sum[:])}
+	u.files = map[string][]byte{"latest.json": []byte(latest), name: pkg, name + ".sig": update.Sign(u.key, dev, version, sum[:])}
 	u.Unlock()
 	if kind == "broken" {
 		d.crashOK = true // the broken reader's exit is what is tested from here on
@@ -116,7 +120,7 @@ func (p *player) updateServe(kind string) (string, error) {
 	return fmt.Sprintf("%s (%s, %d bytes) at %s", version, kind, len(pkg), u.url), nil
 }
 
-// packageVersion is the VERSION file inside a Kobo package.
+// packageVersion is the VERSION file inside a package (the Kobo's or the Kindle's).
 func packageVersion(pkg []byte) (string, error) {
 	z, err := gzip.NewReader(bytes.NewReader(pkg))
 	if err != nil {
@@ -128,7 +132,7 @@ func packageVersion(pkg []byte) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("no VERSION in the package: %v", err)
 		}
-		if strings.HasSuffix(h.Name, ".adds/shamsaink/VERSION") {
+		if strings.HasSuffix(h.Name, "shamsaink/VERSION") {
 			b, err := io.ReadAll(t)
 			return strings.TrimSpace(string(b)), err
 		}
@@ -157,7 +161,7 @@ func brokenPackage(pkg []byte) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasSuffix(h.Name, ".adds/shamsaink/shamsaink") {
+		if strings.HasSuffix(h.Name, "shamsaink/shamsaink") {
 			b = []byte("#!/bin/sh\necho 'e2e: a broken reader, exiting'\nexit 1\n")
 			h.Size = int64(len(b))
 		}
