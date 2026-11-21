@@ -253,6 +253,46 @@ release): the Developer panel's Wi-Fi switch, above SSH, its state under it (off
 on connects with no question (the switch is the yes) and Wi-Fi stays on, off turns it off as Kobo's own switch does
 (`TurnOffWiFi`).
 
+### Updates over Wi-Fi (2026-11-20, the Kobo)
+Settings' last row, Updates (the version under it, Check at its end), the package `reader/update` and the library's
+`updates.go`. **Only when asked:** Check goes through Wi-Fi on demand (above: the question when Wi-Fi is off; Wi-Fi
+turned on for it turned off again at the end, whatever the end); no check runs by itself.
+- **What is newest:** `latest.json` from FarsiEPUB (`farsiepub.org/shamsaink/latest.json`, made from GitHub's releases
+  of this repository, the newest that is not a draft, pre-releases included): the version, and per device its
+  package's URL, size and the URLs of its `.sha256` and `.sig`. Newer is semantic versioning's order (a `-beta` before
+  the release without one; a build that is not a version, `dev`, older than all). Not newer, or no package for this
+  device: "This is the latest version." with the version under it. Not reached: a notice, nothing changed.
+- **Signed, not only summed:** a `.sha256` from the same server proves nothing against that server. Each package has a
+  `.sig`, the ed25519 signature of one line, `shamsaink DEVICE VERSION sha256:HEX` (`update.Message`): the device and
+  version in it keep an older package, or the other device's, signed too, from passing for the one announced. The
+  release job signs with the key in GitHub's secret `SHAMSAINK_SIGNING_KEY` (`reader/cmd/sign`); the reader carries the
+  public keys (`update/keys.go`, more than one allowed, so a key can be replaced over two releases). The key pair is
+  made once by the maintainer, `make signing-key`: the private half straight into the secret and a backup in their home
+  folder, never printed. **No `.sig`, no install** ("could not be verified"), checked before downloading.
+- **The download:** into `update/` beside the reader (the Kobo's storage, never RAM: a package is ~13 MB), in the
+  background like Wi-Fi, so the loop and its heartbeat go on; its share drawn as a bar at most every half second,
+  Cancel stops it (nothing changed). Its size must be the one announced (shorter: "stopped before it finished"; longer:
+  not verified), then the signature. HTTPS does not depend on the firmware's CA roots: the reader carries Go's own copy
+  (`golang.org/x/crypto/x509roots/fallback`, used when Go finds none on the system).
+- **The install** (`update.Install`), `reader/kobo/install.sh`'s whole-file moves done by the reader: the package
+  unpacked into `update/new` (plain files under the reader's folder only), then each file moved in, the one it replaces
+  moved into `previous/` first (fonts and licences no longer in the package too); the launcher's library, when it
+  differs, written beside its place and moved in (the old one kept as `previous/launcher.so`), Nickel loading it at its
+  next start. `update/pending` (the version) and `update/added` (the files with no old one) are written before
+  anything moves. User data is never touched: a package holds none (settings, places, highlights, books, sleep
+  screens, logs, the books' cache; only the cached opening and loading screens are removed, to be drawn anew).
+- **The restart and the way back:** "Restarting with the new version…" stays on the screen and the reader exits with
+  code 85 (`update.RestartCode`). The launcher that started it, the old version's `launch.sh`, starts the new reader on
+  the library; the new one removes `update/pending` once it shows the library (`update.Reached`). If it ends with
+  `pending` still there (a crash, the watchdog, the power gone during the install), the launcher puts `previous/` back,
+  removes what the update added, writes `update/undone` and starts the old reader again, which says "The update did
+  not start, so the previous version was put back." So the trial of a new version is always supervised by the old
+  launcher; the new `launch.sh` is used from the next start. `previous/` stays until the next update.
+- **Trying it before a release** (dev mode only): `dev/update-url` points the reader at another `latest.json`, and
+  `dev/update-key` adds a test key: `make update-serve` serves a package signed with a test key from the Mac (port
+  8090), `make kobo-update-dev` puts both files on the Kobo (`docs/TESTING.md`). A release build has no `dev/`.
+- **The Kindle:** Check says updates over Wi-Fi are not on this device yet (until its Wi-Fi, Now, step 6).
+
 ### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
 
 The reader stops Kobo's interface while a book is open, and with it Kobo's own watchdog (`sickel`: Nickel pings it over

@@ -74,16 +74,14 @@ keyboard first ("Now").
 
 **Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
 - [ ] **Updates over Wi-Fi** (step 2, early: the beta testers get every later feature and fix without a computer).
-  Settings, Check for updates: the reader reads a `latest.json` on FarsiEPUB (version, package URL, size, ed25519
-  signature; static, from Hugo or the router, no API container; maybe the packages mirrored in R2, reachable from Iran;
-  FarsiEPUB's side is the maintainer's). The `.sha256` is not enough over the network: CI signs each release with a key
-  in GitHub's secrets, the reader carries the public key. Install: downloaded to a temporary folder, verified,
-  Restarting..., swapped in place with `reader/kobo/install.sh`'s whole-file moves, the old version kept; if the new one
-  does not reach the library (the watchdog), the launcher goes back to the old one and says so. The first
-  self-updating version still goes on by USB; the Kindle updates over USB until step 6. Wi-Fi as decided for step 1
-  (2026-11-20, `DESIGN.md`, "Wi-Fi on demand"): Check for updates asks before turning Wi-Fi on when it is off
-  ("Wi-Fi is off. Turn it on to check for updates?") and turns it off again after; **never in the background**: an
-  automatic check, if one comes, runs only when Wi-Fi is already on, never turning it on itself
+  **Built and tried on the Kobo 2026-11-20** (`DESIGN.md`, "Updates over Wi-Fi"): with a test key, an update installed
+  and kept, and a broken one undone by the launcher; the release key made (`make signing-key`), CI signs every
+  release. Left: confirmed with the first two real releases (the first by USB, the next over Wi-Fi, from
+  farsiepub.org's `latest.json`); then this item leaves the file. To decide: an end-to-end scenario on the simulator
+  (a local server, the launcher's restart loop shared with it); a "Checking…" screen while Wi-Fi connects; whether
+  `previous/` stays after a good update (it does now, for a later "go back"); immutable releases on GitHub (the
+  maintainer's setting). **Never in the background:** an automatic check, if one comes, runs only when Wi-Fi is
+  already on, never turning it on itself
 - [ ] Before the first such release: (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
   PNG) and name from `.adds/shamsaink/`, its built-in ones as fallback, so brand changes ride with the reader; after
   that the launcher changes only when Kobo's firmware forces it, and then the reader places `Kobo.tgz` and says it

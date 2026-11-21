@@ -5,6 +5,11 @@ packages and puts them on GitHub's Releases page. A version's section here is it
 is at the end, under "Versions and releases".
 
 ## Unreleased
+- **Updates over Wi-Fi** (Kobo): Settings, Updates, Check looks for a newer version and, on Update, downloads it,
+  checks it is ours (signed), installs it and restarts on it; if the new version does not start, the previous one is
+  put back and says so. Wi-Fi is asked for first when it is off, and turned off again after. Your books, places,
+  highlights and settings are not touched. This version is installed by USB; the ones after it can come over Wi-Fi.
+  The Kindle: not yet (it says so).
 - **Opening ShamsaInk twice by accident** (Kobo): a double tap on ShamsaInk's row in More could start it twice, and the
   Kobo restarted. The second tap is ignored now.
 - **Dialogs:** the main button has its icon before its word, Remove's a trash can.
