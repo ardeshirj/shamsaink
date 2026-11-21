@@ -7,7 +7,7 @@
 #     sh reader/scripts/build.sh
 set -e
 cd "$(dirname "$0")/../.."
-VERSION=$(git describe --tags --match 'v[0-9]*' --dirty --always)
+VERSION=${VERSION:-$(git describe --tags --match 'v[0-9]*' --dirty --always)} # make kobo-package VERSION=v0.9.0-test: a test update (update-serve.sh)
 docker run --rm -v "$PWD":/r -v eink-cargo:/cargo -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build \
   -e VERSION="$VERSION" -w /r eink-rust sh reader/scripts/build-armv7.sh
 ls -l reader/out/shamsaink | awk -v v="$VERSION" '{print $5 " bytes, " v}'

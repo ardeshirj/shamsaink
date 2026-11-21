@@ -22,11 +22,16 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        and go list): out/licenses/THIRD-PARTY-LICENSES.md, in both packages' licenses/
 #   make tag V=0.0.1 NOTE="…"  tag a release on a clean main (reader/scripts/release.sh); push it yourself, and CI
 #                        builds and publishes it (CHANGELOG.md, "How to release")
+#   make signing-key     once, by the maintainer: the release signing key for updates over Wi-Fi (reader/scripts/
+#                        signing-key.sh): its private half into GitHub's secret and a backup in the home folder, its
+#                        public half printed, for reader/update/keys.go
+#   make update-serve    a test update served from this Mac on port 8090 (reader/scripts/update-serve.sh): the newest
+#                        Kobo package signed with a test key, for a Kobo in dev mode (make kobo-update-dev)
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
 #                        committing (docs/DESIGN-SYSTEM.md)
 
-.PHONY: reader welcome licenses engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag
+.PHONY: reader welcome licenses engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag signing-key update-serve
 
 reader:
 	@sh reader/scripts/build.sh
@@ -49,6 +54,12 @@ kindle-package: reader welcome licenses
 
 tag:
 	@sh reader/scripts/release.sh "$(V)" "$(NOTE)"
+
+signing-key:
+	@sh reader/scripts/signing-key.sh
+
+update-serve:
+	@sh reader/scripts/update-serve.sh
 
 engine:
 	@$(DOCKER) sh -c 'cd /r/engine && cargo build --release --features parallel --lib --bins'
@@ -80,6 +91,7 @@ check:
 #   make kobo-package-install PKG=file  a package file installed the same way (its .sha256 beside it checked)
 #   make kobo-release-install V=0.0.1  a release's package downloaded from GitHub (into out/download; with `gh` while the
 #                        repository is private, curl once public), checked and installed the same way
+#   make kobo-update-dev dev/update-url and dev/update-key put on the Kobo, so it updates from make update-serve
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
 #   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
 #                        and the battery's use per hour
@@ -110,7 +122,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -124,6 +136,10 @@ kindle-check: devtest
 
 kobo-reader-install: kobo-package
 	@sh reader/kobo/install.sh $(KOBO) out/release/shamsaink-$(VERSION)-kobo.tgz
+
+# dev/update-url and dev/update-key on the Kobo, for a test update from make update-serve
+kobo-update-dev:
+	@sh reader/scripts/update-serve.sh kobo $(KOBO)
 
 kobo-package-install:
 	@[ -n "$(PKG)" ] || { echo "make kobo-package-install PKG=out/release/shamsaink-…-kobo.tgz"; exit 1; }

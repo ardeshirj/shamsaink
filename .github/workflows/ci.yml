@@ -9,7 +9,7 @@
 #          walk-en, reading (read-along, rtl-fa, follow-language) and languages (the other right-to-left languages,
 #          e2e/scenarios/languages/: our own Arabic, Hebrew, Urdu and mixed books; make e2e-sim-all plays the same groups
 #          on the Mac). A failure's folder (step, log, screen, reference, difference) attached to the run, named by its group
-#   release  on a pushed version tag only, after check, build and every group of test: the Kobo's and the Kindle's packages built and published as a GitHub release
+#   release  on a pushed version tag only, after check, build and every group of test: the Kobo's and the Kindle's packages built, signed (updates over Wi-Fi) and published as a GitHub release
 #          (CHANGELOG.md, "How to release")
 # On our own books (e2e/books, 2026-11-13; built by the scenarios, nothing downloaded). Their pages are held against
 # their SHA-256 in e2e/refs.sum (docs/TESTING.md, section 4) and kept as pictures (e2e/refs/LANG/): a page that differs is attached with the old one and their difference.
@@ -175,6 +175,16 @@ jobs:
         run: |
           VERSION="$GITHUB_REF_NAME" sh reader/scripts/package.sh
           VERSION="$GITHUB_REF_NAME" BRAND=kindle sh reader/scripts/package.sh
+      - name: the packages signed for updates over Wi-Fi (reader/cmd/sign; the key, GitHub's secret, from make signing-key)
+        env:
+          SHAMSAINK_SIGNING_KEY: ${{ secrets.SHAMSAINK_SIGNING_KEY }}
+        run: |
+          if [ -z "$SHAMSAINK_SIGNING_KEY" ]; then
+            echo "::error::no secret SHAMSAINK_SIGNING_KEY: an unsigned release could not be installed over Wi-Fi, so none is made"
+            exit 1
+          fi
+          cd reader && go run ./cmd/sign -version "$GITHUB_REF_NAME" ../out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz \
+            ../out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz
       - name: the release, on GitHub
         env:
           GH_TOKEN: ${{ github.token }}
@@ -183,8 +193,7 @@ jobs:
           awk -v v="$v" '$0 ~ "^## "v" " {on=1; next} on && /^## / {exit} on' CHANGELOG.md > notes.md
           [ -s notes.md ] || git tag -l --format='%(contents)' "$GITHUB_REF_NAME" > notes.md
           case "$v" in 0.*|*-*) pre=--prerelease ;; *) pre= ;; esac
-          gh release create "$GITHUB_REF_NAME" out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz \
-            out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz.sha256 \
-            out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz \
-            out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz.sha256 \
+          # each package, its .sha256 and its .sig (when signed: FarsiEPUB's latest.json lists the .sig it finds)
+          files=$(ls out/release/shamsaink-"$GITHUB_REF_NAME"-kobo.tgz* out/release/shamsaink-"$GITHUB_REF_NAME"-kindle.tgz*)
+          gh release create "$GITHUB_REF_NAME" $files \
             --title "ShamsaInk $v" --notes-file notes.md $pre --verify-tag
