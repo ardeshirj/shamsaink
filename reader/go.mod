@@ -7,6 +7,7 @@ toolchain go1.27.4
 
 require (
 	github.com/readium/go-toolkit v0.16.2
+	golang.org/x/crypto/x509roots/fallback v0.0.0-20261115193255-739070949446
 	golang.org/x/image v0.47.0
 	gopkg.in/yaml.v3 v3.0.1
 	shamsainkengine v0.0.0
