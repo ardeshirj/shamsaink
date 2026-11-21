@@ -171,8 +171,11 @@ done
 sleep 0.5
 sync
 # Nickel and the rest of rc.local's tail, and its watchdog (sickel, under its own launcher loop, comes back by itself);
-# fontickel and adobehost go when Nickel starts again (start_nickel)
-killall -q -TERM nickel sickel hindenburg memorylogger
+# fontickel and adobehost go when Nickel starts again (start_nickel). Nickel's helpers too, as KOReader's
+# platform/kobo/koreader.sh stops them with Nickel: its web view's QtWebEngineProcess (the two zygotes, ~15 MB, were
+# left to init by every Nickel stopped: three pairs after two sessions, 2026-11-20), the PDF reader's foxitpdf and
+# iink (handwriting); each new Nickel starts its own
+killall -q -TERM nickel sickel hindenburg memorylogger QtWebEngineProcess foxitpdf iink
 i=0
 while pidof nickel > /dev/null && [ $i -lt 20 ]; do usleep 250000; i=$((i + 1)); done
 pidof nickel > /dev/null && log "Nickel still running after 5 s"
