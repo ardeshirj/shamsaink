@@ -80,6 +80,10 @@ func main() {
 	rd.dev, err = device.Open()
 	check(err)
 	set := loadSettings(rd.dir)
+	set.Dark = startDark(set.DarkChoice, rd.dev.Screen.DeviceDark())
+	if set.DarkChoice == nil {
+		fmt.Printf("dark mode %s: the device's (none chosen)\n", map[bool]string{true: "on", false: "off"}[set.Dark])
+	}
 	rd.dev.Screen.SetInvert(set.Dark)
 	rd.dev.SetReverseButtons(set.ReverseButtons)
 	rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)

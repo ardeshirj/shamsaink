@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,5 +49,28 @@ func TestCleanEvery(t *testing.T) {
 	}
 	if s.stepClean("light-inc") || s.stepClean("clean-light-x") || s.stepClean("clean-every-inc") {
 		t.Error("another button stepped the count")
+	}
+}
+
+// Dark mode at a start: the device's own until chosen in the Light panel, then the choice; a file from before (with
+// "dark": true) keeps its dark, one without the key follows the device.
+func TestStartDark(t *testing.T) {
+	yes, no := true, false
+	for _, c := range []struct {
+		choice       *bool
+		device, want bool
+	}{{nil, false, false}, {nil, true, true}, {&yes, false, true}, {&no, true, false}} {
+		if got := startDark(c.choice, c.device); got != c.want {
+			t.Errorf("chosen %v, device dark %v: dark %v, want %v", c.choice, c.device, got, c.want)
+		}
+	}
+	for file, want := range map[string]*bool{`{"dark": true}`: &yes, `{"dark": false}`: &no, `{}`: nil} {
+		var s settings
+		if err := json.Unmarshal([]byte(file), &s); err != nil {
+			t.Fatal(err)
+		}
+		if (s.DarkChoice == nil) != (want == nil) || s.DarkChoice != nil && *s.DarkChoice != *want {
+			t.Errorf("%s: chosen %v, want %v", file, s.DarkChoice, want)
+		}
 	}
 }

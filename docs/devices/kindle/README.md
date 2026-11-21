@@ -66,6 +66,9 @@ port 2222 in the Kindle's firewall (INPUT's policy is DROP) while it runs. A res
   dark mode looks the same either way; the two stay separate, and Amazon's setting is never changed. Each row of greys
   is inverted in the reader's own memory and then copied in: inverting it in the framebuffer read it back, uncached
   memory, ~500 ms a page turn (experiment 17, 2026-11-21).
+- **Where the Kindle differs (2026-11-21):** until dark mode is chosen in ShamsaInk's Light panel, the reader starts
+  in the Kindle's own mode, read at each start: dark when Amazon's Dark Mode is on. Once chosen, the choice is kept.
+  The Kobo has no dark mode outside its books, so there the reader starts light until chosen.
 
 **Each `lipc-get-prop` or `lipc-set-prop` costs 35 to 40 ms.**
 - What we do: the light is read from `powerd` once and kept in the reader; a tap changes the copy at once and the

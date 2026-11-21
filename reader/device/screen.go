@@ -105,6 +105,11 @@ func (s *Screen) Show(p *image.Gray, waveform uint32, flash bool) {
 // mode is dark either way.
 func (s *Screen) SetInvert(on bool) { s.dark, s.invert = on, on != s.hwInvert }
 
+// DeviceDark says whether the device's own interface is in dark mode, for the reader to start as it looks until dark
+// mode is chosen in it: the Kindle's Dark Mode (its screen inverting, kindleInverts); never on the Kobo, which has none
+// outside its books.
+func (s *Screen) DeviceDark() bool { return s.hwInvert }
+
 // SetTint draws r of the screen in red from the next Show on, on a colour screen (a grey one ignores it): each ink grey
 // there becomes red, paper staying paper (white, or black in dark mode). The empty rectangle takes it off. For the
 // battery when it is low, so it follows every page, panel and refresh that covers the bar.

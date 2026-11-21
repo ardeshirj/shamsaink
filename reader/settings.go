@@ -31,8 +31,14 @@ type settings struct {
 	// Minutes untouched before the device is put to sleep (device.SleepMinutes; one not among them, such as the 0 that
 	// was never until 2026-11-07, read as the default).
 	SleepMin int `json:"sleep_min"`
-	// Dark mode: the screen inverted (device.Screen.SetInvert), set from the Light panel.
-	Dark bool `json:"dark,omitempty"`
+	// Dark mode as chosen in the Light panel; none until it is chosen there, and then the device's own mode is followed
+	// at each start (startDark), so the reader opens as the device looks: the Kindle's Dark Mode; the Kobo has none
+	// outside its books, so light (2026-11-21). Under the key "dark", as before: a file from before, with "dark": true,
+	// keeps its dark; one without it follows the device.
+	DarkChoice *bool `json:"dark,omitempty"`
+	// Dark mode now (device.Screen.SetInvert): the choice, else the device's (startDark). Not saved, so the device's
+	// mode is never taken for a choice.
+	Dark bool `json:"-"`
 	// The page buttons swapped (the lower goes back): off by default, the lower button forward.
 	ReverseButtons bool `json:"reverse_buttons,omitempty"`
 	// Clean the screen (a full refresh with its flash) every this many page turns, one count for light mode (none at first)
@@ -106,6 +112,14 @@ func (s *settings) change(id, key string, lines float32) (layout bool) {
 		return false
 	}
 	return true
+}
+
+// startDark is dark mode at a start: as chosen in the Light panel, else the device's own (device: its Dark Mode is on).
+func startDark(choice *bool, device bool) bool {
+	if choice != nil {
+		return *choice
+	}
+	return device
 }
 
 // nextLines is the line spacing a step wider or narrower than set (0: the book's own, book, measured as laid out):
