@@ -5,10 +5,16 @@ packages and puts them on GitHub's Releases page. A version's section here is it
 is at the end, under "Versions and releases".
 
 ## Unreleased
-- **Updates over Wi-Fi** (Kobo and Kindle): Settings, Updates, Check looks for a newer version and, on Update, downloads it,
-  checks it is ours (signed), installs it and restarts on it; if the new version does not start, the previous one is
-  put back and says so. Wi-Fi is asked for first when it is off, and turned off again after. Your books, places,
-  highlights and settings are not touched. This version is installed by USB; the ones after it can come over Wi-Fi.
+
+## 0.4.0-beta (2026-11-20)
+Updates over Wi-Fi: the first version that can update itself.
+- **Updates over Wi-Fi** (Kobo and Kindle): Settings, Updates, Check looks for a newer version and, on Update, downloads
+  it, checks it is ours (signed), installs it and restarts on it; if the new version does not start, the previous one
+  is put back and says so. Wi-Fi is asked for first when it is off, and turned off again after; nothing is checked by
+  itself. Your books, places, highlights and settings are not touched. This version is installed by USB, as before;
+  the ones after it can come over Wi-Fi.
+- **Words chosen by accident** (Kobo): a swipe, or a finger left a moment on the page, could select a word, as the Kobo
+  reports one touch as many. One touch is one touch now.
 - **Opening ShamsaInk twice by accident** (Kobo): a double tap on ShamsaInk's row in More could start it twice, and the
   Kobo restarted. The second tap is ignored now.
 - **Dialogs:** the main button has its icon before its word, Remove's a trash can.
