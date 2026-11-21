@@ -240,5 +240,42 @@ watch() {
 rm -f /tmp/shamsaink-alive
 watch &
 L4=$!
-./shamsaink "${BOOK:--library}" fonts >> logs/reader.log 2>&1
-log "reader exited ($?)"
+# Updates over Wi-Fi (reader/update, docs/DESIGN.md "Updates over Wi-Fi"): the reader installs a new version (its files
+# moved in, the ones they replaced in previous/, update/pending written first) and exits with 85; this launch, the old
+# version's, starts the new reader on the library. The new one removes update/pending once it shows the library; if it
+# ends while pending is still there (it crashed, the watchdog killed it, the power went half way through the install),
+# previous/ is put back (and the files the update added removed, update/added) and the old version is started again,
+# which says so (update/undone). The new launch.sh is used from the next start on: this one, the old, does the trial.
+undo_update() {
+  v=$(cat update/pending 2>/dev/null)
+  [ -f update/added ] && while IFS= read -r f; do [ -n "$f" ] && rm -f "$f"; done < update/added
+  [ -d previous ] && (cd previous && find . -type f ! -name launcher.so) | while IFS= read -r f; do
+    mkdir -p "$(dirname "$f")" && mv "previous/$f" "$f"
+  done
+  if [ -f previous/launcher.so ]; then
+    L=/usr/local/Kobo/imageformats/libshamsaink-launcher.so
+    cat previous/launcher.so > $L.new && chmod 755 $L.new && mv $L.new $L && rm previous/launcher.so
+  fi
+  # previous/ emptied by the moves back: its folders removed (a file left in it, a move that failed, stays)
+  [ -d previous ] && find previous -depth -type d -exec rmdir {} \; 2>/dev/null
+  echo "$v" > update/undone
+  rm -f update/pending update/added
+  sync
+  log "update to ${v:-?} undone: it did not reach the library; $(cat VERSION 2>/dev/null) put back"
+}
+ARG=${BOOK:--library}
+while :; do
+  ./shamsaink "$ARG" fonts >> logs/reader.log 2>&1
+  code=$?
+  log "reader exited ($code)"
+  if [ $code = 85 ] && [ -f update/pending ]; then
+    log "update installed: starting $(cat VERSION 2>/dev/null)"
+    ARG=-library
+    rm -f /tmp/shamsaink-alive
+    continue
+  fi
+  [ -f update/pending ] || break
+  undo_update
+  ARG=-library
+  rm -f /tmp/shamsaink-alive
+done
