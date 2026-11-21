@@ -84,6 +84,7 @@ var uiTemplates = template.Must(template.New("ui").Funcs(uiFuncs(nil)).ParseFS(f
 type dialog struct {
 	ID, Text, Title, Dir, Note string
 	Icon                       string // drawn before the sentence, for a notice that says something failed (dicon)
+	Bar                        string // a progress bar under the sentence, filled to this per cent ("" none; dbar)
 	Lang                       template.HTMLAttr
 	Buttons                    []button
 }
@@ -157,6 +158,12 @@ func uiFuncs(ids *[]string) template.FuncMap {
 				glyph(icon)
 			}
 			d.Icon = icon
+			return d
+		},
+		"dbar": func(share int, d dialog) dialog { // a progress bar, filled to share per cent (below 0: none)
+			if share >= 0 {
+				d.Bar = fmt.Sprint(min(share, 100))
+			}
 			return d
 		},
 		"pick": func(id, label string, on bool) button {

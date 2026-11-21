@@ -301,6 +301,24 @@ func Validate(s *Spec, src Sources) []string {
 			}
 		}
 	}
+	// every screen in exactly one group of the design page (groups.yaml)
+	inGroup := map[string]string{}
+	for _, g := range s.Groups {
+		for _, n := range g.Screens {
+			switch {
+			case s.Screens[n] == nil:
+				f("groups.yaml: %s: no screen %s", g.Name, n)
+			case inGroup[n] != "":
+				f("groups.yaml: %s is in %s and %s", n, inGroup[n], g.Name)
+			}
+			inGroup[n] = g.Name
+		}
+	}
+	for _, n := range sortedKeys(s.Screens) {
+		if inGroup[n] == "" {
+			f("groups.yaml: screen %s is in no group", n)
+		}
+	}
 	if entry == "" {
 		f("no entry screen")
 		return bad

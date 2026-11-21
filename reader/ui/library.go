@@ -265,13 +265,14 @@ type LibrarySettings struct {
 	SleepMin       int
 	HasButtons     bool
 	ReverseButtons bool
-	Version        string // the reader's build, a small grey line at the end (none when empty)
+	Version        string // the reader's build: Updates' second line, small and grey (no Updates row when empty)
 }
 
 // DrawLibrarySettings draws the Settings panel, directly under the bar (under px from the top), in place of the menu it
 // was opened from: no title, rows with the setting's name at the start and its switch or stepper at the far end:
 // "Sleep after" (sleep-dec and sleep-inc), then the switches: "Follow book language" (lang-follow), on a device with
-// page buttons "Reverse page buttons" (buttons-reverse); under them the version, small and grey.
+// page buttons "Reverse page buttons" (buttons-reverse); under them Updates, the version as its second line, and Check
+// (update-check) at the row's end.
 func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w int) *Panel {
 	sleep := word("min", num(st.SleepMin))
 	html, ids := render("library-settings.html", struct {
@@ -379,11 +380,42 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 }
 
 // DrawNotice draws a notice (templates/notice.html: the dialog component), the words of key, after the icon named
-// icon when not "" (a crossed-out Wi-Fi when it failed), and Close (its button notice-close), w px wide at most; the
-// caller places it (SetY).
-func DrawNotice(key, icon string, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("notice.html", struct{ Key, Icon string }{key, icon})
+// icon when not "" (a crossed-out Wi-Fi when it failed), a grey line under them when note is given (a version: never
+// inside the sentence, 2026-11-20, the maintainer: no Latin popping out of a Farsi one), and Close (its button
+// notice-close), w px wide at most; the caller places it (SetY).
+func DrawNotice(key, icon string, fonts *blitz.Fonts, w int, note ...string) *Panel {
+	d := struct{ Text, Icon, Note string }{word(key), icon, ""}
+	if len(note) > 0 {
+		d.Note = ltr(note[0])
+	}
+	html, ids := render("notice.html", d)
 	return drawPanelIn(html, ids, "notice-box", fonts, w, 900)
+}
+
+// ltr is s kept left to right inside a sentence (a version, "v0.4.0-beta", in a Farsi one): Unicode's isolate marks.
+func ltr(s string) string { return "\u2066" + s + "\u2069" }
+
+// DrawUpdateAvailable draws the question when a newer version is out (templates/update-available.html): "A new version
+// is available.", the version on a grey line of its own, then Update (update-install, its download icon) and Later
+// (update-later).
+func DrawUpdateAvailable(version string, fonts *blitz.Fonts, w int) *Panel {
+	html, ids := render("update-available.html", struct{ Text, Version string }{word("update-available"), ltr(version)})
+	return drawPanelIn(html, ids, "update-box", fonts, w, 900)
+}
+
+// DrawUpdateProgress draws an update under way (templates/update-progress.html): downloading the new version, share per
+// cent of it, with a bar and Cancel (update-cancel); with share below 0, restarting with it, no buttons. The version on
+// a grey line of its own.
+func DrawUpdateProgress(version string, share int, fonts *blitz.Fonts, w int) *Panel {
+	d := struct {
+		Text, Version string
+		Share         int
+	}{word("update-restarting"), ltr(version), share}
+	if share >= 0 {
+		d.Text = word("update-downloading", word("percent", num(share)))
+	}
+	html, ids := render("update-progress.html", d)
+	return drawPanelIn(html, ids, "update-progress-box", fonts, w, 900)
 }
 
 // DrawWiFiAsk draws the question before Wi-Fi is turned on (templates/wifi-ask.html): the words of key (what it is for:

@@ -2,6 +2,10 @@
 name: kindle-paperwhite-11
 screen: {width: 1236, height: 1648, ppi: 300}
 page_buttons: false    # none: pages turn by touch only
+# What only the Kindle shows (2026-11-20: the design page shows each screen once, as the Kobo draws it, and under the
+# Kindle what differs): the notices for what it has not yet. What it lacks (no headphones in the bar, no Sound panel, no
+# Reverse page buttons) is found from the renders and the controls' requires.
+only_here: [notice/listen, notice/wifi-not-here, notice/update-not-here]
 # What it has, of design.Capabilities: a front light with a warmth. No colour, no sound yet (Amazon's player, experiment
 # 12, not built: Listen shows a notice), no page buttons.
 has: [light, warmth]

@@ -105,5 +105,19 @@
   "cancel": "Cancel",
   "wifi-no-network": "No Wi-Fi network is saved. Join one once in the device's Wi-Fi settings.",
   "wifi-no-address": "Couldn't connect to Wi-Fi. Try again later.",
-  "wifi-not-here": "Wi-Fi is not available on this device yet."
+  "wifi-not-here": "Wi-Fi is not available on this device yet.",
+  "updates": "Updates",
+  "check": "Check",
+  "wifi-off-update": "Wi-Fi is off. Turn it on to check for updates?",
+  "update-none": "This is the latest version.",
+  "update-available": "A new version is available.",
+  "update": "Update",
+  "later": "Later",
+  "update-downloading": "Downloading the new version… %s",
+  "update-restarting": "Restarting with the new version…",
+  "update-unreachable": "Couldn't reach the update server. Try again later.",
+  "update-cut": "The download stopped before it finished. Nothing was changed.",
+  "update-unverified": "The download could not be verified, so it was not installed. Nothing was changed.",
+  "update-undone": "The update did not start, so the previous version was put back.",
+  "update-not-here": "Updates over Wi-Fi are not on this device yet: install new versions with a computer."
 }

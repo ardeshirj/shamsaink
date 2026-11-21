@@ -28,6 +28,9 @@ div.dialog p.t { font-weight: bold; }
 div.dialog p.n { font-size: 0.85em; color: #444; }
 /* a notice's icon before its sentence, at the first line's height */
 div.dialog p.ic { display: flex; align-items: flex-start; gap: 0.5em; }
+/* a progress bar (an update's download): an outline filled from the start */
+div.dialog div.bar { height: 0.5em; margin: 0.2em 0 0.6em; border: var(--line) solid var(--ink); border-radius: 0.3em; box-sizing: border-box; display: flex; }
+div.dialog div.bar i { display: block; height: 100%; background: var(--ink); }
 
 /* a button: its words, and an icon before them centred on them */
 span.b { display: inline-flex; align-items: center; gap: 0.3em; border: var(--line) solid var(--ink); border-radius: var(--radius); padding: var(--pad); }

@@ -11,7 +11,6 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
 .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 80px; }
-nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; display: flex; gap: 16px; flex-wrap: wrap; font-size: 14px; z-index: 1; }
 a { color: var(--accent); }
 h1 { margin: 32px 0 4px; font-size: 28px; } h2 { margin: 48px 0 8px; font-size: 22px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
 h3 { margin: 32px 0 4px; font-size: 18px; } .lede { color: var(--mute); margin: 0 0 16px; }
@@ -23,36 +22,52 @@ th { color: var(--mute); font-weight: 600; }
 .tag { display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 0 8px; color: var(--mute); margin-right: 4px; }
 .tag.planned { color: var(--accent); }
 .shots { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; margin: 12px 0 4px; }
+/* a case's renders (English, Farsi, right to left) kept on one line, side by side, shrunk to fit: the difference at a glance */
+.shots .case { display: flex; gap: 8px; align-items: flex-start; max-width: 100%; }
+.shots .case figure { flex: 0 1 auto; min-width: 0; } .shots .case img { max-width: 100%; height: auto; }
 figure { margin: 0; } figure img { display: block; max-width: 100%; border: 1px solid var(--line); background: #fff; } figcaption { font-size: 12px; color: var(--mute); margin-top: 4px; }
 .swatch { display: inline-block; width: 14px; height: 14px; border: 1px solid var(--line); vertical-align: -2px; margin-right: 6px; }
 ul.flow { columns: 2 380px; padding-left: 18px; font-size: 14px; }
 details.sec { margin: 28px 0 0; border-bottom: 1px solid var(--line); }
 details.sec > summary { cursor: pointer; font-size: 22px; font-weight: 600; padding: 8px 0; list-style: none; }
-details.sec > summary::before, details.screen > summary::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--mute); }
+details.sec > summary::before { content: "▸"; display: inline-block; width: 1.1em; color: var(--mute); }
 details[open] > summary::before { content: "▾"; }
-details.sec > summary::-webkit-details-marker, details.screen > summary::-webkit-details-marker { display: none; }
+details.sec > summary::-webkit-details-marker { display: none; }
 details.sec > .body { padding: 4px 0 24px; }
-details.screen { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; background: var(--card); }
-details.screen > summary { cursor: pointer; padding: 10px 14px; list-style: none; font-weight: 600; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-details.screen > summary .sub { font-weight: 400; color: var(--mute); font-size: 14px; flex: 1 1 100%; margin-left: 1.1em; }
-details.screen > .body { padding: 0 14px 14px; }
+
+/* the screens as tiles: the name and tags on top, the first render under them, large; a tile opens the screen in a
+window over the page (#view), so the grid never moves */
+/* a group's name: a tile of its own at the start of its group, so the tiles run on in one grid (no short rows) */
+.tiles .group { display: flex; flex-direction: column; justify-content: center; gap: 4px; padding: 12px; border-radius: 8px; border: 1px dashed var(--line); color: var(--mute); }
+.tiles .group b { color: var(--fg); font-size: 18px; } .tiles .group span { font-size: 13px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: 1fr; gap: 12px; margin: 12px 0; }
+.tiles article.screen { display: flex; }
+/* every tile as tall as the tallest: the name and tags on top, the picture along the bottom */
+a.tile { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); text-decoration: none; }
+a.tile:hover, a.tile:focus-visible { border-color: var(--accent); }
+a.tile .head { display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+a.tile img.thumb { display: block; width: 100%; height: 220px; object-fit: contain; border: 1px solid var(--line); background: #fff; border-radius: 4px; margin-top: auto; }
+a.tile .head { margin-bottom: 8px; }
+dialog#view { width: min(1100px, 94vw); max-height: 90vh; padding: 16px 20px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); }
+dialog#view::backdrop { background: rgba(0, 0, 0, 0.45); }
+dialog#view h3 { margin: 0 0 6px; }
+dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font-size: 22px; line-height: 1; padding: 2px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--fg); cursor: pointer; }
+.body p.sub { color: var(--mute); font-size: 14px; margin: 0 0 8px; }
 .tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 0; }
 .tools button, .tools input { font: inherit; font-size: 14px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--fg); }
 .tools button { cursor: pointer; } .tools input { min-width: 220px; flex: 1 1 220px; }
 .index { font-size: 14px; } .index td, .index th { padding: 4px 10px 4px 0; }
 .hide { display: none !important; } .count { color: var(--mute); font-size: 14px; }
-nav a { white-space: nowrap; }
 </style>
 </head>
 <body><div class="wrap">
-<nav><a href="#principles">Principles</a><a href="#tokens">Tokens</a><a href="#devices">Devices</a><a href="#components">Components</a><a href="#flow">Flow</a><a href="#screens">Screens</a><a href="#buttons">Page buttons</a></nav>
 <h1>ShamsaInk design system</h1>
 <p class="lede">Generated from <code>reader/design/spec</code> and the renders kept in <code>reader/design/golden</code>. The renders are what the reader draws, at a third of their size. Change the spec, then the template; <code>make design-update</code> says what is out of step.</p>
 
 <div class="tools"><button type="button" id="expand">Expand all</button><button type="button" id="collapse">Collapse all</button>
 <input type="search" id="filter" placeholder="Filter screens by name, layer or control id" aria-label="Filter screens"><span class="count" id="count"></span></div>
 
-<details class="sec" id="principles" open><summary>Principles and rules</summary><div class="body">
+<details class="sec" id="principles"><summary>Principles and rules</summary><div class="body">
 <div class="cards">
 {{range .Principles}}<div class="card"><b>{{.Name}}</b><p>{{.Text}}</p><small>Kept by: {{.Check}}</small></div>
 {{end}}{{range .Rules}}<div class="card"><b>Rule: {{.Name}}</b><p>{{.Text}}</p><small>Kept by: {{.Check}}</small></div>
@@ -66,7 +81,13 @@ nav a { white-space: nowrap; }
 
 <details class="sec" id="devices"><summary>Devices</summary><div class="body">
 <table><tr><th>Profile</th><th>Screen</th><th>Waveforms</th><th>Smallest tap</th><th>Page buttons</th><th>Fonts</th></tr>
-{{range .Devices}}<tr><td><code>{{.Name}}</code></td><td>{{.Screen.Width}} × {{.Screen.Height}} at {{.Screen.PPI}} ppi</td><td>{{join .Waveforms ", "}}</td><td>{{.Tap.MinMM}} mm (+ {{.Tap.SlackPx}} px slack)</td><td>{{if .PageButtons}}yes{{else}}no{{end}}</td><td>{{range $k, $v := .Fonts}}{{$k}}: {{$v}}; {{end}}</td></tr>{{end}}</table></div></details>
+{{range .Devices}}<tr><td><code>{{.Name}}</code>{{if .Primary}} <span class="tag">every screen below as it draws them</span>{{end}}</td><td>{{.Screen.Width}} × {{.Screen.Height}} at {{.Screen.PPI}} ppi</td><td>{{join .Waveforms ", "}}</td><td>{{.Tap.MinMM}} mm (+ {{.Tap.SlackPx}} px slack)</td><td>{{if .PageButtons}}yes{{else}}no{{end}}</td><td>{{range $k, $v := .Fonts}}{{$k}}: {{$v}}; {{end}}</td></tr>{{end}}</table>
+{{range .Others}}<h3>How <code>{{.Name}}</code> differs</h3>
+<p class="lede">The panels are the same on every device: Screens shows them as <code>{{$.Primary.Name}}</code> draws them. On this one, {{.Screen.Width}} × {{.Screen.Height}}{{if not (has .Has "colour")}}, in grey{{end}}, only this differs (the tests still draw and compare every screen on it).</p>
+{{if .Missing}}<p>Not on this device: {{range $i, $n := .Missing}}{{if $i}}, {{end}}<a href="#screen-{{$n}}">{{$n}}</a>{{end}}.</p>{{end}}
+{{if .Differ}}<div class="shots">{{range .Differ}}<figure><img src="{{.Image.Path}}" width="{{.Image.Shown}}" alt="{{.Screen}}, {{.Image.Case}}, {{.Image.Lang}}" loading="lazy"><figcaption><a href="#screen-{{.Screen}}">{{.Screen}}</a> · {{.Image.Case}}: {{.Why}}</figcaption></figure>{{end}}</div>{{end}}
+{{if .OnlyHere}}<p>Only on this device:</p><div class="shots">{{range .OnlyHere}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}
+{{end}}</div></details>
 
 <details class="sec" id="components"><summary>Components</summary><div class="body">
 <table><tr><th>Component</th><th>Role</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
@@ -76,35 +97,62 @@ nav a { white-space: nowrap; }
 <p class="lede">Every way into a screen: <em>from → to: gesture control</em>. The app starts at the library; every way out of a panel lands on the page.</p>
 <ul class="flow">{{range .Flow}}<li>{{.}}</li>{{end}}</ul></div></details>
 
-<details class="sec" id="screens" open><summary>Screens</summary><div class="body">
-{{range .Devices}}<p class="lede">Renders for <code>{{.Name}}</code>, {{.Screen.Width}} × {{.Screen.Height}}, shown at a third. Each screen opens on its own; the filter searches names, layers and control ids.</p>
-<table class="index"><tr><th>Screen</th><th>Layer</th><th>Status</th><th>Controls</th><th>Renders</th></tr>
-{{range .Screens}}<tr data-screen="{{.Name}}"><td><a href="#screen-{{.Name}}">{{.Name}}</a></td><td>{{.Layer}}</td><td>{{.Status}}</td><td>{{len .Controls}}</td><td>{{len .Cases}}</td></tr>{{end}}</table>
-{{range .Screens}}<details class="screen" id="screen-{{.Name}}" data-find="{{.Name}} {{.Layer}} {{.Status}}{{range .Controls}} {{.ID}}{{end}}">
-<summary>{{.Name}} <span class="tag">{{.Layer}}</span><span class="tag{{if eq .Status "planned"}} planned{{end}}">{{.Status}}</span>{{if .Entry}}<span class="tag">app starts here</span>{{end}}{{if .Page}}<span class="tag">the page</span>{{end}}{{if .Buttons}}<span class="tag">buttons: {{.Buttons}}</span>{{end}}{{if .Dismiss}}<span class="tag">leave: {{.Dismiss}}</span>{{end}}{{if .Purpose}}<span class="sub">{{.Purpose}}</span>{{end}}</summary><div class="body">
+<details class="sec" id="screens"><summary>Screens</summary><div class="body">
+{{with .Primary}}<p class="lede">Renders for <code>{{.Name}}</code>, {{.Screen.Width}} × {{.Screen.Height}}, shown at a third. A tile opens the screen over the page, with its controls and every render (Esc or a click outside closes it); the filter searches names, layers and control ids.</p>
+{{end}}<div class="tiles">
+{{range .Groups}}<div class="group"><b>{{.Name}}</b><span>{{len .Screens}} screen{{if ne (len .Screens) 1}}s{{end}}</span></div>
+{{range .Screens}}<article class="screen" id="screen-{{.Name}}" data-find="{{.Name}} {{.Layer}} {{.Status}}{{range .Controls}} {{.ID}}{{end}}">
+<a class="tile" href="#screen-{{.Name}}"><span class="head"><b>{{.Name}}</b> <span class="tag">{{.Layer}}</span><span class="tag{{if eq .Status "planned"}} planned{{end}}">{{.Status}}</span>{{if .Entry}}<span class="tag">app starts here</span>{{end}}{{if .Page}}<span class="tag">the page</span>{{end}}{{if .Buttons}}<span class="tag">buttons: {{.Buttons}}</span>{{end}}{{if .Dismiss}}<span class="tag">leave: {{.Dismiss}}</span>{{end}}</span>{{with .Thumb}}<img class="thumb" src="{{.Path}}" alt="" loading="lazy">{{end}}</a><div class="body" hidden>
+<h3>{{.Name}}</h3>
+{{if .Purpose}}<p class="sub">{{.Purpose}}</p>{{end}}
 {{if .Controls}}<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
 {{range .Controls}}<tr><td><code>{{.ID}}</code></td><td>{{.Component}}</td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}{{range .Requires}} <span class="tag">needs {{.}}</span>{{end}}</td></tr>{{end}}</table>{{end}}
-{{$sc := .}}{{range .Cases}}{{$c := .}}<div class="shots">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}
-</div></details>
-{{end}}{{end}}</div></details>
+{{$sc := .}}<div class="shots">{{range .Cases}}{{$c := .}}<div class="case">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}</div>
+</div></article>
+{{end}}{{end}}</div></div></details>
+<dialog id="view" aria-label="Screen"><button type="button" class="close" aria-label="Close">×</button><div class="slot"></div></dialog>
 
 <details class="sec" id="buttons"><summary>Page buttons</summary><div class="body">
 <table><tr><th>Map</th><th>Forward</th><th>Back</th><th>Hold forward</th><th>Hold back</th></tr>
 {{range $n, $m := .Buttons}}<tr><td><code>{{$n}}</code></td><td>{{$m.Forward}}</td><td>{{$m.Back}}</td><td>{{$m.HoldForward}}</td><td>{{$m.HoldBack}}</td></tr>{{end}}</table></div></details>
 <script>
 (function () {
-  var secs = document.querySelectorAll("details.sec"), shots = document.querySelectorAll("details.screen");
-  function all(open) { document.querySelectorAll("details").forEach(function (d) { d.open = open; }); }
+  var shots = document.querySelectorAll("article.screen"), view = document.getElementById("view"), slot = view.querySelector(".slot");
+  function all(open) { document.querySelectorAll("details.sec").forEach(function (d) { d.open = open; }); }
   document.getElementById("expand").onclick = function () { all(true); };
   document.getElementById("collapse").onclick = function () { all(false); };
-  // a link to a screen, or the address of one, opens it and the section it is in
+  // a screen opens in the window over the page: its body moved in, and back to its tile when closed
+  var shown = null;
+  function put() {
+    if (shown) { var b = slot.firstElementChild; if (b) { b.hidden = true; shown.appendChild(b); } shown = null; }
+  }
+  function open(art) {
+    put();
+    var b = art.querySelector(".body");
+    b.hidden = false;
+    slot.appendChild(b);
+    shown = art;
+    if (!view.open) view.showModal();
+    view.scrollTop = 0;
+  }
+  view.addEventListener("close", function () {
+    put();
+    if (location.hash.indexOf("#screen-") === 0) history.replaceState(null, "", location.pathname + location.search);
+  });
+  view.querySelector(".close").onclick = function () { view.close(); };
+  view.addEventListener("click", function (e) { if (e.target === view) view.close(); }); // a click on the backdrop
+  // the address: a screen's (#screen-NAME: a tile, or a link between screens) opens it; any other, its section
   function show() {
     var el = location.hash && document.getElementById(location.hash.slice(1));
+    if (!el) return;
+    if (el.matches("article.screen")) { document.getElementById("screens").open = true; open(el); return; }
     for (var d = el; d; d = d.parentElement) if (d.tagName === "DETAILS") d.open = true;
-    if (el) el.scrollIntoView();
+    el.scrollIntoView();
   }
+  // every section collapsed as the page loads (a browser may bring back what was open), then a linked one opened
+  all(false);
   window.addEventListener("hashchange", show); show();
-  // the filter: screens that match stay (and open when it is not empty), the index rows follow
+  // the filter: the tiles that match stay
   var box = document.getElementById("filter"), count = document.getElementById("count");
   function filter() {
     var q = box.value.trim().toLowerCase(), n = 0;
@@ -112,9 +160,12 @@ nav a { white-space: nowrap; }
       var hit = !q || d.dataset.find.toLowerCase().indexOf(q) >= 0;
       d.classList.toggle("hide", !hit);
       if (hit) n++;
-      if (q) d.open = hit;
-      var row = document.querySelector('tr[data-screen="' + d.id.slice(7) + '"]');
-      if (row) row.classList.toggle("hide", !hit);
+    });
+    // a group's label goes with its tiles (hidden when none of them match)
+    document.querySelectorAll(".tiles .group").forEach(function (g) {
+      var any = false;
+      for (var t = g.nextElementSibling; t && !t.matches(".group"); t = t.nextElementSibling) if (!t.classList.contains("hide")) any = true;
+      g.classList.toggle("hide", !any);
     });
     count.textContent = q ? n + " of " + shots.length + " screens" : "";
     if (q) document.getElementById("screens").open = true;

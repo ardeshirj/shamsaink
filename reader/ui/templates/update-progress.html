@@ -1,0 +1,5 @@
+{{/* An update under way (DrawUpdateProgress), in the middle of the screen: downloading, its share in words and as a bar,
+with Cancel (nothing is changed until the download is whole and verified); then restarting with the new version, no
+buttons; the version on a grey line of its own (2026-11-20). */ -}}
+{{template "head" ""}}</head><body>
+{{if ge .Share 0}}{{template "dialog" (dbar .Share (dlg "update-progress-box" .Text "" "" .Version (btn "update-cancel" (t "cancel"))))}}{{else}}{{template "dialog" (dlg "update-progress-box" .Text "" "" .Version)}}{{end}}</body></html>

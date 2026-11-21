@@ -83,6 +83,8 @@ type Device struct {
 		Width, Height, PPI int
 	} `yaml:"screen"`
 	PageButtons bool     `yaml:"page_buttons"` // the device has page-turn buttons
+	Primary     bool     `yaml:"primary"`      // the device the design page shows every screen on (the others: only how they differ)
+	OnlyHere    []string `yaml:"only_here"`    // render cases this device shows and the primary never does (SCREEN/CASE): on the design page under the device
 	Waveforms   []string `yaml:"waveforms"`
 	Has         []string `yaml:"has"`             // what the device has, of Capabilities: a control that requires something else is not on it
 	SleepAfter  int      `yaml:"sleep_after_min"` // minutes untouched before the reader puts the device to sleep (reader/device.SleepAfter); 0: the device does it
@@ -180,6 +182,13 @@ type Spec struct {
 	Devices    []Device
 	Components map[string]*Component
 	Screens    map[string]*Screen
+	Groups     []Group // the screens in groups, for the design page (groups.yaml)
+}
+
+// A group of screens on the design page, in the order they are met.
+type Group struct {
+	Name    string   `yaml:"name"`
+	Screens []string `yaml:"screens"`
 }
 
 func decode(b []byte, v any) error {
@@ -249,6 +258,16 @@ func LoadFS(fsys fs.FS) (*Spec, error) {
 		return nil, fmt.Errorf("principles.yaml: %w", err)
 	}
 	s.Principles, s.Rules = pr.Principles, pr.Rules
+	if b, err = fs.ReadFile(fsys, "groups.yaml"); err != nil {
+		return nil, err
+	}
+	var gr struct {
+		Groups []Group `yaml:"groups"`
+	}
+	if err := decode(b, &gr); err != nil {
+		return nil, fmt.Errorf("groups.yaml: %w", err)
+	}
+	s.Groups = gr.Groups
 	if s.Devices, err = readAll[Device](fsys, "devices"); err != nil {
 		return nil, err
 	}

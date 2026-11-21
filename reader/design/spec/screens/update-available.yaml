@@ -1,0 +1,12 @@
+name: update-available
+layer: panel   # in the place of Settings, which asked, as wifi-ask
+templates: [update-available.html]
+buttons: ring
+status: planned
+purpose: "A newer version is out (Settings, Updates, Check; roadmap step 2, designed 2026-11-20): the dialog component, A new version is available., the version on a grey line of its own (no Latin inside a sentence), then Update (its download icon) and Later; general and simple, no size and no summary (the maintainer). Later changes nothing."
+enter: [{gesture: update-found, from: library-settings}]
+controls:
+  - {id: update-install, component: button, action: replace, to: update-progress, does: "downloads the package, checks its size and signature, installs it and restarts"}
+  - {id: update-later, component: button, action: act, does: "closes the question; nothing changed"}
+dismiss: tap-outside
+words: [update-available, update, later]

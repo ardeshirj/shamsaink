@@ -1,0 +1,5 @@
+{{/* A newer version is out (DrawUpdateAvailable), in the place of Settings: the dialog component, "A new version is
+available.", the version on a grey line of its own (no Latin inside a sentence), then Update (its download icon) and
+Later. Kept general and simple (2026-11-20, the maintainer): no size, no summary. Later changes nothing. */ -}}
+{{template "head" ""}}</head><body>
+{{template "dialog" (dlg "update-box" .Text "" "" .Version (btni "update-install" "download-simple" (t "update")) (btn "update-later" (t "later")))}}</body></html>

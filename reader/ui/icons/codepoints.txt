@@ -41,3 +41,5 @@ battery-warning e0c8
 flask e79e
 wifi-high e4ea
 wifi-slash e4f2
+download-simple e20c
+warning-circle e4e2

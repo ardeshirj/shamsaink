@@ -3,11 +3,12 @@ layer: panel
 templates: [library-settings.html]
 buttons: ring
 status: built
-purpose: "Settings, rows with no title: Sleep after with a stepper, then the switches (Follow book language, and on a device with page buttons Reverse page buttons); under them, small and grey, the version of the reader running. A tap applies it at once."
+purpose: "Settings, rows with no title: Sleep after with a stepper, then the switches (Follow book language, and on a device with page buttons Reverse page buttons); under them Updates, its own row (2026-11-20, the maintainer: not a button on the version line, not in the menu): the version running as its grey second line, Check at the row's end. A tap applies it at once."
 enter: [{gesture: tap, control: settings, from: menu}]
 controls:
   - {id: lang-follow, component: toggle, action: act, does: "interface language follows the book's, or English only", emits: "interface language: (follows the book|English only)", undo: lang-follow}
   - {id: buttons-reverse, component: toggle, action: act, does: "the page buttons swapped: the lower goes back, the upper forward", requires: [buttons]}
   - {id: sleep, component: stepper, action: act, does: "minutes untouched before the reader sleeps the device, 5 the least, no never", values: ["5", "10", "15", "30", "60"]}
+  - {id: update-check, component: button, action: act, does: "checks for a newer version (roadmap step 2, designed 2026-11-20, not built): Wi-Fi off, asks first (wifi-ask); then up to date (notice), or update-available; on the Kindle, not on this device yet (notice)", walk: "never: reaches the network"}
 dismiss: tap-outside
-words: [follow-book, sleep-after, min, reverse-buttons, version]
+words: [follow-book, sleep-after, min, reverse-buttons, version, updates, check]

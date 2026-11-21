@@ -142,16 +142,16 @@ var renderDevice design.Device
 func renderHas(what string) bool { return slices.Contains(renderDevice.Has, what) }
 
 var designRenders = map[string][]renderCase{
-	"splash": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, false)) }},
-		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
+	"splash": {{"grey", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, false)) }},
+		{"colour", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Splash(tmp(), f, w, h, true)) }}},
 	"sleep": {{"couplet", en, func(f *blitz.Fonts, w, h int) rendered { // the screen's own text sets its direction, not the interface
 		return opened(&Opening{Gray: DrawSleep(Sleep{Layout: "couplet", Verses: []string{"بنی آدم اعضایِ یکدیگرند", "که در آفرینش ز یک گوهرند"},
 			Poet: "سعدی", Gloss: "آدمیان مانند اعضای یک پیکرند، چون همه از یک گوهر آفریده شده‌اند."}, f, w, h)})
 	}}, {"quote", en, func(f *blitz.Fonts, w, h int) rendered {
 		return opened(&Opening{Gray: DrawSleep(Sleep{Layout: "quote", Text: "A room without books is like a body without a soul.", Credit: "Cicero"}, f, w, h)})
 	}}},
-	"loading": {{"grey", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
-		{"colour", enFa, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
+	"loading": {{"grey", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, false)) }},
+		{"colour", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Loading(tmp(), f, w, h, true)) }}},
 	"leaving": {{"grey", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Leaving(tmp(), f, w, h, false)) }},
 		{"colour", en, func(f *blitz.Fonts, w, h int) rendered { return opened(Leaving(tmp(), f, w, h, true)) }}},
 	"topbar": {{"battery-full", enFaRtl, func(f *blitz.Fonts, w, h int) rendered {
@@ -267,7 +267,7 @@ var designRenders = map[string][]renderCase{
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
-	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
+	"library-settings": {{"follow", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: renderHas("buttons"), Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
@@ -293,8 +293,28 @@ var designRenders = map[string][]renderCase{
 	"notice": {{"listen", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", "", f, w)) }},
 		{"wifi-no-network", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-network", "wifi-slash", f, w)) }},
 		{"wifi-no-address", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-address", "wifi-slash", f, w)) }},
-		{"wifi-not-here", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-not-here", "", f, w)) }}},
-	"wifi-ask": {{"check", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawWiFiAsk("wifi-off-check", f, w)) }}},
+		{"wifi-not-here", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-not-here", "", f, w)) }},
+		{"update-none", enFa, func(f *blitz.Fonts, w, h int) rendered {
+			return rel(DrawNotice("update-none", "", f, w, "v0.3.6-beta"))
+		}},
+		{"update-not-here", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("update-not-here", "", f, w)) }},
+		{"update-unreachable", enFa, func(f *blitz.Fonts, w, h int) rendered {
+			return rel(DrawNotice("update-unreachable", "warning-circle", f, w))
+		}},
+		{"update-cut", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("update-cut", "warning-circle", f, w)) }},
+		{"update-unverified", enFa, func(f *blitz.Fonts, w, h int) rendered {
+			return rel(DrawNotice("update-unverified", "warning-circle", f, w))
+		}},
+		{"update-undone", enFa, func(f *blitz.Fonts, w, h int) rendered {
+			return rel(DrawNotice("update-undone", "arrow-counter-clockwise", f, w))
+		}}},
+	"wifi-ask": {{"check", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawWiFiAsk("wifi-off-check", f, w)) }},
+		{"update", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawWiFiAsk("wifi-off-update", f, w)) }}},
+	"update-available": {{"beta", enFa, func(f *blitz.Fonts, w, h int) rendered {
+		return rel(DrawUpdateAvailable("v0.4.0-beta", f, w))
+	}}},
+	"update-progress": {{"downloading", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawUpdateProgress("v0.4.0-beta", 40, f, w)) }},
+		{"restarting", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawUpdateProgress("v0.4.0-beta", -1, f, w)) }}},
 	"highlight-menu": {{"new", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(false, true, f, w)) }},
 		{"made", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawHighlightMenu(true, false, f, w)) }}},
 }

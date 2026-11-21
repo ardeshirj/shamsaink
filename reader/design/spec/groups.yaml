@@ -1,0 +1,11 @@
+# The screens in groups, for the design page (docs/design/system.html): by where the reader is, each group in the order
+# its screens are met (2026-11-20, the maintainer: not by name). Every screen in exactly one group (a check in
+# go test ./design).
+groups:
+  - {name: "Opening and closing", screens: [splash, loading, sleep, leaving]}
+  - {name: "Library", screens: [library, library-sort, library-book-menu, library-book-details, library-book-remove]}
+  - {name: "Reading", screens: [reading, dock, contents, text, highlight-menu]}
+  - {name: "The bar", screens: [topbar, menu, light, sound, battery]}
+  - {name: "Settings", screens: [library-settings, reading-settings, library-developer]}
+  - {name: "Wi-Fi and updates", screens: [wifi-ask, update-available, update-progress]}
+  - {name: "Notices", screens: [notice]}

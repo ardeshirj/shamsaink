@@ -1,0 +1,7 @@
+{
+ "placement": "relative",
+ "boxes": {
+  "update-install": [35, 162, 283, 234],
+  "update-later": [303, 162, 449, 234]
+ }
+}

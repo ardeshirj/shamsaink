@@ -3,6 +3,7 @@ name: kobo-libra-colour
 screen: {width: 1264, height: 1680, ppi: 300}
 # Waveforms the driver takes (reader/device/screen.go); a component's refresh names one of these.
 page_buttons: true     # the two page-turn buttons
+primary: true          # the primary device (CLAUDE.md, 2026-10-30): the design page shows every screen as it draws it
 # What it has, of design.Capabilities: a front light with a warmth, a colour screen, and sound (no speaker: the headphones over Bluetooth).
 has: [light, warmth, colour, sound, buttons]
 waveforms: [A2, DU, GL16, REAGL, GC16]
