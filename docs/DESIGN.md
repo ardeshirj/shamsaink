@@ -1,8 +1,8 @@
 # ShamsaInk's design: the parts, from the book to the ink (2026-10-25; the reader 2026-10-29)
 
-What each part is, how a page goes from an EPUB file to ink on the screen, how the reader's panels are drawn, what
-the reader stands on on a device, where we stand against crengine, and what it all depends on. The work ahead, in order of priority, is in `ROADMAP.md`; the details and every
-measurement in the experiments' NOTES.md files (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
+What each part is, how a page goes from an EPUB to ink, how the panels are drawn, what the reader stands on on a
+device, where we stand against crengine, and what it depends on. The work ahead is in `ROADMAP.md`; every measurement
+in the experiments' NOTES.md (the numbers here: 08 on the reMarkable 2, 09–10 on the Kindle).
 
 ## 1. The layers
 
@@ -151,21 +151,14 @@ flowchart LR
 - Why not in Rust (askama, Dioxus): the panels' data and logic are Go's; a Rust interface would need them across the C
   API or moved, for no measured cost today. `dioxus-native-dom` was tried (14: identical drawings, 1.3–1.7 ms either
   way, +0.7 MB), so the panels stay Go templates, and their HTML and CSS carry over if the reader ever moves to Rust.
-- **Interface language** (built 2026-10-31): **one switch, no list**, "Follow book language", on by default. On: the
-  menus and panels are in the book's language when there is a table for it (`ui/words/en.json`, `fa.json`), else
-  English; the library is always English (the language is for reading a book; a Farsi title among English ones keeps
-  its own direction). Off: English everywhere. Global, never per book: `settings.json`'s `english_only` (absent:
-  following, so an old file stays valid). In the library's menu only (≡ › Settings, a small panel in the menu's place,
-  the switch at the row's end; a tap applies it at once, everything shown drawn again in the new language and
-  direction). Strings are a table per language (`{{t "contents"}}`, whole sentences with `%d`/`%s` slots; a test
-  checks the tables have the same keys); Farsi digits; `dir` and `lang` on each panel; pointing icons mirrored
-  (`.flip`). To check on the Kobo: the menu font (Parastoo), the Farsi wording, the opening screen at launch.
-  **A right-to-left book in a language with no table** (Hebrew, Arabic, Urdu, ...; the maintainer, 2026-11-12): the
-  interface is laid out as a Farsi book's, mirrored, its words and digits English (`ui.SetMirrored`, while following
-  the book; its direction is the way its pages turn, a book's set direction included). Each string is kept left to
-  right inside it by Unicode's isolate marks (`isolated`: a sentence's full stop stays at its end). The design
-  system's renders of a book's screens are kept in a third language, `en-rtl`; the reader logs the interface on
-  opening a book (`interface en-rtl`), and devtest holds the screens against those renders.
+- **Interface language** (2026-10-31): **one switch, "Follow book language"**, on by default, global
+  (`settings.json`'s `english_only`; absent: following), in the library's ≡ › Settings only, applied at once. On: menus
+  and panels in the book's language when it has a table (`ui/words/en.json`, `fa.json`: whole sentences with `%s`
+  slots, a test checks the tables have the same keys), else English; the library is always English. Farsi digits,
+  `dir` and `lang` on each panel, pointing icons mirrored (`.flip`). **A right-to-left book with no table** (Hebrew,
+  Arabic, Urdu, ...; 2026-11-12): the interface mirrored as a Farsi book's, its words English (`ui.SetMirrored`), each
+  string kept left to right in Unicode's isolate marks (`isolated`); its renders kept as a third language, `en-rtl`,
+  which the reader logs on opening a book and devtest holds the screens against.
 
 ### The library's books: an ID each, and what is kept for it (2026-11-21)
 **Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one
@@ -206,10 +199,10 @@ went), the read-along test (`bench/cmd/readalong`), times and memory on a device
 
 ## 4. On the device
 
-What the reader stands on on an e-ink device. Two devices so far (`devices/README.md`): the Kobo Libra Colour, started
-from a row of ours in Kobo's More tab with Kobo's interface stopped while reading (firmware 5 and 6, since 2026-11-11;
-NickelMenu on 4.x before), and the Kindle Paperwhite 11th gen, started from a scriptlet
-in its library with Amazon's framework paused (2026-11-06; before, inside KOReader through our plugin, removed 2026-11-07).
+Two devices so far (`devices/README.md`): the Kobo Libra Colour, started from our row in Kobo's More tab with
+Kobo's interface stopped while reading (firmware 5 and 6 since 2026-11-11; NickelMenu on 4.x before), and the Kindle
+Paperwhite 11th gen, started from a scriptlet in its library with Amazon's framework paused (since 2026-11-06; inside
+KOReader before).
 
 ```mermaid
 flowchart LR
@@ -222,16 +215,15 @@ flowchart LR
   scr --> panel["e-ink controller<br/>Kindle PW5: MediaTek hwtcon_v2"]
 ```
 
-| Part | What it does | Whose | State |
-|---|---|---|---|
-| the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by the row in More (Kobo: `reader/kobo/launcher`, a Qt 6 plugin Nickel loads, installed by Kobo from `.kobo/Kobo.tgz`; it parks itself until a start is confirmed and removes itself once ShamsaInk is deleted) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06; the Kobo's row since 2026-11-11, NickelMenu before) |
-| screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
-| input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so the device's own interface does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
-| Wi-Fi | on demand, asked first: none of our own switch; an action that needs the network runs when Wi-Fi is on and asks before turning it on when it is off; what the reader turned on is turned off again (`device/wifi.go`; "Wi-Fi on demand" below) | ours, over Kobo's own `wpa_supplicant` and `dhcpcd` (Kobo); Amazon's `wirelessEnable` through `lipc` (Kindle) | the Kobo, the Kindle (2026-11-20) |
-| sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
-| power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
-| sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` (firmware 6: BlueZ connects the headphones, PulseAudio in system mode carries the sound; 4.x: Kobo's `mtkbtmwrpcaudiosink`) kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
-| `fbink` | KOReader's build of FBInk: refreshes by hand while trying things | FBInk, GPL-3 (to confirm) | experiments 09–10 only; not in the reader |
+| Part | What it does | Whose |
+|---|---|---|
+| the launcher | starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's interface and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`). Kobo: started by our row in More, `reader/kobo/launcher`, a Qt 6 plugin Nickel loads from `.kobo/Kobo.tgz` (parks itself until a start is confirmed, removes itself once ShamsaInk is deleted). Kindle: a scriptlet (the jailbreak's shell integration) |
+| screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 the read-along mark (10) | ours, Go: the Kindle's MediaTek and the Kobo's; NXP and PocketBook later |
+| input | touches as Linux input events, the device grabbed (`EVIOCGRAB`) so its interface does not see them; taps, swipes, a held finger | ours, Go (`touch.go`) |
+| Wi-Fi | on demand, asked first ("Wi-Fi on demand" below; `device/wifi.go`) | ours, over Kobo's `wpa_supplicant` and `dhcpcd`; Amazon's `wirelessEnable` through `lipc` (Kindle) |
+| sleep | the same sleep screen everywhere (`device/sleep.go`). Kobo: ours, the power button and idle time, Wi-Fi down, suspend (`device/kobo.go`). Kindle: `powerd`'s; the reader draws its sleep screen on `goingToScreenSaver` and the page on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's, answered (Kindle) |
+| power | the charger plugged or not: the kernel's power_supply uevents over netlink (`device/power.go`); the bar redrawn if shown | the kernel's |
+| sound | narration's audio, decoded in the background (symphonia: MP3, AAC LC in MP4). Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` over BlueZ, kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations; the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound. Kindle: Amazon's `mplay`, our decoded parts from RAM (12; `narration.go`). Not yet: Opus (EPUB 3.3 asks for it; symphonia 0.5 has none), a clip with no `clipEnd` (left out and counted in the log) | ours, over the devices' own |
 
 ### Where the device-specific code lives (2026-11-06)
 **Nothing outside `reader/device/` asks which device it is on:** the book, the library, the panels and the settings are
@@ -256,83 +248,57 @@ loaders; `reader/kindle/launch.sh` ~90), the Kobo's `install.sh`, the Kindle's s
 mode), a flash now and then (how often: in use); the read-along mark A2, an underline that never touches the
 letters. Night mode driven by us is not tried yet.
 
-### Wi-Fi on demand (2026-11-20, the Kobo and the Kindle)
-**Nothing turns Wi-Fi on without the person's yes, and the reader has no Wi-Fi switch** (the maintainer, 2026-11-20).
-Wi-Fi is left as the device has it. An action that needs the network (updates first, step 2; the
-library's downloads later) asks `Device.WiFiState()`: on (Kobo's switch on: its `wpa_supplicant` running, `wlan0`
-there), it just runs, no question; off, the question first, the dialog component in the place of the panel that
-asked (`wifi-ask`: "Wi-Fi is off. Turn it on to ...?", Turn on with Wi-Fi's icon, Cancel), and Cancel changes nothing.
-On Turn on, `ConnectWiFi` brings it up in the background as Kobo's interface does: the chip's Wi-Fi on through its
-driver (`/dev/wmtWifi`), `wlan0` up, `wpa_supplicant` with the networks Kobo saved (`.kobo/wpa_supplicant.conf`) and
-`dhcpcd`, each started only if not running; its end is an `Event{WiFi}`, so the event loop and its heartbeat go on
-(the watchdog kills a reader silent for 20 s, and an address may take that long). `ReleaseWiFi` undoes only what it
-started (dhcpcd and wpa_supplicant stopped, `wlan0` down, the chip off), so Kobo's interface finds Wi-Fi as it left
-it. No network saved: a notice to join one once in the device's Wi-Fi settings, nothing changed; no address in 20 s:
-"Couldn't connect, try again later", what was turned on off again; both with a crossed-out Wi-Fi before the sentence.
-**Never in the background:** a check that runs by itself (an automatic look for updates, later) runs only when Wi-Fi is
-already on, never turning it on. The sleep keeps its own rule: Wi-Fi off for the suspend and back after only if it was
-up (`doze`, sharing the chip's helpers). Measured on the Kobo (firmware 6, 2026-11-20): Kobo's "off" stops both
-programs and the chip (the driver's module stays loaded); off to an address 2.7–2.8 s; Kobo's interface turns Wi-Fi
-on at its start only when its `wpa_supplicant` still runs (`devices/kobo/README.md`). **The Kindle** (2026-11-20, the
-same calls and rules, only the bottom layer differs): Amazon's own Wi-Fi service (`cmd` and `wifid`) keeps running
-while the reader has the framework paused, and does the work the reader does itself on the Kobo. On is its
-`wirelessEnable` (`lipc`, `com.lab126.cmd`): set to 1, it joins a network saved in the Kindle's settings and starts
-`wpa_supplicant` and `udhcpc` itself (2.2 s to an address in the trial), 0 disconnects; `ReleaseWiFi` sets it back to 0
-only if it was 0. The networks saved are Amazon's (its own database, not `wpa_supplicant.conf`, which has none): counted
-from `wifid`'s diagnostic text (property `711`, its "3- Networks" lines); a text of another shape counts as one, so a
-connection is tried and gives up after 20 s as anywhere. The sleep needs nothing: Amazon's power manager has Wi-Fi as
-it was after a wake (seen once). **For development** (dev mode only, never in a
-release): the Developer panel's Wi-Fi switch, above SSH, its state under it (off, connecting..., on with the address);
-on connects with no question (the switch is the yes) and Wi-Fi stays on, off turns it off as Kobo's own switch does
-(`TurnOffWiFi`).
+### Wi-Fi on demand (2026-11-20)
+**Nothing turns Wi-Fi on without the person's yes, and the reader has no Wi-Fi switch** (the maintainer). Wi-Fi is
+left as the device has it.
+- **Asking:** an action that needs the network (updates; downloads later) asks `Device.WiFiState()`. On: it just runs.
+  Off: the dialog in the place of the panel that asked (`wifi-ask`: "Wi-Fi is off. Turn it on to ...?", Turn on,
+  Cancel; Cancel changes nothing). A check that runs by itself (later) runs only when Wi-Fi is already on.
+- **On** (`ConnectWiFi`, in the background, its end an `Event{WiFi}`, so the loop and its heartbeat go on: an address
+  may take the watchdog's 20 s). Kobo, as its interface does: the chip on (`/dev/wmtWifi`), `wlan0` up,
+  `wpa_supplicant` with Kobo's saved networks (`.kobo/wpa_supplicant.conf`), `dhcpcd`, each only if not running;
+  2.7–2.8 s to an address. Kindle: Amazon's Wi-Fi service (`cmd`, `wifid`) keeps running while the framework is
+  paused; `wirelessEnable` to 1 (`lipc`, `com.lab126.cmd`) joins a saved network itself (2.2 s); its saved networks are
+  Amazon's own, counted from `wifid`'s property `711` ("3- Networks"; another shape counts as one).
+- **Off** (`ReleaseWiFi`): only what the reader turned on (Kobo: dhcpcd, wpa_supplicant, `wlan0`, the chip; Kindle:
+  `wirelessEnable` back to 0), so the device's interface finds Wi-Fi as it left it.
+- **Failures,** each with a crossed-out Wi-Fi: no network saved, a notice to join one in the device's settings; no
+  address in 20 s, "Couldn't connect, try again later", what was turned on off again.
+- **Sleep:** the Kobo's turns Wi-Fi off for the suspend and back only if it was up (`doze`); the Kindle's needs nothing.
+- **Development** (dev mode only): the Developer panel's Wi-Fi switch, its state under it; on connects with no
+  question and stays on, off turns it off as Kobo's switch does (`TurnOffWiFi`).
 
-### Updates over Wi-Fi (2026-11-20, the Kobo and the Kindle)
-Settings' last row, Updates (the version under it, Check at its end), the package `reader/update` and the library's
-`updates.go`. **Only when asked:** Check goes through Wi-Fi on demand (above: the question when Wi-Fi is off; Wi-Fi
-turned on for it turned off again at the end, whatever the end); no check runs by itself.
-- **What is newest:** `latest.json` from FarsiEPUB (`farsiepub.org/shamsaink/latest.json`, made from GitHub's releases
-  of this repository, the newest that is not a draft, pre-releases included): the version, and per device its
-  package's URL, size and the URLs of its `.sha256` and `.sig`. Newer is semantic versioning's order (a `-beta` before
-  the release without one; a build that is not a version, `dev`, older than all). Not newer, or no package for this
-  device: "This is the latest version." with the version under it. Not reached: a notice, nothing changed.
-- **Signed, not only summed:** a `.sha256` from the same server proves nothing against that server. Each package has a
-  `.sig`, the ed25519 signature of one line, `shamsaink DEVICE VERSION sha256:HEX` (`update.Message`): the device and
-  version in it keep an older package, or the other device's, signed too, from passing for the one announced. The
-  release job signs with the key in GitHub's secret `SHAMSAINK_SIGNING_KEY` (`reader/cmd/sign`); the reader carries the
-  public keys (`update/keys.go`, more than one allowed, so a key can be replaced over two releases). The key pair is
-  made by the maintainer only, `SIGNING_KEY_BACKUP='COMMAND' make signing-key`: the private half piped into the backup
-  command (it reads the key on standard input and should refuse to overwrite one it holds; where it keeps it is not
-  this repository's business), then into the secret; never a file, never printed, never on a command line; no backup
-  command, no key. **A new key:** its public half added beside the old one in a release still signed with the old key,
-  so readers learn it from a package they trust; only then GitHub's secret switched to it; the old public key out a
-  release later. **No `.sig`, no install** ("could not be verified"), checked before downloading.
-- **The download:** into `update/` beside the reader (the Kobo's storage, never RAM: a package is ~13 MB), in the
-  background like Wi-Fi, so the loop and its heartbeat go on; its share drawn as a bar at most every half second,
-  Cancel stops it (nothing changed). Its size must be the one announced (shorter: "stopped before it finished"; longer:
-  not verified), then the signature. HTTPS does not depend on the firmware's CA roots: the reader carries Go's own copy
-  (`golang.org/x/crypto/x509roots/fallback`, used when Go finds none on the system).
-- **The install** (`update.Install`), `reader/kobo/install.sh`'s whole-file moves done by the reader: the package
-  unpacked into `update/new` (plain files under the reader's folder only), then each file moved in, the one it replaces
-  moved into `previous/` first (fonts and licences no longer in the package too); the launcher's library, when it
-  differs, written beside its place and moved in (the old one kept as `previous/launcher.so`), Nickel loading it at its
-  next start. `update/pending` (the version) and `update/added` (the files with no old one) are written before
-  anything moves. User data is never touched: a package holds none (settings, places, highlights, books, sleep
-  screens, logs, the books' cache; only the cached opening and loading screens are removed, to be drawn anew).
-- **The restart and the way back:** "Restarting with the new version…" stays on the screen and the reader exits with
-  code 85 (`update.RestartCode`). The launcher that started it, the old version's `launch.sh`, starts the new reader on
-  the library; the new one removes `update/pending` once it shows the library (`update.Reached`). If it ends with
-  `pending` still there (a crash, the watchdog, the power gone during the install), the launcher puts `previous/` back,
-  removes what the update added, writes `update/undone` and starts the old reader again, which says "The update did
-  not start, so the previous version was put back." So the trial of a new version is always supervised by the old
-  launcher; the new `launch.sh` is used from the next start. `previous/` stays until the next update.
-- **Trying it before a release** (dev mode only): `dev/update-url` points the reader at another `latest.json`, and
-  `dev/update-key` adds a test key: `make update-serve` serves a package signed with a test key from the Mac (port
-  8090), `make kobo-update-dev` puts both files on the Kobo (`docs/TESTING.md`). A release build has no `dev/`.
-- **The Kindle** (2026-11-20): the same, with its own package (`shamsaink/` from the drive's root, and the library's
-  scriptlet `documents/ShamsaInk.sh` beside it, replaced when it differs, the old one `previous/scriptlet.sh`) and the
-  same restart loop and way back in its `launch.sh`. The reader there is given `RESTORE_SCREEN` (the screen found put
-  back on leaving): a reader started after an update would find the restarting screen, so it is not given it, and the
-  launcher puts back its own copy of the screen found at the start instead.
+### Updates over Wi-Fi (2026-11-20)
+Settings' last row, Updates (`reader/update`, the library's `updates.go`). **Only when asked:** Check goes through Wi-Fi
+on demand, and Wi-Fi turned on for it is turned off at the end.
+- **What is newest:** `farsiepub.org/shamsaink/latest.json` (from this repository's GitHub releases, the newest not a
+  draft, pre-releases included): the version, and per device the package's URL, size, `.sha256` and `.sig`. Semantic
+  versioning's order (`-beta` before the release; `dev` older than all). Not newer: "This is the latest version.".
+- **Signed:** each package has a `.sig`, the ed25519 signature of `shamsaink DEVICE VERSION sha256:HEX`
+  (`update.Message`), so an older package or the other device's cannot pass for the one announced. No `.sig`, no
+  install. The release job signs with GitHub's secret `SHAMSAINK_SIGNING_KEY` (`reader/cmd/sign`); the reader carries
+  the public keys (`update/keys.go`, several allowed). The key pair is made by the maintainer only, `SIGNING_KEY_BACKUP=
+  'COMMAND' make signing-key` (the private half piped into the backup command, then the secret: never a file, printed
+  or on a command line). **A new key:** its public half shipped beside the old in a release signed with the old, then
+  the secret switched, the old public key dropped a release later.
+- **The download:** into `update/` (storage, not RAM: ~13 MB), in the background, a bar at most every half second,
+  Cancel changes nothing; size then signature checked. HTTPS with Go's own CA roots when the system has none
+  (`x509roots/fallback`).
+- **The install** (`update.Install`): unpacked into `update/new`, each file moved in, the one it replaces first into
+  `previous/` (files dropped from the package too); the Kobo launcher's library written beside its place and moved in
+  (`previous/launcher.so`), loaded at Nickel's next start. `update/pending` and `update/added` written before anything
+  moves. User data is never touched (only the cached opening and loading screens, drawn anew).
+- **The restart and the way back:** "Restarting with the new version…", exit code 85 (`update.RestartCode`); the old
+  `launch.sh` starts the new reader, which removes `update/pending` once it shows the library (`update.Reached`). If
+  `pending` is still there when it ends (a crash, the watchdog, power lost), the launcher puts `previous/` back, removes
+  what was added, writes `update/undone`, and the old reader says "The update did not start, so the previous version
+  was put back." The old launcher supervises every trial; `previous/` stays until the next update.
+- **The Kindle:** the same, with its package (`shamsaink/` and the scriptlet `documents/ShamsaInk.sh`, the old one
+  `previous/scriptlet.sh`); a reader started after an update is not given `RESTORE_SCREEN` (it would put back the
+  restarting screen), the launcher puts back its own copy of the screen found at the start.
+- **Trying it before a release** (dev mode): `dev/update-url` and `dev/update-key` point the reader at a test
+  `latest.json` and key; `make update-serve` serves a test package from the Mac, `make kobo-update-dev` sets the files
+  (`docs/TESTING.md`).
 
 ### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
 
@@ -358,36 +324,23 @@ flowchart LR
 | watcher | a shell function started in the background before the reader: every 10 s it reads the file; the same value twice in a row, or no file (the launcher removes it before the reader starts), is a freeze; it logs why, sends SIGQUIT (Go prints every goroutine's stack to `reader.log`: what the reader was stuck on), waits 3 s, sends SIGKILL; then waits up to 5 s and, if the reader is still there (a thread stuck in the kernel, such as the screen's driver), runs `sync` and `reboot` | `reader/kobo/launch.sh`, `watch` |
 | the way back | the reader is the launcher's last command: when it dies, the launcher's exit trap starts Nickel again (a reboot instead when Bluetooth has run: 13's NOTES.md) | `launch.sh`, `leave` |
 
-**Why it is outside the reader:** the watcher shares nothing with the reader, so a stopped process, a deadlocked
-engine or a stuck loop cannot stop it, and SIGKILL works on a stopped process. A goroutine inside the reader would
-stop with it, would add little (the stacks come from SIGQUIT, and places and highlights are saved when they change),
-and would be a second thing to keep in step. A self-check for a case the reader can see coming (the screen's driver
-failing again and again) is a different feature, not built.
+**Why outside the reader:** the watcher shares nothing with it, so a stopped process, a deadlocked engine or a stuck
+loop cannot stop it, and SIGKILL works on a stopped process; a goroutine inside would stop with it. **Why 20 to 30 s:**
+the longest stall seen is 4 s (a first open); a false kill costs a session, a late rescue only time.
 
-**Why 20 to 30 s:** the longest stall seen is 4 s (a book's first open or its pagination); a false kill costs a
-session, a late rescue only time. The library's first scan of a large library does not beat yet (to do).
+**Not watched:** the sleep screen (it can last hours), the launcher itself, a reader killed before it started. The
+backstop is the hardware: **holding the power button about 5 s cuts the power** and the Kobo restarts (tried
+2026-11-05): the release notes' answer to a frozen screen.
 
-**What it does not watch:** the sleep screen (a Kobo plugged in can sit there for hours), the launcher itself (a shell
-that only sleeps and reads a file), and a reader killed from outside before it started. The backstop for all of them is
-the hardware: **holding the power button for about 5 s cuts the power** and the Kobo restarts (tried 2026-11-05 on the
-Libra Colour: the screen went dark and the Kobo rebooted; no trace in our logs, the system partition replayed its
-journal). It is the release notes' answer to a frozen screen.
+**Trying it:** `e2e/scenarios/watchdog-freeze.txt` (`freeze` sends SIGSTOP; the watchdog line, exit 137 and Kobo's
+interface back expected) and `watchdog-quiet.txt` (a book idle 30 s, a narration 40 s: no `watchdog:` line), on a
+faster clock (`env HEARTBEAT_EVERY=1s WATCH_EVERY=4`: caught in 8–12 s). By hand: `kill -STOP $(pidof shamsaink)`, and
+`touch /tmp/shamsaink-nowatch` pauses the watcher. Not covered: sleep and wake, the library left alone, a reader that
+survives SIGKILL (the reboot never run).
 
-**Trying it:** two end-to-end scenarios on a faster clock (`HEARTBEAT_EVERY=1s`, `WATCH_EVERY=4`: a freeze is caught in 8
-to 12 s, not 20 to 30; the scenario's `env` step sets them, the reader and the watcher read them), `make e2e
-SCENARIO=e2e/scenarios/watchdog-freeze.txt` (`freeze` stops the reader with SIGSTOP; the watchdog line, the exit with code 137 and
-Kobo's interface back are expected; the first run, 2026-11-05) and `e2e/scenarios/watchdog-quiet.txt` (a book idle 30 s, a narration
-40 s without headphones, the book left: no `watchdog:` line at any point). Both need SSH while the reader is open and
-Bluetooth not run in the boot. By hand, at the real clock: `kill -STOP $(pidof shamsaink)` (22 s on the first try) and
-`touch /tmp/shamsaink-nowatch`, a test hook that pauses the watcher (RAM, gone after a reboot). Not covered by a scenario:
-**sleep and wake** (the Kobo suspends and takes Wi-Fi and SSH with it; by hand), the library list left alone, a reader that
-does not die after SIGKILL (the reboot fallback has not been run), and the sound itself.
-
-**Others:** KOReader's launcher (`koreader.sh`) restarts on its exit codes and shows a crash screen, and has no freeze
-detection that we found; Plato's we could not read. Kobo's own `sickel` is the model: a ping from the main loop, a
-supervisor that acts on silence. Not done: the heartbeat's battery cost (a wake every 5 s while idle; measure over a
-night against none), a heartbeat call in the library's first scan, and a Power panel (Back to Kobo, Restart, Power
-off) with a hold to quit, after the beta.
+**Others:** KOReader's `koreader.sh` restarts on exit codes and shows a crash screen, with no freeze detection we found;
+Kobo's `sickel` is the model. **Not done:** the heartbeat's battery cost (a wake every 5 s), a beat in the library's
+first scan of a large library, a Power panel (Back to Kobo, Restart, Power off).
 
 ## 5. Where we stand against crengine
 
