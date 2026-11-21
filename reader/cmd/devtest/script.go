@@ -219,6 +219,20 @@ func (s *script) check(d *dev) error {
 			if args < 1 {
 				fail(l, "%s TITLE ...", a[0])
 			}
+		case "library", "leave":
+			if args != 0 {
+				fail(l, "%s takes nothing", a[0])
+			}
+		case "update-serve":
+			if args != 1 || a[1] != "latest" && a[1] != "broken" {
+				fail(l, "update-serve latest|broken")
+			}
+		case "tap-dialog":
+			if args != 2 {
+				fail(l, "tap-dialog SCREEN CONTROL")
+			} else if err := d.hasControl(a[1], a[2]); err != nil {
+				fail(l, "%v", err)
+			}
 		case "walk":
 			if !(args == 0 || args == 5 && a[1] == "word" && isInt(a[2]) && isInt(a[3]) && isInt(a[4]) && isInt(a[5])) {
 				fail(l, "walk [word X Y X2 Y2]")

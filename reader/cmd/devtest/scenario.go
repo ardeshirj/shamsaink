@@ -58,6 +58,9 @@ import (
 //	                          nothing when not recording. While recording, each tap, hold and turn is logged too
 //	title TITLE               the same: the words beside the screen from here on, with no card
 //	resume                    the same: the video goes on from here after the last card, what came between left out
+//	library                   the reader launched on its library
+//	leave                     the reader left from the library's menu
+//	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go)
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //	expect-online SECONDS     the Kobo on its network (SSH, wlan0's address) 10 s or more on, SECONDS at most, its
 //	                          Wi-Fi/Bluetooth chip without errors since the scenario began: after a sleep, a close
@@ -82,7 +85,9 @@ type player struct {
 	hlSeen     bool
 	stop       func()
 	closedBook bool
-	chipBefore int // the Wi-Fi/Bluetooth chip's errors in the kernel's log when the scenario began (expect-online)
+	chipBefore int           // the Wi-Fi/Bluetooth chip's errors in the kernel's log when the scenario began (expect-online)
+	upd        *updateServer // the update served (update-serve, update.go)
+	cleanups   []func()      // undone at the end, before the reader's files are put back
 }
 
 var reMenuAt = regexp.MustCompile(`highlight menu: .* at (\d+),(\d+)`)
@@ -147,6 +152,9 @@ func scenario(name, path string, save bool) bool {
 	defer func() {
 		if p.stop != nil {
 			p.stop()
+		}
+		for _, c := range p.cleanups {
+			c()
 		}
 		if said, err := d.putBack(); err != nil {
 			fmt.Println("FAIL the reader's own files put back:", err)
@@ -479,6 +487,32 @@ func (p *player) step(a []string) (string, error) {
 		return "", nil
 	case "walk":
 		return p.walk(a[1:])
+	case "library":
+		d.book = ""
+		stop, line, err := d.start()
+		p.stop = stop
+		return line, err
+	case "leave":
+		menu := p.menu
+		if strings.Contains(" "+d.env+" ", " SHAMSAINK_DEV=1 ") {
+			// dev mode's menu has Developer under Settings: Leave a row lower than the kept render has it
+			s, ok1 := box(menu, "settings")
+			l, ok2 := box(menu, "leave")
+			if !ok1 || !ok2 {
+				return "", fmt.Errorf("no settings or leave in the menu's kept render")
+			}
+			row := s[3] - s[1]
+			menu = &boxes{Placement: menu.Placement, Boxes: map[string][]int{"leave": {l[0], l[1] + row, l[2], l[3] + row}}}
+		}
+		if err := d.leave(p.lib, menu); err != nil {
+			return "", err
+		}
+		p.stop = nil
+		return d.home(), nil
+	case "update-serve":
+		return p.updateServe(a[1])
+	case "tap-dialog":
+		return p.tapDialog(a[1], a[2])
 	}
 	return "", fmt.Errorf("unknown step %q", a[0])
 }

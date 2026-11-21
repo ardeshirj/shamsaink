@@ -38,13 +38,19 @@ type dev struct {
 // reCrash is a reader that ended badly: Go's panic, fatal error or fatal signal, or the launcher's line for an exit other than 0.
 var reCrash = regexp.MustCompile(`^panic: |^fatal error: |^SIG[A-Z]+: |launch: reader exited \([1-9]\d*\)`)
 
+// reRestart is the reader's end once it installed an update (update.RestartCode): the launcher starts the new one
+var reRestart = regexp.MustCompile(`launch: reader exited \(85\)`)
+
+// isCrash says whether a log line is the reader's crash or unexpected end
+func isCrash(l string) bool { return reCrash.MatchString(l) && !reRestart.MatchString(l) }
+
 // crashed says whether the log has the reader's crash since the run started: the run ends there, not ten steps later
 // at a time-out. The lines from the crash on are in the error.
 func (d *dev) crashed() error {
 	out, _ := d.sh(fmt.Sprintf("tail -n +%d %s", d.start0+1, d.a.Log), nil)
 	lines := strings.Split(strings.TrimRight(string(out), "\n"), "\n")
 	for i, l := range lines {
-		if reCrash.MatchString(l) {
+		if isCrash(l) {
 			end := min(i+6, len(lines))
 			if !strings.Contains(l, "launch: ") {
 				return fmt.Errorf("the reader crashed: %q", lines[i:end])
@@ -218,7 +224,7 @@ func (d *dev) expect(pattern string, within time.Duration) (string, error) {
 				d.mark += i + 1
 				return l, nil
 			}
-			crash = crash || reCrash.MatchString(l)
+			crash = crash || isCrash(l)
 		}
 		if crash && !d.crashOK && d.watch { // not waited out: the reader is gone
 			return "", d.crashed()

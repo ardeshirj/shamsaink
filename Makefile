@@ -91,6 +91,8 @@ check:
 #   make kobo-package-install PKG=file  a package file installed the same way (its .sha256 beside it checked)
 #   make kobo-release-install V=0.0.1  a release's package downloaded from GitHub (into out/download; with `gh` while the
 #                        repository is private, curl once public), checked and installed the same way
+#   make kobo-update-e2e the latest build installed on the Kobo as an update over Wi-Fi, and a broken one undone
+#                        (e2e/scenarios/update.txt; dev mode on the Kobo)
 #   make kobo-update-dev dev/update-url and dev/update-key put on the Kobo, so it updates from make update-serve
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
 #   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
@@ -122,7 +124,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev kobo-update-e2e kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -163,6 +165,11 @@ RUNS ?= 1
 runs = $(foreach i,$(shell seq $(RUNS)),$(1))
 # DEVICE=kindle runs them on the Kindle instead (its profile kindle-paperwhite-11); a scenario not on: it is skipped.
 E2E_DEVICE = $(if $(filter kindle,$(DEVICE)),kindle-paperwhite-11,kobo-libra-colour)
+# Updates over Wi-Fi on the Kobo (e2e/scenarios/update.txt): the latest build packed, then served by devtest as an update
+# and installed by the Kobo itself, and a broken one undone; the Kobo is left on the latest build
+kobo-update-e2e: kobo-package devtest
+	@UPDATE_PKG=out/release/shamsaink-$(VERSION)-kobo.tgz reader/out/devtest scenario kobo-libra-colour e2e/scenarios/update.txt
+
 e2e: devtest
 	@for s in $(call runs,$(or $(SCENARIO),e2e/scenarios/basics.txt)); do \
 	  echo "== $$s ($(E2E_DEVICE))"; reader/out/devtest scenario $(E2E_DEVICE) $$s $(if $(SAVE),--save) || exit 1; done
