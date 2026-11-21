@@ -112,6 +112,12 @@ as KOReader knows). A charger is seen by what the supplies are: 6.0's battery is
 charger reads `online` 2 on a computer's USB; before 2026-11-12 neither was seen, and a charging Kobo tried to suspend
 again and again (refused: the USB controller holds a wakeup source while plugged in).
 
+**Force Wi-Fi On stops Kobo's interface from suspending** (6.0, 2026-11-21). Ticked (`[DeveloperSettings]
+ForceWifiOn=true`, setup.md §4), its sleep screen goes up, Bluetooth goes off ~20 s later, and nothing more: Wi-Fi
+stays up and the Kobo never suspends, about 5% an hour on battery. Unticked, it suspends ~20 s after its sleep screen.
+ShamsaInk's own sleep suspends either way (0.0–0.1% an hour overnight). Whether a sleep suspended:
+`/sys/kernel/debug/suspend_stats` (`success`, counted since the last restart).
+
 **The charge light** is the kernel's on a charger and Nickel's off it: with Nickel stopped, it stayed on once the
 charger was out, and came on again with each wake. The reader switches it off on battery (start, power changes, wake).
 
@@ -166,3 +172,10 @@ Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at 
   as Kobo starts them: the saved network joined, an address in 2.8 s. Then the reader's own (b13f83a): Wi-Fi on, no
   question; off, Cancel changed nothing; Turn on, an address in 2.7 s, then everything turned off again, and Kobo's
   interface left Wi-Fi off, as it had it.
+- **2026-11-21, a night asleep in Kobo's interface ran the Kobo flat** (56% at 23:57, off at 09:19). Kobalt (a reader
+  hooked into Nickel, crengine) had been installed that evening; it and `launch.sh`'s change of 2026-11-20 were the
+  suspects. Four rounds unplugged, `suspend_stats` read after each: Kobalt in, then out; Nickel restarted by
+  `launch.sh`, then a clean boot with ShamsaInk never opened; power off at 10 minutes: no suspend in 13–17 minutes,
+  `wlan0` up throughout. Force Wi-Fi On unticked: suspended ~20 s after the sleep screen (`success: 2`). The reader's
+  battery lines (`usage:` in `reader.log`) agree: about 5% an hour in Nickel's sleep since 2026-11-11, 0.0–0.1% in
+  ShamsaInk's; every night between was spent asleep in ShamsaInk. The cause: above, "Force Wi-Fi On". Kobalt removed.

@@ -78,12 +78,17 @@ Open sessions survive switching it off. A restart of the Kobo switches it off.
 - **Awake, and its Wi-Fi up, while experimenting:** sleep and Wi-Fi are whichever is in front's (Kobo's interface or
   ShamsaInk), not a power daemon's as on the Kindle. Set by hand, and set back when done:
   - **Kobo's interface, sleep:** Settings → Energy saving and privacy → **Automatically go to sleep after: Never**.
-  - **Kobo's interface, Wi-Fi:** it switches Wi-Fi off after a few idle minutes even when it never sleeps.
+  - **Kobo's interface, Wi-Fi:** it switches Wi-Fi off after a few idle minutes even when it never sleeps. Only when a
+    session needs Wi-Fi to stay up in Kobo's interface (with ShamsaInk in front, nothing switches it off):
     1. Type `devmodeon` in its search bar and search (nothing says it worked).
     2. Settings → Device information → Developer options → **Force Wi-Fi On**, ticked.
+
+    **Untick it when the session ends.** Ticked, Kobo's interface never suspends behind its sleep screen: Wi-Fi stays
+    up and the battery goes at about 5% an hour (README, findings log, 2026-11-21: left ticked from 2026-10-30, a night
+    asleep in Kobo's interface ran the Kobo flat). ShamsaInk's own sleep suspends either way.
   - **ShamsaInk:** its own Settings → **Sleep after**. Asleep, Wi-Fi is off.
 
-  For everyday reading: sleep back on, Force Wi-Fi On unticked (battery); `devmodeoff` in the search bar leaves Kobo's
+  For everyday reading: sleep back on, Force Wi-Fi On unticked; `devmodeoff` in the search bar leaves Kobo's
   developer mode. Asleep, its Wi-Fi and SSH are off: wake it with its power button, then `make kobo-wait`.
 - **`/mnt/onboard`:** the storage the Mac sees over USB (books, `.adds`): a plain partition (`/dev/mmcblk0p12`, 27 GB),
   not FUSE as the Kindle's `/mnt/us`.
