@@ -6,8 +6,9 @@
 //	sign -version v0.4.0-beta out/release/shamsaink-v0.4.0-beta-kobo.tgz ...
 //
 // -keygen FILE makes a key pair: the private key written to FILE (base64, readable by its owner only, refused if FILE
-// exists), the public key printed, the only line written. reader/scripts/signing-key.sh makes the release key with it,
-// reader/scripts/update-serve.sh a test key.
+// exists), the public key printed, the only line written (reader/scripts/update-serve.sh's test key). -keygen - writes
+// no file: the public key, then the private key, one line each on standard output, for a script to hold in a variable
+// and pass on through pipes (reader/scripts/signing-key.sh, the release key: never a file).
 package main
 
 import (
@@ -26,11 +27,16 @@ import (
 
 func main() {
 	version := flag.String("version", "", "the release's version, as its tag (v0.4.0-beta)")
-	keygen := flag.String("keygen", "", "make a key pair: the private key into this file, the public key printed")
+	keygen := flag.String("keygen", "", "make a key pair: the private key into this file, the public key printed; - both printed, public first")
 	flag.Parse()
 	if *keygen != "" {
 		pub, priv, err := ed25519.GenerateKey(nil)
 		check(err)
+		if *keygen == "-" {
+			fmt.Println(base64.StdEncoding.EncodeToString(pub))
+			fmt.Println(base64.StdEncoding.EncodeToString(priv.Seed()))
+			return
+		}
 		f, err := os.OpenFile(*keygen, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
 		check(err)
 		_, err = fmt.Fprintln(f, base64.StdEncoding.EncodeToString(priv.Seed()))

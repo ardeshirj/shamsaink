@@ -8,9 +8,9 @@ import (
 )
 
 // ReleaseKeys are the public keys a package's signature is checked against, base64, one a line: the release key made by
-// reader/scripts/signing-key.sh (its private half only in GitHub's secrets and the maintainer's backup). More than one
-// may be here, so a new key can be added a release before the old one goes (a leaked key: a release carrying only the
-// new one, signed with the old one a last time).
+// reader/scripts/signing-key.sh (its private half only in GitHub's secret and the maintainer's backup). More than one
+// may be here, so a new key can be added a release before the old one goes: a new key's public half is added here in a
+// release still signed with the old one, and only then is GitHub's secret switched to it.
 const ReleaseKeys = `
 emaYhAs+vqO92MHvhht/wi0+0CFioFjLRyz3+B5Tw88= # 2026-11-20, make signing-key
 `

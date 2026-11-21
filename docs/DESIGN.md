@@ -274,8 +274,12 @@ turned on for it turned off again at the end, whatever the end); no check runs b
   version in it keep an older package, or the other device's, signed too, from passing for the one announced. The
   release job signs with the key in GitHub's secret `SHAMSAINK_SIGNING_KEY` (`reader/cmd/sign`); the reader carries the
   public keys (`update/keys.go`, more than one allowed, so a key can be replaced over two releases). The key pair is
-  made once by the maintainer, `make signing-key`: the private half straight into the secret and a backup in their home
-  folder, never printed. **No `.sig`, no install** ("could not be verified"), checked before downloading.
+  made by the maintainer only, `SIGNING_KEY_BACKUP='COMMAND' make signing-key`: the private half piped into the backup
+  command (it reads the key on standard input and should refuse to overwrite one it holds; where it keeps it is not
+  this repository's business), then into the secret; never a file, never printed, never on a command line; no backup
+  command, no key. **A new key:** its public half added beside the old one in a release still signed with the old key,
+  so readers learn it from a package they trust; only then GitHub's secret switched to it; the old public key out a
+  release later. **No `.sig`, no install** ("could not be verified"), checked before downloading.
 - **The download:** into `update/` beside the reader (the Kobo's storage, never RAM: a package is ~13 MB), in the
   background like Wi-Fi, so the loop and its heartbeat go on; its share drawn as a bar at most every half second,
   Cancel stops it (nothing changed). Its size must be the one announced (shorter: "stopped before it finished"; longer:

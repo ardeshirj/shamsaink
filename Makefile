@@ -22,9 +22,9 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        and go list): out/licenses/THIRD-PARTY-LICENSES.md, in both packages' licenses/
 #   make tag V=0.0.1 NOTE="…"  tag a release on a clean main (reader/scripts/release.sh); push it yourself, and CI
 #                        builds and publishes it (CHANGELOG.md, "How to release")
-#   make signing-key     once, by the maintainer: the release signing key for updates over Wi-Fi (reader/scripts/
-#                        signing-key.sh): its private half into GitHub's secret and a backup in the home folder, its
-#                        public half printed, for reader/update/keys.go
+#   make signing-key     by the maintainer only, SIGNING_KEY_BACKUP='COMMAND': the release signing key for updates over
+#                        Wi-Fi (reader/scripts/signing-key.sh): its private half piped into the backup command and
+#                        GitHub's secret, never a file; its public half printed, for reader/update/keys.go
 #   make update-serve    a test update served from this Mac on port 8090 (reader/scripts/update-serve.sh): the newest
 #                        Kobo package signed with a test key, for a Kobo in dev mode (make kobo-update-dev)
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
