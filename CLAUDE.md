@@ -153,12 +153,12 @@ decisions. **The order of work across FarsiEPUB's projects is set by FarsiEPUB; 
 order decided and why; Next the stages' open items **in order of priority**: since 2026-11-19, after the
 betas, **"Over Wi-Fi" first** (Wi-Fi on demand on the Kobo, then updates installed over it), then stage 7's OPDS and
 the keyboard (its digit layout first, for Get a book; then English and Farsi), then the Kindle's Wi-Fi; (5) daily use
-on the Kobo alongside; then (6) the layout (`docs/DESIGN-SYSTEM.md`, `docs/design/system.html`: layers, interface
+on the Kobo alongside; then (6) the layout (`docs/design/README.md`, `docs/design/system.html`: layers, interface
 language, components, the dock); the rest of (7) a library; (8) read-along on the Kobo; alongside, end-to-end tests and
 upstream (the maintainer posts from their GitHub account); (9) the Kindle, in the betas since 2026-11-07 (read-along on
 it after). Stages 0 to 4 are done (the proof of concept, experiments 01–09; refresh, a minimal reader in KOReader, the
 Kobo's own host, the reader's code). **An item leaves the file once done and tried on a device**, its design going to
-`docs/DESIGN.md` (or `DESIGN-SYSTEM.md`, `TESTING.md`, `docs/devices/`) and what a reader sees to `CHANGELOG.md`; new
+`docs/DESIGN.md` (or `docs/design/README.md`, `TESTING.md`, `docs/devices/`) and what a reader sees to `CHANGELOG.md`; new
 work goes where it belongs as it is decided.
 
 ## Working with the maintainer
@@ -177,7 +177,7 @@ work goes where it belongs as it is decided.
   box's edge below its text is cut off (`drawPanel` adds an empty line at the end; `TestPanelEdges`). Still e-ink:
   refresh only what changed. The layouts to
   build (2026-10-30, the maintainer: nothing on the page while reading, every control a tap away, as a layer; our own
-  components, one set used everywhere): the design system, `docs/DESIGN-SYSTEM.md` (spec in `reader/design/spec`, checks `go test ./design`,
+  components, one set used everywhere): the design system, `docs/design/README.md` (spec in `reader/design/spec`, checks `go test ./design`,
   renders compared `make test`, kept anew `make design-update`; the walk of every screen on the simulator and the Kobo `e2e/scenarios/walk-fa.txt`; its page `docs/design/system.html`); screens designed but not built are kept in `docs/design/TODO.md`, local and untracked (2026-11-20). More: `docs/DESIGN.md`, "The reader's panels".
 - **One reader, the same on every device** (the maintainer, 2026-11-06): the same behaviour, timings, screens and
   settings on the Kobo and the Kindle (the opening screen's minimum, sleep screens, dark mode, the light, the battery,

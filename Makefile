@@ -29,7 +29,7 @@ DOCKER = docker run --rm -v "$(CURDIR)":/r -v eink-cargo:/cargo -v eink-gomod:/g
 #                        Kobo package signed with a test key, for a Kobo in dev mode (make kobo-update-dev)
 #   make design-update   after a change to the design made on purpose: writes ui.css's variables, ui/tokens_gen.go, the
 #                        kept renders (reader/design/golden) and docs/design/system.html; look at the renders' diff before
-#                        committing (docs/DESIGN-SYSTEM.md)
+#                        committing (docs/design/README.md)
 
 .PHONY: reader welcome licenses engine bench-armv7 fetch-blitz design-update check test kobo-package kindle-package tag signing-key update-serve
 

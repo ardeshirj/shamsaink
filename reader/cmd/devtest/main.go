@@ -1,4 +1,4 @@
-// Command devtest holds a device against the design spec's profile of it, over SSH (docs/DESIGN-SYSTEM.md).
+// Command devtest holds a device against the design spec's profile of it, over SSH (docs/design/README.md).
 //
 //	devtest check DEVICE     read-only: the device's screen, touch, fonts and reader against the profile
 //	devtest scenario DEVICE FILE [--save]   plays a file of steps, by control name, with snapshots (scenario.go); the

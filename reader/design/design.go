@@ -1,6 +1,6 @@
 // Package design is the reader's design system as data: tokens, device profiles, components and screens with their
 // flow, in spec/*.yaml, and the checks that keep the spec, the templates in reader/ui and a device in step
-// (validate.go). docs/DESIGN-SYSTEM.md says how it is used.
+// (validate.go). docs/design/README.md says how it is used.
 package design
 
 import (

@@ -1,7 +1,7 @@
 # ShamsaInk roadmap
 
 This file holds what isn't built yet, in order of priority, and why; it is a plan, not a promise, and nothing here has
-a date. What is built and why is in [DESIGN.md](DESIGN.md), [DESIGN-SYSTEM.md](DESIGN-SYSTEM.md),
+a date. What is built and why is in [DESIGN.md](DESIGN.md), [the design system](design/README.md),
 [TESTING.md](TESTING.md) and [devices/](devices/); what each release brought, in [CHANGELOG.md](../CHANGELOG.md). An
 item leaves this file once it is done and tried on a device, its design going to those files, so the two never
 overlap. New work goes where it belongs as it is decided; nothing is built before the maintainer says yes.
