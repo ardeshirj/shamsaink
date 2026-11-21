@@ -450,7 +450,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				b := items[held]
 				d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: library.Lang(b.Book), Source: b.Source,
 					File: filepath.Base(b.Path), RTL: persian([]string{library.Lang(b.Book)}, false), Narrated: b.Narrated,
-					Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0)}
+					Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies)}
 				if st, err := os.Stat(filepath.Join(rd.dir, b.Path)); err == nil {
 					d.Size = st.Size()
 				}
@@ -464,7 +464,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				fmt.Printf("library: %s details\n", b.Path)
 			case bookPanel == "menu" && id == "book-remove":
 				b := items[held]
-				showBook(ui.DrawBookRemove(b.Title, persian([]string{library.Lang(b.Book)}, false), rd.fonts, scr.W), "remove", "ask")
+				showBook(ui.DrawBookRemove(b.Title, persian([]string{library.Lang(b.Book)}, false), 1+len(b.Copies), rd.fonts, scr.W), "remove", "ask")
 				fmt.Printf("library: %s: remove?\n", b.Path)
 			case bookPanel == "remove" && id == "book-remove-yes":
 				b := items[held]

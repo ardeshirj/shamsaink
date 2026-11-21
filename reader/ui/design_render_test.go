@@ -289,7 +289,7 @@ var designRenders = map[string][]renderCase{
 		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
-	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, f, w)) }}},
+	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, 1, f, w)) }}},
 	"notice": {{"listen", enFaRtl, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", "", f, w)) }},
 		{"wifi-no-network", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-network", "wifi-slash", f, w)) }},
 		{"wifi-no-address", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("wifi-no-address", "wifi-slash", f, w)) }},

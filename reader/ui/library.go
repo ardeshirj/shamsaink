@@ -326,6 +326,7 @@ type BookDetails struct {
 	Title, Author, Lang, Source, File string
 	RTL                               bool  // its title reads right to left
 	Size                              int64 // bytes
+	Copies                            int   // its files (identical copies, one book); 1 or 0: one
 	Narrated, Opened, Finished        bool
 	Read                              int // percent read; -1 when not known
 	Added, LastRead                   time.Time
@@ -366,7 +367,11 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 	if d.Source != "" {
 		rows = append(rows, [2]string{word("source"), d.Source})
 	}
-	rows = append(rows, [2]string{word("file"), d.File},
+	rows = append(rows, [2]string{word("file"), d.File})
+	if d.Copies > 1 {
+		rows = append(rows, [2]string{word("copies"), num(d.Copies)})
+	}
+	rows = append(rows,
 		[2]string{word("size"), word("mb", decimal(fmt.Sprintf("%.1f", float64(d.Size)/(1<<20))))})
 	data := struct {
 		Title, Author, Dir string
@@ -426,9 +431,13 @@ func DrawWiFiAsk(key string, fonts *blitz.Fonts, w int) *Panel {
 }
 
 // DrawBookRemove draws the question before a book is removed (templates/library-book-remove.html): its buttons
-// book-remove-yes and book-remove-no.
-func DrawBookRemove(title string, rtl bool, fonts *blitz.Fonts, w int) *Panel {
-	d := struct{ Title, Dir string }{title, "ltr"}
+// book-remove-yes and book-remove-no. copies are its files (more than one: identical copies, all removed).
+func DrawBookRemove(title string, rtl bool, copies int, fonts *blitz.Fonts, w int) *Panel {
+	note := word("remove-book-note")
+	if copies > 1 {
+		note = word("remove-book-note-copies", num(copies))
+	}
+	d := struct{ Title, Dir, Note string }{title, "ltr", note}
 	if rtl {
 		d.Dir = "rtl"
 	}

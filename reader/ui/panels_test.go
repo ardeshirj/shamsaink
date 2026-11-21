@@ -150,7 +150,7 @@ func TestPanels(t *testing.T) {
 					Source: "farsiepub", File: "a-long-file-name_of-a-book-ocr.epub", Size: 3 << 20, Narrated: true, Opened: true, Read: 42,
 					Added: time.Date(2026, 10, 2, 0, 0, 0, 0, time.UTC), LastRead: time.Date(2026, 10, 30, 0, 0, 0, 0, time.UTC)}, fonts, w)
 			case "remove":
-				p = DrawBookRemove(books[row].Title, books[row].RTL, fonts, w)
+				p = DrawBookRemove(books[row].Title, books[row].RTL, 1, fonts, w)
 			}
 			p.Hang(lib.EntryBox(row), lib.HeadHeight(), lib.RowsBottom())
 			img := image.NewGray(image.Rect(0, 0, w, h))
@@ -398,7 +398,7 @@ func TestPanelEdges(t *testing.T) {
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawMenu(160, "device", fonts, w), "book-menu": DrawMenu(160, "reading", fonts, w),
 		"library-sort": DrawLibrarySort(0, 320, fonts, w), "library-book-menu": DrawBookMenu(false, true, fonts, w),
-		"library-book-remove": DrawBookRemove("A title", false, fonts, w)} {
+		"library-book-remove": DrawBookRemove("A title", false, 1, fonts, w)} {
 		for id, r := range m.buttons {
 			if last, ok := listRows[name]; ok && id != last { // a list's rows: grey lines between them, its border under the last
 				continue
