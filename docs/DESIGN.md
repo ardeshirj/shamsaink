@@ -201,7 +201,7 @@ flowchart LR
 | the launcher | the host: starts the reader on the library, stops (Kobo) or pauses (Kindle) the device's own interface while it runs and brings it back after, logs, the watchdog | ours, shell (`reader/kobo/launch.sh`, `reader/kindle/launch.sh`), started by the row in More (Kobo: `reader/kobo/launcher`, a Qt 6 plugin Nickel loads, installed by Kobo from `.kobo/Kobo.tgz`; it parks itself until a start is confirmed and removes itself once ShamsaInk is deleted) and a scriptlet (Kindle, the jailbreak's shell integration) | both (the Kindle's since 2026-11-06; the Kobo's row since 2026-11-11, NickelMenu before) |
 | screen refresh | the page into the framebuffer, refreshed with a waveform: REAGL page turns, A2 for the read-along mark (10) | ours, Go | the Kindle's MediaTek driver done (10); Kindle and Kobo NXP, Kobo MediaTek, PocketBook later |
 | input | touches as Linux input events, the touch device grabbed (`EVIOCGRAB`) so the device's own interface does not see them; taps, swipes, a held finger for highlights | ours, Go (`touch.go`) | the Kindle's `pt_mt` (`event1`); the snow protocol for Kobo to come (13) |
-| Wi-Fi | on demand, asked first: none of our own switch; an action that needs the network runs when Wi-Fi is on and asks before turning it on when it is off; what the reader turned on is turned off again (`device/wifi.go`; "Wi-Fi on demand" below). The Kindle: not yet | ours, over Kobo's own `wpa_supplicant` and `dhcpcd` (Kobo) | the Kobo (2026-11-20) |
+| Wi-Fi | on demand, asked first: none of our own switch; an action that needs the network runs when Wi-Fi is on and asks before turning it on when it is off; what the reader turned on is turned off again (`device/wifi.go`; "Wi-Fi on demand" below) | ours, over Kobo's own `wpa_supplicant` and `dhcpcd` (Kobo); Amazon's `wirelessEnable` through `lipc` (Kindle) | the Kobo, the Kindle (2026-11-20) |
 | sleep | the sleep screen chosen and drawn the same everywhere (`device/sleep.go`). The Kobo: ours, the power button and the idle time, Wi-Fi down, suspend (`device/kobo.go`). The Kindle: `powerd`'s (its timeout, the power button); the reader shows its sleep screen on `goingToScreenSaver` and the page again on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's `powerd`, answered (Kindle) | both |
 | power | the charger plugged or unplugged: the kernel's power_supply uevents over netlink, the same on both (`device/power.go`); the bar redrawn if it shows and changed | the kernel's | both (2026-11-06) |
 | sound | narration's audio | the Kindle: Amazon's `mplay`, our decoded parts from RAM, over Bluetooth (12; `narration.go`); Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` (firmware 6: BlueZ connects the headphones, PulseAudio in system mode carries the sound; 4.x: Kobo's `mtkbtmwrpcaudiosink`) kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations, decoded in the background (symphonia: MP3, AAC LC in MP4); the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound | both. EPUB 3.3 (Reading Systems) asks for MP3, AAC LC and Opus and a clip played from `clipBegin` (0 if absent) to `clipEnd` (the file's end if absent): Opus has no decoder yet (symphonia 0.5 has none), and a clip without `clipEnd` is left out and counted in the log (needs the file's length) |
@@ -216,7 +216,7 @@ the Kindle, four on the Kobo). In `reader/device/` (about 1,770 lines of Go):
 |---|---|---|
 | `device.go`, `screen.go`, `touch.go`, `power.go`, `sleep.go`, `heartbeat.go`, most of `light.go` | ~1,020 | shared: events, the screen and its refreshes (each controller's ioctl), touches, power events, the sleep screen, the watchdog's heartbeat, the light panel's values |
 | `kobo.go` | ~340 | the Kobo: the power and page buttons, sleeping after idle minutes, suspend and Wi-Fi around it, not suspending on a charger |
-| `wifi.go` | ~220 | Wi-Fi on demand: its state, brought up and released (the Kobo; the Kindle answers "not yet") |
+| `wifi.go` | ~330 | Wi-Fi on demand: its state, brought up and released (the Kobo's own way; the Kindle's through Amazon's service) |
 | `kindle.go` | ~110 | the Kindle: `powerd`'s events answered, its idle timer kept going, the screen's own inversion |
 | `sim.go` | ~130 | the simulated device (`docs/TESTING.md`) |
 
@@ -230,7 +230,7 @@ loaders; `reader/kindle/launch.sh` ~90), the Kobo's `install.sh`, the Kindle's s
 mode), a flash now and then (how often: in use); the read-along mark A2, an underline that never touches the
 letters. Night mode driven by us is not tried yet.
 
-### Wi-Fi on demand (2026-11-20, the Kobo)
+### Wi-Fi on demand (2026-11-20, the Kobo and the Kindle)
 **Nothing turns Wi-Fi on without the person's yes, and the reader has no Wi-Fi switch** (the maintainer, 2026-11-20).
 Wi-Fi is left as the device has it. An action that needs the network (updates first, step 2; the
 library's downloads later) asks `Device.WiFiState()`: on (Kobo's switch on: its `wpa_supplicant` running, `wlan0`
@@ -247,13 +247,20 @@ it. No network saved: a notice to join one once in the device's Wi-Fi settings, 
 already on, never turning it on. The sleep keeps its own rule: Wi-Fi off for the suspend and back after only if it was
 up (`doze`, sharing the chip's helpers). Measured on the Kobo (firmware 6, 2026-11-20): Kobo's "off" stops both
 programs and the chip (the driver's module stays loaded); off to an address 2.7–2.8 s; Kobo's interface turns Wi-Fi
-on at its start only when its `wpa_supplicant` still runs (`devices/kobo/README.md`). The Kindle answers `WiFiNone`
-("not available on this device yet") until its own Wi-Fi (Now, step 6). **For development** (dev mode only, never in a
+on at its start only when its `wpa_supplicant` still runs (`devices/kobo/README.md`). **The Kindle** (2026-11-20, the
+same calls and rules, only the bottom layer differs): Amazon's own Wi-Fi service (`cmd` and `wifid`) keeps running
+while the reader has the framework paused, and does the work the reader does itself on the Kobo. On is its
+`wirelessEnable` (`lipc`, `com.lab126.cmd`): set to 1, it joins a network saved in the Kindle's settings and starts
+`wpa_supplicant` and `udhcpc` itself (2.2 s to an address in the trial), 0 disconnects; `ReleaseWiFi` sets it back to 0
+only if it was 0. The networks saved are Amazon's (its own database, not `wpa_supplicant.conf`, which has none): counted
+from `wifid`'s diagnostic text (property `711`, its "3- Networks" lines); a text of another shape counts as one, so a
+connection is tried and gives up after 20 s as anywhere. The sleep needs nothing: Amazon's power manager has Wi-Fi as
+it was after a wake (seen once). **For development** (dev mode only, never in a
 release): the Developer panel's Wi-Fi switch, above SSH, its state under it (off, connecting..., on with the address);
 on connects with no question (the switch is the yes) and Wi-Fi stays on, off turns it off as Kobo's own switch does
 (`TurnOffWiFi`).
 
-### Updates over Wi-Fi (2026-11-20, the Kobo)
+### Updates over Wi-Fi (2026-11-20, the Kobo and the Kindle)
 Settings' last row, Updates (the version under it, Check at its end), the package `reader/update` and the library's
 `updates.go`. **Only when asked:** Check goes through Wi-Fi on demand (above: the question when Wi-Fi is off; Wi-Fi
 turned on for it turned off again at the end, whatever the end); no check runs by itself.
@@ -291,7 +298,11 @@ turned on for it turned off again at the end, whatever the end); no check runs b
 - **Trying it before a release** (dev mode only): `dev/update-url` points the reader at another `latest.json`, and
   `dev/update-key` adds a test key: `make update-serve` serves a package signed with a test key from the Mac (port
   8090), `make kobo-update-dev` puts both files on the Kobo (`docs/TESTING.md`). A release build has no `dev/`.
-- **The Kindle:** Check says updates over Wi-Fi are not on this device yet (until its Wi-Fi, Now, step 6).
+- **The Kindle** (2026-11-20): the same, with its own package (`shamsaink/` from the drive's root, and the library's
+  scriptlet `documents/ShamsaInk.sh` beside it, replaced when it differs, the old one `previous/scriptlet.sh`) and the
+  same restart loop and way back in its `launch.sh`. The reader there is given `RESTORE_SCREEN` (the screen found put
+  back on leaving): a reader started after an update would find the restarting screen, so it is not given it, and the
+  launcher puts back its own copy of the screen found at the start instead.
 
 ### Keeping the reader alive: the watchdog (2026-11-05, the Kobo)
 

@@ -36,7 +36,8 @@ feature and fix without a computer. In this order:
 3. OPDS (stage 7)
 4. The keyboard designed once, its digit layout built first for Get a book (stage 7)
 5. Its English and Farsi layouts (stage 7)
-6. The Kindle's Wi-Fi
+6. The Kindle's Wi-Fi: done 2026-11-20, early, with step 2 (through Amazon's `lipc`, simpler than the Kobo's;
+   `DESIGN.md`, "Wi-Fi on demand"; `devices/kindle/README.md`)
 
 Steps 1, 2 and 6 are in "Over Wi-Fi" below. **Daily use on the Kobo** (stage 5) carries on alongside, done when
 ShamsaInk is the reader picked for Farsi books. Then stage 6, the rest of 7, 8, and the Kindle's (9).
@@ -74,7 +75,7 @@ keyboard first ("Now").
 
 **Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
 - [ ] **Updates over Wi-Fi** (step 2, early: the beta testers get every later feature and fix without a computer).
-  **Built and tried on the Kobo 2026-11-20** (`DESIGN.md`, "Updates over Wi-Fi"): with a test key, an update installed
+  **Built and tried on the Kobo and the Kindle 2026-11-20** (`DESIGN.md`, "Updates over Wi-Fi"): with a test key, an update installed
   and kept, and a broken one undone by the launcher; the release key made (`make signing-key`), CI signs every
   release. Left: confirmed with the first two real releases (the first by USB, the next over Wi-Fi, from
   farsiepub.org's `latest.json`); then this item leaves the file. To decide: an end-to-end scenario on the simulator
@@ -90,8 +91,6 @@ keyboard first ("Now").
 - [ ] An upgrade keeps the user's data: effectively done (`devices/install.md`: a package never holds settings, places,
   highlights, the cache or books); confirmed on the device with the first update. The cache format versioned, an old
   one dropped cleanly
-- [ ] **The Kindle's Wi-Fi** (step 6) through Amazon's `lipc`; until then the Kindle gets the turn-Wi-Fi-on message or no
-  network features
 
 **6. The layout** (`design/system.html`)
 - [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them

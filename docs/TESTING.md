@@ -149,13 +149,13 @@ as untested.
    every scenario.
 5. References updated only after the maintainer has seen the changed pages.
 
-### Updates over Wi-Fi, on the Kobo (2026-11-20)
+### Updates over Wi-Fi, on the Kobo and the Kindle (2026-11-20)
 The parts are tested in Go on every push (`reader/update`: versions' order, signatures, a download from a test server,
-cut, cancelled, too big, unsigned, the install's moves and what it refuses). The whole journey on the Kobo, by hand like
-`basics.txt`, before a release and after a change to `reader/update`, `updates.go` or `launch.sh`:
-**`make kobo-update-e2e`** (`e2e/scenarios/update.txt`; the Kobo awake, ShamsaInk closed). It packs the latest build,
-devtest serves it from this computer as a newer version signed with a key made for the run, and the Kobo installs it
-itself over Wi-Fi, restarts on it and keeps it; then a broken one, which the launcher puts back with its notice. A run
-leaves the Kobo on the latest build. By hand instead (to watch it, or with the Wi-Fi question): `make kobo-package
+cut, cancelled, too big, unsigned, the install's moves and what it refuses). The whole journey on a device, by hand
+like `basics.txt`, before a release and after a change to `reader/update`, `updates.go` or a `launch.sh`:
+**`make update-e2e`**, on the Kindle `make update-e2e DEVICE=kindle` (`e2e/scenarios/update.txt`, the same steps on
+both; the device awake, ShamsaInk closed). It packs the latest build, devtest serves it from this computer as a newer
+version signed with a key made for the run, and the device installs it itself over Wi-Fi, restarts on it and keeps it;
+then a broken one, which the launcher puts back with its notice. A run leaves the device on the latest build. By hand instead (to watch it, or with the Wi-Fi question): `make kobo-package
 VERSION=v0.9.0-test`, `make update-serve` and `make kobo-update-dev`, then Settings, Updates, Check on the Kobo; `make
 kobo-reader-install` after, and `dev/update-url` and `dev/update-key` removed.

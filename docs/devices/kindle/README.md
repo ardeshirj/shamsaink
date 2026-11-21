@@ -122,3 +122,12 @@ Newest last; each a dated entry. The bugs above are the settled ones.
   once the framework is paused, and on any other end writes it back and flashes it whole (`eips -s w=1236,h=1648 -f`)
   before resuming the framework. KOReader's `koreader.sh` keeps such a copy too (read, not copied), without the flash.
   Seen in back-to-back e2e runs; checked with the watchdog scenario from a clean home screen.
+- 2026-11-20, tried: **Wi-Fi on demand and updates over Wi-Fi work here as on the Kobo** (`DESIGN.md`, "Wi-Fi on demand"
+  and "Updates over Wi-Fi"). Amazon's Wi-Fi service (`cmd`, `wifid`, with `wpa_supplicant` and `udhcpc`) keeps running
+  while the framework is paused; `lipc-set-prop com.lab126.cmd wirelessEnable 0|1` turns Wi-Fi off and on (off at
+  once; on to an address in 2.2 to 6.5 s, joining a network saved in the Kindle's settings), and nothing of Amazon's
+  is drawn over our page meanwhile. The networks saved are in Amazon's own database (`wpa_supplicant.conf` has none),
+  listed by `wifid`'s diagnostic property `711`. HTTPS to farsiepub.org works with the CA roots the reader carries. An
+  update over Wi-Fi (`make update-e2e DEVICE=kindle`): 13.6 MB downloaded and installed in 13 s (the Kobo: 5 s; `/mnt/us`
+  is slow), and the running reader, its file moved into `previous/` under it, still drew and exited cleanly: no
+  SIGBUS from FUSE (that came from replacing the file, not moving it).
