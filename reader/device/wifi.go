@@ -17,13 +17,18 @@ import (
 // with the networks Kobo saved (/mnt/onboard/.kobo/wpa_supplicant.conf) and dhcpcd, each started only if not running.
 // ReleaseWiFi undoes only what ConnectWiFi started, so Kobo's interface finds Wi-Fi as it left it. Kobo's "Wi-Fi off"
 // stops both programs and switches the chip off (its driver's module stays loaded); off to an address took 2.8 s in
-// the trial. Never in the background: nothing turns Wi-Fi on without the person's yes. The Kindle: not yet (step 6).
+// the trial. Never in the background: nothing turns Wi-Fi on without the person's yes.
+//
+// The Kindle (2026-11-20): Amazon's own Wi-Fi service (cmd and wifid) keeps running while the reader has the framework
+// paused, and does the work itself: com.lab126.cmd's wirelessEnable, set to 1, joins a network saved in the Kindle's
+// settings (2.2 s to an address in the trial), 0 disconnects; it starts and stops wpa_supplicant and udhcpc itself. So
+// ConnectWiFi sets it to 1 and ReleaseWiFi back to 0 if it was 0; the rest is as on the Kobo.
 
 // WiFi is Wi-Fi's state, as the reader asks it before an action that needs the network.
 type WiFi int
 
 const (
-	WiFiNone WiFi = iota // no Wi-Fi of ours on this device yet (the Kindle)
+	WiFiNone WiFi = iota // no Wi-Fi of ours on this device (the Kindle until 2026-11-20)
 	WiFiOff              // off: an action asks before turning it on
 	WiFiOn               // on (Kobo's switch on), maybe still joining: an action just runs
 )
@@ -55,6 +60,11 @@ func (d *Device) WiFiState() WiFi {
 	switch {
 	case Sim():
 		if strings.HasPrefix(simWiFi(), "on") {
+			return WiFiOn
+		}
+		return WiFiOff
+	case d.Kind == Kindle:
+		if kindleWiFiEnabled() {
 			return WiFiOn
 		}
 		return WiFiOff
@@ -92,6 +102,8 @@ func (d *Device) TurnOffWiFi() {
 		exec.Command("dhcpcd", "-x").Run()
 		exec.Command("wpa_cli", "-i", "wlan0", "terminate").Run()
 		wifiChipOff()
+	case d.Kind == Kindle:
+		kindleWiFi(false)
 	default:
 		return
 	}
@@ -155,7 +167,18 @@ func (d *Device) connectWiFi() int {
 		fmt.Printf("wi-fi: address 192.0.2.10 in %.1f s (simulated)\n", time.Since(t).Seconds())
 		return WiFiConnected
 	}
-	if d.WiFiState() == WiFiOff {
+	if d.Kind == Kindle && d.WiFiState() == WiFiOff {
+		if kindleSavedNetworks() == 0 {
+			fmt.Println("wi-fi: no network saved")
+			return WiFiNoNetwork
+		}
+		d.wifi.Lock()
+		d.wifi.chip = true
+		d.wifi.Unlock()
+		kindleWiFi(true)
+		fmt.Printf("wi-fi: turned on in %.1f s (Amazon's wirelessEnable)\n", time.Since(t).Seconds())
+	}
+	if d.Kind == Kobo && d.WiFiState() == WiFiOff {
 		if savedNetworks() == 0 {
 			fmt.Println("wi-fi: no network saved")
 			return WiFiNoNetwork
@@ -207,6 +230,8 @@ func (d *Device) ReleaseWiFi() bool {
 	}
 	if Sim() {
 		os.WriteFile(hw("/sim/wifi"), []byte("off\n"), 0o644)
+	} else if d.Kind == Kindle {
+		kindleWiFi(false)
 	} else {
 		if o.dhcpd {
 			exec.Command("dhcpcd", "-x").Run()
@@ -265,4 +290,43 @@ func simWiFi() string {
 func exists(path string) bool {
 	_, err := os.Stat(hw(path))
 	return err == nil
+}
+
+// kindleWiFiEnabled says whether the Kindle's Wi-Fi is on (Amazon's wirelessEnable, ~40 ms to ask).
+func kindleWiFiEnabled() bool {
+	out, err := exec.Command("lipc-get-prop", "com.lab126.cmd", "wirelessEnable").Output()
+	return err == nil && strings.TrimSpace(string(out)) == "1"
+}
+
+// kindleWiFi turns the Kindle's Wi-Fi on or off through Amazon's service, which joins a saved network itself.
+func kindleWiFi(on bool) {
+	v := "0"
+	if on {
+		v = "1"
+	}
+	if err := exec.Command("lipc-set-prop", "com.lab126.cmd", "wirelessEnable", v).Run(); err != nil {
+		fmt.Println("wi-fi: wirelessEnable", v, "failed:", err)
+	}
+}
+
+// kindleSavedNetworks counts the networks saved in the Kindle's settings, from wifid's diagnostic text (its property
+// 711, section "3- Networks": a line "3.N" each; nothing else of it is read). Its shape is Amazon's: when the section
+// is not found, one is assumed, so a connection is tried and gives up after wifiWait as anywhere.
+func kindleSavedNetworks() int {
+	out, err := exec.Command("lipc-get-prop", "com.lab126.wifid", "711").Output()
+	if err != nil || !strings.Contains(string(out), "- Networks") {
+		return 1
+	}
+	return kindleNetworks(string(out))
+}
+
+// kindleNetworks counts the "3.N" lines of wifid's diagnostic text.
+func kindleNetworks(text string) int {
+	n := 0
+	for _, l := range strings.Split(text, "\n") {
+		if l = strings.TrimSpace(l); len(l) > 2 && strings.HasPrefix(l, "3.") && l[2] >= '0' && l[2] <= '9' {
+			n++
+		}
+	}
+	return n
 }
