@@ -13,6 +13,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"os"
@@ -24,6 +25,7 @@ import (
 	blitz "shamsainkengine"
 	"shamsainkreader/device"
 	"shamsainkreader/ui"
+	"shamsainkreader/update"
 )
 
 var (
@@ -108,6 +110,9 @@ func main() {
 		err = rd.read(map[string]string{"book": os.Args[1]}, t)
 	}
 	rd.dev.Usage("stop", "")
+	if errors.Is(err, errRestart) { // "Restarting with the new version…" stays until it opens (launch.sh)
+		os.Exit(update.RestartCode)
+	}
 	if found != nil {
 		rd.dev.Screen.Restore(found)
 	} else if err == nil {

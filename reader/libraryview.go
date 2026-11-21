@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"shamsainkreader/device"
 	"shamsainkreader/library"
 	"shamsainkreader/ui"
+	"shamsainkreader/update"
 )
 
 // browse shows the library (DIR/books) until it is left from its menu: a tap on a book reads it, and leaving the book
@@ -102,6 +104,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	time.Sleep(time.Until(rd.splashUntil)) // the opening screen seen for SplashFor at the start (nothing later)
 	scr.Show(rd.over, device.WfGC16, true)
 	fmt.Printf("library: %d books, %d rows, %d pages, shown in %.0f ms\n", len(all), len(items), v.Pages(), ms(t))
+	if u := update.Reached(rd.dir); u != "" { // a new version's first start reached the library: launch.sh keeps it
+		fmt.Printf("update: %s reached the library: kept\n", u)
+	}
+	undone := update.Undone(rd.dir) // the launcher put the previous version back: said once the loop runs
 
 	events, stop, err := rd.dev.Inputs()
 	if err != nil {
@@ -123,14 +129,15 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	}
 	// the panel under the bar (the menu) or the filters (sort), while open
 	var panel *ui.Panel
-	langOpen := false  // the panel is the language panel, not the menu
-	devOpen := false   // the panel is the Developer panel (dev mode; devssh.go)
-	devDialog := ""    // over it, a notice of its Wi-Fi switch ("notice")
-	lightOpen := false // the panel is the Light panel (light.go)
-	soundOpen := false // the panel is the Sound panel (sound.go)
-	phones := ""       // its headphones' Bluetooth address ("" none connected)
-	soundState := ""   // its Connect: "", "connecting" or "failed"
-	slide := ""        // its slider a held finger moves
+	langOpen := false   // the panel is the language panel, not the menu
+	devOpen := false    // the panel is the Developer panel (dev mode; devssh.go)
+	devDialog := ""     // over it, a notice of its Wi-Fi switch ("notice")
+	upd := newUpdater() // an update asked for from Settings (updates.go), and its dialog
+	lightOpen := false  // the panel is the Light panel (light.go)
+	soundOpen := false  // the panel is the Sound panel (sound.go)
+	phones := ""        // its headphones' Bluetooth address ("" none connected)
+	soundState := ""    // its Connect: "", "connecting" or "failed"
+	slide := ""         // its slider a held finger moves
 	// a slider's tap or drag at x on the Light or Sound panel: whether it changed; the panel as it is now
 	sliderTap := func(id string, x int) bool {
 		if soundOpen {
@@ -222,6 +229,49 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		panel.Over(rd.over)
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, scr.H).Intersect(old.Union(panel.Rect())), device.WfREAGL, false)
 	}
+	// an update's dialog in the middle of the screen (kind: upd.dialog), over Settings or, for the notice that an update
+	// was undone, over the library
+	showUpdate := func(p *ui.Panel, kind string) {
+		var old image.Rectangle
+		if panel != nil {
+			old = panel.Rect()
+		}
+		p.SetY((scr.H - p.Rect().Dy()) / 2)
+		fmt.Printf("library: dialog update %s at %d,%d\n", kind, p.Rect().Min.X, p.Rect().Min.Y)
+		panel, upd.dialog = p, kind
+		v.Draw(rd.over)
+		panel.Over(rd.over)
+		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, scr.H).Intersect(old.Union(panel.Rect())), device.WfREAGL, false)
+	}
+	// an update's notice; Wi-Fi turned on for the update turned off again
+	updateEnd := func(key, icon string, note ...string) {
+		rd.dev.ReleaseWiFi()
+		showUpdate(ui.DrawNotice(key, icon, rd.fonts, scr.W, note...), "notice")
+	}
+	// the update's dialog closed: back to Settings, or to the library when Settings was not open
+	updateClose := func() {
+		upd.dialog = ""
+		if langOpen {
+			openLang()
+			return
+		}
+		r := panel.Rect()
+		panel = nil
+		v.Draw(rd.over)
+		scr.ShowPart(rd.over, r, device.WfREAGL, false)
+	}
+	// Settings' Check: Wi-Fi asked for first when it is off; not on a device without updates of ours (the Kindle)
+	updateCheck := func() {
+		switch st := rd.dev.WiFiState(); {
+		case rd.updateDevice() == "" || st == device.WiFiNone:
+			showUpdate(ui.DrawNotice("update-not-here", "", rd.fonts, scr.W), "notice")
+		case st == device.WiFiOff && !rd.dev.WiFiBusy():
+			showUpdate(ui.DrawWiFiAsk("wifi-off-update", rd.fonts, scr.W), "ask")
+		default: // on (maybe still joining): its address waited for, nothing turned on
+			upd.wifi = true
+			rd.dev.ConnectWiFi()
+		}
+	}
 	// the Developer panel's Wi-Fi switch (dev-wifi): on connects, with no question (the switch is the yes), and Wi-Fi
 	// stays on; off turns it off. Not there yet on a device without Wi-Fi of ours (the Kindle): a notice.
 	wifiSwitch := func() {
@@ -255,6 +305,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, v.TopBarHeight()), device.WfREAGL, false)
 	}
 	beats := rd.dev.Beats()
+	if undone != "" {
+		fmt.Printf("update: %s was undone by the launcher\n", undone)
+		showUpdate(ui.DrawNotice("update-undone", "arrow-counter-clockwise", rd.fonts, scr.W, version), "notice")
+	}
 	for {
 		var e device.Event
 		select {
@@ -265,6 +319,50 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			e = ev
 		case <-beats:
 			rd.dev.Beat()
+			continue
+		case m := <-upd.out:
+			switch m.kind {
+			case "checked":
+				switch {
+				case m.err != nil:
+					updateEnd(updateNotice(m.err))
+				case m.latest.Version == "":
+					updateEnd("update-none", "", version)
+				default:
+					upd.latest = m.latest
+					showUpdate(ui.DrawUpdateAvailable(m.latest.Version, rd.fonts, scr.W), "available")
+				}
+			case "progress": // the bar redrawn half a second apart at most, and at its end
+				if upd.dialog == "progress" && m.share != upd.shown && (m.share == 100 || time.Since(upd.shownAt) > 500*time.Millisecond) {
+					upd.shown, upd.shownAt = m.share, time.Now()
+					showUpdate(ui.DrawUpdateProgress(upd.latest.Version, m.share, rd.fonts, scr.W), "progress")
+				}
+			case "failed":
+				if errors.Is(m.err, update.ErrCancelled) {
+					rd.dev.ReleaseWiFi()
+					updateClose()
+				} else {
+					updateEnd(updateNotice(m.err))
+				}
+			case "installed":
+				rd.dev.ReleaseWiFi()
+				showUpdate(ui.DrawUpdateProgress(upd.latest.Version, -1, rd.fonts, scr.W), "progress")
+				scr.Wait()
+				fmt.Printf("library: left to restart on %s\n", upd.latest.Version)
+				return "", errRestart
+			}
+			continue
+		}
+		if e.WiFi != 0 && upd.wifi { // Wi-Fi asked for by Check: on, the check; or a notice of why not
+			upd.wifi = false
+			switch e.WiFi {
+			case device.WiFiConnected:
+				rd.updateCheck(upd)
+			case device.WiFiNoNetwork:
+				updateEnd("wifi-no-network", "wifi-slash")
+			default:
+				updateEnd("wifi-no-address", "wifi-slash")
+			}
 			continue
 		}
 		if e.WiFi != 0 { // the Wi-Fi switch's connection ended: on (it stays on), or a notice of why not
@@ -380,6 +478,33 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					}
 				}
 				changed()
+			case upd.dialog == "ask": // Wi-Fi asked for: Turn on connects, then checks; Cancel or elsewhere changes nothing
+				if id == "wifi-on" {
+					fmt.Println("update: Wi-Fi turned on to check")
+					upd.wifi = true
+					rd.dev.ConnectWiFi()
+				}
+				updateClose()
+			case upd.dialog == "available": // Update downloads it; Later, or a tap elsewhere, changes nothing
+				if id == "update-install" {
+					fmt.Printf("update: %s asked for\n", upd.latest.Version)
+					upd.shown, upd.shownAt = 0, time.Now()
+					showUpdate(ui.DrawUpdateProgress(upd.latest.Version, 0, rd.fonts, scr.W), "progress")
+					rd.updateDownload(upd)
+				} else if id == "update-later" || id == "" && !image.Pt(e.X, e.Y).In(panel.Rect()) {
+					rd.dev.ReleaseWiFi()
+					updateClose()
+				}
+			case upd.dialog == "progress": // only Cancel, while downloading; the restart has no button
+				if id == "update-cancel" && upd.cancel != nil {
+					fmt.Println("update: cancelled")
+					upd.cancel()
+				}
+			case upd.dialog == "notice": // Close or a tap elsewhere
+				updateClose()
+			case id == "update-check" && langOpen:
+				fmt.Println("update: check asked for")
+				updateCheck()
 			case devDialog != "": // Close or a tap elsewhere: back to the Developer panel
 				devDialog = ""
 				openDev()
@@ -470,7 +595,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				held, bookPanel = -1, ""
 				panel, langOpen, devOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false, false
 				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
-				devDialog = ""
+				devDialog, upd.dialog = "", ""
 				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)

@@ -2,7 +2,7 @@ name: update-progress
 layer: panel   # in the place of the question it came from
 templates: [update-progress.html]
 buttons: ring
-status: planned
+status: built
 purpose: "An update under way (roadmap step 2, designed 2026-11-20): Downloading the new version... and its share, the version on a grey line of its own,, in words and as a bar, with Cancel (nothing is changed until the download is whole and verified); then Restarting with the new version..., no buttons, until the new version opens on the library. A failure is a notice: the server not reached, the download cut, not verified; a new version that does not start is undone by the launcher, which says so (notice)."
 enter: [{gesture: tap, control: update-install, from: update-available}]
 controls:

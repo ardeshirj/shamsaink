@@ -2,7 +2,7 @@ name: update-available
 layer: panel   # in the place of Settings, which asked, as wifi-ask
 templates: [update-available.html]
 buttons: ring
-status: planned
+status: built
 purpose: "A newer version is out (Settings, Updates, Check; roadmap step 2, designed 2026-11-20): the dialog component, A new version is available., the version on a grey line of its own (no Latin inside a sentence), then Update (its download icon) and Later; general and simple, no size and no summary (the maintainer). Later changes nothing."
 enter: [{gesture: update-found, from: library-settings}]
 controls:

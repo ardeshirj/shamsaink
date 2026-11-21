@@ -184,7 +184,8 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 		}
 		left[n] = why
 	}
-	// a screen entered only from a dev-mode screen (the Developer panel's Wi-Fi question) is dev mode's too
+	// a screen entered only from a dev-mode screen (the Developer panel's Wi-Fi question) is dev mode's too; one entered
+	// only from a screen the reader shows by itself (an update's progress, from the newer version found) likewise
 	for grew := true; grew; {
 		grew = false
 		for n, why := range left {
@@ -192,8 +193,11 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 				continue
 			}
 			for _, en := range spec.Screens[n].Enter {
-				if strings.HasPrefix(left[en.From], "dev mode only") {
+				switch from := left[en.From]; {
+				case strings.HasPrefix(from, "dev mode only"):
 					left[n], grew = "dev mode only (entered from "+en.From+")", true
+				case strings.HasPrefix(from, "shown by the reader itself"):
+					left[n], grew = "shown by the reader itself (entered from "+en.From+")", true
 				}
 			}
 		}
