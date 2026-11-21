@@ -16,8 +16,13 @@ import (
 	"syscall"
 )
 
-// The Kobo's package holds its files under this path (reader/scripts/package.sh).
-const koboRoot = "mnt/onboard/.adds/shamsaink/"
+// Where a device's package holds the reader's files (reader/scripts/package.sh): the Kobo's from the Kobo's root, the
+// Kindle's from its USB drive's (/mnt/us), which also has the library's scriptlet beside the reader's folder.
+const (
+	koboRoot   = "mnt/onboard/.adds/shamsaink/"
+	kindleRoot = "shamsaink/"
+	scriptlet  = "documents/ShamsaInk.sh" // the Kindle's, in its library: from the drive's root
+)
 
 // The launcher's library in Kobo's tree, and its name in the package's launcher/Kobo.tgz.
 const (
@@ -33,8 +38,8 @@ const (
 //	                     back if the reader ends while it is there
 //	update/added         the files the update added (none before it), removed when it is undone
 //	update/undone        the version launch.sh undid, for the notice (Undone)
-//	previous/            the files the update replaced or removed, as they were; previous/launcher.so the launcher's
-//	                     library when it changed
+//	previous/            the files the update replaced or removed, as they were; previous/launcher.so the Kobo's
+//	                     launcher library, previous/scriptlet.sh the Kindle's scriptlet, when they changed
 const (
 	updateDir   = "update"
 	previousDir = "previous"
@@ -61,17 +66,27 @@ func Prepare(dir string) error {
 	return os.MkdirAll(u, 0o755)
 }
 
-// Install puts the verified package pkg (the Kobo's) in place in dir, version being its version: unpacked into
+// Install puts the verified package pkg of device ("kobo" or "kindle") in place in dir, version being its version: unpacked into
 // update/new, then each file moved in, the one it replaces moved into previous/ first; the launcher's library
 // (launcher, "" for none: the simulator) written beside it and moved in when it differs, the old one kept as
-// previous/launcher.so. update/pending and update/added are written before anything moves, so a reader that stops
+// previous/launcher.so; the Kindle's scriptlet the same way beside dir (../documents), the old one previous/scriptlet.sh.
+// update/pending and update/added are written before anything moves, so a reader that stops
 // half way (the power) is undone by launch.sh like one that does not start. A failure here undoes what was moved.
-func Install(pkg, dir, version, launcher string) error {
+func Install(pkg, dir, device, version, launcher string) error {
 	stage := filepath.Join(dir, updateDir, "new")
 	if err := os.RemoveAll(stage); err != nil {
 		return err
 	}
-	files, err := unpack(pkg, stage)
+	os.RemoveAll(stage + ".extra")
+	root, extra := koboRoot, ""
+	switch device {
+	case "kobo":
+	case "kindle":
+		root, extra, launcher = kindleRoot, scriptlet, ""
+	default:
+		return fmt.Errorf("no updates for the device %q", device)
+	}
+	files, err := unpack(pkg, stage, root, extra)
 	if err != nil {
 		return err
 	}
@@ -109,6 +124,16 @@ func Install(pkg, dir, version, launcher string) error {
 		if b, err := fromTgz(filepath.Join(stage, "launcher/Kobo.tgz"), launcherIn); err == nil {
 			if cur, err := os.ReadFile(launcher); err != nil || !bytes.Equal(cur, b) {
 				newLauncher = b
+			}
+		}
+	}
+	// the Kindle's scriptlet, if the package's differs from the one in the library
+	var newScript []byte
+	scriptPath := filepath.Join(filepath.Dir(dir), filepath.FromSlash(scriptlet))
+	if extra != "" {
+		if b, err := os.ReadFile(filepath.Join(stage+".extra", path.Base(extra))); err == nil {
+			if cur, err := os.ReadFile(scriptPath); err != nil || !bytes.Equal(cur, b) {
+				newScript = b
 			}
 		}
 	}
@@ -178,7 +203,27 @@ func Install(pkg, dir, version, launcher string) error {
 		}
 		fmt.Println("update: the launcher's library is new, loaded when Kobo's interface next starts")
 	}
+	if newScript != nil {
+		if cur, err := os.ReadFile(scriptPath); err == nil {
+			if err := writeSynced(filepath.Join(prev, "scriptlet.sh"), cur); err != nil {
+				undo()
+				return err
+			}
+		}
+		os.MkdirAll(filepath.Dir(scriptPath), 0o755)
+		if err := writeSynced(scriptPath+".new", newScript); err != nil {
+			undo()
+			return err
+		}
+		if err := os.Rename(scriptPath+".new", scriptPath); err != nil {
+			os.Remove(scriptPath + ".new")
+			undo()
+			return err
+		}
+		fmt.Println("update: the library's scriptlet is new")
+	}
 	os.RemoveAll(stage)
+	os.RemoveAll(stage + ".extra")
 	os.Remove(pkg)
 	// the opening and loading screens drawn by the old version (install.sh does the same)
 	for _, g := range []string{"splash-*", "loading-*"} {
@@ -192,9 +237,10 @@ func Install(pkg, dir, version, launcher string) error {
 	return nil
 }
 
-// unpack writes the Kobo package's files under stage, the paths below its reader's folder; only plain files and
-// folders inside it (a link, a device or a path leaving it is refused). Its files, sorted.
-func unpack(pkg, stage string) ([]string, error) {
+// unpack writes a package's files under stage, the paths below root (its reader's folder); only plain files and
+// folders inside it (a link, a device or a path leaving it is refused), and extra, a file outside it the package may
+// have (the Kindle's scriptlet), written to stage.extra/ under its own name. The reader's files, sorted.
+func unpack(pkg, stage, root, extra string) ([]string, error) {
 	f, err := os.Open(pkg)
 	if err != nil {
 		return nil, err
@@ -215,13 +261,26 @@ func unpack(pkg, stage string) ([]string, error) {
 			return nil, fmt.Errorf("%w: %v", ErrUnverified, err)
 		}
 		name := path.Clean(strings.TrimPrefix(h.Name, "./"))
-		if name+"/" == koboRoot || !strings.HasPrefix(name+"/", koboRoot) {
+		if extra != "" && name == extra && h.Typeflag == tar.TypeReg {
+			b, err := io.ReadAll(io.LimitReader(t, 1<<20))
+			if err == nil {
+				err = os.MkdirAll(stage+".extra", 0o755)
+			}
+			if err == nil {
+				err = os.WriteFile(filepath.Join(stage+".extra", path.Base(extra)), b, 0o755)
+			}
+			if err != nil {
+				return nil, err
+			}
+			continue
+		}
+		if name+"/" == root || !strings.HasPrefix(name+"/", root) {
 			if h.Typeflag == tar.TypeDir {
-				continue // ./mnt, ./mnt/onboard, ...
+				continue // ./mnt, ./mnt/onboard, ./documents, ...
 			}
 			return nil, fmt.Errorf("%w: %s is outside the reader's folder", ErrUnverified, h.Name)
 		}
-		rel := strings.TrimPrefix(name, koboRoot)
+		rel := strings.TrimPrefix(name, root)
 		if rel == "" || strings.HasPrefix(rel, "../") || rel == ".." || strings.Contains(rel, "/../") {
 			return nil, fmt.Errorf("%w: %s", ErrUnverified, h.Name)
 		}

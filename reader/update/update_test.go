@@ -203,7 +203,7 @@ func TestInstall(t *testing.T) {
 		t.Fatal(err)
 	}
 	write(t, p, string(pkg))
-	if err := Install(p, dir, "v0.4.0-beta", launcher); err != nil {
+	if err := Install(p, dir, "kobo", "v0.4.0-beta", launcher); err != nil {
 		t.Fatal(err)
 	}
 	for f, want := range map[string]string{"shamsaink": "new", "VERSION": "v0.4.0-beta\n", "fonts/a.ttf": "a2",
@@ -236,7 +236,7 @@ func TestInstallRefuses(t *testing.T) {
 	p := filepath.Join(dir, "p.tgz")
 	// no launch.sh
 	write(t, p, string(makePackage(t, map[string]string{"shamsaink": "new", "VERSION": "v1.0.0\n"})))
-	if err := Install(p, dir, "v1.0.0", ""); !errors.Is(err, ErrUnverified) {
+	if err := Install(p, dir, "kobo", "v1.0.0", ""); !errors.Is(err, ErrUnverified) {
 		t.Errorf("a package without launch.sh: %v", err)
 	}
 	// a path out of the reader's folder
@@ -248,7 +248,7 @@ func TestInstallRefuses(t *testing.T) {
 	w.Close()
 	z.Close()
 	write(t, p, b.String())
-	if err := Install(p, dir, "v1.0.0", ""); !errors.Is(err, ErrUnverified) {
+	if err := Install(p, dir, "kobo", "v1.0.0", ""); !errors.Is(err, ErrUnverified) {
 		t.Errorf("a path leaving the folder: %v", err)
 	}
 	if read(t, filepath.Join(dir, "shamsaink")) != "old" || read(t, filepath.Join(dir, "update/pending")) != "<none>" {
@@ -260,5 +260,46 @@ func TestInstallRefuses(t *testing.T) {
 func TestReleaseKeys(t *testing.T) {
 	if n := len(ParseKeys(ReleaseKeys)); n != 1 {
 		t.Errorf("%d release keys read from keys.go", n)
+	}
+}
+
+func TestInstallKindle(t *testing.T) {
+	drive := t.TempDir() // the Kindle's /mnt/us
+	dir := filepath.Join(drive, "shamsaink")
+	for f, s := range map[string]string{"shamsaink": "old", "launch.sh": "old launch", "VERSION": "v0.3.6-beta\n", "settings.json": "{mine}"} {
+		write(t, filepath.Join(dir, f), s)
+	}
+	write(t, filepath.Join(drive, "documents/ShamsaInk.sh"), "old scriptlet")
+	var b bytes.Buffer
+	z := gzip.NewWriter(&b)
+	w := tar.NewWriter(z)
+	for _, d := range []string{"./documents/", "./shamsaink/", "./shamsaink/books/"} {
+		w.WriteHeader(&tar.Header{Name: d, Typeflag: tar.TypeDir, Mode: 0o755})
+	}
+	for name, body := range map[string]string{"./shamsaink/shamsaink": "new", "./shamsaink/launch.sh": "new launch",
+		"./shamsaink/VERSION": "v0.4.0-beta\n", "./documents/ShamsaInk.sh": "new scriptlet"} {
+		w.WriteHeader(&tar.Header{Name: name, Typeflag: tar.TypeReg, Mode: 0o755, Size: int64(len(body))})
+		w.Write([]byte(body))
+	}
+	w.Close()
+	z.Close()
+	p := PackagePath(dir)
+	if err := Prepare(dir); err != nil {
+		t.Fatal(err)
+	}
+	write(t, p, b.String())
+	if err := Install(p, dir, "kindle", "v0.4.0-beta", "/nowhere/launcher.so"); err != nil {
+		t.Fatal(err)
+	}
+	for f, want := range map[string]string{"shamsaink/shamsaink": "new", "shamsaink/settings.json": "{mine}",
+		"shamsaink/previous/shamsaink": "old", "shamsaink/previous/scriptlet.sh": "old scriptlet",
+		"documents/ShamsaInk.sh": "new scriptlet", "shamsaink/update/pending": "v0.4.0-beta\n"} {
+		if got := read(t, filepath.Join(drive, f)); got != want {
+			t.Errorf("%s: %q, want %q", f, got, want)
+		}
+	}
+	// the package is removed once installed
+	if err := Install(p, dir, "kindle", "v0.4.0-beta", ""); err == nil {
+		t.Error("installed with no package")
 	}
 }

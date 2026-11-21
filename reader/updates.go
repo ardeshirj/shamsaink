@@ -42,8 +42,11 @@ func newUpdater() *updater { return &updater{out: make(chan updMsg, 1)} }
 
 // updateDevice is the package's device name for this device ("" when it has no updates over Wi-Fi yet).
 func (rd *reader) updateDevice() string {
-	if rd.dev.Kind == device.Kobo {
+	switch rd.dev.Kind {
+	case device.Kobo:
 		return "kobo"
+	case device.Kindle:
+		return "kindle"
 	}
 	return ""
 }
@@ -79,7 +82,7 @@ func (rd *reader) updateDownload(u *updater) {
 	u.cancel = cancel
 	l, dev := u.latest, rd.updateDevice()
 	keys := update.Keys(rd.dir, ui.DevMode)
-	launcher := update.LauncherPath
+	launcher := update.LauncherPath // the Kobo's (Install ignores it for the Kindle)
 	if device.Sim() {
 		launcher = ""
 	}
@@ -107,7 +110,7 @@ func (rd *reader) updateDownload(u *updater) {
 			return
 		}
 		fmt.Printf("update: %s downloaded and verified in %.1f s (%d bytes)\n", l.Version, time.Since(t).Seconds(), l.Packages[dev].Size)
-		if err := update.Install(pkg, rd.dir, l.Version, launcher); err != nil {
+		if err := update.Install(pkg, rd.dir, dev, l.Version, launcher); err != nil {
 			fmt.Printf("update: %s not installed: %v\n", l.Version, err)
 			fail(err)
 			return

@@ -47,7 +47,7 @@ leave() {
   kill "$W" 2>/dev/null
   # the reader puts back the screen it found when it leaves (RESTORE_SCREEN); if it did not, the launcher's copy, flashed
   # in whole (GC16), before the framework is resumed over it
-  if [ "$CODE" != 0 ] && [ -s "$SCREEN" ]; then
+  if { [ "$CODE" != 0 ] || [ -n "$UPDATED" ]; } && [ -s "$SCREEN" ]; then
     dd if=$SCREEN of=/dev/fb0 bs=1248 count=1648 2>/dev/null && eips -s w=1236,h=1648 -f >/dev/null 2>&1 && RESTORED=1
   fi
   rm -f "$SCREEN"
@@ -93,6 +93,36 @@ watch() {
 rm -f /tmp/shamsaink-alive
 watch &
 W=$!
-RESTORE_SCREEN=1 ./shamsaink "${BOOK:--library}" fonts >> logs/reader.log 2>&1
-CODE=$?
-log "reader exited ($CODE)"
+# Updates over Wi-Fi, as on the Kobo (reader/kobo/launch.sh, where it is explained): on the reader's exit 85 the new
+# version, just installed, is started on the library; if it ends before reaching it (update/pending still there),
+# previous/ is put back (the library's scriptlet too, previous/scriptlet.sh) and the old version started again, which
+# says so. A reader started after an update is not given RESTORE_SCREEN: the screen it would find is the restarting
+# one, so the launcher's own copy of the screen found at the start is put back on leaving instead (UPDATED).
+undo_update() {
+  v=$(cat update/pending 2>/dev/null)
+  [ -f update/added ] && while IFS= read -r f; do [ -n "$f" ] && rm -f "$f"; done < update/added
+  [ -d previous ] && (cd previous && find . -type f ! -name scriptlet.sh) | while IFS= read -r f; do
+    mkdir -p "$(dirname "$f")" && mv "previous/$f" "$f"
+  done
+  [ -f previous/scriptlet.sh ] && cat previous/scriptlet.sh > ../documents/ShamsaInk.sh && rm previous/scriptlet.sh
+  [ -d previous ] && find previous -depth -type d -exec rmdir {} \; 2>/dev/null
+  echo "$v" > update/undone
+  rm -f update/pending update/added
+  sync
+  log "update to ${v:-?} undone: it did not reach the library; $(cat VERSION 2>/dev/null) put back"
+}
+ARG=${BOOK:--library}
+RS=1
+while :; do
+  RESTORE_SCREEN=$RS ./shamsaink "$ARG" fonts >> logs/reader.log 2>&1
+  CODE=$?
+  log "reader exited ($CODE)"
+  if [ $CODE = 85 ] && [ -f update/pending ]; then
+    log "update installed: starting $(cat VERSION 2>/dev/null)"
+  else
+    [ -f update/pending ] || break
+    undo_update
+  fi
+  ARG=-library RS= UPDATED=1
+  rm -f /tmp/shamsaink-alive
+done
