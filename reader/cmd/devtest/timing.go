@@ -89,7 +89,13 @@ func (p *player) timeStep(a []string) (string, error) {
 		d.tapHook = func(x, y int) error {
 			d.record(fmt.Sprintf("touch tap %d %d (timed)", x, y))
 			tx, ty := d.turn(d.a.Touch.Turn.X, x, y), d.turn(d.a.Touch.Turn.Y, x, y)
-			_, err := d.sh(fmt.Sprintf("%s tap %d %d -node %s -quiet 3000 -max 30000 > %s 2>&1", t.ink, tx, ty, d.a.Touch.Node, res), nil)
+			// done after 3 s of no update for a page turn, 6 s for the rest (an open may pause between a row's
+			// highlight and its page)
+			quiet := 6000
+			if inner[0] == "turn" {
+				quiet = 3000
+			}
+			_, err := d.sh(fmt.Sprintf("%s tap %d %d -node %s -quiet %d -max 30000 > %s 2>&1", t.ink, tx, ty, d.a.Touch.Node, quiet, res), nil)
 			return err
 		}
 	}

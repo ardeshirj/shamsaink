@@ -11,6 +11,8 @@
 @media (prefers-color-scheme: dark) { :root { --bg: #121211; --surface: #1a1a19; --line: #2e2e2b; --grid: #262624;
   --fg: #f0efec; --fg2: #c3c2b7; --muted: #95948b; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --chip: #262624; --chip-on: #f0efec;
   --chip-on-fg: #1a1a19; color-scheme: dark } }
+:root.light { --bg: #ffffff; --surface: #ffffff; --line: #e3e2dc; --grid: #ecebe5; --fg: #16161a; --fg2: #55544f;
+  --muted: #7a7972; --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; color-scheme: light }
 body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, sans-serif; margin: 0; padding: 28px 16px 48px; }
 .wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 26px; }
 #charts { width: 100%; margin: 0; } .panel { min-width: 0; }
@@ -50,10 +52,14 @@ const DATA = /*DATA*/[];
 const STEPS = [["turn", "Page turn", "ms"], ["open", "First open", "s"], ["reopen", "Reopen", "s"], ["start", "Start the app", "s"], ["mem", "Memory while reading", "MB"]];
 const ORDER = ["shamsaink", "koreader", "built-in"];
 const readers = [...new Set(DATA.map(e => e.reader))].sort((a, b) => (ORDER.indexOf(a) + 1 || 9) - (ORDER.indexOf(b) + 1 || 9));
-const label = r => r === "built-in" ? "built-in (once)" : r;
+const NAMES = { shamsaink: "ShamsaInk", koreader: "KOReader", "kobo-libra-colour": "Kobo Libra Colour", "kindle-paperwhite-11": "Kindle Paperwhite 11" };
+const BUILTIN = { "kobo-libra-colour": "Kobo's reader", "kindle-paperwhite-11": "Amazon's reader" };
+const name = k => NAMES[k] || k;
+const label = (r, dev) => r === "built-in" ? (BUILTIN[dev] || "built-in") + (CHART_W < 900 ? "" : " (once)") : name(r);
 const devices = [...new Set(DATA.map(e => e.device))];
 const color = r => `var(--s${readers.indexOf(r) + 1})`;
 const fmt = (v, u) => u === "s" ? (v / 1000).toFixed(2) + " s" : u === "MB" ? Math.round(v) + " MB" : Math.round(v) + " ms";
+let CHART_W = 900; // the chart's own width: narrower (bigger text once shrunk) for the README's picture
 let mode = DATA.some(e => e.mode === "light") ? "light" : "dark";
 function get(dev, r, step) {
   const e = DATA.find(x => x.device === dev && x.reader === r && x.mode === mode);
@@ -69,13 +75,13 @@ function ticks(max) {
   return t;
 }
 function chart(dev, step, unit, max) {
-  const W = 900, L = 140, R = 120, rowH = 60, top = 6, axis = 28, H = top + readers.length * rowH + axis, t = ticks(max), m = t[t.length - 1];
+  const W = CHART_W, L = CHART_W < 900 ? 160 : 210, R = CHART_W < 900 ? 90 : 120, rowH = 60, top = 6, axis = 28, H = top + readers.length * rowH + axis, t = ticks(max), m = t[t.length - 1];
   const x = v => L + v / m * (W - L - R);
   let s = `<svg viewBox="0 0 ${W} ${H}">`;
   for (const v of t) s += `<line x1="${x(v)}" x2="${x(v)}" y1="${top}" y2="${H - axis}" stroke="var(--grid)"/><text x="${x(v)}" y="${H - 8}" font-size="14" fill="var(--muted)" text-anchor="middle">${unit === "s" ? v / 1000 : v}</text>`;
   readers.forEach((r, i) => {
     const cy = top + i * rowH + rowH / 2, d = get(dev, r, step);
-    s += `<text x="${L - 14}" y="${cy + 6}" font-size="17" fill="var(--fg)" text-anchor="end">${label(r)}</text>`;
+    s += `<text x="${L - 14}" y="${cy + 6}" font-size="17" fill="var(--fg)" text-anchor="end">${label(r, dev)}</text>`;
     if (!d) { s += `<text x="${L}" y="${cy + 6}" font-size="15" fill="var(--muted)">not measured</text>`; return; }
     const bh = 28, xe = x(d.v); let end = xe;
     s += `<path fill="${color(r)}" d="M${L},${cy - bh / 2} H${xe - 5} Q${xe},${cy - bh / 2} ${xe},${cy - bh / 2 + 5} V${cy + bh / 2 - 5} Q${xe},${cy + bh / 2} ${xe - 5},${cy + bh / 2} H${L} Z"><title>${r}: ${fmt(d.v, unit)}</title></path>`;
@@ -89,7 +95,7 @@ function chart(dev, step, unit, max) {
 function render() {
   document.getElementById("modes").innerHTML = ["light", "dark"].filter(m => DATA.some(e => e.mode === m)).map(m => `<button aria-pressed="${m === mode}" data-m="${m}">${m[0].toUpperCase() + m.slice(1)} mode</button>`).join("");
   document.querySelectorAll("#modes button").forEach(b => b.onclick = () => { mode = b.dataset.m; render(); });
-  document.getElementById("legend").innerHTML = readers.map(r => `<span><i style="background:${color(r)}"></i>${label(r)}</span>`).join("");
+  document.getElementById("legend").innerHTML = readers.map(r => `<span><i style="background:${color(r)}"></i>${r === "built-in" ? "the device's own reader (measured once)" : name(r)}</span>`).join("");
   const runs = DATA.filter(e => e.mode === mode && !e.once).map(e => `${e.reader} on ${e.device}: ${e.runs} run${e.runs > 1 ? "s" : ""}`);
   const once = DATA.filter(e => e.mode === mode && e.once).map(e => `${e.device}: ${e.once}`);
   document.getElementById("runs").innerHTML = runs.join(" · ") + (once.length ? "<br>Built-in (once): " + once.join("; ") + ". Not repeated: perf/README.md." : "");
@@ -102,7 +108,7 @@ function render() {
     }
     if (!max || !devices.some(dv => readers.some(r => get(dv, r, step)))) continue;
     out += `<section style="display:grid;gap:10px"><h2>${title}</h2><div class="panels">` +
-      devices.map(dv => `<div class="panel"><h3>${dv}</h3>${chart(dv, step, unit, max)}</div>`).join("") + "</div></section>";
+      devices.map(dv => `<div class="panel"><h3>${name(dv)}</h3>${chart(dv, step, unit, max)}</div>`).join("") + "</div></section>";
   }
   document.getElementById("charts").innerHTML = out;
   let t = "<tr><th>Device</th><th>Reader</th><th>Mode</th><th>Runs</th>" + STEPS.map(s => `<th>${s[1]}</th>`).join("") + "</tr>";
@@ -112,6 +118,18 @@ function render() {
   }).join("") + "</tr>";
   document.getElementById("table").innerHTML = t;
 }
-if (DATA.length) render();
+// #turns: the page turns alone, light mode, for a picture (perf/summarize.py --png): the README's chart
+if (location.hash === "#turns" && DATA.length) {
+  document.documentElement.classList.add("light"); // the README's picture: light whatever the system's theme
+  CHART_W = 520;                  // bigger text once shrunk to the README's width
+  document.body.style.padding = "0"; // its left edge the README table's
+  for (const q of ["header", "details", "#modes"]) document.querySelector(q).style.display = "none";
+  document.querySelector(".controls").style.position = "static";
+  mode = "light";
+  render();
+  document.querySelectorAll("#charts section").forEach((s, i) => { if (i) s.remove(); });
+  document.querySelector("#charts h2").textContent = "Page turn, light mode: from the tap to the ink (shorter is better)";
+  document.title = "height " + Math.ceil(document.getElementById("charts").getBoundingClientRect().bottom + 4); // for the picture's size (perf/summarize.py --png)
+} else if (DATA.length) render();
 else document.getElementById("charts").innerHTML = "<p>This is the template. The results are in perf/out/summary.html, written by python3 -I perf/summarize.py (make perf runs it).</p>";
 </script>

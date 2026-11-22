@@ -3,8 +3,10 @@ and perf/koreader.sh) summed up: per device, reader, mode and step (start, open,
 every timing, each run's own median (so the runs' spread shows) and how many turns flashed, drawn as charts; beside
 them the devices' own readers, measured once by hand (perf/reference/).
 
-    python3 -I perf/summarize.py [--since YYYY-MM-DD]   writes perf/out/summary.html (the charts, one file, nothing
-                                                         fetched: open it in a browser) and summary.json (its data)
+    python3 -I perf/summarize.py [--since YYYY-MM-DD] [--png FILE]   writes perf/out/summary.html (the charts, one file, nothing
+                                                         fetched: open it in a browser) and summary.json (its data);
+                                                         --png: the page turns alone as a picture, for the README
+                                                         (docs/images/perf-page-turns.png), by Google Chrome headless
 
 A times.tsv line: run, name (start-1, open-2, turn-12, reopen-3, reading), kind (time or mem), then for time the last
 full-page update's ms, the last update's ms, the full-page waveforms, whether one flashed and the reader's own line;
@@ -89,6 +91,25 @@ def lines(result):
 PAGE = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "summary.template.html"), encoding="utf-8").read()
 
 
+CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+
+
+def png(page, out):
+    """The page's #turns view (the page turns, light mode, 660 px wide: the README's table) as a picture at twice the
+    size, as tall as it is (the view puts its height in the page's title)."""
+    import re
+    import subprocess
+    url = "file://" + page + "#turns"
+    dom = subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--window-size=660,2000", "--dump-dom", url],
+                         capture_output=True, text=True).stdout
+    m = re.search(r"<title>height (\d+)</title>", dom)
+    height = int(m.group(1)) if m else 700
+    subprocess.run([CHROME, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--force-device-scale-factor=2",
+                    f"--window-size=660,{height}", "--screenshot=" + os.path.abspath(out), url],
+                   capture_output=True)
+    print("picture: " + out)
+
+
 def main():
     since = ""
     if "--since" in sys.argv:
@@ -104,6 +125,8 @@ def main():
         f.write(PAGE.replace("/*DATA*/[]", json.dumps(result)))
     print(lines(result))
     print("charts: " + os.path.join(ROOT, "summary.html"))
+    if "--png" in sys.argv:
+        png(os.path.join(ROOT, "summary.html"), sys.argv[sys.argv.index("--png") + 1])
 
 
 if __name__ == "__main__":

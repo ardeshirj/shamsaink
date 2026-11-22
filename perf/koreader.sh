@@ -43,9 +43,11 @@ result() { # result NAME: inktrace's report fetched, kept and read into times.ts
   record "$1" time "$full" "$last" "$modes" "$flash"
   say "$1: $full ms ($modes)"
 }
-timed_tap() { # timed_tap NAME X Y
+timed_tap() { # timed_tap NAME X Y: a page turn's updates done after 3 s of none; an open's after 6 (KOReader's first
+  # open on the Kindle pauses over 3 s between the row's highlight and the page)
+  q=6000; case $1 in turn-*) q=3000 ;; esac
   set -- "$1" $(touch_xy $2 $3)
-  on "$INK tap $2 $3 -node $NODE -quiet 3000 -max 30000 > $TMP/perf-time.txt 2>&1"
+  on "$INK tap $2 $3 -node $NODE -quiet $q -max 30000 > $TMP/perf-time.txt 2>&1"
   result "$1"
 }
 start() { wait_for "home" 60 "$HOME_UP"; on "$START"; wait_for "KOReader" 40 "pidof luajit >/dev/null"; sleep 8; }
@@ -79,7 +81,8 @@ on "pidof luajit >/dev/null" && { say "FAIL: KOReader is running: leave it first
 on "cat > $INK && chmod +x $INK" < reader/out/inktrace
 [ -z "$RUNNER" ] || on "mkdir -p \$(dirname $RUNNER) && cat > $RUNNER" < "$RUNNER_LOCAL"
 on "cp -p $KO/settings.reader.lua $TMP/perf-ko-settings.lua"
-trap 'on "pidof luajit >/dev/null || cp -p $TMP/perf-ko-settings.lua $KO/settings.reader.lua; rm -rf $SDR; rm -f $KO/cache/cr3cache/* $INK $TMP/perf-time.txt $TMP/perf-ko-settings.lua ${RUNNER:-}"; say "KOReader settings put back"' EXIT
+trap 'on "pidof luajit >/dev/null || cp -p $TMP/perf-ko-settings.lua $KO/settings.reader.lua; rm -rf $SDR; rm -f $KO/cache/cr3cache/* $INK $TMP/perf-time.txt $TMP/perf-ko-settings.lua ${RUNNER:-}"; [ -z "${RESTORE:-}" ] || on "$RESTORE"; say "KOReader settings put back"' EXIT
+[ -z "${SETUP:-}" ] || on "$SETUP"
 on "mkdir -p $BENCH && { [ -f $BENCH/holmes.epub ] || cp $BOOK $BENCH/holmes.epub; } && md5sum $BENCH/holmes.epub | grep -q ^480fc441a45570e3caa37b7a4efa780e" ||
   { say "FAIL: no Standard Ebooks Holmes (compatible epub, md5 480fc441...) at $BOOK"; exit 1; }
 on "rm -rf $SDR; rm -f $KO/cache/cr3cache/*"
