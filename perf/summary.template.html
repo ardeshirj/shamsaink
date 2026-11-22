@@ -56,7 +56,7 @@ const NAMES = { shamsaink: "ShamsaInk", koreader: "KOReader", "kobo-libra-colour
 const BUILTIN = { "kobo-libra-colour": "Kobo's reader", "kindle-paperwhite-11": "Amazon's reader" };
 const name = k => NAMES[k] || k;
 const label = (r, dev) => r === "built-in" ? (BUILTIN[dev] || "built-in") + (CHART_W < 900 ? "" : " (once)") : name(r);
-const devices = [...new Set(DATA.map(e => e.device))];
+const devices = [...new Set(DATA.map(e => e.device))].sort((a, b) => b.startsWith("kobo") - a.startsWith("kobo") || a.localeCompare(b)); // the Kobo first, the main device
 const color = r => `var(--s${readers.indexOf(r) + 1})`;
 const fmt = (v, u) => u === "s" ? (v / 1000).toFixed(2) + " s" : u === "MB" ? Math.round(v) + " MB" : Math.round(v) + " ms";
 let CHART_W = 900; // the chart's own width: narrower (bigger text once shrunk) for the README's picture
@@ -122,14 +122,14 @@ function render() {
 if (location.hash === "#turns" && DATA.length) {
   document.documentElement.classList.add("light"); // the README's picture: light whatever the system's theme
   CHART_W = 520;                  // bigger text once shrunk to the README's width
-  document.body.style.padding = "0"; // its left edge the README table's
+  document.body.style.padding = "24px"; // a margin of its own: a README cannot pad a picture
   for (const q of ["header", "details", "#modes"]) document.querySelector(q).style.display = "none";
   document.querySelector(".controls").style.position = "static";
   mode = "light";
   render();
   document.querySelectorAll("#charts section").forEach((s, i) => { if (i) s.remove(); });
   document.querySelector("#charts h2").textContent = "Page turn, light mode: from the tap to the ink (shorter is better)";
-  document.title = "height " + Math.ceil(document.getElementById("charts").getBoundingClientRect().bottom + 4); // for the picture's size (perf/summarize.py --png)
+  document.title = "height " + Math.ceil(document.getElementById("charts").getBoundingClientRect().bottom + 24); // for the picture's size (perf/summarize.py --png)
 } else if (DATA.length) render();
 else document.getElementById("charts").innerHTML = "<p>This is the template. The results are in perf/out/summary.html, written by python3 -I perf/summarize.py (make perf runs it).</p>";
 </script>
