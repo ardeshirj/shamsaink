@@ -180,7 +180,8 @@ hash when first seen, so books from before kept their keys as IDs (no files rena
 - **A new edition, opened:** the place's hash differs, so it opens at the same share read (`atShare`); highlights whose
   text is no longer where they were go to `highlights/ID.unplaced.json`, not drawn (found again by text: later).
 - **Copies:** the first by path is opened; the details show "Copies N", and Remove deletes them all.
-- **Later:** OPDS records its catalogue ID in the record (a book got again matched under any name); notes as a field
+- **Later:** OPDS records its catalogue ID in the record (a book got again matched under any name; the layers
+  proposed in `ROADMAP.md`, stage 7's OPDS); notes as a field
   of a highlight, as Kobo's `Bookmark` rows.
 - **Considered:** the path as key (Kobo's and the Kindle's, checked on ours: copies separate, but a rename starts
   again); folders beside each book (KOReader's `.sdr`: clutter, reading scattered); the modification time (FAT's moved

@@ -111,7 +111,17 @@ keyboard first ("Now").
   Order: FarsiEPUB's feed first (OPDS 1.2, FarsiEPUB's side: built, not yet deployed, 2026-11-19), then this.
   go-toolkit has an OPDS package: check it first. Needs the catalogue and download screens; Wi-Fi from "Over Wi-Fi"
   (step 1); measure the downloads' memory and TLS on the device first. Narrated books, large and hard to copy by hand,
-  gain the most
+  gain the most. **New editions, to settle when building it** (2026-11-21): today a book is matched by path, then by
+  hash (DESIGN.md, "The library's books"), so a new edition under another name is a second book. Proposed, strongest
+  first: (1) the catalogue's address and its entry's Atom `<id>` recorded at download, a later download of that entry
+  the same book whatever its file is called; (2) a fixed path per entry (`books/CATALOGUE/ENTRY.epub`), overwritten,
+  so the new-edition rule applies as it is; (3) the EPUB's own `dc:identifier`, for books copied by hand, only when
+  the old book's file is gone (other tools' IDs can be fixed or empty), never to merge two files present; (4) the
+  rules of today. rtlbook's identifier is a hash of the source PDF (`src/rtlbook/cli.py`), the same over rebuilds; if
+  FarsiEPUB's entries use it as their `<id>`, (1) and (3) agree. To check against each catalogue's real feed: the
+  entries' and EPUBs' IDs (Standard Ebooks, Gutenberg, calibre, Internet Archive); one entry with several files
+  (Standard Ebooks' compatible, advanced, kepub: one format per device, kept); `<updated>` to tell a newer edition
+  without downloading it
 - [ ] **The keyboard, designed once as one component** (step 4, 2026-11-19): its layouts, how taps reach it (Blitz's
   events, or `Panel.At` with big keys and the field drawn again from Go at each key), the keys' sizes
   (`docs/design/TODO.md`, "The keyboard"); then **its digit layout built first**, for Get a book (not a separate keypad
