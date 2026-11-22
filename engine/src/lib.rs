@@ -532,7 +532,14 @@ impl Book {
     fn find_boxes(&mut self, doc: usize, id: &str, lines: bool) -> Option<(usize, Vec<[i32; 4]>)> {
         let rects = self.element_rects(doc, id, lines)?;
         let first = rects.first()?;
-        let page = self.page_at(doc, first.1 + first.3 / 2.0)?;
+        // the page its first line of text is on: a block's own box can span pages (Standard Ebooks' contents point at
+        // a whole <section>), and its middle is pages in (2026-11-21: Holmes's part I opened several pages into it).
+        // Without text (a picture), the middle of its first box.
+        let anchor = self.docs[doc].as_ref().and_then(|d| {
+            let d = d.as_ref();
+            first_line(d, d.get_element_by_id(id)?)
+        });
+        let page = self.page_at(doc, anchor.unwrap_or(first.1 + first.3 / 2.0))?;
         let p = self.pages[page];
         let m = self.opts.margin as f64;
         let boxes = rects
@@ -756,6 +763,25 @@ fn line_rects(doc: &BaseDocument, id: blitz_dom::NodeId, out: &mut Vec<(f64, f64
     for &c in node.children.iter() {
         line_rects(doc, c, out);
     }
+}
+
+/// The middle of the element's first line of text (its own, or its first descendant's that has one), in its document's
+/// coordinates; None if it has none.
+fn first_line(doc: &BaseDocument, id: blitz_dom::NodeId) -> Option<f64> {
+    let node = doc.get_node(id)?;
+    if node.flags.is_inline_root() {
+        if let Some(tl) = node.element_data().and_then(|e| e.inline_layout_data.as_ref()) {
+            let pos = node.absolute_position(0.0, 0.0);
+            let l = node.final_layout();
+            let y0 = (pos.y + l.padding.top + l.border.top + tl.block_offset) as f64;
+            if let Some(line) = tl.layout.lines().next() {
+                let m = line.metrics();
+                return Some(y0 + (m.block_min_coord + m.block_max_coord) as f64 / 2.0);
+            }
+        }
+        return None;
+    }
+    node.children.iter().find_map(|&c| first_line(doc, c))
 }
 
 /// Calls f with each inline root that has a text layout, in document order, and its number in that order.
