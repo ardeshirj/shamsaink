@@ -135,6 +135,11 @@ before starting Nickel (`keep_light`).
 **Leaving takes 11–12 s** to Kobo's home screen (6.0, 2026-11-12): the reader gone in about 1 s, Nickel's home ready 8–10
 s after it starts.
 
+**Dark mode's page turns use GL16, not REAGL** (2026-11-02, by design). The Kobo's driver does REAGL as a full update,
+which in dark mode shows as a flash of the whole black page; so its dark page turns, and any refresh of part of the
+screen, are GL16 (`Screen.ShowPart`, `reader/device/screen.go`). Light page turns are REAGL, as on the Kindle, whose
+dark page turns are REAGL too (2026-11-21, experiment 17's driver logs).
+
 ## Firmware 4.x
 Not supported since 2026-11-11 (the last release for it: v0.1.0-beta). ShamsaInk was started from NickelMenu, set up
 with KOReader for SSH, and `launch.sh` worked around 4.x's Bluetooth service (`mtkbtd`) and its Wi-Fi and Bluetooth
