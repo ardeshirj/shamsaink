@@ -4,6 +4,14 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.5.1-beta (2026-11-21)
+Three fixes, found while timing ShamsaInk against the other readers.
+- **Dark mode cleans the screen again** (Kobo and Kindle): in a book, dark mode's "Clean every" was ignored, so its
+  pages were never cleaned with a full refresh, and the Light panel's switch could start from the wrong state.
+- **Contents open at the start of a part:** a part chosen in Contents ("I" under "A Scandal in Bohemia", say) opened
+  several pages into it.
+- **The charging sign at 100%** (Kindle): on a wall charger and full, the battery showed no charging sign.
+
 ## 0.5.0-beta (2026-11-21)
 Your books keep their place: copied, moved, renamed or updated.
 - **Each book is remembered** (Kobo and Kindle): a book moved to another folder, renamed, or replaced by a new edition
