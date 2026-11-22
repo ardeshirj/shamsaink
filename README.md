@@ -92,25 +92,6 @@ We want Farsi and other right-to-left books done properly, and books that read a
 It is part of FarsiEPUB, which converts Farsi PDFs to EPUB and keeps a library of public-domain Farsi classics. Those
 books are what it was made to read well, but it opens any EPUB.
 
-## Why build on existing tools
-Why rewrite what modern open source already does well? We tried, and measured:
-
-- **A browser's CSS is years of work.** Our own layout matched a browser on four Farsi books, but only for
-  the CSS those books use: on a real English book it got 89 pages right where [Blitz](https://github.com/DioxusLabs/blitz)
-  got 383 of 388. Blitz is a modern CSS engine in Rust built on Firefox's style engine, with Parley for text. So Blitz
-  draws the pages, and we add the pagination, a glyph layer and a cache that make it as fast as KOReader's engine on
-  these devices.
-- **EPUB is a large standard.** [Readium's Go toolkit](https://github.com/readium/go-toolkit) reads it for us: the chapters in
-  reading order, the table of contents, reading positions and the narration timings that tell us which word is being
-  spoken. It is an established open source toolkit, and it runs on these devices as it is.
-- **Farsi shaping and line breaking come with Blitz.** Right-to-left text, joined letters and a browser's line breaks are
-  the hard part, and a browser engine already does them: on Farsi books Blitz's line starts match Chromium's in 88–99% of lines.
-- **Modern and self-contained.** Rust and Go, with Blitz drawing the pages from ordinary HTML and CSS: one static
-  binary for all the devices, with nothing to install around it.
-
-What is our own is the screen (refresh, touch, sleep, sound) and the reader on top: the panels, the settings, the
-library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts fit and what each one depends on.
-
 ## What it does
 - **Reads right-to-left text properly, and English and many other languages.** Farsi, Arabic, Urdu and Hebrew shaping
   and direction come out right, with no `dir` attributes needed in the book; any other EPUB opens as well. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
@@ -148,6 +129,25 @@ slower and ShamsaInk's are not. ShamsaInk and KOReader are timed again with no o
 
 † On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
 Kobo's reader on both.
+
+## Why build on existing tools
+Why rewrite what modern open source already does well? We tried, and measured:
+
+- **A browser's CSS is years of work.** Our own layout matched a browser on four Farsi books, but only for
+  the CSS those books use: on a real English book it got 89 pages right where [Blitz](https://github.com/DioxusLabs/blitz)
+  got 383 of 388. Blitz is a modern CSS engine in Rust built on Firefox's style engine, with Parley for text. So Blitz
+  draws the pages, and we add the pagination, a glyph layer and a cache that make it as fast as KOReader's engine on
+  these devices.
+- **EPUB is a large standard.** [Readium's Go toolkit](https://github.com/readium/go-toolkit) reads it for us: the chapters in
+  reading order, the table of contents, reading positions and the narration timings that tell us which word is being
+  spoken. It is an established open source toolkit, and it runs on these devices as it is.
+- **Farsi shaping and line breaking come with Blitz.** Right-to-left text, joined letters and a browser's line breaks are
+  the hard part, and a browser engine already does them: on Farsi books Blitz's line starts match Chromium's in 88–99% of lines.
+- **Modern and self-contained.** Rust and Go, with Blitz drawing the pages from ordinary HTML and CSS: one static
+  binary for all the devices, with nothing to install around it.
+
+What is our own is the screen (refresh, touch, sleep, sound) and the reader on top: the panels, the settings, the
+library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts fit and what each one depends on.
 
 ## Where things are
 | | |
