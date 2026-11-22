@@ -110,16 +110,16 @@ The quickest of the readers timed, on both devices: books open 3–5× sooner th
 are as quick as KOReader's or quicker.
 
 <p><img src="docs/images/perf.png" width="720"
-  alt="Light mode, from the tap to the ink. Page turn: on the Kobo, ShamsaInk 469 ms, KOReader 477, Kobo's reader 572; on the Kindle, ShamsaInk 306 ms, KOReader 340, Kindle's reader 628. First open: on the Kobo 0.59 s, 2.20 s and 1.89 s; on the Kindle 0.72 s and 3.50 s. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s"></p>
+  alt="Light mode, from the tap to the ink. First open: on the Kobo, ShamsaInk 0.78 s, KOReader 2.20, Kobo's reader 1.89; on the Kindle, ShamsaInk 0.72 s, KOReader 3.50. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s. Page turn: on the Kobo 469 ms, 477 ms and 572 ms; on the Kindle 306 ms, 340 ms and 628 ms"></p>
 
 | | ShamsaInk | KOReader | The device's own reader* |
 |---|---|---|---|
-| **Kobo†:** a page turn | **469 ms** | 477 ms | 572 ms |
-| a new book opened | **0.6 s** | 2.2 s (4× slower) | 1.9 s (3× slower) |
+| **Kobo†:** a new book opened | **0.8 s** | 2.2 s (3× slower) | 1.9 s (2× slower) |
 | reopened | **0.7 s** | 0.9 s | 2.0 s (3× slower) |
-| **Kindle:** a page turn | **306 ms** | 340 ms | 628 ms (2× slower) |
-| a new book opened | **0.7 s** | 3.5 s (5× slower) | – (prepared beforehand) |
+| a page turn | **469 ms** | 477 ms | 572 ms |
+| **Kindle:** a new book opened | **0.7 s** | 3.5 s (5× slower) | – (prepared beforehand) |
 | reopened | **0.6 s** | 1.2 s (2× slower) | 0.9 s |
+| a page turn | **306 ms** | 340 ms | 628 ms (2× slower) |
 
 Each time runs from the tap until the screen has finished updating, taken from the e-ink driver's own log on the
 device. They are medians in light mode, on *The Adventures of Sherlock Holmes* (Standard Ebooks) with every setting at

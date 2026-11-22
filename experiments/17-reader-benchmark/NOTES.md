@@ -129,8 +129,11 @@ one open from the library: the tap seen 0.5 ms after the finger up; then 216 ms 
 library closed (the touch screen 89 ms, the power button 60, the page buttons 60: closing an input device is slow in the
 Kobo's kernel), 22 ms taking them again for the book, and 149 ms reading the opening screen back from its cache (10 MB:
 made on every open, shown only if one takes over 3 s). Fixed in 0.5.2-beta: the inputs taken once for the reader's run,
-the opening screen made once. `make perf` after, light mode: a first open 1.07 → 0.59 s on the Kobo and 0.88 → 0.72 on
+the opening screen made once. `make perf` after, light mode: a first open 1.07 → 0.78 s on the Kobo and 0.88 → 0.72 on
 the Kindle, a reopen 1.01 → 0.72 and 0.77 → 0.61, memory while reading 98 → 81 MB on the Kobo; turns unchanged.
+**Corrected 2026-11-22:** the Kobo's first open was first given as 0.59 s, but that run's first opens took New's
+first row, on a Kobo of 31 books five Farsi books from their cache, not *Holmes* (perf/README.md). Timed again on
+*Holmes* (the current main, 2026-11-22): 747–808 ms, median 0.78 s; the turns and reopens, always on *Holmes*, stand.
 
 **KOReader on the Kobo runs on one core too** (2026-11-21): `cpu1/online` read every 50 ms through its light steps (2
 starts, 2 first opens, 12 turns, 2 reopens) stayed 0 from its first start, when Kobo's interface stopped, to the end.

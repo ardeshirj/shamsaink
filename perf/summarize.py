@@ -5,7 +5,7 @@ them the devices' own readers, measured once by hand (perf/reference/).
 
     python3 -I perf/summarize.py [--since YYYY-MM-DD] [--png FILE]   writes perf/out/summary.html (the charts, one file, nothing
                                                          fetched: open it in a browser) and summary.json (its data);
-                                                         --png: turn, open and reopen as a picture, for the README
+                                                         --png: open, reopen and turn as a picture, for the README
                                                          (docs/images/perf.png), by Google Chrome headless
 
 A times.tsv line: run, name (start-1, open-2, turn-12, reopen-3, reading), kind (time or mem), then for time the last
@@ -95,7 +95,7 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 
 def png(page, out):
-    """The page's #readme view (page turn, first open and reopen, light mode, the devices side by side: the README's
+    """The page's #readme view (first open, reopen and page turn, light mode, the devices side by side: the README's
     table) as a picture at twice the size, as tall as it is (the view puts its height in the page's title)."""
     import re
     import subprocess

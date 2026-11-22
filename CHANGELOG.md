@@ -6,7 +6,7 @@ is at the end, under "Versions and releases".
 
 ## 0.5.2-beta (2026-11-21)
 Books open sooner.
-- **A book opens from the library about 0.3–0.5 s sooner** (Kobo and Kindle): a new book 0.6 s on the Kobo (was 1.1),
+- **A book opens from the library about 0.2–0.3 s sooner** (Kobo and Kindle): a new book 0.8 s on the Kobo (was 1.1),
   a book reopened 0.7 s (was 1.0); on the Kindle 0.7 and 0.6 s (were 0.9 and 0.8). Leaving a book for the library is
   quicker too. The touch screen and the buttons are now taken once, not let go and taken again at every switch, and
   the opening screen is no longer read again at every open.

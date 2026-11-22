@@ -49,7 +49,7 @@ details { background: var(--surface); border: 1px solid var(--line); border-radi
 </div>
 <script>
 const DATA = /*DATA*/[];
-const STEPS = [["turn", "Page turn", "ms"], ["open", "First open", "s"], ["reopen", "Reopen", "s"], ["start", "Start the app", "s"], ["mem", "Memory while reading", "MB"]];
+const STEPS = [["open", "First open", "s"], ["reopen", "Reopen", "s"], ["turn", "Page turn", "ms"], ["start", "Start the app", "s"], ["mem", "Memory while reading", "MB"]];
 const ORDER = ["shamsaink", "koreader", "built-in"];
 const readers = [...new Set(DATA.map(e => e.reader))].sort((a, b) => (ORDER.indexOf(a) + 1 || 9) - (ORDER.indexOf(b) + 1 || 9));
 const NAMES = { shamsaink: "ShamsaInk", koreader: "KOReader", "kobo-libra-colour": "Kobo Libra Colour", "kindle-paperwhite-11": "Kindle Paperwhite 11" };
@@ -121,7 +121,7 @@ function render() {
   }).join("") + "</tr>";
   document.getElementById("table").innerHTML = t;
 }
-// #readme: page turn, first open and reopen in light mode, a row each, the devices side by side, for a picture
+// #readme: first open, reopen and page turn in light mode, a row each, the devices side by side, for a picture
 // (perf/summarize.py --png): the README's chart
 if (location.hash === "#readme" && DATA.length) {
   document.documentElement.classList.add("light"); // the README's picture: light whatever the system's theme
