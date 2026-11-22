@@ -180,9 +180,10 @@ hash when first seen, so books from before kept their keys as IDs (no files rena
 - **A new edition, opened:** the place's hash differs, so it opens at the same share read (`atShare`); highlights whose
   text is no longer where they were go to `highlights/ID.unplaced.json`, not drawn (found again by text: later).
 - **Copies:** the first by path is opened; the details show "Copies N", and Remove deletes them all.
-- **Later:** OPDS records its catalogue ID in the record (a book got again matched under any name; the layers
-  proposed in `ROADMAP.md`, stage 7's OPDS); notes as a field
-  of a highlight, as Kobo's `Bookmark` rows.
+- **From a catalogue:** a book downloaded over OPDS is matched to its catalogue entry by `downloads.json`, beside
+  `library.json` ("Books from catalogues", below), so a new edition goes over its file and the rule above keeps it the
+  same book.
+- **Later:** notes as a field of a highlight, as Kobo's `Bookmark` rows.
 - **Considered:** the path as key (Kobo's and the Kindle's, checked on ours: copies separate, but a rename starts
   again); folders beside each book (KOReader's `.sdr`: clutter, reading scattered); the modification time (FAT's moved
   8 hours on the Kobo, 2026-11-05); the whole file hashed (6.4 s for a narrated book on the Kindle).
@@ -268,6 +269,34 @@ left as the device has it.
 - **Sleep:** the Kobo's turns Wi-Fi off for the suspend and back only if it was up (`doze`); the Kindle's needs nothing.
 - **Development** (dev mode only): the Developer panel's Wi-Fi switch, its state under it; on connects with no
   question and stays on, off turns it off as Kobo's switch does (`TurnOffWiFi`).
+
+### Books from catalogues: OPDS (2026-11-22; the screens to come)
+`reader/opds`, from experiment 18 (its NOTES.md: the catalogues surveyed, the timings on both devices).
+- **Reading a catalogue:** OPDS 1.2 (Atom) read as a stream into go-toolkit's model, each book a `manifest.Manifest`
+  as in Readium's Kotlin and Swift toolkits, the page around them a `Feed` (its links: next, search; its menus, facets
+  and groups). go-toolkit only recognises OPDS; Readium asked us to wait for their Swift rework before a port to Go
+  (2026-11-22), so the parser is ours. `Get` reads a page with the updater's client (its timeouts, Go's CA roots when
+  the device has none); an OPDS 2 (JSON) or HTML answer is refused in plain words. A page of 100 books: 65 ms on the
+  Kobo, 163 on the Kindle.
+- **Which file:** `EPUB` takes a book's open-access EPUB, else its plain acquisition EPUB; never one to buy, borrow or
+  sample, nor one behind another step (an indirect acquisition).
+- **The download** (`Download`): into a hidden part file beside its place (`.download-*.part`, which the scan never
+  lists), a 200 only (a 206 for a whole file is a server's mistake: FarsiEPUB's until 2026-11-22), the length checked
+  against the one announced, the file checked to be an EPUB (`META-INF/container.xml`) whatever the server called it,
+  then moved into place; any failure leaves nothing. Its name is the server's (`Content-Disposition`, else the final
+  address), made safe for FAT. Memory stays at about 10 MB whatever the size; the time is the CPU's (HTTPS on one core:
+  13.6 MB in 4 s on the Kobo, 6 s on the Kindle).
+- **Where, and new editions** (`Fetch`): a catalogue's books go into `books/FOLDER/` (FarsiEPUB's: `farsiepub`, its
+  source in the library), and `downloads.json` records each entry (the catalogue's address and the entry's Atom id) with
+  its file and `<updated>`. The entry downloaded again goes over the same file, so the scan sees a new edition of the
+  same book, its place and highlights kept, whatever the server now calls it; a file moved or removed since is
+  forgotten and the entry comes as a new book. `Newer` tells a newer edition from `<updated>`, without downloading.
+  (Of `ROADMAP.md`'s layers: the entry's id and a fixed file per entry; a book's own `dc:identifier` is not used: FarsiEPUB's
+  entries' ids are not their EPUBs'.)
+- **Catalogues:** FarsiEPUB's built in (`opds.FarsiEPUB`); others from a file over USB, with the screens.
+- **Tested:** `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
+  file comes back new); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on
+  the Mac and, compiled for ARM (`go test -c`), on the Kobo and the Kindle (2026-11-22: 0.8 and 1.0 s).
 
 ### Updates over Wi-Fi (2026-11-20)
 Settings' last row, Updates (`reader/update`, the library's `updates.go`). **Only when asked:** Check goes through Wi-Fi
