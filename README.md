@@ -126,7 +126,7 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 
 ## How quick
 
-<p><img src="docs/images/perf-page-turns.png" width="660"
+<p><img src="docs/images/perf-page-turns.png" width="480"
   alt="Page turns in light mode: on the Kobo, ShamsaInk 469 ms, KOReader 470, Kobo's reader 572; on the Kindle, ShamsaInk 307 ms, KOReader 340, Amazon's reader 628"></p>
 
 | | ShamsaInk | KOReader | The device's own reader* |
