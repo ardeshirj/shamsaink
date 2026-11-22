@@ -130,6 +130,7 @@ func (d *Device) buttons(out chan<- Event) io.Closer {
 				continue
 			}
 			d.active.Store(time.Now().UnixNano())
+			d.busy()
 			b := 1
 			if (code == keyLower) == d.reverse.Load() {
 				b = -1
@@ -275,6 +276,10 @@ func (d *Device) doze(pic image.Image) {
 		d.Screen.Show(p, WfGC16, true)
 	}
 	d.Screen.Wait()
+	if n, on := d.CoreUse(); n > 0 {
+		fmt.Printf("second core: switched on %d times, %.1f s in all, since the last sleep\n", n, on.Seconds())
+	}
+	d.coreOff(true)
 	time.Sleep(lightDelay)
 	setLight(0)
 	// Wi-Fi off for the suspend and on again after (firmware 6), as Bluetooth: the interface down and the chip's Wi-Fi

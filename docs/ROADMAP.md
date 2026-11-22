@@ -60,6 +60,12 @@ keyboard first ("Now").
 
 **5. Daily use on the Kobo** (alongside "Over Wi-Fi")
 - [ ] A night asleep on battery
+- [ ] The Kobo's second core on while the reader is used (built 2026-11-22, `reader/device/cores.go`; to try on the
+  Kindle, where it does nothing): off while we run, since Kobo's interface manages it and we stop that interface; now
+  on at a touch, a page button or a wake, off 2 s after and before a suspend. `make perf` on the Kobo, the same build
+  with `dev/one-core` and without: a turn 468 → 433 ms, an open 598 → 497, a reopen 738 → 658; the battery's draw the
+  same (180 and 179 mA on average, the core on 21% of the run). Next, measured: on while read-aloud plays (its log shows
+  late chunks with one core)
 - [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
 - [ ] The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
 - [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
@@ -218,10 +224,6 @@ keyboard first ("Now").
 ## 5. Later
 ### Ideas, not yet planned
 - Smarter flashes: flashing the screen only when the ink changed enough for ghosting to show, not every few pages.
-- The Kobo's second core while ShamsaInk is busy (2026-11-22): it is off while we run (Kobo's interface manages it, and
-  we stop that interface). Switched on at a touch or a button, off after about 2 s idle and before sleep: a page turn
-  472 → 425 ms, an open's own work a third to a half less (experiment 17's NOTES.md). Already the quickest on one core,
-  so only if reading with it drains no more than about 2% more an hour, off the charger, than without.
 - You were here: on reopening or after a reflow, the word you were at underlined for a moment; your place remembered by
   word, so it survives a change of text size.
 - Time left at your pace, learnt from your page turns in this book.

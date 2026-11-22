@@ -40,6 +40,7 @@ type Device struct {
 	connecting atomic.Bool                // ConnectHeadphones at work
 	events     atomic.Pointer[chan Event] // Inputs' channel, for the headphones' and Wi-Fi's events
 	wifi       wifiOurs                   // what ConnectWiFi turned on (wifi.go)
+	core       secondCore                 // the Kobo's second core, on while the reader is used (cores.go)
 }
 
 // DefaultSleepAfter is how long the Kobo may sit untouched before the reader puts it to sleep, as a press of the power
@@ -126,6 +127,7 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 			select {
 			case e := <-raw:
 				d.active.Store(time.Now().UnixNano())
+				d.busy()
 				if d.Kind == Kindle {
 					kindleTouched(&d.poked)
 				}
@@ -216,6 +218,7 @@ func (d *Device) Doze(dir string, fallback *image.Gray, text SleepText) {
 		d.kindleDoze(pic)
 	} else {
 		d.doze(pic)
+		d.busy() // awake: the page put back, and the work a wake brings
 	}
 	d.Beat()
 	d.active.Store(time.Now().UnixNano()) // awake now: the idle time counts from here

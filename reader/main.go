@@ -108,6 +108,10 @@ func main() {
 	var err error
 	rd.dev, err = device.Open()
 	check(err)
+	if _, err := os.Stat(filepath.Join(rd.dir, "dev", "one-core")); err == nil {
+		rd.dev.SetOneCore() // the Kobo's second core left off, to measure the reader without it
+		fmt.Println("dev/one-core: the second core left off")
+	}
 	set := loadSettings(rd.dir)
 	dark := startDark(set.DarkChoice, rd.dev.Screen.DeviceDark())
 	if set.DarkChoice == nil {

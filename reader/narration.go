@@ -571,7 +571,7 @@ func (s *session) silence() {
 }
 
 // cpuOnline says whether CPU core n is switched on ("on", "off"; "?" where the kernel does not say: the Kindle's, the
-// simulator's). The Kobo's second core is switched on by Kobo's own interface only (experiment 13).
+// simulator's). The Kobo's second core is the reader's to switch: on while it is used, off when idle (device/cores.go).
 func cpuOnline(n int) string {
 	b, err := os.ReadFile(fmt.Sprintf("/sys/devices/system/cpu/cpu%d/online", n))
 	switch {
