@@ -9,7 +9,8 @@
 
 <p align="center">
   <a href="https://github.com/ardeshirj/shamsaink/actions/workflows/ci.yml"><img src="https://github.com/ardeshirj/shamsaink/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-Apache--2.0-blue" alt="Licence: Apache-2.0"></a>
+  <a href="https://github.com/ardeshirj/shamsaink/releases"><img src="https://img.shields.io/github/v/release/ardeshirj/shamsaink?include_prereleases" alt="Release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache-2.0"></a>
 </p>
 
 ## Install
