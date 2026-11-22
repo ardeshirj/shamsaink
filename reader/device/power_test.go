@@ -50,3 +50,33 @@ func TestPlugged(t *testing.T) {
 		}
 	}
 }
+
+// What the Kindle's supplies read on a wall charger (2026-11-21, firmware 5.19.2): the charger USB_DCP, a moisture
+// sensor USB_WET, and the battery Charging until 100%, then Discharging: the charging glyph (Charging or Full) all along.
+func TestKindleCharging(t *testing.T) {
+	d := &Device{}
+	for _, c := range []struct {
+		name           string
+		s              map[string][3]string
+		capacity       string
+		charging, full bool
+	}{
+		{"charging", map[string][3]string{"bd71827_ac": {"USB_DCP", "1", ""}, "bd71827_bat": {"Battery", "1", "Charging"}, "max20342_moisture": {"USB_WET", "0", ""}}, "85", true, false},
+		{"full, on the charger", map[string][3]string{"bd71827_ac": {"USB_DCP", "1", ""}, "bd71827_bat": {"Battery", "1", "Discharging"}, "max20342_moisture": {"USB_WET", "0", ""}}, "100", false, true},
+		{"full, unplugged", map[string][3]string{"bd71827_ac": {"USB_DCP", "0", ""}, "bd71827_bat": {"Battery", "1", "Discharging"}}, "100", false, false},
+		{"the cable just in", map[string][3]string{"bd71827_ac": {"USB_DCP", "1", ""}, "bd71827_bat": {"Battery", "1", "Discharging"}}, "60", true, false},
+		{"wet, unplugged", map[string][3]string{"bd71827_ac": {"USB_DCP", "0", ""}, "bd71827_bat": {"Battery", "1", "Discharging"}, "max20342_moisture": {"USB_WET", "1", ""}}, "60", false, false},
+	} {
+		supplies(t, c.s)
+		os.WriteFile(filepath.Join(simDir, "sys/class/power_supply/bd71827_bat/capacity"), []byte(c.capacity+"\n"), 0o644)
+		if got := d.Charging(); got != c.charging {
+			t.Errorf("%s: Charging() = %v, want %v", c.name, got, c.charging)
+		}
+		if got := d.Full(); got != c.full {
+			t.Errorf("%s: Full() = %v, want %v", c.name, got, c.full)
+		}
+		if got := plugged(); got != (c.charging || c.full) {
+			t.Errorf("%s: plugged() = %v", c.name, got)
+		}
+	}
+}
