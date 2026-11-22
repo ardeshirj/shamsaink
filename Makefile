@@ -95,7 +95,7 @@ check:
 #   make kobo-reader-log the end of the reader's log on the Kobo, and when the Kobo was last up while reading
 #   make kobo-usage      the reader's usage lines (start, stop, sleep, wake with the battery) as a table: awake and asleep stretches
 #                        and the battery's use per hour
-#   make kobo-status     its sleep timer, battery, Wi-Fi, free memory and storage
+#   make kobo-status     its sleep timer, battery, Wi-Fi (and whether Force Wi-Fi On is set), free memory and storage
 #   make kobo-wait       wait until it answers over SSH (after waking it by hand)
 #   make kobo-ssh        a shell on it
 #   make kobo-dropbear   Dropbear, static ARMv7, for the development SSH (reader/kobo/dev/): out/kobo/dropbear
@@ -230,6 +230,7 @@ kobo-status:
 	  echo "sleeps after: $$(sed -n "s/^AutoSleepMinutes=//p" $(KOBO_CONF)) minutes (0: never)"; \
 	  echo "battery: $$(cat $$B/capacity 2>/dev/null)%, $$(cat $$B/status 2>/dev/null)"; \
 	  echo "wi-fi: $$(ip -4 addr show wlan0 2>/dev/null | sed -n "s/.*inet \([0-9.]*\).*/\1/p")"; \
+	  echo "force wi-fi on: $$(sed -n "s/^ForceWifiOn=//p" $(KOBO_CONF) | grep . || echo false) (true stops Kobo'"'"'s own sleep: untick it in Developer options after a dev session)"; \
 	  echo "memory free: $$(sed -n "s/MemAvailable: *\([0-9]*\) kB/\1/p" /proc/meminfo | awk "{printf \"%d MB\", \$$1/1024}")"; \
 	  df -h /mnt/onboard /tmp | awk "NR>1 {print \"storage \" \$$6 \": \" \$$4 \" free of \" \$$2}"'
 
