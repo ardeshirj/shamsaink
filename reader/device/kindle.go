@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"time"
 )
 
@@ -24,6 +25,9 @@ import (
 // called.
 func (d *Device) kindleSleeps(out chan<- Event) (stop func()) {
 	cmd := exec.Command("lipc-wait-event", "-m", "com.lab126.powerd", "goingToScreenSaver,outOfScreenSaver,readyToSuspend")
+	// ended with the reader even when the reader is killed, not left (an install's restart, a test's stop): left
+	// running, each was one more listener orphaned (four found on 2026-11-21)
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGTERM}
 	stdout, err := cmd.StdoutPipe()
 	if err != nil || cmd.Start() != nil {
 		return func() {} // not on a Kindle: never asleep
