@@ -17,19 +17,17 @@ import (
 // between them (the next page drawn ahead, the next document laid out) is done while nothing is waiting. Each event
 // goes to one handler.
 type session struct {
-	turns  int // pages turned since the screen was last cleaned (a flash: "Clean every N pages", or the Light panel's button)
-	rd     *reader
-	dev    *device.Device
-	scr    *device.Screen
-	r      *reading
-	set    *settings
-	o      blitz.Options
-	t      time.Time   // when the book was asked for
-	splash *ui.Opening // the opening screen, the Kobo's sleep screen when sleep/ has no picture
+	turns int // pages turned since the screen was last cleaned (a flash: "Clean every N pages", or the Light panel's button)
+	rd    *reader
+	dev   *device.Device
+	scr   *device.Screen
+	r     *reading
+	set   *settings
+	o     blitz.Options
+	t     time.Time // when the book was asked for
 
-	events  <-chan device.Event
-	stop    func()        // lets go of the touch screen and stops listening for sleep
-	pending *device.Event // an event taken from the channel and not handled yet
+	events  <-chan device.Event // the reader's (rd.inputs)
+	pending *device.Event       // an event taken from the channel and not handled yet
 
 	word *time.Timer // the narration's next word due
 
@@ -87,10 +85,9 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	s := &session{rd: rd, dev: rd.dev, scr: rd.dev.Screen, set: loadSettings(rd.dir), t: t, backDoc: -1, unmark: -1}
 	s.o = s.set.options(s.scr.W, s.scr.H)
 	var err error
-	if s.events, s.stop, err = s.dev.Inputs(); err != nil {
+	if s.events, err = rd.inputs(); err != nil {
 		return nil, err
 	}
-	s.splash = ui.Splash(rd.dir, rd.fonts, s.scr.W, s.scr.H, s.dev.Colour())
 	done := make(chan error, 1)
 	go func() {
 		t0 := time.Now()
@@ -115,7 +112,7 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 	select {
 	case err = <-done:
 	case <-time.After(ui.SplashAfter - time.Since(t)): // from when the book was asked for, so its flash ends sooner
-		screen := s.splash
+		screen := rd.opening()
 		if rd.lib { // from the library: its own screen, the opening one is for starting
 			screen = ui.Loading(rd.dir, rd.fonts, s.scr.W, s.scr.H, s.dev.Colour())
 		}
@@ -124,7 +121,6 @@ func (rd *reader) open(path string, t time.Time) (*session, error) {
 		err = <-done
 	}
 	if err != nil {
-		s.stop()
 		return nil, err
 	}
 	s.word = time.NewTimer(time.Hour)
@@ -166,9 +162,8 @@ func (s *session) readCues() {
 	}()
 }
 
-// close lets go of the touch screen and closes the book (both done already when it was left: twice does no harm).
+// close closes the book (done already when it was left: twice does no harm).
 func (s *session) close() {
-	s.stop()
 	s.word.Stop()
 	s.uncue()
 	if s.snd != nil {
@@ -338,7 +333,8 @@ func (s *session) sleep() {
 	if s.nar != nil {
 		s.silence()
 	}
-	s.dev.Doze(s.rd.dir, s.splash.Gray, s.rd.sleepText())
+	// the opening screen is the Kobo's sleep screen when sleep/ has no picture
+	s.dev.Doze(s.rd.dir, s.rd.opening().Gray, s.rd.sleepText())
 	s.drain()
 	s.barChanged() // the screen put back as it was: the bar's time, if it shows, from before the sleep
 }
@@ -367,7 +363,7 @@ func (rd *reader) sleepText() device.SleepText {
 	}
 }
 
-// leave keeps the place, waits for the ink, lets go of the touch screen and closes the book.
+// leave keeps the place, waits for the ink and closes the book.
 func (s *session) leave() {
 	if s.nar != nil {
 		s.silence()
@@ -377,7 +373,6 @@ func (s *session) leave() {
 	k := ms(t)
 	s.scr.Wait()
 	w := ms(t) - k
-	s.stop()
 	s.uncue()
 	s.r.close()
 	fmt.Printf("left at document %d page %d: kept %.0f ms, ink %.0f ms, closed %.0f ms\n", s.r.doc, s.r.at, k, w, ms(t)-k-w)

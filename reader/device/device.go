@@ -165,6 +165,14 @@ func (d *Device) Inputs() (events <-chan Event, stop func(), err error) {
 	return out, func() { once.Do(func() { f.Close(); stopSleeps(); power.Close(); clock.Close(); close(done) }) }, nil
 }
 
+// NewScreen is said by the reader as a screen (the library, a book) takes over the inputs: the headphones' state is
+// looked at again (a Sound event the last screen took is sent anew for this one) and the idle time counts from now.
+func (d *Device) NewScreen() {
+	d.active.Store(time.Now().UnixNano())
+	d.phones.Store(nil)
+	d.Phones()
+}
+
 // OnDrive is path as the device's drive shows it on a computer over USB (the Kobo's /mnt/onboard and the Kindle's
 // /mnt/us are its root): .adds/shamsaink/books, shamsaink/books. A path elsewhere is as it is.
 func OnDrive(path string) string {

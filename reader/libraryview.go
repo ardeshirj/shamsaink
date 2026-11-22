@@ -19,7 +19,7 @@ import (
 // browse shows the library (DIR/books) until it is left from its menu: a tap on a book reads it, and leaving the book
 // comes back to the library, scanned again for the book's place.
 func (rd *reader) browse(t time.Time) error {
-	splash := ui.Splash(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H, rd.dev.Colour())
+	splash := rd.opening()
 	// the opening screen at once, before the shelf is scanned and the library drawn: starting takes a while (the program
 	// loads, the books are read) and the screen shows Kobo's until then
 	showOpening(rd.dev.Screen, splash, device.WfGC16, true)
@@ -109,11 +109,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	}
 	undone := update.Undone(rd.dir) // the launcher put the previous version back: said once the loop runs
 
-	events, stop, err := rd.dev.Inputs()
+	events, err := rd.inputs()
 	if err != nil {
 		return "", err
 	}
-	defer stop()
 	turn := func(by int) {
 		if n := v.Page() + by; n >= 0 && n < v.Pages() {
 			v.SetPage(n)

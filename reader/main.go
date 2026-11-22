@@ -51,7 +51,36 @@ type reader struct {
 	over  *image.Gray
 	lib   bool // books are opened from the library: a slow one shows the loading screen, not the opening one
 
-	splashUntil time.Time // the opening screen shown at the start stays at least until then (ui.SplashFor)
+	splashUntil time.Time           // the opening screen shown at the start stays at least until then (ui.SplashFor)
+	splash      *ui.Opening         // the opening screen, made once (opening): the same for the whole run
+	events      <-chan device.Event // the touch screen, buttons and sleep, taken once (inputs) for the whole run
+	letGo       func()              // lets go of them as the reader ends (the Kindle: its listener for sleep ended too)
+}
+
+// inputs is the touch screen, the buttons and sleep as one channel, taken the first time they are asked for and kept
+// until the reader ends: the library and each book read from it in turn (device.Device.NewScreen as one takes over).
+// Letting go of an input device and taking it again cost the Kobo's kernel 60 to 90 ms each, about 230 ms of every
+// book's open and every return to the library when each screen took its own (2026-11-21).
+func (rd *reader) inputs() (<-chan device.Event, error) {
+	if rd.events == nil {
+		events, stop, err := rd.dev.Inputs()
+		if err != nil {
+			return nil, err
+		}
+		rd.events, rd.letGo = events, stop
+	}
+	rd.dev.NewScreen()
+	return rd.events, nil
+}
+
+// opening is the opening screen, made the first time it is asked for and kept: it depends only on the screen and the
+// build, and making it (read from the cache and decoded) took 150 ms of every book's open on the Kobo when each
+// session made its own (2026-11-21).
+func (rd *reader) opening() *ui.Opening {
+	if rd.splash == nil {
+		rd.splash = ui.Splash(rd.dir, rd.fonts, rd.dev.Screen.W, rd.dev.Screen.H, rd.dev.Colour())
+	}
+	return rd.splash
 }
 
 func main() {
@@ -112,6 +141,9 @@ func main() {
 		err = rd.browse(t)
 	} else {
 		err = rd.read(map[string]string{"book": os.Args[1]}, t)
+	}
+	if rd.letGo != nil {
+		rd.letGo()
 	}
 	rd.dev.Usage("stop", "")
 	if errors.Is(err, errRestart) { // "Restarting with the new version…" stays until it opens (launch.sh)
