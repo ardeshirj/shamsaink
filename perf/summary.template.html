@@ -65,8 +65,9 @@ function get(dev, r, step) {
   const e = DATA.find(x => x.device === dev && x.reader === r && x.mode === mode);
   if (!e) return null;
   if (step === "mem") return e.memory_mb ? { v: e.memory_mb } : null;
+  if (e.instead && e.instead[step]) return { instead: e.instead[step] }; // measured but not the same step (Amazon's first open)
   const s = e.steps[step];
-  return s ? { v: s.median_ms, runs: s.run_medians_ms, lo: step === "turn" ? s.min_ms : null, hi: step === "turn" ? s.max_ms : null } : null;
+  return s ? { v: s.median_ms, runs: s.run_medians_ms, once: !!e.once, lo: step === "turn" ? s.min_ms : null, hi: step === "turn" ? s.max_ms : null } : null;
 }
 function ticks(max) {
   const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p;
@@ -82,12 +83,13 @@ function chart(dev, step, unit, max) {
   readers.forEach((r, i) => {
     const cy = top + i * rowH + rowH / 2, d = get(dev, r, step);
     s += `<text x="${L - 14}" y="${cy + 6}" font-size="17" fill="var(--fg)" text-anchor="end">${label(r, dev)}</text>`;
-    if (!d) { s += `<text x="${L}" y="${cy + 6}" font-size="15" fill="var(--muted)">not measured</text>`; return; }
+    if (!d || d.instead) { s += `<text x="${L}" y="${cy + 6}" font-size="15" fill="var(--muted)">${d ? d.instead : "not measured"}</text>`; return; }
     const bh = 28, xe = x(d.v); let end = xe;
     s += `<path fill="${color(r)}" d="M${L},${cy - bh / 2} H${xe - 5} Q${xe},${cy - bh / 2} ${xe},${cy - bh / 2 + 5} V${cy + bh / 2 - 5} Q${xe},${cy + bh / 2} ${xe - 5},${cy + bh / 2} H${L} Z"><title>${r}: ${fmt(d.v, unit)}</title></path>`;
     if (d.lo != null) { const a = x(d.lo), b = x(d.hi); end = Math.max(end, b);
       s += `<path d="M${a},${cy} H${b} M${a},${cy - 8} V${cy + 8} M${b},${cy - 8} V${cy + 8}" stroke="var(--fg)" stroke-width="2" opacity="0.7"/>`; }
-    else for (const v of d.runs || []) { end = Math.max(end, x(v)); s += `<circle cx="${x(v)}" cy="${cy}" r="5" fill="var(--fg)" stroke="var(--surface)" stroke-width="2"><title>a run: ${fmt(v, unit)}</title></circle>`; }
+    else if (!d.once) for (const v of d.runs || []) { // measured once: its single values are not runs, so no dots
+      end = Math.max(end, x(v)); s += `<circle cx="${x(v)}" cy="${cy}" r="5" fill="var(--fg)" stroke="var(--surface)" stroke-width="2"><title>a run: ${fmt(v, unit)}</title></circle>`; }
     s += `<text x="${end + 10}" y="${cy + 6}" font-size="17" fill="var(--fg)">${fmt(d.v, unit)}</text>`;
   });
   return s + "</svg>";
@@ -104,7 +106,8 @@ function render() {
     let max = 0;
     for (const md of ["light", "dark"]) for (const e of DATA.filter(e => e.mode === md)) {
       if (step === "mem") max = Math.max(max, e.memory_mb || 0);
-      else if (e.steps[step]) max = Math.max(max, e.steps[step].max_ms, ...e.steps[step].run_medians_ms);
+      else if (e.steps[step] && !(e.instead && e.instead[step])) // what is drawn: the bar and its dots, a turn's range
+        max = Math.max(max, step === "turn" ? e.steps[step].max_ms : e.steps[step].median_ms, ...e.steps[step].run_medians_ms);
     }
     if (!max || !devices.some(dv => readers.some(r => get(dv, r, step)))) continue;
     out += `<section style="display:grid;gap:10px"><h2>${title}</h2><div class="panels">` +
@@ -118,8 +121,9 @@ function render() {
   }).join("") + "</tr>";
   document.getElementById("table").innerHTML = t;
 }
-// #turns: the page turns alone, light mode, for a picture (perf/summarize.py --png): the README's chart
-if (location.hash === "#turns" && DATA.length) {
+// #readme: page turn, first open and reopen in light mode, a row each, the devices side by side, for a picture
+// (perf/summarize.py --png): the README's chart
+if (location.hash === "#readme" && DATA.length) {
   document.documentElement.classList.add("light"); // the README's picture: light whatever the system's theme
   CHART_W = 520;                  // bigger text once shrunk to the README's width
   document.body.style.padding = "24px"; // a margin of its own: a README cannot pad a picture
@@ -127,8 +131,14 @@ if (location.hash === "#turns" && DATA.length) {
   document.querySelector(".controls").style.position = "static";
   mode = "light";
   render();
-  document.querySelectorAll("#charts section").forEach((s, i) => { if (i) s.remove(); });
-  document.querySelector("#charts h2").textContent = "Page turn, light mode: from the tap to the ink (shorter is better)";
+  const keep = { "Page turn": "Page turn", "First open": "First open of a book", "Reopen": "Reopen, from the library" };
+  document.querySelectorAll("#charts section").forEach(s => {
+    const h = s.querySelector("h2");
+    if (!keep[h.textContent]) return s.remove();
+    h.textContent = keep[h.textContent];
+    s.querySelector(".panels").style.gridTemplateColumns = "1fr 1fr";
+  });
+  document.querySelector(".controls").insertAdjacentHTML("afterbegin", "<h2>Light mode, from the tap to the ink (shorter is better)</h2>");
   document.title = "height " + Math.ceil(document.getElementById("charts").getBoundingClientRect().bottom + 24); // for the picture's size (perf/summarize.py --png)
 } else if (DATA.length) render();
 else document.getElementById("charts").innerHTML = "<p>This is the template. The results are in perf/out/summary.html, written by python3 -I perf/summarize.py (make perf runs it).</p>";
