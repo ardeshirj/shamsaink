@@ -27,7 +27,9 @@ import (
 //	close                     the book left by the bar's back arrow, then the reader left from the library's menu
 //	tap SCREEN CONTROL        a control of a screen of the spec, by its kept render: tap dock contents, tap contents e7
 //	                          (a list's row n is the first row's box moved down by n rows), tap topbar topbar-light;
-//	                          tap library eN waits for the row's book and holds the screens after against its direction
+//	                          tap library eN waits for the row's book and holds the screens after against its direction;
+//	                          tap library eN FILE fails unless the book opened is FILE (holmes.epub): a library of many
+//	                          books never has another taken for it
 //	tap page-top              the top tenth of the page: the bar and the dock
 //	turn forward|back         a tap on the page that turns it, by the book's own direction
 //	press forward|back|power  a page button pressed and let go: the lower (forward) or the upper (back), as the reader
@@ -323,6 +325,9 @@ func (p *player) step(a []string) (string, error) {
 			b, err := d.openedRow(p.lib)
 			if err != nil {
 				return name, err
+			}
+			if len(a) > 3 && b.file != a[3] {
+				return name, fmt.Errorf("the row opened %s, not %s", b.file, a[3])
 			}
 			b.report = func(bool, string, string) {}
 			if p.b != nil {

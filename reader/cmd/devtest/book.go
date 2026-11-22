@@ -15,12 +15,13 @@ type book struct {
 	lang      string // the interface as the reader logs it ("en", "fa", "en-rtl"): the renders its screens are held against
 	rtl       bool
 	doc, page int
+	file      string // the book's file name, as the opening line starts (holmes.epub)
 	w         int
 	report    func(good bool, what, detail string)
 	bar, dock *boxes
 }
 
-var reOpened = regexp.MustCompile(`document (\d+) page (\d+) shown in .*right to left (true|false)(?:.*interface ([a-z-]+))?`)
+var reOpened = regexp.MustCompile(`(?:^|\s)(\S+): document (\d+) page (\d+) shown in .*right to left (true|false)(?:.*interface ([a-z-]+))?`)
 
 // openFirst taps the library's first row (the book read last) and waits for it: its place and its direction.
 func (d *dev) openFirst(lib *boxes) (*book, error) {
@@ -53,10 +54,11 @@ func (d *dev) opened(lib *boxes) (*book, error) {
 	if m == nil {
 		return nil, fmt.Errorf("the reader's opening line is not as expected: %q", line)
 	}
-	b.doc, _ = strconv.Atoi(m[1])
-	b.page, _ = strconv.Atoi(m[2])
-	b.rtl = m[3] == "true"
-	b.lang = m[4]
+	b.file = m[1]
+	b.doc, _ = strconv.Atoi(m[2])
+	b.page, _ = strconv.Atoi(m[3])
+	b.rtl = m[4] == "true"
+	b.lang = m[5]
 	if b.lang == "" { // a reader from before the interface was logged: a right-to-left book's was Farsi
 		b.lang = map[bool]string{true: "fa", false: "en"}[b.rtl]
 	}

@@ -27,10 +27,14 @@ python3 -I perf/summarize.py   # perf/out/summary.html: the charts (one file: op
   started as ShamsaInk is, the book alone in a folder of its own (`.../koreader/perf/`), the menus' remembered tabs set
   before each start, part I placed by its own position (`last_xpointer`). Its settings are kept aside and put back.
 - **A page turn** is a tap at the middle of the screen, 900 px down, for both readers (devtest's `turn forward`).
-- **The steps**, in light mode: 5 starts, 5 first opens (the book's layout and place removed, the reader started
-  afresh), 12 turns from part I of "A Scandal in Bohemia", memory, 5 reopens (10 s in the library first); 30 s idle
-  before each start, first open and the turns. Dark mode: the turns and memory only, the rest being the same in both
-  modes (experiment 17: within 3%; KOReader's turns 15–21% slower in dark mode, ShamsaInk's not).
+- **The steps**, in light mode: 5 starts, 5 first opens (the book's layout removed, the reader started afresh, the book
+  placed at its start), 12 turns from part I of "A Scandal in Bohemia", memory, 5 reopens (10 s in the library first);
+  30 s idle before each start, first open and the turns. Every book is opened from the Reading filter's first row, the
+  book placed just before so it is the newest there, and the row's tap names it (`tap library e0 holmes.epub`: devtest
+  fails unless the book opened is that file): a device's other books never take its place. (Until 2026-11-22 the first
+  opens took New's first row, which on a Kobo with 31 books was another book: the Kobo's run of 2026-11-21 23:14 timed
+  five Farsi books from their cache, not *Holmes*.) Dark mode: the turns and memory only, the rest being the same in
+  both modes (experiment 17: within 3%; KOReader's turns 15–21% slower in dark mode, ShamsaInk's not).
 - **Conditions:** on the charger, Wi-Fi on for SSH (the Kobo: Force Wi-Fi On while running, unticked after), nothing
   else running.
 

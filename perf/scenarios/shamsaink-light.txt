@@ -22,44 +22,50 @@ wait 30
 time start-5 library
 leave
 
-# first opens: layout and place removed, the reader started afresh (it keeps chapters laid out between books); the
-# book is the only one in New
+# first opens: layout and place removed, the reader started afresh (it keeps chapters laid out between books); then a
+# place at the book's start (where a book never opened opens), so it is the first row of Reading however many books the
+# device has (New lists them newest added first, and Holmes was rarely the newest: 2026-11-22, five other books timed)
 cold books/standard-ebooks/holmes.epub
+place books/standard-ebooks/holmes.epub 0 0
 library
-tap library filter-new
+tap library filter-reading
 wait 30
-time open-1 tap library e0
+time open-1 tap library e0 holmes.epub
 close
 cold books/standard-ebooks/holmes.epub
+place books/standard-ebooks/holmes.epub 0 0
 library
-tap library filter-new
+tap library filter-reading
 wait 30
-time open-2 tap library e0
+time open-2 tap library e0 holmes.epub
 close
 cold books/standard-ebooks/holmes.epub
+place books/standard-ebooks/holmes.epub 0 0
 library
-tap library filter-new
+tap library filter-reading
 wait 30
-time open-3 tap library e0
+time open-3 tap library e0 holmes.epub
 close
 cold books/standard-ebooks/holmes.epub
+place books/standard-ebooks/holmes.epub 0 0
 library
-tap library filter-new
+tap library filter-reading
 wait 30
-time open-4 tap library e0
+time open-4 tap library e0 holmes.epub
 close
 cold books/standard-ebooks/holmes.epub
+place books/standard-ebooks/holmes.epub 0 0
 library
-tap library filter-new
+tap library filter-reading
 wait 30
-time open-5 tap library e0
+time open-5 tap library e0 holmes.epub
 close
 
 place books/standard-ebooks/holmes.epub 2 0
 # page turns from part I's first page (the fixture's place: document 2 page 0), 30 s idle first
 library
 tap library filter-reading
-tap library e0
+tap library e0 holmes.epub
 wait 30
 time turn-1 turn forward
 wait 1
@@ -92,25 +98,25 @@ tap page-top
 tap topbar topbar-start
 expect library: \d+ books.*shown in
 wait 10
-time reopen-1 tap library e0
+time reopen-1 tap library e0 holmes.epub
 tap page-top
 tap topbar topbar-start
 expect library: \d+ books.*shown in
 wait 10
-time reopen-2 tap library e0
+time reopen-2 tap library e0 holmes.epub
 tap page-top
 tap topbar topbar-start
 expect library: \d+ books.*shown in
 wait 10
-time reopen-3 tap library e0
+time reopen-3 tap library e0 holmes.epub
 tap page-top
 tap topbar topbar-start
 expect library: \d+ books.*shown in
 wait 10
-time reopen-4 tap library e0
+time reopen-4 tap library e0 holmes.epub
 tap page-top
 tap topbar topbar-start
 expect library: \d+ books.*shown in
 wait 10
-time reopen-5 tap library e0
+time reopen-5 tap library e0 holmes.epub
 close

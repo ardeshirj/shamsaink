@@ -171,12 +171,12 @@ func (s *script) check(d *dev) error {
 			switch {
 			case args == 1 && a[1] == "page-top":
 			case args == 2 && isInt(a[1]) && isInt(a[2]):
-			case args == 2:
+			case args == 2, args == 3 && a[1] == "library" && strings.HasPrefix(a[2], "e") && isInt(a[2][1:]):
 				if err := d.hasControl(a[1], a[2]); err != nil {
 					fail(l, "%v", err)
 				}
 			default:
-				fail(l, "tap page-top, tap X Y or tap SCREEN CONTROL")
+				fail(l, "tap page-top, tap X Y, tap SCREEN CONTROL or tap library eN FILE")
 			}
 		case "turn":
 			if args != 1 || a[1] != "forward" && a[1] != "back" {
@@ -269,7 +269,7 @@ func (s *script) check(d *dev) error {
 				if args != 3 || a[3] != "forward" && a[3] != "back" {
 					fail(l, "time NAME turn forward|back")
 				}
-			case a[2] == "tap" && args == 4 && !isInt(a[3]):
+			case a[2] == "tap" && (args == 4 || args == 5 && a[3] == "library") && !isInt(a[3]):
 				if err := d.hasControl(a[3], a[4]); err != nil {
 					fail(l, "%v", err)
 				}
