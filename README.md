@@ -110,14 +110,14 @@ The quickest of the readers timed, on both devices: books open 3–5× sooner th
 are as quick as KOReader's or quicker.
 
 <p><img src="docs/images/perf.png" width="720"
-  alt="Light mode, from the tap to the ink. First open: on the Kobo, ShamsaInk 0.78 s, KOReader 2.20, Kobo's reader 1.89; on the Kindle, ShamsaInk 0.72 s, KOReader 3.50. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s. Page turn: on the Kobo 469 ms, 477 ms and 572 ms; on the Kindle 306 ms, 340 ms and 628 ms"></p>
+  alt="Light mode, from the tap to the ink. First open: on the Kobo, ShamsaInk 0.78 s, KOReader 2.20, Kobo's reader 1.89; on the Kindle, ShamsaInk 0.72 s, KOReader 3.50, Kindle's reader 1.05. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s. Page turn: on the Kobo 469 ms, 477 ms and 572 ms; on the Kindle 306 ms, 340 ms and 628 ms"></p>
 
-| | ShamsaInk | KOReader | The device's own reader* |
+| | ShamsaInk | KOReader | The device's own reader¹ |
 |---|---|---|---|
-| **Kobo†:** a new book opened | **0.8 s** | 2.2 s (3× slower) | 1.9 s (2× slower) |
+| **Kobo²:** a new book opened | **0.8 s** | 2.2 s (3× slower) | 1.9 s (2× slower) |
 | reopened | **0.7 s** | 0.9 s | 2.0 s (3× slower) |
 | a page turn | **469 ms** | 477 ms | 572 ms |
-| **Kindle:** a new book opened | **0.7 s** | 3.5 s (5× slower) | – (prepared beforehand) |
+| **Kindle:** a new book opened | **0.7 s** | 3.5 s (5× slower) | 1.1 s³ |
 | reopened | **0.6 s** | 1.2 s (2× slower) | 0.9 s |
 | a page turn | **306 ms** | 340 ms | 628 ms (2× slower) |
 
@@ -127,10 +127,13 @@ its default, with ShamsaInk 0.5.2 on a Kobo Libra Colour (firmware 6.0) and a Ki
 mode KOReader's page turns are 14–21% slower; ShamsaInk's are not. ShamsaInk's and KOReader's timings are scripted and
 can be rerun: [`perf/README.md`](perf/README.md).
 
-\* Measured once, on 2026-11-21; Kindle's reader timed by hand, its book prepared beforehand by its own indexer.
+¹ Measured once, on 2026-11-21; Kindle's reader timed by hand.
 
-† On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
+² On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
 Kobo's reader on both.
+
+³ Kindle's reader cannot be made to forget a book, so this is a book it had opened before, prepared by its own indexer:
+its very first open of it took 3.4 s.
 
 ## Why build on existing tools
 Why rewrite what modern open source already does well? We tried, and measured:
