@@ -78,6 +78,8 @@ ShamsaInk
 <sub>¹ Line starts that match Chromium's, on four of rtlbook's Farsi books.<br>
 ² Kindle: the underlining works, but sound is unofficial and unreliable. Kobo is the first target.</sub>
 
+And it is quick: the quickest page turn on both devices, a new book open in about a second ([How quick](#how-quick)).
+
 Narration can change how a book is read: a classic made easier to follow, a language learned by ear and eye together.
 We want Farsi and other right-to-left books done properly, and books that read along.
 
@@ -112,8 +114,8 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 ## What it does
 - **Reads right-to-left text properly, and English and many other languages.** Farsi, Arabic, Urdu and Hebrew shaping
   and direction come out right, with no `dir` attributes needed in the book; any other EPUB opens as well. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
-- **Is quick.** As fast as KOReader's engine (crengine) on these devices, and a cache file per book so a reopened
-  book comes up quickly.
+- **Is quick.** The quickest page turn of the readers on these devices, and a new book open in about a second, 2–4×
+  sooner than KOReader ([How quick](#how-quick), below).
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones and
   marks each word as it is spoken, on the Kobo (on the Kindle, not yet: Amazon's software drops headphones it is not
   playing to). The headphones' own delay is a setting we have not built yet.
@@ -121,6 +123,28 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
   front light and its warmth, touch and the Kobo's page buttons, contents, highlights, sleep and wake, and a sleep
   screen from your own pictures. The interface is in English or Farsi, laid out right to left for a book in Farsi,
   Arabic, Hebrew, Urdu and the other right-to-left languages.
+
+## How quick
+
+<p><img src="docs/images/perf-page-turns.png" width="660"
+  alt="Page turns in light mode: on the Kobo, ShamsaInk 469 ms, KOReader 470, Kobo's reader 572; on the Kindle, ShamsaInk 307 ms, KOReader 340, Amazon's reader 628"></p>
+
+| | ShamsaInk | KOReader | The device's own reader* |
+|---|---|---|---|
+| **Kobo:** a page turn | **469 ms** | **470 ms** | 572 ms |
+| a new book opened | **1.1 s** | 2.2 s (2× slower) | 1.9 s |
+| reopened | 1.0 s | **0.9 s** | 2.0 s (2× slower) |
+| **Kindle:** a page turn | **307 ms** | 340 ms | 628 ms (2× slower) |
+| a new book opened | **0.9 s** | 3.5 s (4× slower) | – (prepared beforehand) |
+| reopened | **0.8 s** | 1.2 s | 0.9 s |
+
+From the tap to the screen's last update done, read from the e-ink driver's own log on the device. Medians in light
+mode, *The Adventures of Sherlock Holmes* (Standard Ebooks), every setting at its default; the Kobo Libra Colour
+(firmware 6.0) and the Kindle Paperwhite 11 (5.19.2), ShamsaInk 0.5.
+
+In dark mode KOReader's page turns are 14–21% slower and ShamsaInk's are not. \* Measured once, on 2026-11-21; Amazon's
+reader by finger, its book prepared beforehand by its own indexer. ShamsaInk and KOReader are timed again with no one at
+the device: [`perf/README.md`](perf/README.md).
 
 ## Where things are
 | | |
