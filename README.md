@@ -106,6 +106,8 @@ books are what it was made to read well, but it opens any EPUB.
   Arabic, Hebrew, Urdu and the other right-to-left languages.
 
 ## How quick
+The quickest of the readers timed, on both devices: books open 3–5× sooner than in KOReader, and page turns
+are as quick as KOReader's or quicker.
 
 <p><img src="docs/images/perf.png" width="720"
   alt="Light mode, from the tap to the ink. Page turn: on the Kobo, ShamsaInk 469 ms, KOReader 477, Kobo's reader 572; on the Kindle, ShamsaInk 306 ms, KOReader 340, Kindle's reader 628. First open: on the Kobo 0.59 s, 2.20 s and 1.89 s; on the Kindle 0.72 s and 3.50 s. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s"></p>
@@ -119,13 +121,13 @@ books are what it was made to read well, but it opens any EPUB.
 | a new book opened | **0.7 s** | 3.5 s (5× slower) | – (prepared beforehand) |
 | reopened | **0.6 s** | 1.2 s (2× slower) | 0.9 s |
 
-From the tap to the screen's last update done, read from the e-ink driver's own log on the device. Medians in light
-mode, *The Adventures of Sherlock Holmes* (Standard Ebooks), every setting at its default; the Kobo Libra Colour
-(firmware 6.0) and the Kindle Paperwhite 11 (5.19.2), ShamsaInk 0.5.2. In dark mode KOReader's page turns are 14–21%
-slower and ShamsaInk's are not. ShamsaInk and KOReader are timed again with no one at the device:
-[`perf/README.md`](perf/README.md).
+Each time runs from the tap until the screen has finished updating, taken from the e-ink driver's own log on the
+device. They are medians in light mode, on *The Adventures of Sherlock Holmes* (Standard Ebooks) with every setting at
+its default, with ShamsaInk 0.5.2 on a Kobo Libra Colour (firmware 6.0) and a Kindle Paperwhite 11 (5.19.2). In dark
+mode KOReader's page turns are 14–21% slower; ShamsaInk's are not. ShamsaInk's and KOReader's timings are scripted and
+can be rerun: [`perf/README.md`](perf/README.md).
 
-\* Measured once, on 2026-11-21; Kindle's reader by finger, its book prepared beforehand by its own indexer.
+\* Measured once, on 2026-11-21; Kindle's reader timed by hand, its book prepared beforehand by its own indexer.
 
 † On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
 Kobo's reader on both.
