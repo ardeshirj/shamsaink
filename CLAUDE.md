@@ -207,6 +207,12 @@ work goes where it belongs as it is decided.
   **Our own test books are the other exception (the maintainer, 2026-11-12):** the rule is about other people's books.
   The books we write for the tests (`e2e/books/`, our own text, Apache-2.0 as the repository) are committed as source,
   and the pages drawn from them are committed as pictures beside their hashes (`e2e/refs/LANG/`, a scenario's `refs: images LANG`).
+  **Standard Ebooks' public-domain books are the third (the maintainer, 2026-11-21),** as *Buried Alive*: pages drawn
+  from them may be committed as pictures for the README and docs (the comparison of readers first). Their text is
+  public domain and Standard Ebooks dedicates all its own work (markup, cover art, everything in the file) to the public
+  domain under CC0 (standardebooks.org, "Standard Ebooks and the public domain", checked 2026-11-21). CC0 waives no
+  trademark rights; none claimed on their site, but pages of the text are shown, not their cover or logo, so nothing
+  reads as their endorsement. The EPUBs themselves and their text stay out of the repository.
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
 - **The Kindle:** set up as in `docs/devices/kindle/setup.md` (ShamsaInk, then our development SSH from its Developer
