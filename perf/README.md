@@ -36,9 +36,9 @@ python3 -I perf/summarize.py   # perf/out/summary.html: the charts (one file: op
 
 ## Not here
 
-The devices' own readers, measured once in experiment 17 (2026-11-21): Amazon's reader takes no written taps (a finger
+The devices' own readers, measured once in experiment 17 (2026-11-21): Kindle's reader takes no written taps (a finger
 is needed), and a fresh copy for Kobo's reader's first open needs a USB import; neither came close (Kobo's turns 572 ms,
-Amazon's 628, reopens 2.0 s on the Kobo).
+Kindle's 628, reopens 2.0 s on the Kobo).
 
 ## The book
 

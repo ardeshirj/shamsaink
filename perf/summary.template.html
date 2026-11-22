@@ -53,7 +53,7 @@ const STEPS = [["turn", "Page turn", "ms"], ["open", "First open", "s"], ["reope
 const ORDER = ["shamsaink", "koreader", "built-in"];
 const readers = [...new Set(DATA.map(e => e.reader))].sort((a, b) => (ORDER.indexOf(a) + 1 || 9) - (ORDER.indexOf(b) + 1 || 9));
 const NAMES = { shamsaink: "ShamsaInk", koreader: "KOReader", "kobo-libra-colour": "Kobo Libra Colour", "kindle-paperwhite-11": "Kindle Paperwhite 11" };
-const BUILTIN = { "kobo-libra-colour": "Kobo's reader", "kindle-paperwhite-11": "Amazon's reader" };
+const BUILTIN = { "kobo-libra-colour": "Kobo's reader", "kindle-paperwhite-11": "Kindle's reader" };
 const name = k => NAMES[k] || k;
 const label = (r, dev) => r === "built-in" ? (BUILTIN[dev] || "built-in") + (CHART_W < 900 ? "" : " (once)") : name(r);
 const devices = [...new Set(DATA.map(e => e.device))].sort((a, b) => b.startsWith("kobo") - a.startsWith("kobo") || a.localeCompare(b)); // the Kobo first, the main device
@@ -65,7 +65,7 @@ function get(dev, r, step) {
   const e = DATA.find(x => x.device === dev && x.reader === r && x.mode === mode);
   if (!e) return null;
   if (step === "mem") return e.memory_mb ? { v: e.memory_mb } : null;
-  if (e.instead && e.instead[step]) return { instead: e.instead[step] }; // measured but not the same step (Amazon's first open)
+  if (e.instead && e.instead[step]) return { instead: e.instead[step] }; // measured but not the same step (the Kindle's reader's first open)
   const s = e.steps[step];
   return s ? { v: s.median_ms, runs: s.run_medians_ms, once: !!e.once, lo: step === "turn" ? s.min_ms : null, hi: step === "turn" ? s.max_ms : null } : null;
 }

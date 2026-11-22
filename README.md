@@ -127,7 +127,7 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 ## How quick
 
 <p><img src="docs/images/perf.png" width="720"
-  alt="Light mode, from the tap to the ink. Page turn: on the Kobo, ShamsaInk 469 ms, KOReader 477, Kobo's reader 572; on the Kindle, ShamsaInk 306 ms, KOReader 340, Amazon's reader 628. First open: on the Kobo 0.59 s, 2.20 s and 1.89 s; on the Kindle 0.72 s and 3.50 s. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s"></p>
+  alt="Light mode, from the tap to the ink. Page turn: on the Kobo, ShamsaInk 469 ms, KOReader 477, Kobo's reader 572; on the Kindle, ShamsaInk 306 ms, KOReader 340, Kindle's reader 628. First open: on the Kobo 0.59 s, 2.20 s and 1.89 s; on the Kindle 0.72 s and 3.50 s. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s"></p>
 
 | | ShamsaInk | KOReader | The device's own reader* |
 |---|---|---|---|
@@ -144,7 +144,7 @@ mode, *The Adventures of Sherlock Holmes* (Standard Ebooks), every setting at it
 slower and ShamsaInk's are not. ShamsaInk and KOReader are timed again with no one at the device:
 [`perf/README.md`](perf/README.md).
 
-\* Measured once, on 2026-11-21; Amazon's reader by finger, its book prepared beforehand by its own indexer.
+\* Measured once, on 2026-11-21; Kindle's reader by finger, its book prepared beforehand by its own indexer.
 
 † On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
 Kobo's reader on both.
