@@ -105,6 +105,26 @@ showed in the library: the Kindle's indexer failed to add it ("SQL logic error",
 embedded icon (a 940×1432 PNG, 120 kB of base64) was left out. The stuck indexer then failed to drop the entry too; a
 restart cleared it.
 
+## Why the Kobo is slower than its clock says (2026-11-21, evening)
+
+The Kobo's second core is off while ShamsaInk runs: Kobo's interface switches it on when busy and off when idle, and
+ShamsaInk, which stops that interface, never switches it on (`/sys/devices/system/cpu/cpu1/online` stayed 0 through an
+open; the first core went to 2 GHz). The Kindle has both cores on at 1 GHz. With the core switched on by hand (a line in
+`launch.sh` for the test, removed after), devtest's timing steps, 3 first opens, 6 turns, 3 reopens each way:
+
+| | second core off (as released) | on |
+|---|---|---|
+| page turn, tap to ink | 439–489 ms (median 472) | 411–434 (425) |
+| ShamsaInk's own work, first open | 506–538 ms | 357–363 |
+| ShamsaInk's own work, reopen | 472–511 ms | 259–290 |
+| first open, tap to ink | 1.02–1.09 s | 0.99–1.04 |
+| reopen, tap to ink | 1.01–1.05 s | 0.95–0.99 |
+
+The turns gain from the e-ink driver's own work (on the CPU) no longer sharing one core. An open's own work drops by a
+third, but the tap to ink hardly moves: the page is asked for ~620 ms after the tap either way, ~340 ms of it before
+the book's open starts (in the library taking the tap or letting go after it), cause not found yet. To do, as its own task: that gap first
+(a timestamp), then the second core on while ShamsaInk is in front, its battery cost measured, `make perf` again.
+
 ## Next
 
 - The repeats: `make perf` on both devices, twice on different days, then the README's table (rounded, light mode, the
