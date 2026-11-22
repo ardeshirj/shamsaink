@@ -213,6 +213,9 @@ work goes where it belongs as it is decided.
   domain under CC0 (standardebooks.org, "Standard Ebooks and the public domain", checked 2026-11-21). CC0 waives no
   trademark rights; none claimed on their site, but pages of the text are shown, not their cover or logo, so nothing
   reads as their endorsement. The EPUBs themselves and their text stay out of the repository.
+- **The devices by their own names** (the maintainer, 2026-11-22): in what readers see (the README, the docs, the charts,
+  the CHANGELOG), "the Kindle" and "Kindle's reader", "the Kindle's own software", as "Kobo's reader"; not "Amazon's".
+  Amazon stays only where the company itself is meant (its tools by name, a licence).
 - **Persian renders reversed in the maintainer's terminal:** describe text in English there, show Persian only in a
   browser page (like `experiments/01-renderers/index.html`).
 - **The Kindle:** set up as in `docs/devices/kindle/setup.md` (ShamsaInk, then our development SSH from its Developer
