@@ -114,8 +114,8 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 ## What it does
 - **Reads right-to-left text properly, and English and many other languages.** Farsi, Arabic, Urdu and Hebrew shaping
   and direction come out right, with no `dir` attributes needed in the book; any other EPUB opens as well. It uses real CSS (flex, grid, custom properties), so books with their own styling look as designed.
-- **Is quick.** The quickest page turn of the readers on these devices, and a new book open in about a second, 2–4×
-  sooner than KOReader ([How quick](#how-quick), below).
+- **Is quick.** The quickest of the readers on these devices at every step timed: a page turn, a new book opened in
+  under a second (3–5× sooner than KOReader), a book reopened ([How quick](#how-quick), below).
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones and
   marks each word as it is spoken, on the Kobo (on the Kindle, not yet: Amazon's software drops headphones it is not
   playing to). The headphones' own delay is a setting we have not built yet.
@@ -126,25 +126,28 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 
 ## How quick
 
-<p><img src="docs/images/perf-page-turns.png" width="480"
-  alt="Page turns in light mode: on the Kobo, ShamsaInk 469 ms, KOReader 470, Kobo's reader 572; on the Kindle, ShamsaInk 307 ms, KOReader 340, Amazon's reader 628"></p>
+<p><img src="docs/images/perf.png" width="720"
+  alt="Light mode, from the tap to the ink. Page turn: on the Kobo, ShamsaInk 469 ms, KOReader 477, Kobo's reader 572; on the Kindle, ShamsaInk 306 ms, KOReader 340, Amazon's reader 628. First open: on the Kobo 0.59 s, 2.20 s and 1.89 s; on the Kindle 0.72 s and 3.50 s. Reopen: on the Kobo 0.72 s, 0.89 s and 2.00 s; on the Kindle 0.61 s, 1.15 s and 0.88 s"></p>
 
 | | ShamsaInk | KOReader | The device's own reader* |
 |---|---|---|---|
-| **Kobo:** a page turn | **469 ms** | **470 ms** | 572 ms |
-| a new book opened | **1.1 s** | 2.2 s (2× slower) | 1.9 s |
-| reopened | 1.0 s | **0.9 s** | 2.0 s (2× slower) |
-| **Kindle:** a page turn | **307 ms** | 340 ms | 628 ms (2× slower) |
-| a new book opened | **0.9 s** | 3.5 s (4× slower) | – (prepared beforehand) |
-| reopened | **0.8 s** | 1.2 s | 0.9 s |
+| **Kobo†:** a page turn | **469 ms** | 477 ms | 572 ms |
+| a new book opened | **0.6 s** | 2.2 s (4× slower) | 1.9 s (3× slower) |
+| reopened | **0.7 s** | 0.9 s | 2.0 s (3× slower) |
+| **Kindle:** a page turn | **306 ms** | 340 ms | 628 ms (2× slower) |
+| a new book opened | **0.7 s** | 3.5 s (5× slower) | – (prepared beforehand) |
+| reopened | **0.6 s** | 1.2 s (2× slower) | 0.9 s |
 
 From the tap to the screen's last update done, read from the e-ink driver's own log on the device. Medians in light
 mode, *The Adventures of Sherlock Holmes* (Standard Ebooks), every setting at its default; the Kobo Libra Colour
-(firmware 6.0) and the Kindle Paperwhite 11 (5.19.2), ShamsaInk 0.5.
+(firmware 6.0) and the Kindle Paperwhite 11 (5.19.2), ShamsaInk 0.5.2. In dark mode KOReader's page turns are 14–21%
+slower and ShamsaInk's are not. ShamsaInk and KOReader are timed again with no one at the device:
+[`perf/README.md`](perf/README.md).
 
-In dark mode KOReader's page turns are 14–21% slower and ShamsaInk's are not. \* Measured once, on 2026-11-21; Amazon's
-reader by finger, its book prepared beforehand by its own indexer. ShamsaInk and KOReader are timed again with no one at
-the device: [`perf/README.md`](perf/README.md).
+\* Measured once, on 2026-11-21; Amazon's reader by finger, its book prepared beforehand by its own indexer.
+
+† On the Kobo, ShamsaInk and KOReader ran on one of its two cores (the second is off unless a program switches it on),
+Kobo's reader on both.
 
 ## Where things are
 | | |

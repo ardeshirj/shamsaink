@@ -218,6 +218,10 @@ keyboard first ("Now").
 ## 5. Later
 ### Ideas, not yet planned
 - Smarter flashes: flashing the screen only when the ink changed enough for ghosting to show, not every few pages.
+- The Kobo's second core while ShamsaInk is busy (2026-11-22): it is off while we run (Kobo's interface manages it, and
+  we stop that interface). Switched on at a touch or a button, off after about 2 s idle and before sleep: a page turn
+  472 → 425 ms, an open's own work a third to a half less (experiment 17's NOTES.md). Already the quickest on one core,
+  so only if reading with it drains no more than about 2% more an hour, off the charger, than without.
 - You were here: on reopening or after a reflow, the word you were at underlined for a moment; your place remembered by
   word, so it survives a change of text size.
 - Time left at your pace, learnt from your page turns in this book.

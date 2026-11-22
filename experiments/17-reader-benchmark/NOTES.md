@@ -122,8 +122,21 @@ open; the first core went to 2 GHz). The Kindle has both cores on at 1 GHz. With
 
 The turns gain from the e-ink driver's own work (on the CPU) no longer sharing one core. An open's own work drops by a
 third, but the tap to ink hardly moves: the page is asked for ~620 ms after the tap either way, ~340 ms of it before
-the book's open starts (in the library taking the tap or letting go after it), cause not found yet. To do, as its own task: that gap first
-(a timestamp), then the second core on while ShamsaInk is in front, its battery cost measured, `make perf` again.
+the book's open starts (in the library taking the tap or letting go after it).
+
+**The gap, found (2026-11-21, late):** timestamps on the reader's clock (CLOCK_MONOTONIC, as the driver's log) through
+one open from the library: the tap seen 0.5 ms after the finger up; then 216 ms letting go of the input devices as the
+library closed (the touch screen 89 ms, the power button 60, the page buttons 60: closing an input device is slow in the
+Kobo's kernel), 22 ms taking them again for the book, and 149 ms reading the opening screen back from its cache (10 MB:
+made on every open, shown only if one takes over 3 s). Fixed in 0.5.2-beta: the inputs taken once for the reader's run,
+the opening screen made once. `make perf` after, light mode: a first open 1.07 → 0.59 s on the Kobo and 0.88 → 0.72 on
+the Kindle, a reopen 1.01 → 0.72 and 0.77 → 0.61, memory while reading 98 → 81 MB on the Kobo; turns unchanged.
+
+**KOReader on the Kobo runs on one core too** (2026-11-21): `cpu1/online` read every 50 ms through its light steps (2
+starts, 2 first opens, 12 turns, 2 reopens) stayed 0 from its first start, when Kobo's interface stopped, to the end.
+
+The second core while ShamsaInk is busy is left for later (`docs/ROADMAP.md`, "Later"): already the quickest on one
+core, it goes in only if its battery cost is small.
 
 ## Next
 

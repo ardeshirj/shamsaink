@@ -4,6 +4,16 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.5.2-beta (2026-11-21)
+Books open sooner.
+- **A book opens from the library about 0.3–0.5 s sooner** (Kobo and Kindle): a new book 0.6 s on the Kobo (was 1.1),
+  a book reopened 0.7 s (was 1.0); on the Kindle 0.7 and 0.6 s (were 0.9 and 0.8). Leaving a book for the library is
+  quicker too. The touch screen and the buttons are now taken once, not let go and taken again at every switch, and
+  the opening screen is no longer read again at every open.
+- **Less memory while reading:** 81 MB on the Kobo, was 98.
+- **Nothing left running after the reader** (Kindle): when the reader was stopped by an update or a restart, its
+  listener for the Kindle's sleep stayed behind.
+
 ## 0.5.1-beta (2026-11-21)
 Three fixes, found while timing ShamsaInk against the other readers.
 - **Dark mode cleans the screen again** (Kobo and Kindle): in a book, dark mode's "Clean every" was ignored, so its
