@@ -214,6 +214,17 @@ keyboard first ("Now").
 - A reading ruler: an underline moved line by line by the buttons (dense classical text, dyslexia).
 - The light by a swipe along one edge; warmth that follows the time of day.
 - Kashida: Persian lines justified by stretching letters instead of spaces (whether Blitz can, to check first).
+- More fonts (2026-11-21, the maintainer): a font chosen in the Text panel, in place of the book's own, as other readers
+  offer. Today a book's own CSS fonts are used, ours (`reader/fonts/README.md`) filling in. Three sources, each a
+  choice: (a) more fonts of our own, open-licensed and in the packages (Farsi and Latin, a serif and a sans each); (b)
+  the device's own, read where they are and never copied or shipped: the Kindle has 109 files, 130 MB, in
+  `/usr/java/lib/fonts` (Bookerly, Amazon Ember, Caecilia, Baskerville, Palatino, Futura, Helvetica, OpenDyslexic, and
+  for the Arabic script Noto Naskh, Diwan Muna, Sakkal Kitab), the Kobo's to list; (c) the reader's own fonts, from the
+  folder each device already has for them (the Kindle's `/mnt/us/fonts`; the Kobo's `fonts` on its drive). The
+  engine's side: a folder's fonts registered by family (today only Mono, Serif, Sans by file name,
+  `fallback_fonts`), only the chosen family loaded (memory), the book's body given it, pages and the cache per font.
+  Which device fonts draw Farsi right (joining, Persian digits and letters such as پ چ ژ گ) to check, and whether
+  their licences allow use in place.
 
 ### Upstream to Blitz (2026-10-29)
 Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259), and neither is e-ink only.
