@@ -111,6 +111,10 @@ check:
 #   make e2e             a scenario on the Kobo (e2e/README.md): SCENARIO (e2e/scenarios/basics.txt by default), by
 #                        control name, its pages compared with the references kept by a run with SAVE=1 (their hashes
 #                        in e2e/refs.sum). Both: RUNS=5 plays the list five times (the Kobo stops at a failure)
+#   make perf            the benchmarks (perf/README.md) on the Kobo (DEVICE=kindle: the Kindle): ShamsaInk and KOReader
+#                        timed from the tap to the ink, light mode in full and dark mode's page turns, no one at the
+#                        device; READERS (shamsaink koreader), MODES (light dark); results in perf/out/, summed up in
+#                        perf/out/summary.html, charts (perf/summarize.py)
 #   make inktrace        inktrace (reader/cmd/inktrace), static ARMv7: reader/out/inktrace, for perf and devtest's time
 #   make update-e2e      updates over Wi-Fi on the Kobo (DEVICE=kindle: the Kindle), e2e/scenarios/update.txt: the latest
 #                        build packed, installed by the device itself as an update, and a broken one undone
@@ -125,7 +129,7 @@ KOBO_DIR = /mnt/onboard/.adds/shamsaink
 KOBO_CONF = "/mnt/onboard/.kobo/Kobo/Kobo eReader.conf"
 KOBO_USB = /Volumes/KOBOeReader
 
-.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev update-e2e kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all inktrace
+.PHONY: kobo-check kindle-check kobo-reader-install kobo-package-install kobo-update-dev update-e2e kobo-release-install kobo-reader-log kobo-usage kobo-status kobo-wait kobo-ssh kobo-dev-ssh kobo-dropbear kobo-launcher kobo-launcher-install kobo-import e2e e2e-sim e2e-sim-languages e2e-sim-all perf inktrace
 
 devtest:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
@@ -180,6 +184,16 @@ e2e: devtest
 inktrace:
 	@docker run --rm -v "$(CURDIR)":/r -v eink-gomod:/go/pkg/mod -v eink-gocache:/root/.cache/go-build -w /r/reader eink-go \
 	  sh -c 'CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=7 go build -trimpath -ldflags="-s -w" -o out/inktrace ./cmd/inktrace'
+
+# the Kindle kept awake meanwhile (between the readers it shows Amazon's home, which sleeps after a few minutes)
+PERF_AWAKE = $(if $(filter kindle,$(DEVICE)),ssh -o ConnectTimeout=10 kindle lipc-set-prop com.lab126.powerd preventScreenSaver,true)
+perf: devtest inktrace
+	@$(PERF_AWAKE) 1; trap '$(PERF_AWAKE) 0' EXIT; \
+	for m in $(or $(MODES),light dark); do for r in $(or $(READERS),shamsaink koreader); do \
+	  echo "== $$r, $$m mode ($(E2E_DEVICE))"; \
+	  if [ $$r = shamsaink ]; then reader/out/devtest scenario $(E2E_DEVICE) perf/scenarios/shamsaink-$$m.txt || exit 1; \
+	  else sh perf/koreader.sh $(E2E_DEVICE) $$m || exit 1; fi; done; done
+	@python3 -I perf/summarize.py
 
 SIM_BOOKS ?= out/sim-books
 e2e-sim:

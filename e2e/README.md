@@ -66,6 +66,12 @@ With the same settings the simulator draws the Kobo's pages byte for byte (2026-
 the Kobo's ARMv7 in Noto Naskh Arabic's curves; the Kobo keeps its own hashes for those pages, and the pictures are the
 simulator's.
 
+## Timing
+
+`time NAME STEP`, `mem NAME`, `cold PATH` and `place PATH DOC PAGE` (`reader/cmd/devtest/timing.go`) time a step from
+the tap to the ink on the devices (not the simulator): the benchmarks' (`perf/README.md`), whose scenarios are in
+`perf/scenarios/`, their fixtures in `perf/fixtures/` (`fixture:` takes a path) and results in `perf/out/`.
+
 ## Writing a scenario
 
 First, whether it is a scenario at all: what one control does, on any book, belongs in the design spec, whose walk tests

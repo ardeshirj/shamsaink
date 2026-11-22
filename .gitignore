@@ -21,3 +21,6 @@ experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*
 .claude/settings.local.json
 
 __pycache__/
+
+# the benchmarks' results (perf/README.md)
+perf/out/

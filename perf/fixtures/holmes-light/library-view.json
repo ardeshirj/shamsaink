@@ -1,0 +1,7 @@
+{
+  "filter": "reading",
+  "sorts": {
+    "all": "recent",
+    "new": "recent"
+  }
+}

@@ -4,6 +4,10 @@
 # Nickel instead brought its watchdog's reboots, a frozen screen and a power button nobody heard). Bluetooth stays on
 # while the reader runs. The first argument: a book to read; without one, the library (books/ and one folder down, by
 # source: farsiepub/, rtlbook/, ...), where a book is chosen and the library comes back when it is left.
+# For development only: `launch.sh --run DIR/dev/readers/NAME.sh` runs another reader in ShamsaInk's place, Nickel
+# stopped and started again the same way: the benchmarks' KOReader (perf/koreader.sh, which puts the script there for
+# its run and removes it after; perf/README.md). The script finds Nickel's environment in $NICKEL_ENV and logs to
+# logs/other.log.
 #
 # The logs, in logs/: reader.log (ours and the reader's), and while a book is open, kept on storage for after a crash
 # (the Kobo's own system log is in RAM, gone with a reboot; the kernel's is in no log): system.log, kernel.log (its
@@ -20,7 +24,7 @@ cd "$D" || exit 1
 mkdir -p logs
 # rewritten in place, not moved: the loggers appending to them keep their file
 cut_logs() {
-  for f in logs/reader.log logs/system.log logs/kernel.log logs/alive.log; do
+  for f in logs/reader.log logs/system.log logs/kernel.log logs/alive.log logs/other.log; do
     [ "$(wc -c < "$f" 2>/dev/null || echo 0)" -gt 1000000 ] && tail -c 500000 "$f" > "$f.cut" && cat "$f.cut" > "$f" \
       && rm "$f.cut"
   done
@@ -117,6 +121,14 @@ nickel_back() {
   sync
   reboot
 }
+RUN=
+if [ "$1" = --run ]; then
+  case "$2" in
+    "$D"/dev/readers/*.sh) [ -f "$2" ] && RUN=$2 ;;
+  esac
+  [ -n "$RUN" ] || { log "--run: no script $2 in dev/readers: not started"; exit 1; }
+  shift 2
+fi
 if [ "$1" = nickel ]; then
   pidof nickel > /dev/null && { echo "Nickel is running"; exit 1; }
   start_nickel
@@ -181,7 +193,11 @@ while pidof nickel > /dev/null && [ $i -lt 20 ]; do usleep 250000; i=$((i + 1));
 pidof nickel > /dev/null && log "Nickel still running after 5 s"
 # udev would wait on Nickel's pipe with nobody reading it
 udev_unstick
-log "Nickel ($N) stopped in $((i * 250)) ms; ${BOOK:+reading $BOOK}${BOOK:-the library}"
+if [ -n "$RUN" ]; then
+  log "Nickel ($N) stopped in $((i * 250)) ms; running $(basename "$RUN" .sh)"
+else
+  log "Nickel ($N) stopped in $((i * 250)) ms; ${BOOK:+reading $BOOK}${BOOK:-the library}"
+fi
 
 echo "== $(date -u '+%Y-%m-%d %H:%M:%S UTC') uptime $(cut -d' ' -f1 /proc/uptime) s" | tee -a logs/system.log \
   logs/kernel.log >> logs/alive.log
@@ -266,6 +282,13 @@ undo_update() {
   sync
   log "update to ${v:-?} undone: it did not reach the library; $(cat VERSION 2>/dev/null) put back"
 }
+# another reader (development only): run once, Nickel started again on its exit (leave); the watchdog idle (no shamsaink)
+if [ -n "$RUN" ]; then
+  echo "== $(date -u '+%Y-%m-%d %H:%M:%S UTC') $RUN" >> logs/other.log
+  NICKEL_ENV="$D"/nickel.env sh "$RUN" >> logs/other.log 2>&1
+  log "$(basename "$RUN" .sh) exited ($?)"
+  exit 0
+fi
 ARG=${BOOK:--library}
 while :; do
   ./shamsaink "$ARG" fonts >> logs/reader.log 2>&1

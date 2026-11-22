@@ -1,0 +1,38 @@
+# ShamsaInk on Standard Ebooks' Sherlock Holmes, dark mode: 12 page turns and memory (the rest as in light mode, perf/README.md) (perf/README.md). Each timed from the tap
+# (or the launcher's command, for a start) to the last full-page ink done; results in perf/out/DEVICE/shamsaink-dark/times.tsv.
+# The book is not ours: on the device first as books/standard-ebooks/holmes.epub (perf/README.md, The book).
+on: kobo kindle
+book: books/standard-ebooks/holmes.epub
+fixture: perf/fixtures/holmes-dark
+
+# page turns from part I's first page (the fixture's place: document 2 page 0), 30 s idle first
+library
+tap library filter-reading
+tap library e0
+wait 30
+time turn-1 turn forward
+wait 1
+time turn-2 turn forward
+wait 1
+time turn-3 turn forward
+wait 1
+time turn-4 turn forward
+wait 1
+time turn-5 turn forward
+wait 1
+time turn-6 turn forward
+wait 1
+time turn-7 turn forward
+wait 1
+time turn-8 turn forward
+wait 1
+time turn-9 turn forward
+wait 1
+time turn-10 turn forward
+wait 1
+time turn-11 turn forward
+wait 1
+time turn-12 turn forward
+wait 1
+mem reading
+close

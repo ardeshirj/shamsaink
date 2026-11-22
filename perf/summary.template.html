@@ -1,0 +1,117 @@
+<!doctype html>
+<!-- perf/summary.template.html: the page perf/summarize.py writes as perf/out/summary.html, its results put in for DATA. One file,
+     nothing fetched. Shorter bars are better; a bar is the median of every timing, dots each run's own median, the thin
+     line a page turn's range. -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ShamsaInk benchmarks</title>
+<style>
+:root { --bg: #f7f7f4; --surface: #fdfdfb; --line: #e3e2dc; --grid: #ecebe5; --fg: #16161a; --fg2: #55544f; --muted: #7a7972;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --chip: #ecebe5; --chip-on: #16161a; --chip-on-fg: #fdfdfb; }
+@media (prefers-color-scheme: dark) { :root { --bg: #121211; --surface: #1a1a19; --line: #2e2e2b; --grid: #262624;
+  --fg: #f0efec; --fg2: #c3c2b7; --muted: #95948b; --s1: #3987e5; --s2: #d95926; --s3: #199e70; --chip: #262624; --chip-on: #f0efec;
+  --chip-on-fg: #1a1a19; color-scheme: dark } }
+body { background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, sans-serif; margin: 0; padding: 28px 16px 48px; }
+.wrap { max-width: 1180px; margin: 0 auto; display: grid; gap: 26px; }
+#charts { width: 100%; margin: 0; } .panel { min-width: 0; }
+h1, h2 { margin: 0; } h1 { font-size: 1.8rem; } h2 { font-size: 1.15rem; }
+p { margin: 0; color: var(--fg2); max-width: 75ch; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--bg); padding: 10px 0; border-bottom: 1px solid var(--line); z-index: 2; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px; gap: 2px; }
+.seg button { font: 500 0.9rem system-ui, sans-serif; border: 0; background: none; color: var(--fg2); padding: 6px 16px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--chip-on); color: var(--chip-on-fg); }
+.legend { display: flex; gap: 18px; color: var(--fg2); font-size: 0.9rem; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px 10px; }
+.panel h3 { margin: 0 0 8px; font-size: 1rem; color: var(--fg2); font-weight: 600; }
+.panels { display: grid; gap: 14px; }
+svg { width: 100%; height: auto; display: block; } svg text { font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; font-size: 0.85rem; font-variant-numeric: tabular-nums; width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); } th { color: var(--fg2); }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; overflow-x: auto; }
+</style>
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>ShamsaInk benchmarks</h1>
+    <p>From the tap to the e-ink driver's last full-page "ink done" (perf/README.md). Bars: the median of every timing;
+      dots: each run's own median; the thin line: a page turn's range. Shorter is better.</p>
+    <p id="runs"></p>
+  </header>
+  <div class="controls">
+    <div class="seg" id="modes"></div>
+    <div class="legend" id="legend"></div>
+  </div>
+  <div id="charts" class="wrap"></div>
+  <details><summary>The numbers</summary><table id="table"></table></details>
+</div>
+<script>
+const DATA = /*DATA*/[];
+const STEPS = [["turn", "Page turn", "ms"], ["open", "First open", "s"], ["reopen", "Reopen", "s"], ["start", "Start the app", "s"], ["mem", "Memory while reading", "MB"]];
+const ORDER = ["shamsaink", "koreader", "built-in"];
+const readers = [...new Set(DATA.map(e => e.reader))].sort((a, b) => (ORDER.indexOf(a) + 1 || 9) - (ORDER.indexOf(b) + 1 || 9));
+const label = r => r === "built-in" ? "built-in (once)" : r;
+const devices = [...new Set(DATA.map(e => e.device))];
+const color = r => `var(--s${readers.indexOf(r) + 1})`;
+const fmt = (v, u) => u === "s" ? (v / 1000).toFixed(2) + " s" : u === "MB" ? Math.round(v) + " MB" : Math.round(v) + " ms";
+let mode = DATA.some(e => e.mode === "light") ? "light" : "dark";
+function get(dev, r, step) {
+  const e = DATA.find(x => x.device === dev && x.reader === r && x.mode === mode);
+  if (!e) return null;
+  if (step === "mem") return e.memory_mb ? { v: e.memory_mb } : null;
+  const s = e.steps[step];
+  return s ? { v: s.median_ms, runs: s.run_medians_ms, lo: step === "turn" ? s.min_ms : null, hi: step === "turn" ? s.max_ms : null } : null;
+}
+function ticks(max) {
+  const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p;
+  const st = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p, t = [];
+  for (let v = 0; v <= max + st; v += st) { t.push(v); if (v >= max) break; }
+  return t;
+}
+function chart(dev, step, unit, max) {
+  const W = 900, L = 140, R = 120, rowH = 60, top = 6, axis = 28, H = top + readers.length * rowH + axis, t = ticks(max), m = t[t.length - 1];
+  const x = v => L + v / m * (W - L - R);
+  let s = `<svg viewBox="0 0 ${W} ${H}">`;
+  for (const v of t) s += `<line x1="${x(v)}" x2="${x(v)}" y1="${top}" y2="${H - axis}" stroke="var(--grid)"/><text x="${x(v)}" y="${H - 8}" font-size="14" fill="var(--muted)" text-anchor="middle">${unit === "s" ? v / 1000 : v}</text>`;
+  readers.forEach((r, i) => {
+    const cy = top + i * rowH + rowH / 2, d = get(dev, r, step);
+    s += `<text x="${L - 14}" y="${cy + 6}" font-size="17" fill="var(--fg)" text-anchor="end">${label(r)}</text>`;
+    if (!d) { s += `<text x="${L}" y="${cy + 6}" font-size="15" fill="var(--muted)">not measured</text>`; return; }
+    const bh = 28, xe = x(d.v); let end = xe;
+    s += `<path fill="${color(r)}" d="M${L},${cy - bh / 2} H${xe - 5} Q${xe},${cy - bh / 2} ${xe},${cy - bh / 2 + 5} V${cy + bh / 2 - 5} Q${xe},${cy + bh / 2} ${xe - 5},${cy + bh / 2} H${L} Z"><title>${r}: ${fmt(d.v, unit)}</title></path>`;
+    if (d.lo != null) { const a = x(d.lo), b = x(d.hi); end = Math.max(end, b);
+      s += `<path d="M${a},${cy} H${b} M${a},${cy - 8} V${cy + 8} M${b},${cy - 8} V${cy + 8}" stroke="var(--fg)" stroke-width="2" opacity="0.7"/>`; }
+    else for (const v of d.runs || []) { end = Math.max(end, x(v)); s += `<circle cx="${x(v)}" cy="${cy}" r="5" fill="var(--fg)" stroke="var(--surface)" stroke-width="2"><title>a run: ${fmt(v, unit)}</title></circle>`; }
+    s += `<text x="${end + 10}" y="${cy + 6}" font-size="17" fill="var(--fg)">${fmt(d.v, unit)}</text>`;
+  });
+  return s + "</svg>";
+}
+function render() {
+  document.getElementById("modes").innerHTML = ["light", "dark"].filter(m => DATA.some(e => e.mode === m)).map(m => `<button aria-pressed="${m === mode}" data-m="${m}">${m[0].toUpperCase() + m.slice(1)} mode</button>`).join("");
+  document.querySelectorAll("#modes button").forEach(b => b.onclick = () => { mode = b.dataset.m; render(); });
+  document.getElementById("legend").innerHTML = readers.map(r => `<span><i style="background:${color(r)}"></i>${label(r)}</span>`).join("");
+  const runs = DATA.filter(e => e.mode === mode && !e.once).map(e => `${e.reader} on ${e.device}: ${e.runs} run${e.runs > 1 ? "s" : ""}`);
+  const once = DATA.filter(e => e.mode === mode && e.once).map(e => `${e.device}: ${e.once}`);
+  document.getElementById("runs").innerHTML = runs.join(" · ") + (once.length ? "<br>Built-in (once): " + once.join("; ") + ". Not repeated: perf/README.md." : "");
+  let out = "";
+  for (const [step, title, unit] of STEPS) {
+    let max = 0;
+    for (const md of ["light", "dark"]) for (const e of DATA.filter(e => e.mode === md)) {
+      if (step === "mem") max = Math.max(max, e.memory_mb || 0);
+      else if (e.steps[step]) max = Math.max(max, e.steps[step].max_ms, ...e.steps[step].run_medians_ms);
+    }
+    if (!max || !devices.some(dv => readers.some(r => get(dv, r, step)))) continue;
+    out += `<section style="display:grid;gap:10px"><h2>${title}</h2><div class="panels">` +
+      devices.map(dv => `<div class="panel"><h3>${dv}</h3>${chart(dv, step, unit, max)}</div>`).join("") + "</div></section>";
+  }
+  document.getElementById("charts").innerHTML = out;
+  let t = "<tr><th>Device</th><th>Reader</th><th>Mode</th><th>Runs</th>" + STEPS.map(s => `<th>${s[1]}</th>`).join("") + "</tr>";
+  for (const e of DATA) t += `<tr><td>${e.device}</td><td>${e.reader}</td><td>${e.mode}</td><td>${e.runs}</td>` + STEPS.map(([s, , u]) => {
+    if (s === "mem") return `<td>${e.memory_mb ? e.memory_mb + " MB" : "–"}</td>`;
+    const x = e.steps[s]; return `<td>${x ? fmt(x.median_ms, u) + ` (n=${x.n}${s === "turn" && x.flashed ? `, ${x.flashed} flashed` : ""})` : "–"}</td>`;
+  }).join("") + "</tr>";
+  document.getElementById("table").innerHTML = t;
+}
+if (DATA.length) render();
+else document.getElementById("charts").innerHTML = "<p>This is the template. The results are in perf/out/summary.html, written by python3 -I perf/summarize.py (make perf runs it).</p>";
+</script>

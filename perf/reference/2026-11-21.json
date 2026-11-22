@@ -1,0 +1,22 @@
+[
+ {"device": "kobo-libra-colour", "reader": "built-in", "mode": "light", "runs": 1, "once": "Kobo's reader, experiment 17 (2026-11-21), by hand: a never-opened copy (its Kobo edition) for each first open",
+  "steps": {"open": {"median_ms": 1890, "n": 3, "min_ms": 1820, "max_ms": 2080, "run_medians_ms": [2080, 1820, 1890], "flashed": 0, "waveforms": ["glr16"]},
+            "turn": {"median_ms": 572, "n": 12, "min_ms": 540, "max_ms": 589, "run_medians_ms": [572], "flashed": 0, "waveforms": ["glr16"]},
+            "reopen": {"median_ms": 2000, "n": 3, "min_ms": 1990, "max_ms": 2020, "run_medians_ms": [2020, 2000, 1990], "flashed": 0, "waveforms": ["glr16"]}},
+  "memory_mb": 367, "available_mb": 492},
+ {"device": "kobo-libra-colour", "reader": "built-in", "mode": "dark", "runs": 1, "once": "Kobo's reader, experiment 17 (2026-11-21), by hand",
+  "steps": {"open": {"median_ms": 1850, "n": 3, "min_ms": 1800, "max_ms": 1860, "run_medians_ms": [1850, 1800, 1860], "flashed": 0, "waveforms": ["glkw16"]},
+            "turn": {"median_ms": 668, "n": 12, "min_ms": 660, "max_ms": 724, "run_medians_ms": [668], "flashed": 0, "waveforms": ["glkw16"]},
+            "reopen": {"median_ms": 2170, "n": 3, "min_ms": 2160, "max_ms": 2180, "run_medians_ms": [2160, 2170, 2180], "flashed": 0, "waveforms": ["glkw16"]}},
+  "memory_mb": 370, "available_mb": 489},
+ {"device": "kindle-paperwhite-11", "reader": "built-in", "mode": "light", "runs": 1, "once": "Amazon's reader, experiment 17 (2026-11-21), tapped by finger; its first open cannot be cleared (3.36 s was its first ever)",
+  "steps": {"open": {"median_ms": 1050, "n": 3, "min_ms": 940, "max_ms": 3360, "run_medians_ms": [3360, 1050, 940], "flashed": 0, "waveforms": []},
+            "turn": {"median_ms": 628, "n": 12, "min_ms": 618, "max_ms": 664, "run_medians_ms": [628], "flashed": 0, "waveforms": ["p2sw"]},
+            "reopen": {"median_ms": 880, "n": 3, "min_ms": 870, "max_ms": 880, "run_medians_ms": [870, 880, 880], "flashed": 0, "waveforms": []}},
+  "memory_mb": 139, "available_mb": 200},
+ {"device": "kindle-paperwhite-11", "reader": "built-in", "mode": "dark", "runs": 1, "once": "Amazon's reader, experiment 17 (2026-11-21), tapped by finger, the Kindle's Dark Mode on",
+  "steps": {"open": {"median_ms": 910, "n": 3, "min_ms": 870, "max_ms": 1330, "run_medians_ms": [1330, 870, 910], "flashed": 0, "waveforms": []},
+            "turn": {"median_ms": 424, "n": 12, "min_ms": 416, "max_ms": 435, "run_medians_ms": [424], "flashed": 0, "waveforms": ["glkw16"]},
+            "reopen": {"median_ms": 870, "n": 3, "min_ms": 820, "max_ms": 880, "run_medians_ms": [820, 880, 870], "flashed": 0, "waveforms": []}},
+  "memory_mb": 135, "available_mb": 199}
+]

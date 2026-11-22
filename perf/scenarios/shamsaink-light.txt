@@ -1,0 +1,116 @@
+# ShamsaInk on Standard Ebooks' Sherlock Holmes, light mode: starts, first opens, 12 page turns, memory, reopens (perf/README.md). Each timed from the tap
+# (or the launcher's command, for a start) to the last full-page ink done; results in perf/out/DEVICE/shamsaink-light/times.tsv.
+# The book is not ours: on the device first as books/standard-ebooks/holmes.epub (perf/README.md, The book).
+on: kobo kindle
+book: books/standard-ebooks/holmes.epub
+fixture: perf/fixtures/holmes-light
+
+# starts: the launcher's command to the library drawn
+wait 30
+time start-1 library
+leave
+wait 30
+time start-2 library
+leave
+wait 30
+time start-3 library
+leave
+wait 30
+time start-4 library
+leave
+wait 30
+time start-5 library
+leave
+
+# first opens: layout and place removed, the reader started afresh (it keeps chapters laid out between books); the
+# book is the only one in New
+cold books/standard-ebooks/holmes.epub
+library
+tap library filter-new
+wait 30
+time open-1 tap library e0
+close
+cold books/standard-ebooks/holmes.epub
+library
+tap library filter-new
+wait 30
+time open-2 tap library e0
+close
+cold books/standard-ebooks/holmes.epub
+library
+tap library filter-new
+wait 30
+time open-3 tap library e0
+close
+cold books/standard-ebooks/holmes.epub
+library
+tap library filter-new
+wait 30
+time open-4 tap library e0
+close
+cold books/standard-ebooks/holmes.epub
+library
+tap library filter-new
+wait 30
+time open-5 tap library e0
+close
+
+place books/standard-ebooks/holmes.epub 2 0
+# page turns from part I's first page (the fixture's place: document 2 page 0), 30 s idle first
+library
+tap library filter-reading
+tap library e0
+wait 30
+time turn-1 turn forward
+wait 1
+time turn-2 turn forward
+wait 1
+time turn-3 turn forward
+wait 1
+time turn-4 turn forward
+wait 1
+time turn-5 turn forward
+wait 1
+time turn-6 turn forward
+wait 1
+time turn-7 turn forward
+wait 1
+time turn-8 turn forward
+wait 1
+time turn-9 turn forward
+wait 1
+time turn-10 turn forward
+wait 1
+time turn-11 turn forward
+wait 1
+time turn-12 turn forward
+wait 1
+mem reading
+
+# reopens: back to the library, 10 s, the book again on the page left
+tap page-top
+tap topbar topbar-start
+expect library: \d+ books.*shown in
+wait 10
+time reopen-1 tap library e0
+tap page-top
+tap topbar topbar-start
+expect library: \d+ books.*shown in
+wait 10
+time reopen-2 tap library e0
+tap page-top
+tap topbar topbar-start
+expect library: \d+ books.*shown in
+wait 10
+time reopen-3 tap library e0
+tap page-top
+tap topbar topbar-start
+expect library: \d+ books.*shown in
+wait 10
+time reopen-4 tap library e0
+tap page-top
+tap topbar topbar-start
+expect library: \d+ books.*shown in
+wait 10
+time reopen-5 tap library e0
+close
