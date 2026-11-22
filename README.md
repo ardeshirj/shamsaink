@@ -117,8 +117,8 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 - **Is quick.** The quickest of the readers on these devices at every step timed: a page turn, a new book opened in
   under a second (3–5× sooner than KOReader), a book reopened ([How quick](#how-quick), below).
 - **Reads along.** For books with narration (EPUB media overlays), it plays the voice through Bluetooth headphones and
-  marks each word as it is spoken, on the Kobo (on the Kindle, not yet: Amazon's software drops headphones it is not
-  playing to). The headphones' own delay is a setting we have not built yet.
+  marks each word as it is spoken, on the Kobo (on the Kindle, not yet: the Kindle's own software drops headphones it
+  is not playing to). The headphones' own delay is a setting we have not built yet.
 - **Is made for the screen.** Page turns without flashes, partial refreshes for panels and menus, a dark mode, the
   front light and its warmth, touch and the Kobo's page buttons, contents, highlights, sleep and wake, and a sleep
   screen from your own pictures. The interface is in English or Farsi, laid out right to left for a book in Farsi,
