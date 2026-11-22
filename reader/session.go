@@ -443,7 +443,8 @@ func (s *session) turn(g device.Gesture) {
 		}
 		// every Nth page turned is drawn with a flash, N the Light panel's "Clean every" for the screen's mode
 		s.turns++
-		clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
+		every := s.set.cleanEvery(s.scr.Inverted())
+		clean := every > 0 && s.turns >= every
 		s.showAs(clean)
 		if clean {
 			how += ", cleaned"

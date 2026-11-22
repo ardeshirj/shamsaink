@@ -1,0 +1,25 @@
+# Dark mode chosen in a book, the reader left and the book opened again: the page turns are counted against dark mode's
+# "Clean every" (the fixture's clean_dark 5), not light mode's (clean_light 3). In 0.5.0-beta only the start's own
+# settings knew the screen was dark, so a reopened book cleaned every 3 pages in dark mode.
+on: sim kobo                       # the taps that close the panel are at the Kobo's pixels
+book fa-basics
+open books/test/fa-basics.epub
+tap page-top
+expect menu drawn
+tap topbar topbar-light
+tap light dark
+expect dark mode on
+tap 632 1000                       # the panel closed, then the bar and the dock
+tap 632 1000
+close
+open books/test/fa-basics.epub
+turn forward                       # forward and back: the book opens near its end (the fixture's place)
+expect page \d+: drawn( before)?, \d+ ms
+turn back
+expect page \d+: drawn( before)?, \d+ ms
+turn forward
+expect page \d+: drawn( before)?, \d+ ms  # the third: light mode's count would clean here
+turn back
+expect page \d+: drawn( before)?, \d+ ms
+turn forward
+expect page \d+: drawn( before)?, cleaned            # the fifth: dark mode's

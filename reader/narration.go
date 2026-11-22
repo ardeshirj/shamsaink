@@ -530,7 +530,8 @@ func (s *session) narratedPage(doc, page int) {
 	s.rd.pages.touch(s.shown)
 	nar.bars = nil
 	s.turns++
-	clean := s.set.cleanEvery() > 0 && s.turns >= s.set.cleanEvery()
+	every := s.set.cleanEvery(s.scr.Inverted())
+	clean := every > 0 && s.turns >= every
 	if clean {
 		s.turns = 0
 		s.showPage(device.WfGC16, true)

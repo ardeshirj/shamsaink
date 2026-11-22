@@ -25,12 +25,11 @@ func (rd *reader) lightTap(set *settings, p *ui.Panel, id string, x int) (change
 		return false, true
 	}
 	if id == "dark" { // dark mode: every grey inverted from now on; the whole screen is drawn again with a flash
-		set.Dark = !set.Dark
-		choice := set.Dark // chosen: kept from now on, the device's own mode no longer followed
-		set.DarkChoice = &choice
-		rd.dev.Screen.SetInvert(set.Dark)
+		dark := !rd.dev.Screen.Inverted()
+		set.DarkChoice = &dark // chosen: kept from now on, the device's own mode no longer followed
+		rd.dev.Screen.SetInvert(dark)
 		set.save(rd.dir)
-		fmt.Printf("dark mode %s\n", map[bool]string{true: "on", false: "off"}[set.Dark])
+		fmt.Printf("dark mode %s\n", map[bool]string{true: "on", false: "off"}[dark])
 		return false, true
 	}
 	level, warmth, ok := rd.dev.Light()

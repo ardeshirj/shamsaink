@@ -80,11 +80,11 @@ func main() {
 	rd.dev, err = device.Open()
 	check(err)
 	set := loadSettings(rd.dir)
-	set.Dark = startDark(set.DarkChoice, rd.dev.Screen.DeviceDark())
+	dark := startDark(set.DarkChoice, rd.dev.Screen.DeviceDark())
 	if set.DarkChoice == nil {
-		fmt.Printf("dark mode %s: the device's (none chosen)\n", map[bool]string{true: "on", false: "off"}[set.Dark])
+		fmt.Printf("dark mode %s: the device's (none chosen)\n", map[bool]string{true: "on", false: "off"}[dark])
 	}
-	rd.dev.Screen.SetInvert(set.Dark)
+	rd.dev.Screen.SetInvert(dark)
 	rd.dev.SetReverseButtons(set.ReverseButtons)
 	rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
 	if set.Light != nil && set.Warmth != nil { // the reader's own light (light.go)

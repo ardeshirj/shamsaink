@@ -188,7 +188,7 @@ e2e-sim-languages:
 # A group is NAME=its scenarios, comma-separated (the shell expands a pattern); NAME@N runs them with the battery at N%
 # (e2e/sim/setup.sh's SIM_BATTERY; 80 otherwise).
 SIM_GROUPS = walk-fa=e2e/scenarios/walk-fa.txt walk-en=e2e/scenarios/walk-en.txt \
-  reading=e2e/scenarios/readalong-granularity.txt,e2e/scenarios/rtl-fa.txt,e2e/scenarios/follow-language.txt \
+  reading=e2e/scenarios/readalong-granularity.txt,e2e/scenarios/rtl-fa.txt,e2e/scenarios/follow-language.txt,e2e/scenarios/dark-clean.txt \
   languages=e2e/scenarios/languages/*.txt low-battery@10=e2e/scenarios/rtl-fa.txt
 e2e-sim-all:
 	@[ -z "$(SAVE)" ] || { echo "e2e-sim-all does not keep references: make e2e-sim SAVE=1 SCENARIO=..." >&2; exit 2; }

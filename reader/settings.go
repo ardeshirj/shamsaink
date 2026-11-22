@@ -36,9 +36,6 @@ type settings struct {
 	// outside its books, so light (2026-11-21). Under the key "dark", as before: a file from before, with "dark": true,
 	// keeps its dark; one without it follows the device.
 	DarkChoice *bool `json:"dark,omitempty"`
-	// Dark mode now (device.Screen.SetInvert): the choice, else the device's (startDark). Not saved, so the device's
-	// mode is never taken for a choice.
-	Dark bool `json:"-"`
 	// The page buttons swapped (the lower goes back): off by default, the lower button forward.
 	ReverseButtons bool `json:"reverse_buttons,omitempty"`
 	// Clean the screen (a full refresh with its flash) every this many page turns, one count for light mode (none at first)
@@ -149,9 +146,10 @@ func nextSleep(cur int, longer bool) int {
 // cleanSteps are the page counts "Clean every" steps through (0: off).
 var cleanSteps = []int{0, 3, 5, 10, 20}
 
-// cleanEvery is how many page turns come between cleanings now, by the screen's mode (0: never).
-func (s *settings) cleanEvery() int {
-	if s.Dark {
+// cleanEvery is how many page turns come between cleanings in the screen's mode, dark or light (0: never). Dark mode
+// now is the screen's own (device.Screen.Inverted), never a copy here: each part of the reader loads its own settings.
+func (s *settings) cleanEvery(dark bool) int {
+	if dark {
 		return s.CleanDark
 	}
 	return s.CleanLight
