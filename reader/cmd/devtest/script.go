@@ -14,7 +14,8 @@ import (
 //	on: sim kobo kindle    where it runs (required): the simulated Kobo (make e2e-sim), the Kobo or the Kindle (make e2e)
 //	book: PATH             a book it needs, by its path under the reader's folder (books/farsiepub/...); checked before
 //	                       the first step, so a missing book is said as such (one line each)
-//	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: fa-basics, our own Farsi book's)
+//	fixture: NAME          the reader's files it starts from, e2e/fixtures/NAME (default: fa-basics, our own Farsi book's);
+//	                       a path with a slash is a folder from the repository's root (perf/fixtures/holmes-light)
 //	refs: images LANG      its references kept as pictures too, committed (e2e/refs/LANG/HASH.png, by refs.sum's hash,
 //	                       LANG the book's language: fa, ar, he, ...), the simulator's only (what CI runs): only
 //	                       for scenarios on our own books (e2e/books), never on another's
@@ -38,6 +39,26 @@ type line struct {
 
 // where are the places a scenario can run: the simulated Kobo, the Kobo and the Kindle.
 var where = map[string]bool{"sim": true, "kobo": true, "kindle": true}
+
+// fixtureDir is a fixture's folder: e2e/fixtures/NAME, or the path itself when it has a slash (perf's, perf/README.md).
+func fixtureDir(fixture string) string {
+	if strings.Contains(fixture, "/") {
+		return filepath.Clean(fixture)
+	}
+	return filepath.Join("e2e", "fixtures", fixture)
+}
+
+// outDir is where a scenario's snapshots, failure and times go: e2e/out/[PLACE/]NAME, or perf/out/DEVICE/NAME for
+// perf's (DEVICE: devices.yaml's name, as perf/koreader.sh's)
+func outDir(path, place, device, base string) string {
+	if strings.HasPrefix(filepath.ToSlash(filepath.Clean(path)), "perf/") {
+		return filepath.Join("perf", "out", device, base)
+	}
+	if place != "kobo" {
+		return filepath.Join("e2e", "out", place, base)
+	}
+	return filepath.Join("e2e", "out", base)
+}
 
 func parseScenario(path string) (*script, error) {
 	data, err := os.ReadFile(path)
@@ -102,6 +123,9 @@ func (s *script) runsOn(place string) bool {
 // koboOnly are the steps the simulator cannot do: the watchdog (the simulated launcher has none) and Kobo's own interface.
 var koboOnly = map[string]bool{"freeze": true, "expect-nickel": true, "expect-online": true}
 
+// deviceOnly are the steps that need a device's e-ink driver (timing.go): not the simulator's.
+var deviceOnly = map[string]bool{"time": true, "mem": true}
+
 var reSHA256 = regexp.MustCompile(`^[0-9a-f]{64}$`)
 
 // check holds the scenario against what the steps need: each step known, its arguments, its regular expressions, the
@@ -111,8 +135,8 @@ func (s *script) check(d *dev) error {
 	fail := func(l line, f string, a ...any) {
 		errs = append(errs, fmt.Sprintf("%s:%d: %s: %s", s.path, l.n, l.text, fmt.Sprintf(f, a...)))
 	}
-	if st, err := os.Stat(filepath.Join("e2e", "fixtures", s.fixture)); err != nil || !st.IsDir() {
-		errs = append(errs, fmt.Sprintf("%s: no fixture e2e/fixtures/%s", s.path, s.fixture))
+	if st, err := os.Stat(fixtureDir(s.fixture)); err != nil || !st.IsDir() {
+		errs = append(errs, fmt.Sprintf("%s: no fixture %s", s.path, fixtureDir(s.fixture)))
 	}
 	snaps := map[string]bool{}
 	for _, l := range s.steps {
@@ -127,6 +151,9 @@ func (s *script) check(d *dev) error {
 		}
 		if koboOnly[a[0]] && s.runsOn("sim") {
 			fail(l, "%s runs on the Kobo only (on: kobo)", a[0])
+		}
+		if deviceOnly[a[0]] && s.runsOn("sim") {
+			fail(l, "%s runs on the devices only (on: kobo kindle)", a[0])
 		}
 		if a[0] == "press" && args == 1 && a[1] != "power" && s.runsOn("kindle") {
 			fail(l, "the Kindle has no page buttons: a scenario with press %s is not on: kindle", a[1])
@@ -232,6 +259,31 @@ func (s *script) check(d *dev) error {
 				fail(l, "tap-dialog SCREEN CONTROL")
 			} else if err := d.hasControl(a[1], a[2]); err != nil {
 				fail(l, "%v", err)
+			}
+		case "time":
+			switch {
+			case args < 2 || !regexp.MustCompile(`^[a-z0-9-]+$`).MatchString(a[1]):
+				fail(l, "time NAME STEP... (NAME: a-z, 0-9, -)")
+			case a[2] == "library" || a[2] == "open":
+			case a[2] == "turn":
+				if args != 3 || a[3] != "forward" && a[3] != "back" {
+					fail(l, "time NAME turn forward|back")
+				}
+			case a[2] == "tap" && args == 4 && !isInt(a[3]):
+				if err := d.hasControl(a[3], a[4]); err != nil {
+					fail(l, "%v", err)
+				}
+			case a[2] == "tap":
+			default:
+				fail(l, "time NAME times tap, turn, library or open, not %s", a[2])
+			}
+		case "mem", "cold":
+			if args != 1 {
+				fail(l, "%s %s", a[0], map[string]string{"mem": "NAME", "cold": "PATH"}[a[0]])
+			}
+		case "place":
+			if args != 3 || !isInt(a[2]) || !isInt(a[3]) {
+				fail(l, "place PATH DOC PAGE")
 			}
 		case "walk":
 			if !(args == 0 || args == 5 && a[1] == "word" && isInt(a[2]) && isInt(a[3]) && isInt(a[4]) && isInt(a[5])) {

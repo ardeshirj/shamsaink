@@ -17,6 +17,8 @@ func TestScenarios(t *testing.T) {
 	}
 	files, _ := filepath.Glob("e2e/scenarios/*.txt")
 	more, _ := filepath.Glob("e2e/scenarios/languages/*.txt") // the other languages' scenarios, CI's languages group
+	perf, _ := filepath.Glob("perf/scenarios/*.txt")          // the timed ones (perf/README.md), on the devices only
+	more = append(more, perf...)
 	files = append(files, more...)
 	if len(files) == 0 {
 		t.Fatal("no scenarios in e2e/scenarios")

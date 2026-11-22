@@ -51,6 +51,8 @@ type Access struct {
 	} `yaml:"framebuffer"`
 	FontsLocal  string `yaml:"fonts_local"`
 	ReaderLocal string `yaml:"reader_local"`
+	// Tmp is a folder in the device's RAM for devtest's tools while a scenario runs (inktrace, for time: timing.go)
+	Tmp string `yaml:"tmp"`
 	// Kobo is what a Kobo with Kobo's own interface (Nickel) beside the reader must have (docs/devices/kobo/README.md);
 	// nil for the other devices.
 	Kobo *KoboAccess `yaml:"kobo"`

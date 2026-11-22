@@ -62,6 +62,8 @@ import (
 //	leave                     the reader left from the library's menu
 //	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go)
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
+//	time NAME STEP..., mem NAME, cold PATH, place PATH DOC PAGE: timing a step from the tap to the ink, memory, a first
+//	                          open, a place (timing.go); on the devices only
 //	expect-online SECONDS     the Kobo on its network (SSH, wlan0's address) 10 s or more on, SECONDS at most, its
 //	                          Wi-Fi/Bluetooth chip without errors since the scenario began: after a sleep, a close
 //
@@ -88,6 +90,7 @@ type player struct {
 	chipBefore int           // the Wi-Fi/Bluetooth chip's errors in the kernel's log when the scenario began (expect-online)
 	upd        *updateServer // the update served (update-serve, update.go)
 	cleanups   []func()      // undone at the end, before the reader's files are put back
+	tm         *timer        // time and mem's (timing.go)
 }
 
 var reMenuAt = regexp.MustCompile(`highlight menu: .* at (\d+),(\d+)`)
@@ -118,10 +121,9 @@ func scenario(name, path string, save bool) bool {
 	}
 	menu, _ := d.boxes("menu-library-en")
 	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	p := &player{d: d, lib: lib, menu: menu, out: filepath.Join("e2e", "out", base), save: save, target: place, scenario: base, images: s.images}
-	if place != "kobo" { // the simulator's and the Kindle's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4)
-		p.out = filepath.Join("e2e", "out", place, base)
-	}
+	// the simulator's and the Kindle's snapshots and references apart from the Kobo's (docs/TESTING.md, section 4); perf's
+	// scenarios in perf/out
+	p := &player{d: d, lib: lib, menu: menu, out: outDir(path, place, d.name, base), save: save, target: place, scenario: base, images: s.images}
 	p.refs = filepath.Join(p.out, "refs")
 	// what this run sees as it fails goes in failure.new, which replaces failure/ only if it does fail: a run that passes
 	// leaves the last failure's folder alone (a rare failure was lost to the reruns that chased it, 2026-11-13)
@@ -509,6 +511,23 @@ func (p *player) step(a []string) (string, error) {
 		}
 		p.stop = nil
 		return d.home(), nil
+	case "time":
+		return p.timeStep(a)
+	case "mem":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		return p.memStep(a[1])
+	case "cold":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		return p.coldStep(a[1])
+	case "place":
+		if err := need(3); err != nil {
+			return "", err
+		}
+		return p.placeStep(a[1], a[2], a[3])
 	case "update-serve":
 		return p.updateServe(a[1])
 	case "tap-dialog":

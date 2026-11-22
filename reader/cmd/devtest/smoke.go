@@ -33,6 +33,9 @@ type dev struct {
 	book   string // the book the reader is started on, by its path under the device's folder (open PATH); "" for the library
 	// crashOK: the reader's end is expected (a scenario's freeze: the watchdog ends it), not a crash
 	crashOK bool
+	// a time step's (timing.go): the next tap made by tapHook, the reader's launch command wrapped by launchWrap
+	tapHook    func(x, y int) error
+	launchWrap func(cmd string) string
 }
 
 // reCrash is a reader that ended badly: Go's panic, fatal error or fatal signal, or the launcher's line for an exit other than 0.
@@ -127,7 +130,7 @@ func (d *dev) knownStart(fixture string) (string, error) {
 	// files: its screen inverts every pixel itself, so the reader writes the page inverted into the framebuffer, which
 	// the snapshots read (2026-11-08: every one failed with it on). Elsewhere there is no lipc-get-prop: nothing done.
 	d.sh(`m=$(lipc-get-prop com.lab126.winmgr epdcMode 2>/dev/null); case "$m" in *INV) lipc-set-prop com.lab126.winmgr epdcMode "${m%INV}" && echo "$m" > `+d.a.Dir+"/"+savedDir+`/epdc-mode && echo "the Kindle's Dark Mode off for the run" >&2;; esac`, nil)
-	dir := filepath.Join("e2e", "fixtures", fixture)
+	dir := fixtureDir(fixture)
 	var laid []string
 	err := filepath.WalkDir(dir, func(path string, e os.DirEntry, err error) error {
 		if err != nil || e.IsDir() {
@@ -145,7 +148,7 @@ func (d *dev) knownStart(fixture string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("laying the fixture: %v", err)
 	}
-	return said + "the reader's files saved, " + strings.Join(laid, ", ") + " laid from e2e/fixtures/" + fixture, nil
+	return said + "the reader's files saved, " + strings.Join(laid, ", ") + " laid from " + dir, nil
 }
 
 // putBack waits for the reader to be gone (it writes its place as it leaves), then puts its saved files back.
@@ -363,6 +366,10 @@ func (d *dev) record(line string) bool {
 
 // tapAt writes a finger down and up at the screen's (x, y) into the touch screen.
 func (d *dev) tapAt(x, y int) error {
+	if h := d.tapHook; h != nil {
+		d.tapHook = nil
+		return h(x, y)
+	}
 	d.record(fmt.Sprintf("touch tap %d %d", x, y))
 	at := func() []byte {
 		b := append(event(evAbs, posX, int32(d.turn(d.a.Touch.Turn.X, x, y))), event(evAbs, posY, int32(d.turn(d.a.Touch.Turn.Y, x, y)))...)
@@ -473,7 +480,11 @@ func (d *dev) start() (stop func(), line string, err error) {
 	d.mark = d.logLines()
 	// dev mode off (SHAMSAINK_DEV=0, before the scenario's env, which may turn it on): the screens are the readers', as the
 	// kept renders are, on a device with dev/ too
-	if _, err := d.sh("cd "+d.a.Dir+" && nohup env SHAMSAINK_DEV=0 "+d.env+" sh launch.sh "+d.book+" >/dev/null 2>&1 </dev/null &", nil); err != nil {
+	launch := "cd " + d.a.Dir + " && nohup env SHAMSAINK_DEV=0 " + d.env + " sh launch.sh " + d.book + " >/dev/null 2>&1 </dev/null &"
+	if d.launchWrap != nil {
+		launch = d.launchWrap(launch)
+	}
+	if _, err := d.sh(launch, nil); err != nil {
 		return nil, "", err
 	}
 	stop = func() {
