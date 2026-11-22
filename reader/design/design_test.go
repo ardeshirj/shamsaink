@@ -55,7 +55,7 @@ func TestValidateCatches(t *testing.T) {
 		{"panel from panel", func(s *Spec) {
 			s.Screens["light"].Controls = append(s.Screens["light"].Controls, Control{ID: "x", Component: "button", Action: "goto", To: "light"})
 		}, "a panel from a panel"},
-		{"replace across layers", func(s *Spec) { s.Screens["library-book-menu"].Controls[3].To = "library-sort" }, "another layer"},
+		{"replace across layers", func(s *Spec) { s.Screens["library-book-menu"].Controls[2].To = "library-sort" }, "another layer"},
 		{"replace into nothing", func(s *Spec) { s.Screens["menu"].Controls[0].To = "nowhere" }, "no screen"},
 		{"nothing enters", func(s *Spec) { s.Screens["library-book-menu"].Enter = nil }, "nothing enters it"},
 		{"unknown capability on a control", func(s *Spec) { s.Screens["dock"].Controls[6].Requires = []string{"teleport"} }, "not a capability"},

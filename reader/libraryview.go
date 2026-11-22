@@ -431,19 +431,19 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case panel != nil:
 			id := panel.At(e.X, e.Y)
 			switch {
-			case bookPanel == "menu" && (id == "book-finish" || id == "book-unfinish"):
+			case bookPanel == "menu" && id == "book-finish":
 				b := items[held]
-				if err := library.SetMark(rd.dir, b.ID, id == "book-finish"); err != nil {
+				if err := library.MarkFinished(rd.dir, b.ID); err != nil {
 					fmt.Fprintln(os.Stderr, "shamsaink: mark:", err)
 				}
-				fmt.Printf("library: %s marked %s\n", b.Path, map[bool]string{true: "finished", false: "not finished"}[id == "book-finish"])
+				fmt.Printf("library: %s marked finished\n", b.Path)
 				changed()
-			case bookPanel == "menu" && id == "book-again":
+			case bookPanel == "menu" && id == "book-new":
 				b := items[held]
-				if err := library.StartAgain(rd.dir, b.ID); err != nil {
-					fmt.Fprintln(os.Stderr, "shamsaink: start again:", err)
+				if err := library.MarkNew(rd.dir, b.ID); err != nil {
+					fmt.Fprintln(os.Stderr, "shamsaink: mark new:", err)
 				}
-				fmt.Printf("library: %s started again\n", b.Path)
+				fmt.Printf("library: %s marked new\n", b.Path)
 				changed()
 			case bookPanel == "menu" && id == "book-details":
 				b := items[held]
@@ -642,6 +642,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				build()
 				v.Draw(rd.over)
 				scr.Show(rd.over, device.WfREAGL, false)
+				fmt.Printf("library: filter %s, %d rows\n", library.Filters[f], len(items))
 			}
 		case v.PagerAt(e.X, e.Y) == "list-prev":
 			turn(-1)
@@ -650,6 +651,12 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		default:
 			if i := v.EntryAt(e.X, e.Y); i >= 0 {
 				fmt.Printf("library: %s chosen\n", items[i].Path)
+				if items[i].Finished() { // a finished book starts again: at its start, then Reading (the maintainer, 2026-11-22)
+					if err := library.MarkNew(rd.dir, items[i].ID); err != nil {
+						fmt.Fprintln(os.Stderr, "shamsaink: start again:", err)
+					}
+					fmt.Printf("library: %s finished: starts again\n", items[i].Path)
+				}
 				return filepath.Join(rd.dir, items[i].Path), nil
 			}
 		}

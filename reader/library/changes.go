@@ -15,9 +15,11 @@ import (
 
 // What a book's menu in the library changes (libraryview.go): whether it is finished, its place, the book itself.
 //
-// A book marked finished or not finished by hand has DIR/places/ID.mark: "finished" or "reading", and the share read
-// when it was marked ("none" if it had no place). The mark holds while the place says the same; once the book is read
-// on (or opened for the first time), its place decides again, as a book never marked.
+// A book marked finished by hand has DIR/places/ID.mark: "finished", and the share read when it was marked ("none" if
+// it had no place). The mark holds while the place says the same; once the book is read on (or opened for the first
+// time), its place decides again, as a book never marked. A finished book opened from the library starts again
+// (MarkNew, libraryview.go). "reading" (marked not finished) is still read, from before that entry left the menu
+// (2026-11-22).
 
 // markOf is a book's mark: 1 marked finished, -1 marked not finished, 0 none (or no longer holding), and when it was
 // marked. opened and share are its place's (Place).
@@ -53,19 +55,18 @@ func mark(b []byte, opened bool, share float64) int {
 	return -1
 }
 
-// SetMark marks a book finished, or not finished, as its place is now.
-func SetMark(dir, id string, finished bool) error {
-	state := map[bool]string{true: "finished", false: "reading"}[finished]
+// MarkFinished marks a book finished, as its place is now.
+func MarkFinished(dir, id string) error {
 	at := "none"
 	if _, share, ok := Place(dir, id); ok {
 		at = strconv.FormatFloat(share, 'g', -1, 64)
 	}
-	return files.Write(filepath.Join(dir, "places", id+".mark"), []byte(state+" "+at+"\n"))
+	return files.Write(filepath.Join(dir, "places", id+".mark"), []byte("finished "+at+"\n"))
 }
 
-// StartAgain forgets where a book was and its mark: it opens at its start, a new book in the library. Its highlights
-// stay.
-func StartAgain(dir, id string) error {
+// MarkNew forgets where a book was and its mark: it opens at its start, a new book in the library. Its highlights
+// stay. The book's menu does it (Mark as new), and opening a finished book.
+func MarkNew(dir, id string) error {
 	return removeAll(filepath.Join(dir, "places", id+".place"), filepath.Join(dir, "places", id+".mark"))
 }
 

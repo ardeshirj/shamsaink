@@ -175,10 +175,10 @@ func brokenPackage(pkg []byte) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-var reDialogAt = regexp.MustCompile(`dialog .* at (\d+),(\d+)`)
+var reDialogAt = regexp.MustCompile(`(?:dialog|library: book) .* at (\d+),(\d+)`)
 
 // tapDialog taps a control of a dialog the reader placed itself: the screen's kept render, moved where the log's last
-// "dialog ... at X,Y" says it is.
+// "dialog ... at X,Y" says it is; or of a book's panel in the library, hung by its row ("library: book menu ... at X,Y").
 func (p *player) tapDialog(screen, id string) (string, error) {
 	d := p.d
 	r, name, err := p.render(screen)
@@ -189,7 +189,7 @@ func (p *player) tapDialog(screen, id string) (string, error) {
 	if !ok {
 		return name, fmt.Errorf("no control %q in %s", id, name)
 	}
-	out, _ := d.sh(fmt.Sprintf("tail -n +%d %s | grep 'dialog .* at ' | tail -n 1", d.start0+1, d.a.Log), nil)
+	out, _ := d.sh(fmt.Sprintf("tail -n +%d %s | grep -E 'dialog .* at |library: book .* at ' | tail -n 1", d.start0+1, d.a.Log), nil)
 	m := reDialogAt.FindStringSubmatch(string(out))
 	if m == nil {
 		return name, fmt.Errorf("no dialog placed in the log")

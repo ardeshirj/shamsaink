@@ -1,9 +1,0 @@
-{
- "placement": "screen",
- "boxes": {
-  "lang-follow": [40, 327, 150, 389],
-  "sleep-dec": [387, 226, 461, 298],
-  "sleep-inc": [50, 226, 126, 298],
-  "update-check": [40, 436, 189, 509]
- }
-}

@@ -16,7 +16,7 @@ func TestMarks(t *testing.T) {
 	book := func() Item { return Shelf([]Book{{Path: "books/k.epub", ID: "k"}}, dir)[0] }
 
 	// never opened, marked finished: Finished, not New; opened later, New's mark gone: Reading
-	if err := SetMark(dir, "k", true); err != nil {
+	if err := MarkFinished(dir, "k"); err != nil {
 		t.Fatal(err)
 	}
 	if b := book(); !b.Finished() || b.In(1) || !b.In(2) {
@@ -27,7 +27,7 @@ func TestMarks(t *testing.T) {
 		t.Errorf("opened after the mark: %+v", b)
 	}
 	// half read, marked finished; read on: Reading again
-	SetMark(dir, "k", true)
+	MarkFinished(dir, "k")
 	if b := book(); !b.Finished() || b.In(0) || time.Since(b.FinishedAt()) > time.Minute {
 		t.Errorf("marked finished at 0.4: %+v", b)
 	}
@@ -35,25 +35,39 @@ func TestMarks(t *testing.T) {
 	if b := book(); b.Finished() {
 		t.Errorf("read on after the mark: %+v", b)
 	}
-	// read to the end, marked not finished: Reading
+	// read to the end, marked not finished (the menu's entry until 2026-11-22, its marks still read): Reading
 	place("3 0 0.99\n")
 	if b := book(); !b.Finished() {
 		t.Errorf("at 0.99: %+v", b)
 	}
-	SetMark(dir, "k", false)
+	files.Write(filepath.Join(dir, "places", "k.mark"), []byte("reading 0.99\n"))
 	if b := book(); b.Finished() || !b.In(0) {
 		t.Errorf("marked not finished at 0.99: %+v", b)
 	}
-	// started again: New, the mark gone, the highlights kept
+	os.Remove(filepath.Join(dir, "places", "k.mark"))
+	// marked new: New, the mark gone, the highlights kept
 	files.Write(filepath.Join(dir, "highlights", "k.json"), []byte("[]\n"))
-	if err := StartAgain(dir, "k"); err != nil {
+	if err := MarkNew(dir, "k"); err != nil {
 		t.Fatal(err)
 	}
 	if b := book(); b.Opened || b.Mark != 0 || !b.In(1) {
-		t.Errorf("started again: %+v", b)
+		t.Errorf("marked new: %+v", b)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "highlights", "k.json")); err != nil {
 		t.Errorf("highlights gone: %v", err)
+	}
+	// a finished book opened from the library starts again (libraryview.go): marked new, then its first place kept at
+	// its start: Reading, not Finished
+	for _, finish := range []func(){func() { place("3 0 0.99\n") }, func() { place("1 0 0.4\n"); MarkFinished(dir, "k") }} {
+		finish()
+		if !book().Finished() {
+			t.Fatalf("not finished: %+v", book())
+		}
+		MarkNew(dir, "k")
+		place("0 0 0.0000\n")
+		if b := book(); b.Finished() || !b.In(0) || b.Share != 0 {
+			t.Errorf("finished, opened again: %+v", b)
+		}
 	}
 }
 

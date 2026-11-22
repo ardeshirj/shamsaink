@@ -314,7 +314,7 @@ func DrawLibrarySort(sort, under int, fonts *blitz.Fonts, w int) *Panel {
 }
 
 // DrawBookMenu draws a book's menu (templates/library-book-menu.html), for the row of a book held in the library: Mark as
-// finished, or not finished when finished (book-finish, book-unfinish); Start again when it was opened (book-again);
+// finished unless it is (book-finish); Mark as new when it was opened (book-new);
 // Details (book-details) and Remove book (book-remove). Hang puts it by the row.
 func DrawBookMenu(finished, opened bool, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-book-menu.html", struct{ Finished, Opened bool }{finished, opened})

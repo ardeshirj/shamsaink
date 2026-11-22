@@ -89,7 +89,7 @@ Folders inside **books** are fine, one level deep.
 
 ![](library-guide-en.png)
 
-In the library, **Reading**, **New**, **Finished** and **All** show those books, and the arrows on the right sort them. Hold your finger on a book for its menu: mark it finished, start again, its details, or remove it.
+In the library, **Reading**, **New**, **Finished** and **All** show those books, and the arrows on the right sort them. Hold your finger on a book for its menu: mark it finished or new, its details, or remove it.
 
 You can find public-domain Farsi books, ready for e-ink, on FarsiEPUB.
 

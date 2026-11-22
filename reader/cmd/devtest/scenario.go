@@ -60,7 +60,8 @@ import (
 //	resume                    the same: the video goes on from here after the last card, what came between left out
 //	library                   the reader launched on its library
 //	leave                     the reader left from the library's menu
-//	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go)
+//	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go); tap-dialog also taps a
+//	                          book's menu in the library, where the reader hung it: tap-dialog library-book-menu book-finish
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //	time NAME STEP..., mem NAME, cold PATH, place PATH DOC PAGE: timing a step from the tap to the ink, memory, a first
 //	                          open, a place (timing.go); on the devices only
@@ -209,10 +210,11 @@ func truncate(s string, n int) string {
 	return s
 }
 
-// render is the kept render of a screen, for the book being read (its direction), with the boxes of its controls.
+// render is the kept render of a screen, for the book being read (its direction; the library's in English, as it is
+// always drawn), with the boxes of its controls.
 func (p *player) render(screen string) (*boxes, string, error) {
 	lang := "en"
-	if p.b != nil {
+	if p.b != nil && !strings.HasPrefix(screen, "library") { // the library is always in English (libraryview.go)
 		lang = p.b.lang
 	}
 	name, r := p.d.bestRenderIn(screen, lang)

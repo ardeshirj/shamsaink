@@ -267,7 +267,7 @@ var designRenders = map[string][]renderCase{
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}},
-	"library-settings": {{"follow", enFa, func(f *blitz.Fonts, w, h int) rendered {
+	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: renderHas("buttons"), Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},
 		{"english", en, func(f *blitz.Fonts, w, h int) rendered {
@@ -282,9 +282,9 @@ var designRenders = map[string][]renderCase{
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
 	}}},
-	"library-book-menu": {{"new", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, false, f, w)) }},
-		{"opened", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, true, f, w)) }},
-		{"finished", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(true, true, f, w)) }}},
+	"library-book-menu": {{"new", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, false, f, w)) }},
+		{"opened", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, true, f, w)) }},
+		{"finished", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(true, true, f, w)) }}},
 	"library-book-details": {{"opened", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
