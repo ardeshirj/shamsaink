@@ -13,6 +13,27 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue" alt="License: Apache-2.0"></a>
 </p>
 
+<table>
+<tr>
+<th width="50%">Library</th>
+<th width="50%">Farsi, right to left</th>
+</tr>
+<tr>
+<td valign="top"><img src="docs/images/screen-library.png" alt="The library: Farsi, Urdu and Arabic books, each with how much is read, English books after them"></td>
+<td valign="top"><img src="docs/images/screen-farsi-dock.png" alt="A page of Buried Alive (FarsiEPUB) with the bar and the dock open, laid out right to left in Farsi"></td>
+</tr>
+<tr>
+<th width="50%">English</th>
+<th width="50%">Arabic, as you read it</th>
+</tr>
+<tr>
+<td valign="top"><img src="docs/images/screen-english.png" alt="A page of The Adventures of Sherlock Holmes (Standard Ebooks) with the bar and the dock open"></td>
+<td valign="top"><img src="docs/images/screen-arabic.png" alt="A page in Arabic with nothing else on the screen: the chapter's title and its text (our own test book)"></td>
+</tr>
+</table>
+
+<sub>A simulated Kobo Libra Colour. The bar and the dock come with a tap at the top and go while you read.</sub>
+
 ## Install
 On a **Kobo** with firmware 5 or newer (Connect tapped), or a jailbroken **Kindle**, plugged into a Mac or Linux computer
 over USB:
