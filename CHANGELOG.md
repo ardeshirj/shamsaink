@@ -4,6 +4,29 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.6.0-beta (2026-11-22)
+Books from catalogues, over Wi-Fi: no computer or cable.
+- **Catalogues** (Kobo and Kindle): the cloud in the library's bar shows FarsiEPUB's library, built in, and any other
+  catalogue you add. Wi-Fi is asked for when it is off, and turned off again when you leave the catalogues and no
+  download is running.
+- **Get a book in one tap:** each book's button downloads it, shows how much has come, then becomes **Read**, which
+  opens it. The book is in your library too, in a folder of its catalogue's name; a book downloaded again later (a new
+  edition) goes over the same file and keeps your place and highlights. Downloads go on while you read or switch back
+  to the library.
+- **Sections:** a catalogue organised in sections (by author, by subject...) is browsed by tapping them. A second
+  button beside the catalogue's name switches between its sections; the catalogue chosen again in its own menu goes
+  back to its main page. Going back is instant, and the last list read shows at once, even offline.
+- **Other catalogues:** a `catalogues.json` file in the reader's folder (`.adds/shamsaink` on the Kobo, `shamsaink` on
+  the Kindle), copied over USB, adds them: `[{"name": "Ebooksgratuits", "url": "https://www.ebooksgratuits.com/opds/"}]`.
+  OPDS 1 catalogues work, and plain Atom feeds that attach their EPUBs (Standard Ebooks' new releases,
+  `https://standardebooks.org/feeds/atom/new-releases`). Not yet: catalogues that need a login (Standard Ebooks' full
+  one), search, and OPDS 2 (the Internet Archive's).
+- **The library's bar:** Library and Catalogues are two icons, books and a cloud; tap the side you are on to see its
+  name.
+- **The library's pages line up:** turning a page no longer moves the rows up a little.
+- **Settings say what they do:** each setting has a short grey line under its name (Sleep after, Follow book
+  language, Reverse page buttons; Clean screen automatically in a book's Reading settings).
+
 ## 0.5.3-beta (2026-11-22)
 Fixes in the library, and headphones that connect properly on the Kobo.
 - **Right-to-left books in the library, whatever their language:** an Arabic, Urdu, Hebrew or other right-to-left
