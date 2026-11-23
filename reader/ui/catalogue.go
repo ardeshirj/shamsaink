@@ -148,7 +148,7 @@ func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *L
 	switch {
 	case len(rows) > 0, c.Loading:
 	case c.Unreachable:
-		none = &catalogueEmpty{Text: word("catalogue-unreachable", c.Name), Icon: "warning-circle", Retry: &button{ID: "catalogue-retry", Label: word("catalogue-retry")}}
+		none = &catalogueEmpty{Text: word("catalogue-unreachable", isolate(c.Name)), Icon: "warning-circle", Retry: &button{ID: "catalogue-retry", Label: word("catalogue-retry")}}
 	case c.NoMatch:
 		none = &catalogueEmpty{Text: word("catalogue-no-match"), Icon: "funnel", Retry: &button{ID: "catalogue-clear-all", Label: word("catalogue-clear-filters")}}
 	default:
@@ -335,3 +335,7 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 	l.Track(append(ids, "filters-show")...)
 	return l
 }
+
+// isolate marks a name put into a sentence as a piece of its own (Unicode's first-strong isolate, FSI ... PDI, as <bdi>
+// does): a right-to-left catalogue's name keeps the sentence's punctuation and digits around it in their order.
+func isolate(s string) string { return "\u2068" + s + "\u2069" }

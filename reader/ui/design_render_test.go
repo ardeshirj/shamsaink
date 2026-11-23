@@ -334,6 +334,10 @@ var designRenders = map[string][]renderCase{
 		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Unreachable: true}, catalogueHead(f, w, false), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"unreachable-rtl", en, func(f *blitz.Fonts, w, h int) rendered { // a right-to-left catalogue's name, isolated in the sentence
+		c := NewCatalogue(CatalogueView{Name: "کتابخانه‌ی ۲", Unreachable: true}, CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "کتابخانه‌ی ۲"}, f, w), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"facets", en, func(f *blitz.Fonts, w, h int) rendered { // planned: the funnel, on a feed with facets
 		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true}, false, f, w, h)
 	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section and two facets in force: the funnel's 3

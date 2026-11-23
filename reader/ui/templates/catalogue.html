@@ -1,7 +1,8 @@
 {{/* A catalogue's page (catalogue.go, NewCatalogue): its sections, then its books, a row each in its title's direction,
 as the library's rows. A section's row: its title, how many books under it when the catalogue says, and a "›" at its
-end. A book's: its title, the author or an empty line, and at its end (a Farsi title's at the left, under the
-catalogue's name) what can be done with it: a download button (its icon), while it downloads how much has come (per
+end. A book's: its title, the author or an empty line, and at the row's right (every row's, a Farsi title's too: the
+frame is the interface's, 2026-11-23, the principle "The interface's frame, the content's direction") what can be done
+with it: a download button (its icon), while it downloads how much has come (per
 cent, framed), and once it is here Read, which opens it. Under the last row, when the catalogue has more pages, a
 button for more books. With no rows, one line in their place: that the catalogue could not be reached with a button to
 try again, or that it has no books (Loading… is in the head). The page itself is always left to right, as the
@@ -11,21 +12,23 @@ library's; the line in place of the rows has the interface's direction. */ -}}
    the first would otherwise start that much lower */
 ul { list-style: none; margin: -0.35em 0 0; padding: 0; }
 li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
-h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; padding-inline-end: 4.6em; } /* the button's room: actWidth */
+h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; padding-right: 4.6em; } /* the button's room, at the right: actWidth */
 li[dir="rtl"] h3 { text-align: right; }
 h3 .t { line-height: 1.25; }
 li[dir="rtl"] h3 .t, li[dir="rtl"] h3 .a { line-height: 1.35; }
 h3 .a { font-size: 0.85em; line-height: 1.2; color: #444; }
-/* the row's action at its end, centred on the row: a Farsi title's at the left, under the catalogue's name and lined up
-   with it (the maintainer, 2026-11-22); one size for the three, so nothing moves as it changes */
-li .act { position: absolute; top: 50%; inset-inline-end: 0; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 4em; height: 1.7em; box-sizing: border-box; border: var(--line) solid var(--ink); border-radius: var(--radius); font-family: Vazirmatn, "DejaVu Sans", sans-serif; font-size: 0.85em; }
+/* the row's action at its right, centred on the row, a Farsi title's too, in one column (2026-11-23; till then a Farsi
+   row's was at the left); one size for the three, so nothing moves as it changes */
+li .act { position: absolute; top: 50%; right: 0; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 4em; height: 1.7em; box-sizing: border-box; border: var(--line) solid var(--ink); border-radius: var(--radius); font-family: Vazirmatn, "DejaVu Sans", sans-serif; font-size: 0.85em; }
 li .act.read { background: var(--ink); color: var(--paper); }
 li .act .i { font-size: 1.15em; }
-/* a section's row: a "›" (pointing on, "‹" in a right-to-left row) where a book's button is, no frame */
+/* a section's row: a "›" where a book's button is, no frame, pointing right in every row (the frame's direction, not
+   the title's: not mirrored in a right-to-left row) */
+li .act .flip { transform: none; }
 /* a section's count, in the interface's words and direction, on the row's side */
 h3 .a.n { display: block; }
 li[dir="rtl"] h3 .a.n { text-align: right; }
-li .act.go { border: 0; justify-content: flex-end; } /* at the row's very edge: the right, a Farsi row's left */
+li .act.go { border: 0; justify-content: flex-end; direction: ltr; } /* at the row's very edge, the right */
 .more { display: flex; justify-content: center; margin: 0.8em 0 0; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
 .empty { margin: 4em 1.5em 0; text-align: center; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
 .empty p { margin: 0 0 0.8em; }
