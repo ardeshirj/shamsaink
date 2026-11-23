@@ -837,8 +837,12 @@ fn collect(doc: &BaseDocument, id: blitz_dom::NodeId, out: &mut Vec<Block>) {
                 .element_data()
                 .map(|e| matches!(e.name.local.as_ref(), "h1" | "h2" | "h3" | "h4" | "h5" | "h6"))
                 .unwrap_or(false);
+            // a row of the reader's own lists (the library's, a catalogue's: data-shamsaink="row" on its heading):
+            // never split, but not kept with the next row, which pushed the last row that fit onto the next page
+            // (2026-11-22: a page of the library one row short). No book has it: their pages are unchanged.
+            let row = node.element_data().and_then(|e| e.attr(blitz_dom::LocalName::from("data-shamsaink"))) == Some("row");
             if !lines.is_empty() {
-                out.push(Block { lines, avoid_after: heading, avoid_inside: heading });
+                out.push(Block { lines, avoid_after: heading && !row, avoid_inside: heading });
             }
             return; // its inline content is in these lines
         }
