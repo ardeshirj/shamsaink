@@ -15,10 +15,10 @@
 
 <table>
 <tr>
-<th width="25%">Library</th>
-<th width="25%">Farsi</th>
-<th width="25%">English</th>
-<th width="25%">Arabic</th>
+<th width="25%">Library<br><sub>every language, each row in its own direction</sub></th>
+<th width="25%">Farsi<br><sub>the bar and the dock open, right to left</sub></th>
+<th width="25%">English<br><sub>the bar and the dock open</sub></th>
+<th width="25%">Arabic<br><sub>reading: nothing but the page</sub></th>
 </tr>
 <tr>
 <td valign="top"><img src="docs/images/screen-library.png" alt="The library: Farsi, Urdu and Arabic books, each with how much is read, English books after them"></td>
@@ -28,7 +28,7 @@
 </tr>
 </table>
 
-<sub>A simulated Kobo Libra Colour. The bar and the dock come with a tap at the top and go while you read.</sub>
+<sub>A simulated Kobo Libra Colour. A tap at the top of the page brings the bar and the dock; they go while you read.</sub>
 
 ## Install
 On a **Kobo** with firmware 5 or newer (Connect tapped), or a jailbroken **Kindle**, plugged into a Mac or Linux computer
