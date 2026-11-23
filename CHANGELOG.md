@@ -4,6 +4,23 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.5.3-beta (2026-11-22)
+Fixes in the library, and headphones that connect properly on the Kobo.
+- **Right-to-left books in the library, whatever their language:** an Arabic, Urdu, Hebrew or other right-to-left
+  book's row is laid out from the right, as a Farsi book's always was (before, only Farsi's were; the others were set
+  as English rows). The same for a book's details and the question before removing it.
+- **A page of the library holds every book that fits:** the last row that fit used to go to the next page, leaving
+  its room empty (in every language).
+- **Mark as new:** in a book's menu, in place of Start again; the book goes back to New, its place forgotten. A
+  finished book opened from the library starts again from its beginning, and Mark as not finished is gone.
+- **Headphones connect for music** (Kobo): headphones also paired with a phone could connect to the Kobo only as a
+  headset for calls, and the reader took them for connected with no sound. The reader now asks for their music
+  channel and uses only that.
+- **Quicker on the Kobo:** its second core is on while you read (Kobo's own interface switches it on, and the reader
+  stops that interface): page turns about 7% quicker, books open 10–15% sooner, the battery's use the same.
+- The library's bar shows **Library | Catalogues**: Catalogues, to get books from FarsiEPUB and other catalogues,
+  comes in the next version.
+
 ## 0.5.2-beta (2026-11-21)
 Books open sooner.
 - **A book opens from the library about 0.2–0.3 s sooner** (Kobo and Kindle): a new book 0.8 s on the Kobo (was 1.1),
