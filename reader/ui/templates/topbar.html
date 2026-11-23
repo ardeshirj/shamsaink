@@ -1,6 +1,7 @@
 {{/* The top bar (topbar.go): the same at the top of the library and over a book. Three columns: the button at the start and
 the title; the time in the middle of the screen, away from the icons; at the end the headphones, the light, the
 battery and the menu. In right to left it mirrors on its own.
+In the library the title is a choice instead, Library or Catalogues (Shelf).
 The engine does not clip text, so DrawTopBar cuts a long title itself, with an ellipsis, comparing the boxes of the title
 and of the words in it (not buttons: DrawTopBar drops them from the panel). */ -}}
 {{template "head" .Dir}}<style>
@@ -12,6 +13,8 @@ div.topbar .lead { display: flex; align-items: center; gap: 0.5em; min-width: 0;
 div.topbar .lead.exp .title { flex: none; width: auto; }
 /* Phosphor's flask fills more of its square than the bar's glyphs: drawn smaller, as high as the headphones and the battery */
 div.topbar .lead.exp .i { font-size: 1.1em; }
+/* the library's choice in place of the title (Shelf): the segments as the filters', only as wide as their words */
+div.topbar .shelf { flex: none; font-size: 0.94em; }
 div.topbar .end { display: flex; align-items: center; justify-content: flex-end; gap: 0.55em; }
 /* the status (the time, the battery) a little smaller than the buttons; the time larger in Farsi, whose digits in
    Parastoo are small for their size (the battery the same size in both) */
@@ -24,7 +27,7 @@ div.topbar .end > span:not(.tb), div.topbar .time { font-size: 0.94em; }
 .batt.on { background: var(--ink); border-radius: var(--radius); }
 .batt.on .i { color: var(--paper); }
 </style></head><body>
-<div class="topbar"><div class="lead{{if .Dev}} exp{{end}}">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div>{{if .Dev}}<span class="tb"><span class="i">{{icon "flask"}}</span></span>{{end}}</div>
+<div class="topbar"><div class="lead{{if .Dev}} exp{{end}}">{{if .Start}}{{template "iconbutton" ibtn "topbar-start" .Start false}}{{end}}{{if .Shelves}}<div class="shelf">{{template "segments" reg .Shelves}}</div>{{else}}<div class="title" id="{{id "topbar-title"}}"><span id="{{id "topbar-title-text"}}"{{textlang .Title}}>{{.Title}}</span></div>{{end}}{{if .Dev}}<span class="tb"><span class="i">{{icon "flask"}}</span></span>{{end}}</div>
 <span class="time">{{.Time}}</span><span class="end">
 {{- if .Phones}}{{template "iconbutton" ibtn "topbar-phones" "headphones" .PhonesOn}}{{end -}}
 {{template "iconbutton" ibtn "topbar-light" "sun" .LightOn -}}

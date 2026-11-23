@@ -1,0 +1,22 @@
+name: catalogue
+layer: screen
+templates: [topbar.html, catalogue-head.html, catalogue.html, pager.html]
+buttons: list
+status: planned
+purpose: "The library's Catalogues side (OPDS; FarsiEPUB's built in, others from a file over USB): under the bar the catalogue shown, a button that opens the choice of catalogues; its books a row each, as the library's, each ending in what can be done with it: a download button, its per cent while it downloads (going on when you switch away), then Read, which opens it (the book is in the Library too; one downloaded before shows Read at once). Loading… until its page comes (the last list kept and shown at once, then refreshed), that it could not be reached with Try again, or that it has no books; More books under the last row when the catalogue has more pages. Wi-Fi asked for when it is off."
+enter: [{gesture: tap, control: shelf-catalogues, from: library}]
+words: [catalogues, catalogue-loading, catalogue-unreachable, catalogue-empty, catalogue-read]
+controls:
+  - {id: topbar-phones, component: icon-button, action: goto, to: sound, requires: [sound]}
+  - {id: topbar-light, component: icon-button, action: goto, to: light}
+  - {id: topbar-battery, component: button, action: goto, to: battery}
+  - {id: topbar-menu, component: icon-button, action: goto, to: menu}
+  - {id: shelf-library, component: segments, action: goto, to: library}
+  - {id: shelf-catalogues, component: segments, action: act, does: "nothing: the side shown"}
+  - {id: catalogue-choose, component: button, action: goto, to: catalogue-menu}
+  - {id: catalogue-more, component: button, action: act, does: "the catalogue's next page of books, after the last row", when: "the catalogue has more pages"}
+  - {id: catalogue-retry, component: button, action: act, does: "reads the catalogue's page again", when: "it could not be reached"}
+  - {id: list-prev, component: icon-button, action: act, does: the previous page of rows}
+  - {id: list-next, component: icon-button, action: act, does: the next page of rows}
+  - {id: e, component: list-row, action: act, does: "its button: downloads the book; once it is here, opens it", dynamic: true}
+dismiss: shelf-library   # the bar's choice, back to the books on the device

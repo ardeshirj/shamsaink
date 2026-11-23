@@ -75,11 +75,14 @@ func missing(c design.Control, has []string) string {
 }
 
 // edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each, but through a
-// control the device has not (missing).
+// control the device has not (missing), and none into a planned screen (its controls are drawn, it is not reached yet).
 func edges(spec *design.Spec, has []string) []edge {
 	seen := map[string]bool{}
 	var out []edge
 	add := func(e edge) {
+		if to := spec.Screens[e.to]; to != nil && to.Status != "built" { // a planned screen: drawn, not yet wired
+			return
+		}
 		k := e.from + "|" + e.to + "|" + e.gesture + "|" + e.control
 		if !seen[k] {
 			seen[k] = true

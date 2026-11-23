@@ -10,18 +10,19 @@ import (
 // A paged list as shown: a header given by the caller, the rows under it laid out and paginated by the engine (right
 // to left for a right-to-left list), each row's page and box on it, and, if asked for, a pager at the bottom.
 type List struct {
-	head  *Panel
-	pager *Panel // nil: none
-	rtl   bool
-	fonts *blitz.Fonts
-	w, h  int
-	list  *blitz.Book
-	pages int
-	page  int
-	paged int         // the page the pager's count is of
-	img   *image.Gray // the list's page shown
-	at    []image.Rectangle
-	on    []int // each row's page
+	buttons map[string]listButton // buttons in the list's own content besides its rows (Track)
+	head    *Panel
+	pager   *Panel // nil: none
+	rtl     bool
+	fonts   *blitz.Fonts
+	w, h    int
+	list    *blitz.Book
+	pages   int
+	page    int
+	paged   int         // the page the pager's count is of
+	img     *image.Gray // the list's page shown
+	at      []image.Rectangle
+	on      []int // each row's page
 }
 
 // pagerData is what templates/pager.html draws: the count, in the list's direction.
@@ -162,8 +163,37 @@ func (v *List) RowsBottom() int {
 
 func (v *List) Close() { v.list.Close() }
 
-// Boxes are where every button of the list is on the screen as it is drawn now: the header's, the pager's, and the rows
-// (e0, e1, ...) of the page shown.
+// A button in the list's own content: its page and its box on that page.
+type listButton struct {
+	page int
+	box  image.Rectangle
+}
+
+// Track finds buttons of the list's own content besides its rows (a catalogue's More books, Try again), so Boxes and
+// ButtonAt know them on their page.
+func (v *List) Track(ids ...string) {
+	if v.buttons == nil {
+		v.buttons = map[string]listButton{}
+	}
+	for _, id := range ids {
+		if p, rs := v.list.Find(0, id); len(rs) > 0 {
+			v.buttons[id] = listButton{p, union(rs)}
+		}
+	}
+}
+
+// ButtonAt is the tracked button (Track) tapped at (x, y) on the screen, "" if none.
+func (v *List) ButtonAt(x, y int) string {
+	for id, b := range v.buttons {
+		if b.page == v.page && image.Pt(x, y-v.head.img.Rect.Dy()).In(b.box.Inset(-8)) {
+			return id
+		}
+	}
+	return ""
+}
+
+// Boxes are where every button of the list is on the screen as it is drawn now: the header's, the pager's, the rows
+// (e0, e1, ...) of the page shown, and the buttons tracked on it (Track).
 func (v *List) Boxes() map[string]image.Rectangle {
 	boxes := map[string]image.Rectangle{}
 	for _, p := range []*Panel{v.head, v.pager} {
@@ -176,6 +206,11 @@ func (v *List) Boxes() map[string]image.Rectangle {
 	for i := range v.at {
 		if v.on[i] == v.page {
 			boxes[fmt.Sprint("e", i)] = v.EntryBox(i)
+		}
+	}
+	for id, b := range v.buttons {
+		if b.page == v.page {
+			boxes[id] = b.box.Add(image.Pt(0, v.head.img.Rect.Dy()))
 		}
 	}
 	return boxes

@@ -43,3 +43,4 @@ wifi-high e4ea
 wifi-slash e4f2
 download-simple e20c
 warning-circle e4e2
+caret-down e136

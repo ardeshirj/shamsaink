@@ -1,0 +1,11 @@
+{{/* The choice of catalogues (catalogue.go): a narrow list hanging from the catalogue's button under the bar, at the
+start side, an entry a row: FarsiEPUB's first, then those added over USB, the one shown with a tick. The whole row is
+the button. DrawCatalogueMenu crops the page to the list's box. */ -}}
+{{template "head" ""}}<style>
+ul.menu { list-style: none; margin: 0; padding: 0; width: max-content; min-width: 8em; border: var(--line) solid var(--ink); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); }
+.menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
+.menu li + li { border-top: 2px solid #999; }
+.menu li .i { visibility: hidden; }
+.menu li.on .i { visibility: visible; }
+</style></head><body>
+<ul class="menu" id="catalogue-list">{{range reg .Catalogues}}<li class="{{if .On}}on{{end}}" id="{{.ID}}">{{icon "check"}}<bdi>{{.Label}}</bdi></li>{{end}}</ul></body></html>

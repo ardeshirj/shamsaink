@@ -6,6 +6,8 @@
   "filter-new": [309, 221, 579, 295],
   "filter-reading": [43, 221, 310, 295],
   "list-sort": [1136, 214, 1224, 302],
+  "shelf-catalogues": [179, 48, 396, 120],
+  "shelf-library": [43, 48, 180, 120],
   "topbar-battery": [1022, 40, 1114, 128],
   "topbar-light": [912, 40, 1001, 128],
   "topbar-menu": [1136, 40, 1224, 128],

@@ -30,6 +30,9 @@ type renderCase struct {
 	draw  func(f *blitz.Fonts, w, h int) rendered
 }
 
+// The languages a screen is drawn in, by where it shows: en for the library and its panels (with no book open the
+// interface is English); enFa for what also shows over a Farsi book (notices, dialogs); enFaRtl for what is on a book's
+// page (docs/design/README.md, "Renders").
 var en = []string{"en"}
 var enFa = []string{"en", "fa"}
 
@@ -98,6 +101,11 @@ func libraryTopBar() TopBar {
 
 func libraryHead(f *blitz.Fonts, w int) *Panel {
 	return LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
+}
+
+// catalogueHead is the catalogues' head over FarsiEPUB's books (chooseOn: its choice open).
+func catalogueHead(f *blitz.Fonts, w int, chooseOn bool) *Panel {
+	return CatalogueHead(libraryTopBar(), "FarsiEPUB", chooseOn, f, w)
 }
 
 // barHeight is the library's bar: where the panels that hang from it start.
@@ -281,6 +289,36 @@ var designRenders = map[string][]renderCase{
 		}}},
 	"library-sort": {{"title", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
+	}}},
+	"catalogue": {{"books", en, func(f *blitz.Fonts, w, h int) rendered {
+		// invented books, as the library's: one to download, one coming, one here, and a title too long for its row
+		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", More: true, Books: []CatalogueBook{
+			{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Share: -1},
+			{Title: "سفر به ماه", Author: "نویسنده‌ای شکیبا", RTL: true, Share: 42},
+			{Title: "Tales of a Small Town", Author: "Another Author", Here: true, Share: -1},
+			{Title: "The Remarkably Long and Winding Account of a Voyage Around Every Lighthouse of the Northern Coast", Author: "A Patient Author", Share: -1},
+		}}, catalogueHead(f, w, false), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"pages", en, func(f *blitz.Fonts, w, h int) rendered { // more books than a page: the pager
+		var books []CatalogueBook
+		for i := range 12 {
+			books = append(books, CatalogueBook{Title: fmt.Sprintf("A catalogue's book %d", i+1), Author: "Someone", Share: -1})
+		}
+		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Books: books}, catalogueHead(f, w, false), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered {
+		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Loading: true}, catalogueHead(f, w, false), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"unreachable", en, func(f *blitz.Fonts, w, h int) rendered {
+		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Unreachable: true}, catalogueHead(f, w, false), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}},
+	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
+		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))
 	}}},
 	"library-book-menu": {{"new", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, false, f, w)) }},
 		{"opened", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, true, f, w)) }},

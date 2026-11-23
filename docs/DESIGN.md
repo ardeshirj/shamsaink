@@ -270,7 +270,7 @@ left as the device has it.
 - **Development** (dev mode only): the Developer panel's Wi-Fi switch, its state under it; on connects with no
   question and stays on, off turns it off as Kobo's switch does (`TurnOffWiFi`).
 
-### Books from catalogues: OPDS (2026-11-22; the screens to come)
+### Books from catalogues: OPDS (2026-11-22; the screens designed, not yet wired)
 `reader/opds`, from experiment 18 (its NOTES.md: the catalogues surveyed, the timings on both devices).
 - **Reading a catalogue:** OPDS 1.2 (Atom) read as a stream into go-toolkit's model, each book a `manifest.Manifest`
   as in Readium's Kotlin and Swift toolkits, the page around them a `Feed` (its links: next, search; its menus, facets
@@ -294,6 +294,19 @@ left as the device has it.
   (Of `ROADMAP.md`'s layers: the entry's id and a fixed file per entry; a book's own `dc:identifier` is not used: FarsiEPUB's
   entries' ids are not their EPUBs'.)
 - **Catalogues:** FarsiEPUB's built in (`opds.FarsiEPUB`); others from a file over USB, with the screens.
+- **The screens** (designed 2026-11-22, `status: planned` in the spec: `screens/catalogue.yaml`, `catalogue-menu.yaml`;
+  their renders on `docs/design/system.html`): the library's bar shows **Library | Catalogues** in place of the title,
+  on every library screen. Catalogues: under the bar the catalogue shown, its name a button opening the choice of
+  catalogues (a menu under it, the one shown ticked, FarsiEPUB's first); its books a row each as the library's (title,
+  author, right to left for a Farsi title), each ending in its button: download, its per cent while downloading, then
+  **Read**, which opens the book (one downloaded before shows Read at once, found by `downloads.json`). Loading…, that
+  the catalogue could not be reached (with Try again), or that it has no books, in the middle; **More books** under the
+  last row when the catalogue has more pages; the rows paged as the library's. `ui.NewCatalogue` draws it from a
+  `CatalogueView` (no network in `reader/ui`); its buttons are tracked by the list (`List.Track`, `ButtonAt`) and,
+  since a page ends at its last line of text, the list ends in an empty line so the last row's button is drawn.
+  English only, as the library: with no book open the interface is English (`docs/design/README.md`, "Renders").
+  Still to wire: the shelves' switch, Wi-Fi asked for when off, the catalogue's page read and kept for offline,
+  downloads going on in the background, Read opening the book, the menu's choice remembered.
 - **Tested:** `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
   file comes back new); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on
   the Mac and, compiled for ARM (`go test -c`), on the Kobo and the Kindle (2026-11-22: 0.8 and 1.0 s).

@@ -1,0 +1,8 @@
+{{/* The catalogues' head, under the bar (library.go, CatalogueHead): the catalogue shown, as a button that opens the
+choice of catalogues (catalogue-menu), its name and a caret. Where the library has its filters. */ -}}
+{{template "head" ""}}<style>
+.head { display: flex; align-items: center; margin: 0.3em 0; }
+.head span.b { font-weight: bold; }
+.head span.b .i { font-size: 0.9em; }
+span.b.on { background: var(--ink); color: var(--paper); }
+</style></head><body><div class="head"><span class="b{{if .On}} on{{end}}" id="{{id "catalogue-choose"}}"><bdi>{{.Name}}</bdi>{{icon "caret-down"}}</span></div></body></html>

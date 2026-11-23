@@ -1,0 +1,12 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "catalogue-choose": [40, 214, 331, 286],
+  "catalogue-retry": [498, 640, 738, 720],
+  "shelf-catalogues": [179, 48, 396, 120],
+  "shelf-library": [43, 48, 180, 120],
+  "topbar-battery": [994, 40, 1086, 128],
+  "topbar-light": [884, 40, 973, 128],
+  "topbar-menu": [1108, 40, 1196, 128]
+ }
+}

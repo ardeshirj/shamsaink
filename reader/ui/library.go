@@ -48,7 +48,7 @@ type LibraryView struct {
 // the filters and the sort button, with no line under them. Its buttons are the bar's, filter-reading, filter-new,
 // filter-finished and filter-all, and list-sort.
 func LibraryHead(topBar TopBar, v LibraryView, fonts *blitz.Fonts, w int) *Panel {
-	topBar.Title = word("library")
+	topBar.Shelf = "library" // the bar's choice of Library and Catalogues in place of its title
 	topBar.Dev = DevMode
 	topBar.MenuOn = v.MenuOn // no start icon: search comes back with a keyboard
 	var fs []button
@@ -120,7 +120,7 @@ func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w,
 			none.Hint, none.After, _ = strings.Cut(word("no-books-hint", "\x00"), "\x00")
 		}
 	}
-	fitTitles(rows, fonts, w)
+	fitTitles(rows, 0, fonts, w)
 	html, _ := render("library.html", struct {
 		Rows    []libraryRow
 		Empty   *emptyWords
@@ -133,8 +133,8 @@ func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w,
 // that fit and "…" (the engine does not clip text: a long title ran under the bar, 2026-11-08); the whole title stays
 // in the book's details. The rows are measured in a page of their own (the list's options, titles on one line): a title
 // too wide is cut by its share of the room, the cut ones measured again and cut a little more until each fits; a few
-// layouts, not one a letter.
-func fitTitles(rows []libraryRow, fonts *blitz.Fonts, w int) {
+// layouts, not one a letter. A row with nothing at its title's end keeps end px free there (a catalogue's button).
+func fitTitles(rows []libraryRow, end int, fonts *blitz.Fonts, w int) {
 	full := make([][]rune, len(rows))
 	keep := make([]int, len(rows)) // letters kept, -1 for the whole title
 	for i := range rows {
@@ -149,7 +149,7 @@ func fitTitles(rows []libraryRow, fonts *blitz.Fonts, w int) {
 		for _, i := range todo {
 			some = append(some, rows[i])
 		}
-		room, width := measureTitles(some, fonts, w)
+		room, width := measureTitles(some, end, fonts, w)
 		var next []int
 		for j, i := range todo {
 			if width[j] <= room[j] || width[j] == 0 {
@@ -172,8 +172,9 @@ func fitTitles(rows []libraryRow, fonts *blitz.Fonts, w int) {
 }
 
 // measureTitles lays out rows with their titles on one line: for each, the room for its title's line (up to the share
-// read at its end, a gap before it, else the row's end) and the line's width, in px.
-func measureTitles(rows []libraryRow, fonts *blitz.Fonts, w int) (room, width []int) {
+// read at its end, a gap before it, else the row's end less end px: a catalogue's row keeps that for its button) and
+// the line's width, in px.
+func measureTitles(rows []libraryRow, end int, fonts *blitz.Fonts, w int) (room, width []int) {
 	const margin, gap = 40, 20 // the list's margin (NewList); between the title and the share read
 	html, _ := render("library.html", struct {
 		Rows    []libraryRow
@@ -193,13 +194,13 @@ func measureTitles(rows []libraryRow, fonts *blitz.Fonts, w int) (room, width []
 		width[i] = t.Dx()
 		_, ps := b.Find(0, r.ID+"-p")
 		if r.Dir == "rtl" { // the title from the right, the share read at the left
-			limit := margin
+			limit := margin + end
 			if len(ps) > 0 {
 				limit = union(ps).Max.X + gap
 			}
 			room[i] = t.Max.X - limit
 		} else {
-			limit := w - margin
+			limit := w - margin - end
 			if len(ps) > 0 {
 				limit = union(ps).Min.X - gap
 			}

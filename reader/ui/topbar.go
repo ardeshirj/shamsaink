@@ -21,6 +21,7 @@ type TopBar struct {
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
 	Dev               bool   // dev mode (DevMode): a flask after the title (the library's)
+	Shelf             string // the library's bar: in place of the title, the choice of Library and Catalogues, this one chosen ("library", "catalogues"); "" for the title
 	RTL               bool
 }
 
@@ -50,13 +51,23 @@ func (b TopBar) BatteryIcon() string {
 // The top bar's data for templates/topbar.html: the top bar and the direction of the page.
 type topBarData struct {
 	TopBar
-	Dir string
+	Dir     string
+	Shelves []button // the choice in place of the title (Shelf)
 }
+
+// Shelves are the two sides of the library, in the bar's choice: the books on the device, and the catalogues to get
+// more from (OPDS); their buttons shelf-library and shelf-catalogues.
+var Shelves = []string{"library", "catalogues"}
 
 // DrawTopBar draws the bar as a panel at the top of the screen, w px wide. Its buttons are bar-start, bar-phones (if
 // there are headphones), bar-light, which is always there, and bar-menu (if the bar has the menu).
 func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 	d := topBarData{TopBar: b, Dir: "ltr"}
+	if b.Shelf != "" {
+		for _, s := range Shelves {
+			d.Shelves = append(d.Shelves, button{ID: "shelf-" + s, Label: word(s), On: s == b.Shelf})
+		}
+	}
 	d.Time = digits(b.Time) // in the interface's digits
 	if b.RTL || RTL() {     // the interface's language mirrors the bar too
 		d.Dir = "rtl"
