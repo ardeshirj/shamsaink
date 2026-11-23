@@ -159,10 +159,23 @@ keyboard first ("Now").
     ours to do: reconnect on purpose at a paragraph break shortly before 20 minutes (the timer counts from the
     connection), narration and the word clock paused a few seconds, and the same after an unexpected drop; measure a
     reconnect's time and whether every pair comes back (`devices/kindle/README.md`).
-  - The route that removes the drop: ShamsaOS's own Bluetooth stack (Bumble over `/dev/stpbt`, Amazon's `btmanagerd`
-    and `acsbtfd` stopped; ShamsaOS experiments 08–10: 40 minutes of a narrated book, no drop). Ours is how narration
-    reaches that player: S16LE 48 kHz stereo, as `reader/sink.go` writes it, SBC through `libsbc` since Bumble has no
-    encoder (ShamsaOS 11's PLAN.md). The Kobo unchanged: firmware 6's own BlueZ and PulseAudio.
+  - The route that removes the drop, **proven** (ShamsaOS 10, step 4, 2026-11-10): ShamsaOS's own Bluetooth stack
+    (Bumble over `/dev/stpbt`, Amazon's `btmanagerd` and `acsbtfd` stopped) and its player `btplayer`: a narrated Farsi
+    book 40 minutes unbroken, past the 20-minute mark; ShamsaOS's userspace settled for the Kindle the same day
+    (OpenRC in our namespace, real suspend with our Bluetooth, back to stock with no reboot). The Kobo unchanged:
+    firmware 6's own BlueZ and PulseAudio. Left, in order (ShamsaOS 10's NOTES.md, "Not yet shown"):
+    - [ ] **The reader's sound to `btplayer`**, the one piece missing for Listen on the Kindle, and ShamsaInk's: S16LE
+      48 kHz stereo, as `reader/sink.go` writes it, SBC through `libsbc` since Bumble has no encoder; how it is handed
+      over (a pipe, a socket) to design. Its plan to write first: ShamsaOS's next experiment (12; its empty
+      `11-kindle-narration/` dropped and 11 given to Kobo firmware 6, 2026-11-22).
+    - [ ] Connect counts only once `btplayer` streams, as on the Kobo since 2026-11-22 (`docs/devices/kobo/README.md`,
+      "Headphones also connected to a phone"): headphones held by a phone refused ShamsaOS 10's first try too.
+    - [ ] Sleep during narration: the player re-arms powerd's timeout each minute (the power button still sleeps),
+      fixed 2026-11-10, not yet tried: 15 min untouched past the timeout, then the power button, narration back on
+      wake.
+    - [ ] Long runs: hours streaming, the battery against stock.
+    - [ ] Amazon's chip set-up (address, radio, TX power, Wi-Fi coexistence) sent by our stack: the commands captured
+      (ShamsaOS 08), not sent yet; range and Wi-Fi may suffer without them.
   - Its size: Bumble's image is 26 MB compressed (Alpine, Python 3.12, cryptography, Bumble), ~3× the Kindle package's
     ~12.7 MB; Python's memory not measured. In order: (a) an optional "Kindle sound" add-on, offered the first time
     Listen is tapped, downloaded and signature-checked over Wi-Fi like updates (so after "Over Wi-Fi" and the Kindle's
