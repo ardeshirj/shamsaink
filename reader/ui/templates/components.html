@@ -27,10 +27,10 @@ direction of its own. */}}
 {{define "segments"}}<div class="g">{{range .}}<span class="{{if .On}}on{{end}}" id="{{.ID}}">{{if .Icon}}<span class="si">{{icon .Icon}}</span>{{end}}{{if .Dir}}<bdi dir="{{.Dir}}">{{.Label}}</bdi>{{else}}{{.Label}}{{end}}{{if .Count}} <span class="n">{{.Count}}</span>{{end}}</span>{{end}}</div>{{end}}
 
 {{/* A setting's row (in a div.set): a name, a minus, the value, a plus. */}}
-{{define "stepper"}}<span class="name">{{.Name}}</span>{{template "button" .Dec}}<span class="v">{{.Value}}</span>{{template "button" .Inc}}{{end}}
+{{define "stepper"}}<span class="name">{{.Name}}{{with .Sub}}<span class="sub">{{.}}</span>{{end}}</span>{{template "button" .Dec}}<span class="v">{{.Value}}</span>{{template "button" .Inc}}{{end}}
 
 {{/* A setting's row (in a div.set) with a switch for its value, at the row's far end, where a stepper's plus ends. */}}
-{{define "switch"}}<span class="name">{{.Label}}</span><span class="sw">{{template "toggle" .}}</span>{{end}}
+{{define "switch"}}<span class="name">{{.Label}}{{with .Sub}}<span class="sub">{{.}}</span>{{end}}</span><span class="sw">{{template "toggle" .}}</span>{{end}}
 
 {{/* A button that is an icon alone (from ibtn), no border; drawn filled when on. The arrows that point are mirrored
 in right to left. */}}

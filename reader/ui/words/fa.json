@@ -76,6 +76,7 @@
   "reset": "بازنشانی",
   "px": "%s پیکسل",
   "min": "%s دقیقه",
+  "clean-auto-about": "تازه‌سازی کامل، ردّ کم‌رنگ صفحه‌های پیشین را پاک می‌کند",
   "sleep-after": "خواب پس از",
   "ssh-dev": "SSH",
   "developer": "Developer",

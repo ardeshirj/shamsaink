@@ -6,7 +6,10 @@ dark apart (dark shows ghosting most). Its header names it as the automatic vers
 /* the value is a phrase ("Every 5 pages"), wider than the steppers' usual column */
 div.set { grid-template-columns: 1fr 2.4em 10em 2.4em; }
 div.set > .v { white-space: nowrap; }
+/* the heading's grey line apart from the rows it heads, as the rows are apart from each other (the main Settings'
+   rows, each with its own line, keep the grid's gap) */
+.slider .sname .sub { margin-bottom: 0.45em; }
 </style></head><body>
-<div class="slider"><div class="sname"><span>{{t "clean-auto"}}</span></div></div>
+<div class="slider"><div class="sname"><span>{{t "clean-auto"}}<span class="sub">{{t "clean-auto-about"}}</span></span></div></div>
 <div class="set">{{template "stepper" step (t "in-light-mode") "clean-light" .Light}}</div>
 <div class="set">{{template "stepper" step (t "in-dark-mode") "clean-dark" .Dark}}</div></body></html>

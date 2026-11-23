@@ -107,6 +107,9 @@ keyboard first ("Now").
   meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and
   its paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
 - The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
+- Settings on a page of their own, in sections, if the panels outgrow a panel (2026-11-22, the maintainer: each
+  setting now has a grey line saying what it does, so Settings is about 570 px tall on the Kobo; to look at again as
+  settings are added)
 
 **7. A library** (its text rows are in the betas)
 - Books over the air, **OPDS** (2026-11-02; step 3 of "Now" since 2026-11-19, after updates): the aim is one tap

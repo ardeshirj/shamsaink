@@ -92,3 +92,6 @@ div.slider { margin: 0.5em 0; }
 .slider .srow span.b { width: 2.6em; height: 1.7em; justify-content: center; padding: 0; }
 .slider span.b.small .i { font-size: 0.95em; }
 .slider span.b.large .i { font-size: 1.6em; }
+
+/* a setting's grey second line, under its name: what it does (2026-11-22) */
+div.set .name .sub, .slider .sname .sub { display: block; font-size: 0.75em; color: #444; line-height: 1.3; }

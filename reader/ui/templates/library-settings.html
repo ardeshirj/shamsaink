@@ -3,14 +3,12 @@ grid (div.set), each row as tall as the tallest, so the rows are evenly spaced w
 maintainer: a switch's row was lower than a stepper's); the setting's name at the start, a switch at the far end (the
 right in English, the left in Farsi: the page's direction is the interface's), a stepper's minus, value and plus before it. Under them Updates, its own row
 (2026-11-20, the maintainer: not a button on the version line, not in the menu): the version running as its grey second
-line, Check at the row's end. Sleep after first, then the switches together (2026-11-11, the maintainer: a
+line, Check at the row's end. Every setting has such a grey line, saying what it does (2026-11-22). Sleep after first, then the switches together (2026-11-11, the maintainer: a
 stepper between switches split them). */ -}}
 {{template "head" ""}}<style>
-/* Updates: its own row after the others (in a grid of its own: two lines would make every row as tall), the version
-running as its second line, small and grey */
-div.set.upd .name .sub { display: block; font-size: 0.75em; color: #444; }
+/* Updates: its own row after the others (in a grid of its own), the version running as its second line */
 </style></head><body>
-<div class="set">{{template "stepper" step (t "sleep-after") "sleep" .Sleep}}
-{{template "switch" pick "lang-follow" (t "follow-book") .Follow}}
-{{if .HasButtons}}{{template "switch" pick "buttons-reverse" (t "reverse-buttons") .ReverseButtons}}{{end}}</div>
+<div class="set">{{template "stepper" step (t "sleep-after") "sleep" .Sleep (t "sleep-after-about")}}
+{{template "switch" pick "lang-follow" (t "follow-book") .Follow (t "follow-book-about")}}
+{{if .HasButtons}}{{template "switch" pick "buttons-reverse" (t "reverse-buttons") .ReverseButtons (t "reverse-buttons-about")}}{{end}}</div>
 {{with .Version}}<div class="set upd" id="panel-end"><span class="name">{{t "updates"}}<span class="sub">{{t "version"}} <span dir="ltr">{{.}}</span></span></span><span class="sw">{{template "button" (btn "update-check" (t "check"))}}</span></div>{{end}}</body></html>

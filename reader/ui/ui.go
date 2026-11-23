@@ -95,6 +95,7 @@ type button struct {
 	On        bool
 	Count     string // shown after the label, smaller (segments)
 	Dir       string // the label's own direction, "" for the page's (segments)
+	Sub       string // a grey line under the label: what a setting does (switch)
 }
 
 // A slider: its name and value, its track (the id a tap on it gives, filled to Share per cent) between the buttons for
@@ -109,6 +110,7 @@ type slider struct {
 // A row with a minus, a value and a plus: the buttons are name-dec and name-inc.
 type stepper struct {
 	Name, Value string
+	Sub         string // a grey line under the name: what the setting does
 	Dec, Inc    button
 }
 
@@ -166,8 +168,12 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			}
 			return d
 		},
-		"pick": func(id, label string, on bool) button {
-			return button{ID: add(id), Label: label, On: on}
+		"pick": func(id, label string, on bool, about ...string) button { // about: a grey line under the label (a setting's)
+			b := button{ID: add(id), Label: label, On: on}
+			if len(about) > 0 {
+				b.Sub = about[0]
+			}
+			return b
 		},
 		"list": func(bs ...button) []button { return bs },
 		"reg": func(bs []button) []button { // buttons made by the program: their ids registered
@@ -180,8 +186,12 @@ func uiFuncs(ids *[]string) template.FuncMap {
 			return slider{name, value, add(id), fmt.Sprintf("%.1f", 100*min(max(share, 0), 1)),
 				button{ID: add(id + "-dec")}, button{ID: add(id + "-inc")}, less, more, sized}
 		},
-		"step": func(name, id, value string) stepper {
-			return stepper{name, value, button{ID: add(id + "-dec"), Label: "−"}, button{ID: add(id + "-inc"), Label: "+"}}
+		"step": func(name, id, value string, about ...string) stepper { // about: a grey line under the name
+			s := stepper{Name: name, Value: value, Dec: button{ID: add(id + "-dec"), Label: "−"}, Inc: button{ID: add(id + "-inc"), Label: "+"}}
+			if len(about) > 0 {
+				s.Sub = about[0]
+			}
+			return s
 		},
 	}
 }

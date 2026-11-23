@@ -1,10 +1,10 @@
 {
  "placement": "screen",
  "boxes": {
-  "buttons-reverse": [1114, 423, 1224, 485],
-  "lang-follow": [1114, 327, 1224, 389],
-  "sleep-dec": [803, 226, 877, 298],
-  "sleep-inc": [1138, 226, 1214, 298],
-  "update-check": [1059, 532, 1224, 605]
+  "buttons-reverse": [1114, 495, 1224, 558],
+  "lang-follow": [1114, 370, 1224, 433],
+  "sleep-dec": [803, 240, 877, 313],
+  "sleep-inc": [1138, 240, 1214, 313],
+  "update-check": [1059, 615, 1224, 688]
  }
 }

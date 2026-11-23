@@ -1,9 +1,9 @@
 {
  "placement": "screen",
  "boxes": {
-  "clean-dark-dec": [615, 404, 689, 476],
-  "clean-dark-inc": [1110, 404, 1186, 476],
-  "clean-light-dec": [615, 308, 689, 380],
-  "clean-light-inc": [1110, 308, 1186, 380]
+  "clean-dark-dec": [615, 456, 689, 529],
+  "clean-dark-inc": [1110, 456, 1186, 529],
+  "clean-light-dec": [615, 360, 689, 433],
+  "clean-light-inc": [1110, 360, 1186, 433]
  }
 }
