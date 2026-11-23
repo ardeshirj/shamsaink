@@ -26,6 +26,9 @@ rules:
   - name: A panel closes to where it came from
     text: "A tap outside a panel closes the panel and leaves the bar and dock it was opened from; a second tap on the page closes those. (Decided 2026-11-01 after use: kept, it saves a tap when moving between Light and Text.)"
     check: "by eye (the device walk closes Light, then uses the bar)"
+  - name: A control says what it is
+    text: "A control whose value alone does not say what it sets has its name at the start of its line, regular, in the ink's colour, the control after it with its value regular (a setting's row: Sleep after, Follow book language; a labelled dropdown: Catalogue). Neither is bold; the control's border marks what is tapped. One under a heading, or whose value says it, has no name. As Apple's settings rows, Material's list items and WCAG's labels (2.4.6, 3.3.2): a name that stays, not a placeholder (2026-11-23)."
+    check: "by eye (the samples of the dropdown, stepper and toggle on the page)"
   - name: Two levels at most
     text: "The page, the bar and dock, one panel. No panel opens another; one may take another's place."
     check: "no goto from a panel or overlay to a panel or overlay; replace stays in one layer"

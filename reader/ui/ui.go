@@ -71,6 +71,32 @@ func pointing(name string) bool {
 }
 
 // An icon button, as the templates draw it; On: drawn filled; Flip: mirrored in right to left (an arrow that points).
+// A dropdown (components.html "dropdown", from dd): the value chosen, its own direction ("" the page's), open, and its
+// label ("" none).
+type dropdown struct {
+	ID, Value, Dir, Label string
+	On                    bool
+}
+
+// A menu's row (components.html "menuitem", from mi or mit): an action with its icon, or a choice with a tick (Tick)
+// shown when it is the one chosen (On); Apart: an ink line over it.
+type menuItem struct {
+	ID, Label, Icon string
+	Tick, On, Apart bool
+}
+
+// A progress bar (components.html "progress", from pbar): filled to Share per cent from Side, Ticks where parts start.
+type progressBar struct {
+	ID, Share, Side string
+	Ticks           []string
+}
+
+// A long list's row (components.html "listrow", from lrow): its words, its indent in em, current.
+type listRow struct {
+	ID, Title, Pad string
+	Cur            bool
+}
+
 type iconButton struct {
 	ID       string
 	Glyph    template.HTML
@@ -148,6 +174,31 @@ func uiFuncs(ids *[]string) template.FuncMap {
 				Flip: pointing(name)}
 		},
 		"btn": func(id, label string) button { return button{ID: add(id), Label: label} },
+		"pbar": func(id, share, side string, ticks []string) progressBar {
+			return progressBar{ID: add(id), Share: share, Side: side, Ticks: ticks}
+		},
+		"lrow": func(id, title, pad string, cur bool) listRow {
+			return listRow{ID: id, Title: title, Pad: pad, Cur: cur}
+		},
+		"mi": func(id, icon, label string) menuItem { return menuItem{ID: add(id), Icon: icon, Label: label} },
+		"mit": func(id, label string, on bool) menuItem {
+			return menuItem{ID: add(id), Label: label, Tick: true, On: on}
+		},
+		"apart": func(m menuItem) menuItem { m.Apart = true; return m }, // an ink line over it
+		"mis": func(bs []button) []menuItem { // buttons made by the program as choices, registered
+			var ms []menuItem
+			for _, b := range bs {
+				ms = append(ms, menuItem{ID: add(b.ID), Label: b.Label, Tick: true, On: b.On})
+			}
+			return ms
+		},
+		"dd": func(id, value string, on bool, label ...string) dropdown { // label: what is chosen, before it
+			d := dropdown{ID: add(id), Value: value, On: on}
+			if len(label) > 0 {
+				d.Label = label[0]
+			}
+			return d
+		},
 		"btni": func(id, icon, label string) button { // a dialog's main action: its icon, then its label
 			glyph(icon) // an unknown name found here, by the tests
 			return button{ID: add(id), Label: label, Icon: icon}

@@ -3,10 +3,11 @@ layer: screen
 templates: [topbar.html, catalogue-head.html, catalogue.html, pager.html]
 buttons: list
 status: built
+planned: [facets, filtered, no-match]   # 2026-11-23: the funnel and Browse and filter, not wired
 english: true   # the library: English only, its words in en.json alone
-purpose: "The library's Catalogues side (OPDS; FarsiEPUB's built in, others from a file over USB): under the bar the catalogue shown, a button that opens the choice of catalogues, and in a section the section shown as a second such button, which opens the way back up and the catalogue's own sections; its sections (an OPDS catalogue's menus: by author, an author...) a row each ending in a \u203a, then its books a row each, as the library's, each ending in what can be done with it: a download button, its per cent while it downloads (going on when you switch away), then Read, which opens it (the book is in the Library too; one downloaded before shows Read at once). Loading… at the head's end while a page is read (the last list kept and shown at once, then refreshed only if it changed), that it could not be reached with Try again, or that it has no books; More books under the last row when the catalogue has more pages. Wi-Fi asked for when it is off (wifi-ask), and turned off again once the catalogues are left and no download goes on; a download that failed is a notice."
+purpose: "The library's Catalogues side (OPDS; FarsiEPUB's built in, others from a file over USB): under the bar the catalogue shown, a button that opens the choice of catalogues, and in a section the section shown as a second such button, which opens the way back up and the catalogue's own sections; its sections (an OPDS catalogue's menus: by author, an author...) a row each ending in a \u203a, then its books a row each, as the library's, each ending in what can be done with it: a download button, its per cent while it downloads (going on when you switch away), then Read, which opens it (the book is in the Library too; one downloaded before shows Read at once). Loading… at the head's end while a page is read (the last list kept and shown at once, then refreshed only if it changed), that it could not be reached with Try again, or that it has no books; More books under the last row when the catalogue has more pages. Planned (2026-11-23): the catalogue's button alone, its name only, \"Catalogue\" before it as a setting's name (the dropdown's label); the second dropdown gone into catalogue-filters as Browse, the section shown counted on the funnel; a funnel at the head's end, with how many filters are in force, opening catalogue-filters; no books with them: that, and Clear filters. Wi-Fi asked for when it is off (wifi-ask), and turned off again once the catalogues are left and no download goes on; a download that failed is a notice."
 enter: [{gesture: tap, control: shelf-catalogues, from: library}]
-words: [catalogues, catalogue-count, catalogue-loading, catalogue-unreachable, catalogue-empty, catalogue-read, catalogue-retry, catalogue-more]
+words: [catalogues, catalogue-count, catalogue-loading, catalogue-unreachable, catalogue-empty, catalogue-read, catalogue-retry, catalogue-more, catalogue-label, catalogue-no-match, catalogue-clear-filters]
 controls:
   - {id: topbar-phones, component: icon-button, action: goto, to: sound, requires: [sound]}
   - {id: topbar-light, component: icon-button, action: goto, to: light}
@@ -15,9 +16,11 @@ controls:
   - {id: shelf-library, component: segments, action: goto, to: library}
   - {id: shelf-catalogues, component: segments, action: goto, to: shelf-name}
   - {id: catalogue-section, component: button, action: goto, to: catalogue-section-menu, when: "in a section"}
-  - {id: catalogue-choose, component: button, action: goto, to: catalogue-menu}
+  - {id: catalogue-choose, component: dropdown, action: goto, to: catalogue-menu}
   - {id: catalogue-more, component: button, action: act, does: "the catalogue's next page of books, after the last row", when: "the catalogue has more pages"}
   - {id: catalogue-retry, component: button, action: act, does: "reads the catalogue's page again", when: "it could not be reached"}
+  - {id: catalogue-filter, component: icon-button, action: goto, to: catalogue-filters, when: "planned, 2026-11-23: always, as sections are in it too"}
+  - {id: catalogue-clear-all, component: button, action: act, does: "back to the catalogue's main page with no facets (planned)", when: "no books with the facets in force"}
   - {id: list-prev, component: icon-button, action: act, does: the previous page of rows}
   - {id: list-next, component: icon-button, action: act, does: the next page of rows}
   - {id: e, component: list-row, action: act, does: "a section: opens it (its sections and books, the same list); a book, its button: downloads it; once it is here, opens it", dynamic: true}

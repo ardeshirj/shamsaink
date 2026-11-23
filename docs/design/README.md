@@ -32,6 +32,11 @@ book open the interface is English: the library, its menus, the catalogues); **E
 also shows over a book (the bar, the dock, contents, notices, dialogs). English is never mirrored (2026-11-22; English
 mirrored, `en-rtl`, from 11-12): a right-to-left book in English has its own parts right to left, kept as cases of
 their own (the dock's and contents' `rtl-book`). A screen shown only in English says so (`english: true` in its spec), and its words are then in `en.json` alone.
+**Components are drawn too** (2026-11-23, `reader/ui/component_render_test.go`): each one made from `components.html`
+alone, in each of its states (`templates/samples.html`, English and Farsi), kept in `golden/DEVICE/components/` and
+compared like the screens; one with a template and no samples fails `TestEveryComponentIsRendered`. On the page the
+components are tiles as the screens are: what each is, the screens that use it, its samples. A screen's render of a
+design not built yet is listed in its spec's `planned:` and tagged so on the page, the rest *built*.
 Beside each picture is a `.json` with where every button is (`placement: screen`: on the screen, panels placed as the reader places
 them, under the real bar; `relative`: on a panel hung by a row or by words), compared exactly like the picture. The device tool reads them to
 tap a control by name.

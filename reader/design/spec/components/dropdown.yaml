@@ -1,0 +1,9 @@
+name: dropdown
+purpose: "What is chosen, bold, and a caret, in a border; a tap opens the other choices as a list (menu-item rows) hanging from its start edge, the chosen one ticked. Inverted while its list is open. Its label (2026-11-23) says what is being chosen, before it on its line as a setting's name: the label regular in the ink's colour, the value then regular too (rules: A control says what it is); given when the value alone does not say it (a catalogue's name), left out when a heading or the row's name does "
+role: button         # one that opens a list (aria-haspopup="listbox")
+template: dropdown   # {{define}} in ui/templates/components.html
+helper: dd           # dd "id" value open [label]
+states: [off, on, labelled]   # on: its list open
+rtl: mirrors on its own (the label and caret at the other sides)
+refresh: {waveform: DU, region: own-box}
+order: [plain, open, labelled, labelled-open, long]

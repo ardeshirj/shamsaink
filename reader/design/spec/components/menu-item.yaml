@@ -1,7 +1,9 @@
 name: menu-item
-purpose: "One entry of a narrow menu: an icon and its words, the whole row the button; the last entry set apart by a line."
+purpose: "One entry of a narrow menu, the whole row the button: an action (its icon, then its words) or a choice (a tick before it, shown only on the one chosen: a dropdown's list, the catalogues). A row may be set apart by an ink line over it: the last entry (Leave, Remove book) or the first of a second group. The menu (ul.menu) hangs at the end side (end) and from what opened it (hang: no top border)."
 role: menuitem
-template: ""         # drawn in each menu's own template (ul.menu)
-states: [off]
-rtl: the menu hangs from the end side of the bar
+template: menuitem   # {{define}} in ui/templates/components.html
+helper: mi           # mi "id" "icon" words; mit "id" words chosen (a choice); apart (mi ...); mis: the program's choices
+states: [off, on, apart]   # on: the choice chosen, ticked
+rtl: mirrors on its own; a menu at the end side hangs from the bar's end
 refresh: {waveform: GL16, region: own-box}
+order: [actions, choices]

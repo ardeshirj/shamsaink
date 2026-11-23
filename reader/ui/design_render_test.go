@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -333,6 +334,25 @@ var designRenders = map[string][]renderCase{
 		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Unreachable: true}, catalogueHead(f, w, false), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"facets", en, func(f *blitz.Fonts, w, h int) rendered { // planned: the funnel, on a feed with facets
+		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true}, false, f, w, h)
+	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section and two facets in force: the funnel's 3
+		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true, InForce: 3}, false, f, w, h)
+	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // planned: no books with them
+		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true, InForce: 3}, true, f, w, h)
+	}}},
+	"catalogue-filters": {{"browse-and-facets", en, func(f *blitz.Fonts, w, h int) rendered {
+		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Books: 214}, 0, f, w, h)
+	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered { // a choice tapped: the panel stays until the new feed's choices come
+		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Loading: true}, 0, f, w, h)
+	}}, {"browse-only", en, func(f *blitz.Fonts, w, h int) rendered { // most catalogues: sections and no facets
+		return plannedFilters(FiltersView{Browse: &designBrowse}, 0, f, w, h)
+	}}, {"many", en, func(f *blitz.Fonts, w, h int) rendered { // more groups than a screen: paged, its second page
+		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: append(designFacets(), designMore()...), Books: 37}, 1, f, w, h)
+	}}, {"more-language", en, func(f *blitz.Fonts, w, h int) rendered { // More… under Language: the group alone, a row each
+		return plannedFilters(FiltersView{Open: &FilterGroup{Name: "Language", Choices: designLanguages()}, Books: 214}, 0, f, w, h)
+	}}, {"more-authors", en, func(f *blitz.Fonts, w, h int) rendered { // By author ›: the section's own, paged
+		return plannedFilters(FiltersView{Open: &FilterGroup{Name: "By author", Choices: designAuthors()}}, 0, f, w, h)
 	}}},
 	"shelf-name": {{"library", en, func(f *blitz.Fonts, w, h int) rendered {
 		tb := libraryTopBar()
@@ -606,4 +626,80 @@ func compareGoldenRGBA(t *testing.T, path, name string, img *image.RGBA, update 
 			os.WriteFile(filepath.Join(out, name+".png"), buf.Bytes(), 0o644)
 		}
 	}
+}
+
+// plannedCatalogue is a catalogue's page under a head of the planned design (2026-11-23): invented books, or none with
+// the filters in force (noMatch).
+func plannedCatalogue(hv CatalogueHeadView, noMatch bool, f *blitz.Fonts, w, h int) rendered {
+	books := []CatalogueBook{
+		{Title: "The Lighthouse Keeper", Author: "An Author", Share: -1},
+		{Title: "Letters from the Coast", Author: "Another Author", Share: -1},
+		{Title: "A Small Town in Winter", Author: "A Patient Author", Here: true, Share: -1},
+		{Title: "Notes on the Northern Sea", Author: "Someone", Share: -1},
+	}
+	v := CatalogueView{Name: hv.Name, Books: books, More: true}
+	if noMatch {
+		v = CatalogueView{Name: hv.Name, NoMatch: true}
+	}
+	c := NewCatalogue(v, CatalogueHead(libraryTopBar(), hv, f, w), f, w, h)
+	defer c.Close()
+	return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+}
+
+// plannedFilters is the planned Browse and filter panel under the bar, its page page.
+func plannedFilters(v FiltersView, page int, f *blitz.Fonts, w, h int) rendered {
+	tb := libraryTopBar()
+	tb.Shelf = "catalogues"
+	l := DrawCatalogueFilters(tb, v, f, w, h)
+	defer l.Close()
+	l.SetPage(min(page, l.Pages()-1))
+	boxes := l.Boxes()
+	for id := range boxes { // the bar over it is the catalogue's, as under any panel
+		if strings.HasPrefix(id, "topbar-") || strings.HasPrefix(id, "shelf-") {
+			delete(boxes, id)
+		}
+	}
+	return rendered{img: screenOf(w, h, l.Draw), boxes: boxes, placement: "screen"}
+}
+
+// An invented catalogue's sections and facets, as a feed would give them.
+var designBrowse = FilterGroup{Chosen: "Poetry", Choices: []FilterChoice{{Label: "All books"}, {Label: "Poetry", On: true},
+	{Label: "Drama"}, {Label: "New releases"}, {Label: "By author", Deeper: true}, {Label: "By subject", Deeper: true}}}
+
+func designFacets() []FilterGroup {
+	return []FilterGroup{
+		{Name: "Sort by", Chosen: "Newest", Choices: []FilterChoice{{Label: "Popular"}, {Label: "Newest", On: true}, {Label: "Title"}, {Label: "Author"}}},
+		{Name: "Language", Chosen: "French", Choices: []FilterChoice{{Label: "All"}, {Label: "English", Count: 6412}, {Label: "French", Count: 214, On: true},
+			{Label: "German", Count: 388}, {Label: "Spanish", Count: 156}, {Label: "Italian", Count: 97}, {Label: "Portuguese", Count: 61},
+			{Label: "Dutch", Count: 40}}, Folded: 23},
+		{Name: "Subject", Choices: []FilterChoice{{Label: "All", On: true}, {Label: "Fiction"}, {Label: "Poetry"}, {Label: "Drama"}, {Label: "History"},
+			{Label: "Philosophy"}, {Label: "Children's"}, {Label: "Travel"}}, Folded: 41},
+	}
+}
+
+// More groups than a screen holds, as a big catalogue gives them.
+func designMore() []FilterGroup {
+	return []FilterGroup{
+		{Name: "Era", Choices: []FilterChoice{{Label: "All", On: true}, {Label: "Ancient"}, {Label: "Medieval"}, {Label: "1600s"}, {Label: "1700s"}, {Label: "1800s"}, {Label: "1900s"}}},
+		{Name: "Length", Choices: []FilterChoice{{Label: "Any", On: true}, {Label: "Short"}, {Label: "Novella"}, {Label: "Novel"}, {Label: "Long"}}},
+		{Name: "Collection", Choices: []FilterChoice{{Label: "All", On: true}, {Label: "Classics"}, {Label: "Prize winners"}, {Label: "Translations"}, {Label: "Letters and diaries"}}, Folded: 12},
+	}
+}
+
+func designLanguages() []FilterChoice {
+	var cs []FilterChoice
+	for i, l := range []string{"All", "English", "French", "German", "Spanish", "Italian", "Portuguese", "Dutch", "Latin", "Greek", "Russian", "Swedish", "Danish", "Finnish"} {
+		cs = append(cs, FilterChoice{Label: l, Count: max(0, 900-i*60) * min(i, 1), On: l == "French"})
+	}
+	return cs
+}
+
+func designAuthors() []FilterChoice {
+	var cs []FilterChoice
+	for i, n := range []string{"Austen, Jane", "Balzac, Honoré de", "Brontë, Charlotte", "Cervantes, Miguel de", "Chekhov, Anton",
+		"Dickens, Charles", "Dostoevsky, Fyodor", "Dumas, Alexandre", "Eliot, George", "Flaubert, Gustave", "Gogol, Nikolai", "Hugo, Victor",
+		"James, Henry", "Kafka, Franz", "Melville, Herman", "Poe, Edgar Allan"} {
+		cs = append(cs, FilterChoice{Label: n, Count: 3 + i*2, Deeper: true})
+	}
+	return cs
 }

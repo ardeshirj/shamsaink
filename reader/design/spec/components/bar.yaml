@@ -1,7 +1,8 @@
 name: bar
 purpose: A progress bar with ticks; a tap on it goes anywhere.
 role: progressbar
-template: ""         # drawn in dock.html itself, not yet a shared component
+template: progress   # {{define}} in ui/templates/components.html
+helper: pbar         # pbar "id" share side ticks
 states: [share]
 rtl: fills from the book's start side
 refresh: {waveform: DU, region: own-box}

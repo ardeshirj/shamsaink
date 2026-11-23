@@ -37,6 +37,29 @@ span.b { display: inline-flex; align-items: center; gap: 0.3em; border: var(--li
 
 /* a button that is on (Dark mode): filled, its words and icon in the paper's colour */
 span.b.on { background: var(--ink); color: var(--paper); }
+/* a progress bar (components.html, progress): a rounded track, filled from its start, ticks under it */
+.pbar { flex: 1; position: relative; display: flex; height: 22px; border: var(--line) solid var(--ink); border-radius: 11px; }
+.pbar i { display: block; background: var(--ink); border-radius: 8px; }
+.pbar b { position: absolute; top: 100%; width: var(--line); height: 0.3em; background: var(--ink); }
+/* a long list's row (components.html, listrow): the current one bold on grey */
+p.lr { margin: 0; padding: 0.35em 0.3em; }
+p.lr.cur { font-weight: bold; background: #d8d8d8; }
+/* a menu (components.html, menuitem): a narrow list in a border, a row each; "end" at the end side, "hang" from what
+   opened it (no top border); a row set apart by an ink line; a choice's tick only on the one chosen */
+ul.menu { list-style: none; margin: 0; padding: 0; width: max-content; border: var(--line) solid var(--ink); border-radius: var(--radius); }
+ul.menu.end { margin-inline-start: auto; }
+ul.menu.hang { border-top: 0; border-radius: 0 0 var(--radius) var(--radius); }
+.menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
+.menu li + li { border-top: 2px solid #999; }
+.menu li.apart { border-top: var(--line) solid var(--ink); }
+.menu li.tick .i { visibility: hidden; }
+.menu li.tick.on .i { visibility: visible; }
+/* a dropdown (components.html): bold, its caret a little smaller; with a label, the label before it as a setting's name
+   and the value regular, as a setting's value */
+span.b.dd { font-weight: bold; flex: none; }
+span.b.dd .i { font-size: 0.9em; }
+.ddw { display: inline-flex; align-items: center; gap: 0.5em; flex: none; }
+.ddw span.b.dd { font-weight: normal; }
 
 /* The switch: a track with a knob, the knob at the end when on. */
 span.s { display: inline-block; width: 2.4em; height: 1.2em; padding: 0.1em; border: var(--line) solid var(--ink); border-radius: 0.6em; }

@@ -6,3 +6,4 @@ helper: btn
 states: [off, on]    # on: filled (a mode that is set, such as Dark mode)
 rtl: mirrors on its own (logical properties)
 refresh: {waveform: DU, region: own-box}
+order: [plain, icon]

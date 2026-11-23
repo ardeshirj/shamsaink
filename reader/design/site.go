@@ -9,6 +9,7 @@ import (
 	"image"
 	_ "image/png"
 	"io/fs"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -16,8 +17,9 @@ import (
 // A render kept for a screen: its case and language, the file and its size.
 type siteImage struct {
 	Case, Lang, Path string
-	W, H             int // as drawn, px
-	Shown            int // width on the page, px
+	W, H             int  // as drawn, px
+	Shown            int  // width on the page, px
+	Planned          bool // a design not built yet (the screen's status, or its spec's planned list)
 }
 
 type siteScreen struct {
@@ -26,6 +28,16 @@ type siteScreen struct {
 	Cases   []string
 	Buttons ButtonMap
 	Thumb   *siteImage // its first case, in English when there is one: the closed row's picture
+}
+
+// A component on the page: its samples (golden/DEVICE/components/NAME-CASE-LANG.png, the primary device's) and the
+// screens that use it.
+type siteComponent struct {
+	*Component
+	Images map[string][]siteImage
+	Cases  []string
+	Thumb  *siteImage
+	Used   []string
 }
 
 type siteDevice struct {
@@ -59,7 +71,7 @@ type siteData struct {
 	Primary    siteDevice  // the screens, as the primary device draws them
 	Groups     []siteGroup // the same, in their groups (groups.yaml)
 	Others     []siteOther // how each other device differs
-	Components []*Component
+	Components []siteComponent
 	Layers     []string
 	Flow       []string
 }
@@ -69,9 +81,6 @@ type siteData struct {
 // goldenURL (a path from the page to golden/).
 func Site(s *Spec, golden fs.FS, goldenURL string) ([]byte, error) {
 	data := siteData{Spec: s, Layers: s.Tokens.Layers}
-	for _, n := range sortedKeys(s.Components) {
-		data.Components = append(data.Components, s.Components[n])
-	}
 	names := sortedKeys(s.Screens)
 	// screens in the order of the layers, then by name
 	sort.SliceStable(names, func(i, j int) bool {
@@ -106,7 +115,7 @@ func Site(s *Spec, golden fs.FS, goldenURL string) ([]byte, error) {
 				if err != nil {
 					return nil, fmt.Errorf("%s: %w", f, err)
 				}
-				img := siteImage{Case: c, Lang: lang, Path: goldenURL + "/" + f, W: cfg.Width, H: cfg.Height, Shown: cfg.Width / 3}
+				img := siteImage{Case: c, Lang: lang, Planned: sc.Status == "planned" || slices.Contains(sc.Planned, c), Path: goldenURL + "/" + f, W: cfg.Width, H: cfg.Height, Shown: cfg.Width / 3}
 				if _, seen := ss.Images[c]; !seen {
 					ss.Cases = append(ss.Cases, c)
 				}
@@ -128,6 +137,49 @@ func Site(s *Spec, golden fs.FS, goldenURL string) ([]byte, error) {
 		all = append(all, sd)
 	}
 	data.Primary = all[0]
+	samples, _ := fs.Glob(golden, data.Primary.Name+"/components/*.png")
+	for _, n := range sortedKeys(s.Components) {
+		c := s.Components[n]
+		sc := siteComponent{Component: c, Images: map[string][]siteImage{}}
+		for _, f := range samples {
+			base := strings.TrimSuffix(f[strings.LastIndex(f, "/")+1:], ".png")
+			if !strings.HasPrefix(base, n+"-") {
+				continue
+			}
+			rest := strings.TrimPrefix(base, n+"-")
+			i := strings.LastIndex(rest, "-")
+			cs, lang := rest[:i], rest[i+1:]
+			if s.Components[n+"-"+cs] != nil || strings.Contains(cs, "-") && s.Components[n+"-"+cs[:strings.Index(cs, "-")]] != nil {
+				continue // a longer component's name (icon-button under button)
+			}
+			fh, err := golden.Open(f)
+			if err != nil {
+				return nil, err
+			}
+			cfg, _, err := image.DecodeConfig(fh)
+			fh.Close()
+			if err != nil {
+				return nil, fmt.Errorf("%s: %w", f, err)
+			}
+			if _, seen := sc.Images[cs]; !seen {
+				sc.Cases = append(sc.Cases, cs)
+			}
+			sc.Images[cs] = append(sc.Images[cs], siteImage{Case: cs, Lang: lang, Path: goldenURL + "/" + f, W: cfg.Width, H: cfg.Height, Shown: cfg.Width / 3})
+		}
+		sort.SliceStable(sc.Cases, func(i, j int) bool { return indexOf(c.Order, sc.Cases[i]) < indexOf(c.Order, sc.Cases[j]) })
+		if len(sc.Cases) > 0 {
+			sc.Thumb = &sc.Images[sc.Cases[0]][0]
+		}
+		for _, sn := range names {
+			for _, ctl := range s.Screens[sn].Controls {
+				if ctl.Component == n {
+					sc.Used = append(sc.Used, sn)
+					break
+				}
+			}
+		}
+		data.Components = append(data.Components, sc)
+	}
 	for _, g := range s.Groups {
 		sg := siteGroup{Name: g.Name}
 		for _, n := range g.Screens {

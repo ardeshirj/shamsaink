@@ -1,4 +1,2 @@
-{{template "head" .Dir}}<style>
-p { margin: 0; padding: 0.35em 0.3em; }
-p.cur { font-weight: bold; background: #d8d8d8; }
-</style></head><body>{{range .Entries}}<p id="{{.ID}}"{{textlang .Title}}{{if .Cur}} class="cur"{{end}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}</body></html>
+{{/* Contents (contents.go): a row each entry, the listrow component, laid out and paged by the engine. */ -}}
+{{template "head" .Dir}}</head><body>{{range .Entries}}{{template "listrow" lrow .ID .Title .Pad .Cur}}{{end}}</body></html>

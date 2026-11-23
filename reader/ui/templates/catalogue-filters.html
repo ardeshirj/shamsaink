@@ -1,0 +1,38 @@
+{{/* Planned (2026-11-23, not wired): a catalogue's Browse and filter (catalogue.go, DrawCatalogueFilters), under the
+bar and filling the screen, in two parts. Its head: the title with Clear all (when any is in force) and a close; with a
+group open, a back arrow and the group's name. Its body, paged as a list when it is long (no scrolling on e-ink): the
+catalogue's own sections as Browse (a deeper one, "By author ›", opens in place), then each group of the feed's facets
+(OPDS 1, their facetGroup; Sort first): its name and what is chosen, its choices as chips (the chosen one filled, how
+many books when the feed says), a long group's first few and More…, which opens the group in place, every choice a
+row. A tap on a choice follows its link at once: the panel stays, Loading… in its title, until the new feed's choices
+come. At the foot Show N books (Done when the feed gives no number), which closes it. */ -}}
+{{template "head" ""}}<style>
+.top { display: flex; align-items: center; gap: 0.6em; margin: 0.2em 0 0.4em; }
+.top .ttl { font-weight: bold; flex: 1; }
+.top .ld { font-size: 0.8em; color: #444; }
+.top .clr { text-decoration: underline; font-size: 0.9em; padding: 0.2em 0.3em; }
+.grp { border-top: 2px solid #999; padding: 0.5em 0 0.6em; }
+.grp .h { font-size: 0.8em; color: #444; margin: 0 0 0.45em; }
+.grp .h b { color: var(--ink); }
+.cs { display: flex; flex-wrap: wrap; gap: 0.45em; }
+.cs span.c { border: var(--line) solid var(--ink); border-radius: 1em; padding: 0.15em 0.75em; font-size: 0.9em; }
+.cs span.c.on { background: var(--ink); color: var(--paper); }
+.cs span.c .n { font-size: 0.75em; color: #555; }
+.cs span.c.on .n { color: var(--paper); }
+.cs span.c.more { border-style: dashed; }
+/* a group opened: every choice a row, ticked when chosen, its count at the end */
+ul.all { list-style: none; margin: 0; padding: 0; border-top: 2px solid #999; }
+ul.all li { display: flex; align-items: center; gap: 0.6em; padding: 0.4em 0; border-bottom: 2px solid #999; }
+ul.all li .i { visibility: hidden; }
+ul.all li.on .i { visibility: visible; }
+ul.all li .l { flex: 1; }
+ul.all li .n { font-size: 0.8em; color: #555; }
+.foot { display: flex; justify-content: center; border-top: 2px solid #999; padding-top: 0.7em; }
+ul.all + .foot { border-top: 0; }
+</style></head><body>
+{{- if eq .Part "head"}}<div class="top">{{if .Back}}{{template "iconbutton" ibtn "filters-back" "caret-left" false}}{{end}}<span class="ttl">{{.Title}}</span>{{with .Loading}}<span class="ld">{{.}}</span>{{end}}{{if .Clear}}<span class="clr" id="{{id "filters-clear"}}">{{.Clear}}</span>{{end}}{{template "iconbutton" ibtn "filters-close" "x" false}}</div>
+{{- else}}
+{{- range .Groups}}<div class="grp"><p class="h">{{.Name}}{{with .Chosen}} · <b>{{.}}</b>{{end}}</p><div class="cs">
+{{- range .Chips}}<span class="c{{if .On}} on{{end}}{{if .More}} more{{end}}" id="{{.ID}}"><bdi>{{.Label}}</bdi>{{with .Count}} <span class="n">{{.}}</span>{{end}}</span>{{end}}</div></div>{{end}}
+{{- with .Rows}}<ul class="all">{{range .}}<li class="{{if .On}}on{{end}}" id="{{.ID}}">{{icon "check"}}<bdi class="l">{{.Label}}</bdi>{{with .Count}}<span class="n">{{.}}</span>{{end}}</li>{{end}}</ul>{{end}}
+<div class="foot"><span class="b" id="filters-show">{{.Show}}</span></div><p class="end">&nbsp;</p>{{end}}</body></html>

@@ -3,11 +3,7 @@
 for a highlight held: Remove highlight. Listen from here when the book is narrated. A narrow list centred on the words, never
 past the page's margins (Panel.Centre), an entry a row with its icon, as the library's menus. A tap off
 it closes it, the words left as they were. */ -}}
-{{template "head" ""}}<style>
-ul.menu { list-style: none; margin: 0; margin-inline-start: auto; padding: 0; width: max-content; border: var(--line) solid var(--ink); border-radius: var(--radius); }
-.menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
-.menu li + li { border-top: 2px solid #999; }
-</style></head><body>
-<ul class="menu" id="highlight-menu">
-{{- if .Made}}<li id="{{id "hl-remove"}}">{{icon "trash"}}{{t "remove-highlight"}}</li>{{else}}<li id="{{id "hl-make"}}">{{icon "highlighter-circle"}}{{t "highlight"}}</li>{{end}}
-{{- if .Narrated}}<li id="{{id "hl-listen"}}">{{icon "play"}}{{t "listen-here"}}</li>{{end}}</ul></body></html>
+{{template "head" ""}}</head><body>
+<ul class="menu end" id="highlight-menu">
+{{- if .Made}}{{template "menuitem" mi "hl-remove" "trash" (t "remove-highlight")}}{{else}}{{template "menuitem" mi "hl-make" "highlighter-circle" (t "highlight")}}{{end}}
+{{- if .Narrated}}{{template "menuitem" mi "hl-listen" "play" (t "listen-here")}}{{end}}</ul></body></html>

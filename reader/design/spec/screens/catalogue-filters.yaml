@@ -1,0 +1,18 @@
+name: catalogue-filters
+layer: panel
+templates: [catalogue-filters.html]
+buttons: panel
+status: planned
+english: true   # the library: English only, its words in en.json alone
+purpose: "Planned (2026-11-23, not wired): a catalogue's Browse and filter, filling the screen under the bar, opened by the funnel at the head's end; paged as a list when long (no scrolling on e-ink). Its title with Clear all (when any is in force) and a close; then the catalogue's own sections as Browse (a deeper one, By author ›, opens its own; in place of the second dropdown, so the head keeps one), then each group of the feed's facets (OPDS 1 facets, their facetGroup; Sort first): its name and what is chosen, its choices as chips, the chosen one filled, how many books when the feed says, a long group's first few and More…, which opens that group in place (the back arrow and its name in the title), every choice a row, paged, as a deeper section does (By author: its authors, the feed's next pages read as they are turned to). A tap follows that choice's link at once and the panel stays, Loading… in its title, until the new feed's choices come; Show N books at its foot (Done when the feed gives no number) closes it. Only what the feed links to is shown: a feed without facets has Browse alone, one without sections no Browse."
+enter: [{gesture: tap, control: catalogue-filter, from: catalogue}]
+words: [filters-title, filters-browse, filters-clear, filters-done, filters-show, filters-more]
+controls:
+  - {id: filter-, component: segments, action: act, does: "follows that choice's link: a section opens, a facet applies; the panel stays with the new feed's choices; More… shows the rest of its group", dynamic: true}
+  - {id: filters-clear, component: button, action: act, does: "back to the catalogue's main page with no facets", when: "any is in force"}
+  - {id: filters-back, component: icon-button, action: act, does: "from a group opened (More…, a deeper section) back to all the groups", when: "a group is open"}
+  - {id: list-prev, component: icon-button, action: act, does: the previous page}
+  - {id: list-next, component: icon-button, action: act, does: the next page}
+  - {id: filters-close, component: icon-button, action: goto, to: catalogue}
+  - {id: filters-show, component: button, action: goto, to: catalogue}
+dismiss: filters-close

@@ -45,3 +45,25 @@ share with a round knob at the fill's end (the track's own id: a tap on it sets 
 Sized, the less one drawn small and the more one large, as one icon for a quantity). The track fills from the start
 side. */}}
 {{define "slider"}}<div class="slider"><div class="sname"><span>{{.Name}}</span><span>{{.Value}}</span></div><div class="srow"><span class="b{{if .Sized}} small{{end}}" id="{{.Dec.ID}}">{{icon .Less}}</span><div class="track" id="{{.Track}}"><i style="width: {{.Share}}%"></i><b></b></div><span class="b{{if .Sized}} large{{end}}" id="{{.Inc.ID}}">{{icon .More}}</span></div></div>{{end}}
+
+{{/* A menu's row (from mi, or mit for a choice): the whole row is the button. An action: its icon, then its words. A
+choice (a dropdown's list, the catalogues): a tick before it, shown only on the one chosen, its words in their own
+direction. Apart: an ink line over it, for a last entry set apart (Leave, Remove book) or the first of a second group.
+In a ul.menu (ui.css): "end" hangs at the end side, "hang" from a button above it (no top border). */}}
+{{define "menuitem"}}<li class="{{if .Tick}}tick{{end}}{{if .On}} on{{end}}{{if .Apart}} apart{{end}}" id="{{.ID}}">{{if .Tick}}{{icon "check"}}<bdi>{{.Label}}</bdi>{{else}}{{icon .Icon}}{{.Label}}{{end}}</li>{{end}}
+
+{{/* A progress bar (from pbar): a rounded track filled to its share from the start side (Side: left, or right in a
+right-to-left book), a tick under it where each part starts (Ticks, per cent from that side). A tap on it goes there. */}}
+{{define "progress"}}<div class="pbar" id="{{.ID}}"><i style="width: {{.Share}}%"></i>{{range .Ticks}}<b style="{{$.Side}}: {{.}}%"></b>{{end}}</div>{{end}}
+
+{{/* A long list's row (from lrow; Contents'): its words, indented on its start side (Pad, em), the current one bold on
+grey; laid out and paged by the engine with the rest. Its own language when it has one. */}}
+{{define "listrow"}}<p class="lr{{if .Cur}} cur{{end}}" id="{{.ID}}"{{textlang .Title}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}
+
+{{/* A dropdown (from dd): what is chosen, bold, then a caret, in a border; it opens a list of the other choices
+(menu-item rows hanging from its start edge). Inverted while its list is open. With a label (2026-11-23), what is being
+chosen, before it on its line as a setting's name: the label regular in the ink's colour, the value then regular too, as a
+setting's value (rules: A control says what it is). Given when the value alone does not say it (a catalogue's name), left
+out when a heading or the row's name already does. */}}
+{{define "dropdown"}}{{if .Label}}<span class="ddw"><span class="lgt">{{.Label}}</span>{{template "ddbox" .}}</span>{{else}}{{template "ddbox" .}}{{end}}{{end}}
+{{define "ddbox"}}<span class="b dd{{if .On}} on{{end}}" id="{{.ID}}"><bdi{{with .Dir}} dir="{{.}}"{{end}}>{{.Value}}</bdi>{{icon "caret-down"}}</span>{{end}}

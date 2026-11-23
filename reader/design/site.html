@@ -42,6 +42,8 @@ window over the page (#view), so the grid never moves */
 .tiles .group b { color: var(--fg); font-size: 18px; } .tiles .group span { font-size: 13px; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); grid-auto-rows: 1fr; gap: 12px; margin: 12px 0; }
 .tiles article.screen { display: flex; }
+.tiles.comps { grid-auto-rows: auto; }
+.comp a.tile img.thumb { height: 90px; object-fit: scale-down; }
 /* every tile as tall as the tallest: the name and tags on top, the picture along the bottom */
 a.tile { flex: 1; display: flex; flex-direction: column; padding: 10px 12px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--fg); text-decoration: none; }
 a.tile:hover, a.tile:focus-visible { border-color: var(--accent); }
@@ -90,8 +92,18 @@ dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font
 {{end}}</div></details>
 
 <details class="sec" id="components"><summary>Components</summary><div class="body">
-<table><tr><th>Component</th><th>Role</th><th>Purpose</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th></tr>
-{{range .Components}}<tr><td><code>{{.Name}}</code>{{if .Helper}}<br><small>helper <code>{{.Helper}}</code></small>{{end}}</td><td>{{.Purpose}}</td><td>{{join .States ", "}}</td><td>{{if .CSS}}{{.CSS.Width}} × {{.CSS.Height}}{{end}}</td><td>{{.Refresh.Waveform}}, {{.Refresh.Region}}</td><td>{{.RTL}}</td></tr>{{end}}</table></div></details>
+<p class="lede">The pieces every screen is made of, drawn alone in each state from <code>templates/samples.html</code> (English, then Farsi: each mirrors itself), at a third of their size. A tile opens the component with what it is, where it is used and every sample.</p>
+<div class="tiles comps">
+{{range .Components}}<article class="screen comp" id="component-{{.Name}}" data-find="{{.Name}} {{.Role}}">
+<a class="tile" href="#component-{{.Name}}"><span class="head"><b>{{.Name}}</b> <span class="tag">{{.Role}}</span>{{if .Template}}<span class="tag">shared</span>{{else}}<span class="tag">in its screens</span>{{end}}</span>{{with .Thumb}}<img class="thumb" src="{{.Path}}" alt="" loading="lazy">{{end}}</a><div class="body" hidden>
+<h3>{{.Name}}</h3>
+<p class="sub">{{.Purpose}}</p>
+<table><tr><th>Helper</th><th>States</th><th>Size</th><th>Refresh</th><th>Right to left</th><th>Used in</th></tr>
+<tr><td>{{if .Helper}}<code>{{.Helper}}</code>{{end}}</td><td>{{join .States ", "}}</td><td>{{if .CSS}}{{.CSS.Width}} × {{.CSS.Height}}{{end}}</td><td>{{.Refresh.Waveform}}, {{.Refresh.Region}}</td><td>{{.RTL}}</td><td>{{range $i, $u := .Used}}{{if $i}}, {{end}}<a href="#screen-{{$u}}">{{$u}}</a>{{end}}</td></tr></table>
+{{if not .Template}}<p class="sub">Drawn in its screens' own templates: no samples yet.</p>{{end}}
+{{$c := .}}<div class="shots">{{range .Cases}}{{$k := .}}<div class="case">{{range index $c.Images $k}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$c.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}</div>
+</div></article>
+{{end}}</div></div></details>
 
 <details class="sec" id="flow"><summary>Flow</summary><div class="body">
 <p class="lede">Every way into a screen: <em>from → to: gesture control</em>. The app starts at the library; every way out of a panel lands on the page.</p>
@@ -106,8 +118,8 @@ dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font
 <h3>{{.Name}}</h3>
 {{if .Purpose}}<p class="sub">{{.Purpose}}</p>{{end}}
 {{if .Controls}}<table><tr><th>Control</th><th>Component</th><th>Does</th><th>When</th></tr>
-{{range .Controls}}<tr><td><code>{{.ID}}</code></td><td>{{.Component}}</td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}{{range .Requires}} <span class="tag">needs {{.}}</span>{{end}}</td></tr>{{end}}</table>{{end}}
-{{$sc := .}}<div class="shots">{{range .Cases}}{{$c := .}}<div class="case">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}}</figcaption></figure>{{end}}</div>{{end}}</div>
+{{range .Controls}}<tr><td><code>{{.ID}}</code></td><td><a href="#component-{{.Component}}">{{.Component}}</a></td><td>{{if eq .Action "act"}}{{.Does}}{{else}}{{.Action}} → <a href="#screen-{{.To}}">{{.To}}</a>{{end}}</td><td>{{.When}}{{range .Requires}} <span class="tag">needs {{.}}</span>{{end}}</td></tr>{{end}}</table>{{end}}
+{{$sc := .}}<div class="shots">{{range .Cases}}{{$c := .}}<div class="case">{{range index $sc.Images $c}}<figure><img src="{{.Path}}" width="{{.Shown}}" alt="{{$sc.Name}}, {{.Case}}, {{.Lang}}" loading="lazy"><figcaption>{{.Case}} · {{.Lang}} <span class="tag{{if .Planned}} planned{{end}}">{{if .Planned}}planned{{else}}built{{end}}</span></figcaption></figure>{{end}}</div>{{end}}</div>
 </div></article>
 {{end}}{{end}}</div></div></details>
 <dialog id="view" aria-label="Screen"><button type="button" class="close" aria-label="Close">×</button><div class="slot"></div></dialog>
@@ -117,7 +129,7 @@ dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font
 {{range $n, $m := .Buttons}}<tr><td><code>{{$n}}</code></td><td>{{$m.Forward}}</td><td>{{$m.Back}}</td><td>{{$m.HoldForward}}</td><td>{{$m.HoldBack}}</td></tr>{{end}}</table></div></details>
 <script>
 (function () {
-  var shots = document.querySelectorAll("article.screen"), view = document.getElementById("view"), slot = view.querySelector(".slot");
+  var shots = document.querySelectorAll("#screens article.screen"), view = document.getElementById("view"), slot = view.querySelector(".slot");
   function all(open) { document.querySelectorAll("details.sec").forEach(function (d) { d.open = open; }); }
   document.getElementById("expand").onclick = function () { all(true); };
   document.getElementById("collapse").onclick = function () { all(false); };
@@ -137,7 +149,7 @@ dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font
   }
   view.addEventListener("close", function () {
     put();
-    if (location.hash.indexOf("#screen-") === 0) history.replaceState(null, "", location.pathname + location.search);
+    if (location.hash.indexOf("#screen-") === 0 || location.hash.indexOf("#component-") === 0) history.replaceState(null, "", location.pathname + location.search);
   });
   view.querySelector(".close").onclick = function () { view.close(); };
   view.addEventListener("click", function (e) { if (e.target === view) view.close(); }); // a click on the backdrop
@@ -145,7 +157,7 @@ dialog#view .close { position: sticky; top: 0; float: right; font: inherit; font
   function show() {
     var el = location.hash && document.getElementById(location.hash.slice(1));
     if (!el) return;
-    if (el.matches("article.screen")) { document.getElementById("screens").open = true; open(el); return; }
+    if (el.matches("article.screen")) { el.closest("details.sec").open = true; open(el); return; }
     for (var d = el; d; d = d.parentElement) if (d.tagName === "DETAILS") d.open = true;
     el.scrollIntoView();
   }

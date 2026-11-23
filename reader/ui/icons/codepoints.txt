@@ -46,3 +46,4 @@ warning-circle e4e2
 caret-down e136
 books e758
 cloud-arrow-down e1ac
+funnel e266

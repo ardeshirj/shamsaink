@@ -116,7 +116,8 @@ type Component struct {
 		Width    string `yaml:"width"`
 		Height   string `yaml:"height"`
 	} `yaml:"css"`
-	Refresh Refresh `yaml:"refresh"`
+	Refresh Refresh  `yaml:"refresh"`
+	Order   []string `yaml:"order"` // the order its samples are shown in on the page; those not listed follow by name
 }
 
 // Control is one thing on a screen that answers a tap.
@@ -163,6 +164,7 @@ type Screen struct {
 	Dismiss   string    `yaml:"dismiss"`  // how it is left for what is under it
 	Buttons   string    `yaml:"buttons"`  // its map of the page buttons (spec/buttons.yaml)
 	Order     []string  `yaml:"order"`    // the order its renders are shown in on the page (their cases); those not listed follow by name
+	Planned   []string  `yaml:"planned"`  // its renders (cases) of a design not built yet: tagged planned on the page, the rest built
 	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
 	// shown only with the English interface (the library and its panels: with no book open the interface is English,
 	// docs/design/README.md, "Renders"): its words in the English table only (2026-11-22)

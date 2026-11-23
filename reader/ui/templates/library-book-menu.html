@@ -2,14 +2,9 @@
 row's end, under the row (over it when there is no room under), an entry a row with its icon, as the library's menu.
 Mark as finished (not for a book that is: opening it starts it again), Mark as new (a book opened: its place forgotten, its highlights
 kept), Details, and Remove book, set apart by an ink line as the library menu's last entry. */ -}}
-{{template "head" "ltr"}}<style>
-ul.menu { list-style: none; margin: 0; margin-inline-start: auto; padding: 0; width: max-content; border: var(--line) solid var(--ink); border-radius: var(--radius); }
-.menu li { display: flex; align-items: center; gap: 0.6em; padding: 0.35em 0.8em; }
-.menu li + li { border-top: 2px solid #999; }
-.menu li:last-child { border-top: var(--line) solid var(--ink); }
-</style></head><body>
-<ul class="menu" id="book-menu">
-{{- if not .Finished}}<li id="{{id "book-finish"}}">{{icon "check-circle"}}{{t "mark-finished"}}</li>{{end}}
-{{- if .Opened}}<li id="{{id "book-new"}}">{{icon "arrow-counter-clockwise"}}{{t "mark-new"}}</li>{{end}}
-<li id="{{id "book-details"}}">{{icon "info"}}{{t "details"}}</li>
-<li id="{{id "book-remove"}}">{{icon "trash"}}{{t "remove-book"}}</li></ul></body></html>
+{{template "head" "ltr"}}</head><body>
+<ul class="menu end" id="book-menu">
+{{- if not .Finished}}{{template "menuitem" mi "book-finish" "check-circle" (t "mark-finished")}}{{end}}
+{{- if .Opened}}{{template "menuitem" mi "book-new" "arrow-counter-clockwise" (t "mark-new")}}{{end}}
+{{template "menuitem" mi "book-details" "info" (t "details")}}
+{{template "menuitem" apart (mi "book-remove" "trash" (t "remove-book"))}}</ul></body></html>

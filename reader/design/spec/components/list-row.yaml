@@ -1,7 +1,8 @@
 name: list-row
 purpose: "One row of a long list (Contents' entries); the current one bold on grey. A list is laid out and paginated by the engine."
 role: listitem
-template: ""         # drawn in contents.html itself, not yet a shared component
+template: listrow    # {{define}} in ui/templates/components.html: Contents' row; the library's and the catalogue's rows (a book: title, author, its button) are still their own
+helper: lrow         # lrow "id" words indent current
 states: [off, current]
 rtl: the list runs in the book's direction; each row's indent is on its start side
 refresh: {waveform: GL16, region: page}   # a page of the list, as the library's

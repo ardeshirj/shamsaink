@@ -1,0 +1,26 @@
+{{/* The components' samples for the design page (design_render_test.go, componentRenders): one component in one state,
+alone, as a panel draws it, cropped to its box; what is no word of the reader's in both languages from sampleText. Not shown
+by the reader. */ -}}
+{{template "head" ""}}<style>
+.sample { display: inline-flex; align-items: center; gap: 0.6em; padding: 0.6em; }
+.sample.wide { display: block; width: 14em; }
+.sample.set { display: grid; width: 26em; }
+</style></head><body>
+{{- $c := .Case}}{{if eq .Name "button"}}<div class="sample" id="sample">
+  {{- if eq $c "plain"}}{{template "button" btn "b" (t "close")}}{{else if eq $c "icon"}}{{template "button" btni "b" "trash" (t "remove")}}{{end}}</div>
+{{- else if eq .Name "dialog"}}<div class="sample wide" id="sample">
+  {{- if eq $c "question"}}{{template "dialog" dlg "d" (t "wifi-off-update") "" "" "" (btni "on" "wifi-high" (t "turn-on")) (btn "no" (t "cancel"))}}{{else}}{{template "dialog" dicon "warning-circle" (dlg "d" (t "connect-failed") "" "" "" (btn "ok" (t "close")))}}{{end}}</div>
+{{- else if eq .Name "icon-button"}}<div class="sample" id="sample">
+  {{- if eq $c "off"}}{{template "iconbutton" ibtn "i" "sun" false}}{{else if eq $c "on"}}{{template "iconbutton" ibtn "i" "moon" true}}{{else}}{{template "iconbutton" ibtn "i" "arrow-left" false}}{{end}}</div>
+{{- else if eq .Name "segments"}}<div class="sample wide" id="sample">{{template "segments" list (pick "a" (t "contents") (eq $c "first")) (pick "b" (t "light") (ne $c "first")) (pick "c" (t "text") false)}}</div>
+{{- else if eq .Name "tabs"}}<div class="sample wide" id="sample">{{template "tabs" list (pick "a" (t "contents") (eq $c "first")) (pick "b" (t "text") (ne $c "first"))}}</div>
+{{- else if eq .Name "toggle"}}{{if eq $c "row" "row-about"}}<div class="sample set" id="sample">{{if eq $c "row"}}{{template "switch" pick "s" (t "dark-mode") true}}{{else}}{{template "switch" pick "s" (t "follow-book") false (index $.S "switch-about")}}{{end}}</div>{{else}}<div class="sample" id="sample">{{template "toggle" pick "s" "" (eq $c "on")}}</div>{{end}}
+{{- else if eq .Name "stepper"}}<div class="sample set" id="sample">{{if eq $c "value"}}{{template "stepper" step (t "sleep-after") "st" (t "min" "15")}}{{else}}{{template "stepper" step (t "sleep-after") "st" (t "min" "15") (index $.S "step-about")}}{{end}}</div>
+{{- else if eq .Name "slider"}}<div class="sample wide" id="sample">{{template "slider" slide (t "light") "sl" "60" 60 "sun" "sun" true}}</div>
+{{- else if eq .Name "menu-item"}}<div class="sample" id="sample"><ul class="menu">
+  {{- if eq $c "actions"}}{{template "menuitem" mi "a" "gear" (t "settings")}}{{template "menuitem" mi "b" "info" (t "details")}}{{template "menuitem" apart (mi "c" "trash" (t "remove"))}}{{else}}{{template "menuitem" mit "a" (index $.S "dd-short") true}}{{template "menuitem" mit "b" (index $.S "dd-value") false}}{{template "menuitem" apart (mit "c" (t "contents") false)}}{{end}}</ul></div>
+{{- else if eq .Name "bar"}}<div class="sample wide" id="sample" style="display: flex; padding-bottom: 1em;"{{if eq (index $.S "bar-side") "right"}} dir="rtl"{{end}}>{{template "progress" pbar "p" (index $.S "bar-share") (index $.S "bar-side") (index $.T "ticks")}}</div>
+{{- else if eq .Name "list-row"}}<div class="sample wide" id="sample">{{range $i, $r := index $.R "rows"}}{{template "listrow" lrow (printf "e%d" $i) $r.Title $r.Pad (and (eq $c "current") (eq $i 1))}}{{end}}</div>
+{{- else if eq .Name "dropdown"}}<div class="sample" id="sample">
+  {{- if eq $c "plain"}}{{template "dropdown" dd "dd" (index $.S "dd-short") false}}{{else if eq $c "open"}}{{template "dropdown" dd "dd" (index $.S "dd-short") true}}{{else if eq $c "labelled"}}{{template "dropdown" dd "dd" (index $.S "dd-value") false (index $.S "dd-label")}}{{else if eq $c "labelled-open"}}{{template "dropdown" dd "dd" (index $.S "dd-value") true (index $.S "dd-label")}}{{else}}{{template "dropdown" dd "dd" (index $.S "dd-long") false (index $.S "dd-label")}}{{end}}</div>
+{{- end}}</body></html>

@@ -6,3 +6,4 @@ helper: dlg          # dlg "box-id" text title dir note (btni "id" "icon" ...) (
 states: [off]
 rtl: the page's direction; the title its own
 refresh: {waveform: GL16, region: own-box}
+order: [question, notice]
