@@ -57,8 +57,11 @@ right-to-left book), a tick under it where each part starts (Ticks, per cent fro
 {{define "progress"}}<div class="pbar" id="{{.ID}}"><i style="width: {{.Share}}%"></i>{{range .Ticks}}<b style="{{$.Side}}: {{.}}%"></b>{{end}}</div>{{end}}
 
 {{/* A long list's row (from lrow; Contents'): its words, indented on its start side (Pad, em), the current one bold on
-grey; laid out and paged by the engine with the rest. Its own language when it has one. */}}
-{{define "listrow"}}<p class="lr{{if .Cur}} cur{{end}}" id="{{.ID}}"{{textlang .Title}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}
+grey; laid out and paged by the engine with the rest. Its own language when it has one, and its own direction from its
+first strong letter (textdir; the engine ignores dir on an inline bdi, and its dir="auto" leaves the indent on the
+list's side): a Farsi name in an English book's list reads from the right, indented from the right, a number before it
+on its right (principles: The interface's frame, the content's direction); the list's order is the book's. */}}
+{{define "listrow"}}<p class="lr{{if .Cur}} cur{{end}}" id="{{.ID}}"{{with textdir .Title}} dir="{{.}}"{{end}}{{textlang .Title}} style="padding-inline-start: {{.Pad}}em">{{.Title}}</p>{{end}}
 
 {{/* A dropdown (from dd): what is chosen, bold, then a caret, in a border; it opens a list of the other choices
 (menu-item rows hanging from its start edge). Inverted while its list is open. With a label (2026-11-23), what is being

@@ -169,6 +169,7 @@ func uiFuncs(ids *[]string) template.FuncMap {
 		},
 		"rtlui":    RTL,
 		"textlang": textLang,
+		"textdir":  textDir,
 		"ibtn": func(id, name string, on bool) iconButton {
 			return iconButton{ID: add(id), Glyph: glyph(name), On: on,
 				Flip: pointing(name)}
@@ -267,6 +268,22 @@ func textLang(s string) template.HTMLAttr {
 	for _, r := range s {
 		if unicode.Is(unicode.Arabic, r) {
 			return ` lang="fa"`
+		}
+	}
+	return ""
+}
+
+// textDir is the direction of a piece of text with no language of its own (a chapter's name): its first strong letter's,
+// "rtl" in a right-to-left script (Hebrew, Arabic and their neighbours), else "ltr"; with no letter (a number alone), ""
+// for none, the list's then. As HTML's dir="auto", given to the engine as a direction so the row's logical properties
+// (its indent) follow it too.
+func textDir(s string) string {
+	for _, r := range s {
+		switch {
+		case r >= 0x0590 && r <= 0x08FF || r >= 0xFB1D && r <= 0xFEFF:
+			return "rtl"
+		case unicode.IsLetter(r):
+			return "ltr"
 		}
 	}
 	return ""
