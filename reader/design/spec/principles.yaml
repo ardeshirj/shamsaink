@@ -19,6 +19,9 @@ principles:
   - name: Refresh what changed
     text: "Each layer its own box and waveform; black and white controls, no shadows, greys or motion. Smooth by default: no flash on a page turn or a panel; a wake from sleep flashes white, then the page, so the sleep screen does not stay behind the text."
     check: "every component names a waveform the device has and a region"
+  - name: The interface's frame, the content's direction
+    text: "The frame of a screen (the order of things in a row, icons, controls, where a bar or a tag sits) follows the interface's language: English left to right, Farsi right to left, never mirrored for what is shown in it. Each piece of content (a book's title and author, a chapter's name) takes its own direction, from the language its book declares, else its first strong letter; it is isolated from what is around it and aligned by its own direction inside the frame. A book's own parts keep its direction: its pages and page turns, its contents (one book's list, in its language), what shows its progress (its bar filled from the book's start). In the library a Farsi title reads from the right and its bar sits in the same column as an English one's (2026-11-23; as W3C's guidance on bidirectional text and Unicode's bidi algorithm, UAX #9)."
+    check: "by eye (the library's renders: a mixed shelf, its bars in one column)"
 rules:
   - name: Out is the page
     text: "A tap on the page, Done, a close button or a jump: each closes everything at once and leaves the page alone, one refresh."

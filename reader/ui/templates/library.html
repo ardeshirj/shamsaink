@@ -7,20 +7,23 @@ folder they go in, as the device's drive shows it (left to right, bold). The eng
 of text but never inside a heading, so the two lines are one heading (each line's height its own, the heading's none;
 data-shamsaink="row": not kept with the next row, as a book's heading is with its text, which left a row's room empty),
 the share read after it in the page, put on the title's line. The page itself is always left to right, whatever the
-interface's language: each row has the direction of its own title. */ -}}
+interface's language: each row has the direction of its own title, and the frame is the interface's (2026-11-23, the
+principle "The interface's frame, the content's direction"): the share read, a tag or a date at every row's right, in
+one column; a right-to-left title from the right, ending before that column (Col px wide, gap included: fitTitles),
+its bar still filled from its book's start. */ -}}
 {{template "head" "ltr"}}<style>
 /* pulled up by a row's top padding: a page after the first starts at its first line (the engine's rule for books), so
    the first would otherwise start that much lower (2026-11-22: the rows moved 15 px up on a page turn) */
-ul { list-style: none; margin: -0.35em 0 0; padding: 0; }
+ul { list-style: none; margin: -0.35em 0 0; padding: 0; --col: {{.Col}}px; }
 li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; }
-li[dir="rtl"] h3 { text-align: right; }
+li[dir="rtl"] h3 { text-align: right; padding-right: var(--col); }
 h3 .t { line-height: 1.25; }
 /* Farsi's letters reach higher and lower than Latin ones: its lines taller */
 li[dir="rtl"] h3 .t, li[dir="rtl"] h3 .a { line-height: 1.35; }
 h3 .nar .i { font-size: 0.9em; line-height: 1.2; }
 h3 .a { font-size: 0.85em; line-height: 1.2; color: #444; }
-li .pct { position: absolute; top: 0.35em; inset-inline-end: 0; display: flex; align-items: center; gap: 0.4em; height: 1.39em; font-size: 0.9em; line-height: 1.33; white-space: nowrap; }
+li .pct { position: absolute; top: 0.35em; right: 0; display: flex; align-items: center; gap: 0.4em; height: 1.39em; font-size: 0.9em; line-height: 1.33; white-space: nowrap; }
 /* the share read as a short bar, filled from the row's start */
 li .pct .prog { display: flex; width: 3.5em; height: 0.4em; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 0.3em; }
 li .pct .prog i { display: block; height: 100%; background: var(--ink); }

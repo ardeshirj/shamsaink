@@ -19,8 +19,10 @@ FarsiEPUB's ShamsaInk page.
 - **The interface** has words in English and Farsi. A Farsi book's menus are in Farsi, right to left; every other
   book's in English, left to right, a right-to-left book's own parts (its pages, the dock's progress row, its
   contents) in its direction (since 2026-11-22; before, English mirrored). The library is
-  always in English, each book's row laid out in its own direction (a right-to-left language's from the right,
-  since 2026-11-22; before, Farsi's only). Settings → "Follow book language" off: English, left to right, everywhere.
+  always in English, each book's title and author in their own direction (a right-to-left language's from the right,
+  since 2026-11-22; before, Farsi's only), the share read or a tag at every row's right in one column (since
+  2026-11-23; before, a right-to-left row's at its left: the principle "The interface's frame, the content's
+  direction", `reader/design/spec/principles.yaml`). Settings → "Follow book language" off: English, left to right, everywhere.
 - **Read-along** (EPUB media overlays) does not depend on the language: words are highlighted by the SMIL's ids and
   times. On the Kobo only (the Kindle has no sound of ours yet).
 

@@ -5,7 +5,7 @@ buttons: list
 status: built
 english: true   # the library: English only, its words in en.json alone
 entry: true          # where the app starts
-purpose: "The books, a row each, under the bar (its title the choice of Library and Catalogues, Library chosen) and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row in its title's direction. With no books in the filter chosen, one placeholder: No books here; when there are no books at all, also the folder on the device's drive that EPUB books go in."
+purpose: "The books, a row each, under the bar (its title the choice of Library and Catalogues, Library chosen) and the filters (Reading, New, Finished, All) with a sort button; always left to right, each row's title and author in their own direction, the share read, a tag or a date at every row's right in one column (a right-to-left title ending before it). With no books in the filter chosen, one placeholder: No books here; when there are no books at all, also the folder on the device's drive that EPUB books go in."
 enter: [{gesture: tap, control: topbar-start, from: topbar}]
 words: [no-books, no-books-hint, catalogues]
 controls:
