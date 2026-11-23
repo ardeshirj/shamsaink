@@ -32,36 +32,48 @@ const maxFeed = 8 << 20
 // Get reads one page of a catalogue at addr with client (the updater's: its timeouts and CA roots). Its links come
 // resolved against the address it was finally read from, after redirects.
 func Get(ctx context.Context, client *http.Client, addr string) (*Feed, error) {
+	f, _, err := GetPage(ctx, client, addr)
+	return f, err
+}
+
+// GetPage is Get, with the page as it came, to keep for offline (Page).
+func GetPage(ctx context.Context, client *http.Client, addr string) (*Feed, *Page, error) {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, "GET", addr, nil)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUnreachable, err)
+		return nil, nil, fmt.Errorf("%w: %v", ErrUnreachable, err)
 	}
 	req.Header.Set("Accept", "application/atom+xml;profile=opds-catalog, application/atom+xml;q=0.9, */*;q=0.5")
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", ErrUnreachable, err)
+		return nil, nil, fmt.Errorf("%w: %v", ErrUnreachable, err)
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("%w: %s: %s", ErrUnreachable, addr, res.Status)
+		return nil, nil, fmt.Errorf("%w: %s: %s", ErrUnreachable, addr, res.Status)
 	}
 	if ct := res.Header.Get("Content-Type"); strings.Contains(ct, "json") {
-		return nil, fmt.Errorf("%w: %s is %s (OPDS 2 is not read yet)", ErrNotFeed, addr, ct)
+		return nil, nil, fmt.Errorf("%w: %s is %s (OPDS 2 is not read yet)", ErrNotFeed, addr, ct)
 	}
-	f, err := ParseOPDS1(io.LimitReader(res.Body, maxFeed), res.Request.URL)
+	b, err := io.ReadAll(io.LimitReader(res.Body, maxFeed))
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s: %v", ErrNotFeed, addr, err)
+		return nil, nil, fmt.Errorf("%w: %s: %v", ErrUnreachable, addr, err)
 	}
-	return f, nil
+	p := &Page{URL: res.Request.URL.String(), At: time.Now().UTC(), XML: b}
+	f, err := p.Feed()
+	if err != nil {
+		return nil, nil, fmt.Errorf("%w: %s: %v", ErrNotFeed, addr, err)
+	}
+	return f, p, nil
 }
 
 // EPUB is the link to download a book by, nil when it has none ShamsaInk can take: an EPUB given freely (open access
-// first, then a plain acquisition link), not one to buy, borrow or sample, nor one behind another step (an indirect
+// first, then a plain acquisition link, then an Atom enclosure: a plain Atom feed's file, as Standard Ebooks' open feed
+// of new releases gives its books), not one to buy, borrow or sample, nor one behind another step (an indirect
 // acquisition: a licence, a page).
 func EPUB(m *manifest.Manifest) *manifest.Link {
-	var plain *manifest.Link
+	var plain, enclosure *manifest.Link
 	for i := range m.Links {
 		l := &m.Links[i]
 		if l.MediaType == nil || l.MediaType.String() != "application/epub+zip" || l.Properties.Get("indirectAcquisition") != nil {
@@ -75,8 +87,15 @@ func EPUB(m *manifest.Manifest) *manifest.Link {
 				if plain == nil {
 					plain = l
 				}
+			case "enclosure":
+				if enclosure == nil {
+					enclosure = l
+				}
 			}
 		}
+	}
+	if plain == nil {
+		return enclosure
 	}
 	return plain
 }

@@ -8,7 +8,8 @@ import (
 )
 
 // On each device's profile, every built screen of the spec is walked, or shown by the reader itself, or dev mode's, or
-// reached only through what that device has not (the Kindle's Sound panel); a screen added with no way the walk can make
+// reached only through what that device has not (the Kindle's Sound panel), or only by a control the walk must not press
+// (walk: "never: why": the catalogues, which need the network); a screen added with no way the walk can make
 // to it fails here, in make check. Every route's gesture is one the walk can make.
 func TestWalkPlan(t *testing.T) {
 	spec, err := design.Load()
@@ -19,7 +20,7 @@ func TestWalkPlan(t *testing.T) {
 		routes, left := plan(spec, dev.Has)
 		for n, why := range left {
 			if !strings.HasPrefix(why, "shown by the reader itself") && !strings.HasPrefix(why, "dev mode only") &&
-				!strings.HasPrefix(why, "not on this device") {
+				!strings.HasPrefix(why, "not on this device") && !strings.HasPrefix(why, "never: ") {
 				t.Errorf("%s: %s: %s", dev.Name, n, why)
 			}
 		}

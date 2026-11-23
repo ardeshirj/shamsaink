@@ -4,10 +4,36 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"shamsainkreader/design"
 )
 
-// Every language has the same words as English, with the same slots (%d, %s).
+// englishOnly are the words only screens shown in English use (the spec's english: true, the library and its panels):
+// in the English table alone.
+func englishOnly(t *testing.T) map[string]bool {
+	s, err := design.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	only, shared := map[string]bool{}, map[string]bool{}
+	for _, sc := range s.Screens {
+		for _, w := range sc.Words {
+			if sc.English {
+				only[w] = true
+			} else {
+				shared[w] = true
+			}
+		}
+	}
+	for w := range shared {
+		delete(only, w)
+	}
+	return only
+}
+
+// Every language has the same words as English, with the same slots (%d, %s), but those of English-only screens.
 func TestWordTablesAgree(t *testing.T) {
+	only := englishOnly(t)
 	slots := func(s string) string {
 		var out []string
 		for i := 0; i+1 < len(s); i++ {
@@ -21,6 +47,9 @@ func TestWordTablesAgree(t *testing.T) {
 	for code, table := range words {
 		for key, en := range words["en"] {
 			v, ok := table[key]
+			if !ok && only[key] {
+				continue
+			}
 			if !ok || v == "" {
 				t.Errorf("%s: no word %q", code, key)
 			} else if code != "en" && slots(v) != slots(en) {

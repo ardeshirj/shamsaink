@@ -115,8 +115,9 @@ keyboard first ("Now").
   OPDS feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header,
   a two-part choice (Library | Catalogues, 2026-11-20; On this Kobo | FarsiEPUB before), not a setting; the list, and
   downloads into the library. **Built 2026-11-22: reading catalogues and downloading into the library** (`DESIGN.md`,
-  "Books from catalogues"; tried on both devices). **The screens designed 2026-11-22** (the spec's `catalogue` and
-  `catalogue-menu`, renders on `docs/design/system.html`); wiring them next.
+  "Books from catalogues"; tried on both devices). **The screens built and wired 2026-11-22** (sections, two
+  dropdowns, downloads and Read; tried on both devices, a scenario in CI). Next: OPDS groups, search and logins (with
+  the keyboard), OPDS 2 after Readium's rework.
   FarsiEPUB's feed is live (OPDS 1.2, since 2026-11-20); go-toolkit only recognises OPDS (experiment 18), so the
   parser is ours. Narrated books, large and hard to copy by hand, gain the most. **New editions, settled 2026-11-22:**
   (1) the catalogue's address and the entry's Atom `<id>` recorded at download and (2) the entry's file gone over by a

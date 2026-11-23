@@ -295,6 +295,9 @@ func Validate(s *Spec, src Sources) []string {
 		}
 		for w := range used {
 			for l, tab := range words {
+				if l != "en" && sc.English {
+					continue
+				}
 				if _, ok := tab[w]; !ok {
 					f("screen %s: word %q is not in the %s table", n, w, l)
 				}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"shamsainkreader/files"
@@ -16,6 +17,7 @@ import (
 // catalogue (the address of the catalogue's start) and its Atom id; a catalogue's ids are its own, so the same id in
 // two catalogues is two entries.
 type Record struct {
+	mu        sync.Mutex // downloads run beside the screen that reads it
 	path      string
 	Downloads []Saved `json:"downloads"`
 }
@@ -42,6 +44,8 @@ func LoadRecord(dir string) *Record {
 // Find is the file (relative to the reader's folder) of the entry's last download, "" if it has none or its file is
 // gone from dir.
 func (r *Record) Find(dir, catalogue, entry string) string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	for _, d := range r.Downloads {
 		if d.Catalogue == catalogue && d.Entry == entry {
 			if _, err := os.Stat(filepath.Join(dir, d.Path)); err == nil {
@@ -55,6 +59,8 @@ func (r *Record) Find(dir, catalogue, entry string) string {
 
 // Get is the entry's download, false if it has none.
 func (r *Record) Get(catalogue, entry string) (Saved, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	for _, d := range r.Downloads {
 		if d.Catalogue == catalogue && d.Entry == entry {
 			return d, true
@@ -65,6 +71,8 @@ func (r *Record) Get(catalogue, entry string) (Saved, bool) {
 
 // Put records d, in place of the entry's earlier download, and saves the record.
 func (r *Record) Put(d Saved) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	for i := range r.Downloads {
 		if r.Downloads[i].Catalogue == d.Catalogue && r.Downloads[i].Entry == d.Entry {
 			r.Downloads[i] = d

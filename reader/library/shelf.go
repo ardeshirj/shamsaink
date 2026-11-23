@@ -160,6 +160,8 @@ func Sort(books []Item, sort string) {
 type View struct {
 	Filter string            `json:"filter,omitempty"`
 	Sorts  map[string]string `json:"sorts,omitempty"`
+	// the catalogue last shown on the Catalogues side (its address), the first (FarsiEPUB's) when none
+	Catalogue string `json:"catalogue,omitempty"`
 }
 
 // LoadView reads DIR/library-view.json; ok is false when there is none (or it does not parse).

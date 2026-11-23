@@ -164,6 +164,9 @@ type Screen struct {
 	Buttons   string    `yaml:"buttons"`  // its map of the page buttons (spec/buttons.yaml)
 	Order     []string  `yaml:"order"`    // the order its renders are shown in on the page (their cases); those not listed follow by name
 	Words     []string  `yaml:"words"`    // the strings it uses, in both language tables
+	// shown only with the English interface (the library and its panels: with no book open the interface is English,
+	// docs/design/README.md, "Renders"): its words in the English table only (2026-11-22)
+	English bool `yaml:"english"`
 }
 
 // Principle is something the design stands on, and what keeps it so.

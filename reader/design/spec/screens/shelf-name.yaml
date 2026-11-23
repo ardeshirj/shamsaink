@@ -1,0 +1,12 @@
+name: shelf-name
+layer: overlay
+templates: [shelf-name.html]
+buttons: panel
+status: built
+english: true   # the library: English only, its words in en.json alone
+purpose: "The name of the library's side shown (Library or Catalogues, the bar's two icons) and what it holds, in a small box hanging from the bar under its icon, as the battery's level; opened by a tap on the side already shown, closed by any tap (2026-11-22: the icons alone say less than their words did)."
+enter: [{gesture: tap, control: shelf-library, from: library}, {gesture: tap, control: shelf-catalogues, from: catalogue}]
+internal: [shelf-name]   # the box itself, found to cut the panel to it
+words: [library, catalogues, shelf-library-about, shelf-catalogues-about]
+controls: []
+dismiss: tap-outside

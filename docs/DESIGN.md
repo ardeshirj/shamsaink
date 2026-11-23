@@ -270,7 +270,7 @@ left as the device has it.
 - **Development** (dev mode only): the Developer panel's Wi-Fi switch, its state under it; on connects with no
   question and stays on, off turns it off as Kobo's switch does (`TurnOffWiFi`).
 
-### Books from catalogues: OPDS (2026-11-22; the screens designed, not yet wired)
+### Books from catalogues: OPDS (2026-11-22)
 `reader/opds`, from experiment 18 (its NOTES.md: the catalogues surveyed, the timings on both devices).
 - **Reading a catalogue:** OPDS 1.2 (Atom) read as a stream into go-toolkit's model, each book a `manifest.Manifest`
   as in Readium's Kotlin and Swift toolkits, the page around them a `Feed` (its links: next, search; its menus, facets
@@ -293,22 +293,35 @@ left as the device has it.
   forgotten and the entry comes as a new book. `Newer` tells a newer edition from `<updated>`, without downloading.
   (Of `ROADMAP.md`'s layers: the entry's id and a fixed file per entry; a book's own `dc:identifier` is not used: FarsiEPUB's
   entries' ids are not their EPUBs'.)
-- **Catalogues:** FarsiEPUB's built in (`opds.FarsiEPUB`); others from a file over USB, with the screens.
-- **The screens** (designed 2026-11-22, `status: planned` in the spec: `screens/catalogue.yaml`, `catalogue-menu.yaml`;
-  their renders on `docs/design/system.html`): the library's bar shows **Library | Catalogues** in place of the title,
-  on every library screen. Catalogues: under the bar the catalogue shown, its name a button opening the choice of
-  catalogues (a menu under it, the one shown ticked, FarsiEPUB's first); its books a row each as the library's (title,
-  author, right to left for a Farsi title), each ending in its button: download, its per cent while downloading, then
-  **Read**, which opens the book (one downloaded before shows Read at once, found by `downloads.json`). Loading…, that
-  the catalogue could not be reached (with Try again), or that it has no books, in the middle; **More books** under the
-  last row when the catalogue has more pages; the rows paged as the library's. `ui.NewCatalogue` draws it from a
-  `CatalogueView` (no network in `reader/ui`); its buttons are tracked by the list (`List.Track`, `ButtonAt`) and,
-  since a page ends at its last line of text, the list ends in an empty line so the last row's button is drawn.
-  English only, as the library: with no book open the interface is English (`docs/design/README.md`, "Renders").
-  Still to wire: the shelves' switch, Wi-Fi asked for when off, the catalogue's page read and kept for offline,
-  downloads going on in the background, Read opening the book, the menu's choice remembered.
+- **Catalogues:** FarsiEPUB's built in (`opds.FarsiEPUB`); others from `catalogues.json` beside the reader, copied over USB
+  until there is a keyboard (`opds.Catalogues`: `[{"name": ..., "url": ..., "folder": ...}]`, a folder made from the name
+  when none). Plain Atom feeds are read too: an entry's EPUB enclosure is its download when it has no OPDS acquisition
+  link (Standard Ebooks' open feed of new releases; their full OPDS feed needs a Patrons Circle login, not yet). Not yet:
+  OPDS 2 (JSON: the Internet Archive's), logins, search, OPDS groups.
+- **The screens** (2026-11-22; the spec's `catalogue`, `catalogue-menu`, `catalogue-section-menu`, `shelf-name`, all
+  English only, as the library; renders on `docs/design/system.html`; `catalogues.go` and the library's loop):
+  - **The bar:** a choice of two icons in place of the title, books (Library) and a cloud (Catalogues), on every library
+    screen; a tap on the side shown says its name in a box under it, as the battery's level.
+  - **The head:** the catalogue shown, a button opening the choice of catalogues (FarsiEPUB's first, then
+    `catalogues.json`'s); the catalogue chosen again goes back to its main page as it was left. In a section, a second
+    such button, the section's name, opening the catalogue's own sections (the one the list is under ticked: chosen, back
+    to it as left; another, opened). Names cut with an ellipsis (18, 22, 30 letters), so the line keeps room for
+    Loading…, at its end while a page is read: a read refreshes that line only, and the list only when what it shows
+    changed (no refresh for Wi-Fi coming up, or the same page read again).
+  - **The list:** sections first (a "›" at the row's end, the count when the catalogue gives it), then books, each
+    ending in its button: download, its per cent, then **Read**, which opens the book (one downloaded before shows Read
+    at once, by `downloads.json`); a Farsi row's button at the left, under the boxes above. **More books** under the last
+    row when the level has more pages; the rows paged as the library's, the list pulled up by a row's top padding so
+    every page starts at the same height (the engine's page 1 keeps a block's margin, later pages start at a line: the
+    library's list had the same 15 px jump). That the catalogue could not be reached (Try again) or has no books, in the
+    middle.
+  - **Levels:** a section opened keeps the levels above it in memory, so going back is instant and offline; only a
+    catalogue's main page is kept on disk (`catalogues/FOLDER.json`), shown at once on entering, then read again.
+  - **Wi-Fi:** asked for when off (the Wi-Fi question; Cancel stays on Library); turned off again once the catalogues are
+    left and no download goes on. Downloads go on on the Library side, or in a book.
 - **Tested:** `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
-  file comes back new); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on
+  file comes back new; the catalogues file, the kept page, enclosures); `e2e/scenarios/catalogue.txt` on the simulated
+  Kobo (CI) and both devices (`docs/TESTING.md`, "Catalogues"); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on
   the Mac and, compiled for ARM (`go test -c`), on the Kobo and the Kindle (2026-11-22: 0.8 and 1.0 s).
 
 ### Updates over Wi-Fi (2026-11-20)

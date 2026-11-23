@@ -1,0 +1,8 @@
+{{/* The name of the library's side shown (DrawShelfName): a small box hanging from the bar under its icon, as the
+battery's level hangs under the battery, opened by a tap on the side already shown and closed by any tap: the side's
+name, and under it what it holds. Its edge lines up with the icon's start (Margin, set by DrawShelfName). */ -}}
+{{template "head" ""}}<style>
+div.shelf-name { width: max-content; padding: 0.35em 0.8em; border: var(--line) solid var(--ink); border-top: 0; border-radius: 0 0 var(--radius) var(--radius); {{.Margin}} }
+div.shelf-name b { display: block; }
+div.shelf-name .about { white-space: nowrap; font-size: 0.8em; }
+</style></head><body><div class="shelf-name" id="shelf-name"><b>{{.Name}}</b><span class="about">{{.About}}</span></div></body></html>

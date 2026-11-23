@@ -91,6 +91,9 @@ func isolated(s string) string {
 
 func words1(key string, args ...any) string {
 	s, ok := words[lang][key]
+	if !ok && lang != "en" { // a word of an English-only screen (the library's): English
+		s, ok = words["en"][key]
+	}
 	if !ok {
 		panic(fmt.Sprintf("ui: no word %q in language %q", key, lang))
 	}

@@ -103,9 +103,9 @@ func libraryHead(f *blitz.Fonts, w int) *Panel {
 	return LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
 }
 
-// catalogueHead is the catalogues' head over FarsiEPUB's books (chooseOn: its choice open).
-func catalogueHead(f *blitz.Fonts, w int, chooseOn bool) *Panel {
-	return CatalogueHead(libraryTopBar(), "FarsiEPUB", chooseOn, f, w)
+// catalogueHead is the catalogues' head over FarsiEPUB's books (chooseOn: its choice open; loading: Loading… beside it).
+func catalogueHead(f *blitz.Fonts, w int, chooseOn bool, loading ...bool) *Panel {
+	return CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "FarsiEPUB", ChooseOn: chooseOn, Loading: len(loading) > 0 && loading[0]}, f, w)
 }
 
 // barHeight is the library's bar: where the panels that hang from it start.
@@ -309,13 +309,49 @@ var designRenders = map[string][]renderCase{
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered {
-		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Loading: true}, catalogueHead(f, w, false), f, w, h)
+		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Loading: true}, catalogueHead(f, w, false, true), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"sections", en, func(f *blitz.Fonts, w, h int) rendered { // a catalogue's front page of menus
+		c := NewCatalogue(CatalogueView{Name: "A Library", Sections: []CatalogueSection{{Title: "All books", Count: 3278},
+			{Title: "By author"}, {Title: "By subject"}, {Title: "New this month", Count: 24}, {Title: "کتاب‌های فارسی", RTL: true, Count: 12}}},
+			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library"}, f, w), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"authors", en, func(f *blitz.Fonts, w, h int) rendered { // a long section, one level down, a page of many
+		var secs []CatalogueSection
+		for i, n := range []string{"Austen, Jane", "Balzac, Honoré de", "Brontë, Charlotte", "Cervantes, Miguel de", "Chekhov, Anton",
+			"Dickens, Charles", "Dostoevsky, Fyodor", "Dumas, Alexandre", "Eliot, George", "Flaubert, Gustave", "Gogol, Nikolai", "Hugo, Victor"} {
+			secs = append(secs, CatalogueSection{Title: n, Count: 3 + i*2})
+		}
+		c := NewCatalogue(CatalogueView{Name: "A Library", Sections: secs, More: true},
+			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Section: "By author", Loading: true}, f, w), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}, {"long-names", en, func(f *blitz.Fonts, w, h int) rendered { // names cut: the head's line and its Loading… kept
+		c := NewCatalogue(CatalogueView{Name: "The Very Large Public Library of Classics", Sections: []CatalogueSection{{Title: "Collected Works", Count: 4}}},
+			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "The Very Large Public Library of Classics",
+				Section: "Short Stories, Novellas and Other Collected Writings", Loading: true}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"unreachable", en, func(f *blitz.Fonts, w, h int) rendered {
 		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Unreachable: true}, catalogueHead(f, w, false), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
+	}}},
+	"shelf-name": {{"library", en, func(f *blitz.Fonts, w, h int) rendered {
+		tb := libraryTopBar()
+		tb.Shelf = "library"
+		return pr(DrawShelfName("library", barHeight(f, w), DrawTopBar(tb, f, w).Box("shelf-library"), f, w))
+	}}, {"catalogues", en, func(f *blitz.Fonts, w, h int) rendered {
+		tb := libraryTopBar()
+		tb.Shelf = "catalogues"
+		return pr(DrawShelfName("catalogues", barHeight(f, w), DrawTopBar(tb, f, w).Box("shelf-catalogues"), f, w))
+	}}},
+	"catalogue-section-menu": {{"path", en, func(f *blitz.Fonts, w, h int) rendered { // two levels down: the way back, then the sections
+		head := CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Section: "Hugo, Victor", SectionOn: true}, f, w)
+		return pr(DrawCatalogueSectionMenu([]string{"All books", "By author", "By subject", "New this month"}, 1,
+			head.Rect().Dy(), head.Box("catalogue-section"), f, w))
 	}}},
 	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))

@@ -30,7 +30,7 @@ It builds Dropbear (Docker, the first time; the Kobo's, `make kobo-dropbear`), c
 puts ShamsaInk in dev mode. Later, with SSH up, the same command (without `KINDLE_KEY`) updates them over SSH.
 
 ## 4. Switching it on (on the Kindle)
-Open ShamsaInk (from the Kindle's library), then its menu (the flask in the library's title says dev mode is on) →
+Open ShamsaInk (from the Kindle's library), then its menu (a Developer row there says dev mode is on) →
 **Developer** → **SSH (development)**. The panel shows the Kindle's address and port 2222. The server runs from RAM,
 as root, keys only; it opens port 2222 in the Kindle's firewall while it runs and closes it when switched off. It
 stays on when ShamsaInk is closed, and goes with a restart: switch it on again then. The host key is made once and

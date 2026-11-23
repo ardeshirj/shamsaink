@@ -53,7 +53,7 @@ ShamsaInk's **Developer** panel, which shows in **dev mode** only: a folder `dev
    ```
    It builds Dropbear (Docker, the first time), copies it, `dropbearkey` and `dev/ssh.sh` into `.adds/shamsaink/dev/`,
    and ejects the Kobo. Later, with SSH up, the same command updates them over SSH.
-3. **Switch it on:** More → ShamsaInk, the menu (the flask in the library's title says dev mode is on) → **Developer** →
+3. **Switch it on:** More → ShamsaInk, the menu (a Developer row there says dev mode is on) → **Developer** →
    **SSH (development)**. The panel shows the Kobo's address and port 2222.
 4. **On the Mac,** add a host to `~/.ssh/config`, with that address as `HostName`:
    ```

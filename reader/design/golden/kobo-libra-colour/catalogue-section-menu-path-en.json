@@ -1,0 +1,9 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "catalogue-top-0": [324, 320, 748, 410],
+  "catalogue-top-1": [324, 410, 748, 502],
+  "catalogue-top-2": [324, 502, 748, 594],
+  "catalogue-top-3": [324, 594, 748, 686]
+ }
+}

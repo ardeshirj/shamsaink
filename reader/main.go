@@ -8,8 +8,8 @@
 //	shamsaink -library [FONTS_DIR|-]       the library (DIR/books): a book chosen is read, and leaving it comes back;
 //	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //
-// DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set: dev mode, a flask after the
-// library's title and a Developer entry in its menu (devssh.go); SHAMSAINK_DEV=0 keeps it off, dev/ or not.
+// DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set: dev mode: a Developer entry
+// in the library's menu (devssh.go); SHAMSAINK_DEV=0 keeps it off, dev/ or not.
 package main
 
 import (
@@ -55,6 +55,7 @@ type reader struct {
 	splash      *ui.Opening         // the opening screen, made once (opening): the same for the whole run
 	events      <-chan device.Event // the touch screen, buttons and sleep, taken once (inputs) for the whole run
 	letGo       func()              // lets go of them as the reader ends (the Kindle: its listener for sleep ended too)
+	cat         *catalogues         // the library's catalogues and their downloads (catalogues.go), made at their first use
 }
 
 // inputs is the touch screen, the buttons and sleep as one channel, taken the first time they are asked for and kept

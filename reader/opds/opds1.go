@@ -182,7 +182,7 @@ func ParseOPDS1(r io.Reader, base *url.URL) (*Feed, error) {
 	return &f, nil
 }
 
-// addEntry puts an entry in the feed: a book when it has an acquisition link, otherwise a navigation link (a menu of
+// addEntry puts an entry in the feed: a book when it has an acquisition link (isPublication), otherwise a navigation link (a menu of
 // the catalogue's tree); into its group when it links to a collection.
 func addEntry(f *Feed, e *xEntry, base *url.URL, groups map[string]int) {
 	var group *Group
@@ -223,9 +223,10 @@ func addEntry(f *Feed, e *xEntry, base *url.URL, groups map[string]int) {
 	}
 }
 
+// isPublication: an acquisition link, or an EPUB enclosure (a plain Atom feed's file: Standard Ebooks' new releases).
 func isPublication(e *xEntry) bool {
 	for _, l := range e.Links {
-		if strings.HasPrefix(l.Rel, RelAcquisition) {
+		if strings.HasPrefix(l.Rel, RelAcquisition) || l.Rel == "enclosure" && l.Type == "application/epub+zip" {
 			return true
 		}
 	}

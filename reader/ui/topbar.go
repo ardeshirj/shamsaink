@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"html/template"
+	"image"
 	"strings"
 
 	blitz "shamsainkengine"
@@ -20,14 +23,13 @@ type TopBar struct {
 	Charging, Full    bool   // on the charger: the charging glyph, charging or full
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
-	Dev               bool   // dev mode (DevMode): a flask after the title (the library's)
 	Shelf             string // the library's bar: in place of the title, the choice of Library and Catalogues, this one chosen ("library", "catalogues"); "" for the title
 	RTL               bool
 }
 
 // DevMode is set when the reader runs in dev mode (main.go): dev/ beside it (the development tools, make kobo-dev-ssh;
-// never in a release) or SHAMSAINK_DEV given (the simulator, tests). The library's title has a flask after it, and its
-// menu a Developer entry (2026-11-11; until then "an experimental run", SHAMSAINK_EXP).
+// never in a release) or SHAMSAINK_DEV given (the simulator, tests). The library's menu has a Developer entry (2026-11-11;
+// until then "an experimental run", SHAMSAINK_EXP; the bar's flask after the title went on 2026-11-22: the menu says it).
 var DevMode bool
 
 // BatteryIcon is the battery's glyph (Phosphor's): charging, warning when low (15% or less, as the red is), else its level in
@@ -52,12 +54,16 @@ func (b TopBar) BatteryIcon() string {
 type topBarData struct {
 	TopBar
 	Dir     string
-	Shelves []button // the choice in place of the title (Shelf)
+	Shelves []button // the choice in place of the title (Shelf): segments, an icon each
 }
 
 // Shelves are the two sides of the library, in the bar's choice: the books on the device, and the catalogues to get
 // more from (OPDS); their buttons shelf-library and shelf-catalogues.
 var Shelves = []string{"library", "catalogues"}
+
+// ShelfIcons are their icons, one in each segment (2026-11-22: the words were a second row of words in a box over the
+// filters, too heavy; bare icons left which side is shown to a filled icon alone).
+var ShelfIcons = map[string]string{"library": "books", "catalogues": "cloud-arrow-down"}
 
 // DrawTopBar draws the bar as a panel at the top of the screen, w px wide. Its buttons are bar-start, bar-phones (if
 // there are headphones), bar-light, which is always there, and bar-menu (if the bar has the menu).
@@ -65,7 +71,7 @@ func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 	d := topBarData{TopBar: b, Dir: "ltr"}
 	if b.Shelf != "" {
 		for _, s := range Shelves {
-			d.Shelves = append(d.Shelves, button{ID: "shelf-" + s, Label: word(s), On: s == b.Shelf})
+			d.Shelves = append(d.Shelves, button{ID: "shelf-" + s, Icon: ShelfIcons[s], On: s == b.Shelf})
 		}
 	}
 	d.Time = digits(b.Time) // in the interface's digits
@@ -97,4 +103,24 @@ func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 	delete(p.buttons, "topbar-title")
 	delete(p.buttons, "topbar-title-text")
 	return p
+}
+
+// DrawShelfName draws the name of the library's side shown (shelf: "library" or "catalogues") and what it holds, in a
+// small box hanging from the bar (under px high) under its icon, whose box on the screen is at (the bar's
+// Box("shelf-"+shelf)); w px wide. No buttons: any tap closes it, as the battery's level.
+func DrawShelfName(shelf string, under int, at image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
+	const margin = 40 // the page's margin in drawPanelIn
+	d := struct {
+		Name, About string
+		Margin      template.CSS
+	}{Name: word(shelf), About: word("shelf-" + shelf + "-about")}
+	if RTL() { // the choice at the right: the box's right edge under the icon's
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-at.Max.X, 0)))
+	} else {
+		d.Margin = template.CSS(fmt.Sprintf("margin-left: %dpx; margin-right: auto;", max(at.Min.X-margin, 0)))
+	}
+	html, ids := render("shelf-name.html", d)
+	m := drawPanelIn(html, append(ids, "shelf-name"), "shelf-name", fonts, w, 900)
+	m.y0 += under
+	return m
 }

@@ -44,3 +44,5 @@ wifi-slash e4f2
 download-simple e20c
 warning-circle e4e2
 caret-down e136
+books e758
+cloud-arrow-down e1ac

@@ -58,7 +58,7 @@ func (r route) String() string {
 // the device has no player of ours, which the simulated Kobo has).
 var (
 	walkable  = map[string]bool{"tap": true, "tap-top-tenth": true, "hold-row": true, "hold-word": true}
-	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true, "needs-network": true, "update-found": true, "update-result": true,
+	automatic = map[string]bool{"app-start": true, "slow-open": true, "power-button": true, "idle": true, "no-player": true, "needs-network": true, "update-found": true, "update-result": true, "download-result": true,
 		"leave": true}
 )
 
@@ -75,7 +75,7 @@ func missing(c design.Control, has []string) string {
 }
 
 // edges are the spec's ways from screen to screen: enter: and the controls' goto and replace, once each, but through a
-// control the device has not (missing), and none into a planned screen (its controls are drawn, it is not reached yet).
+// control the device has not (missing) or one the walk must not press (walk: "never: why"), and none into a planned screen (its controls are drawn, it is not reached yet).
 func edges(spec *design.Spec, has []string) []edge {
 	seen := map[string]bool{}
 	var out []edge
@@ -97,7 +97,7 @@ func edges(spec *design.Spec, has []string) []edge {
 	for _, n := range names {
 		sc := spec.Screens[n]
 		for _, c := range sc.Controls {
-			if (c.Action == "goto" || c.Action == "replace") && missing(c, has) == "" {
+			if (c.Action == "goto" || c.Action == "replace") && missing(c, has) == "" && c.Walk == "" {
 				add(edge{from: n, to: c.To, gesture: "tap", control: c.ID, when: c.When})
 			}
 		}
@@ -115,7 +115,7 @@ func edges(spec *design.Spec, has []string) []edge {
 					}
 				}
 			}
-			if gone {
+			if c := control(spec, en.From, en.Control); gone || c != nil && c.Walk != "" {
 				continue
 			}
 			add(edge{from: en.From, to: n, gesture: en.Gesture, control: en.Control, when: when})
@@ -177,6 +177,8 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 						continue
 					}
 					switch m := missing(c, has); {
+					case c.Walk != "":
+						why = c.Walk
 					case m == "development":
 						why = "dev mode only (off in devtest's runs, SHAMSAINK_DEV=0)"
 					case m != "":
@@ -188,7 +190,8 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 		left[n] = why
 	}
 	// a screen entered only from a dev-mode screen (the Developer panel's Wi-Fi question) is dev mode's too; one entered
-	// only from a screen the reader shows by itself (an update's progress, from the newer version found) likewise
+	// only from a screen the reader shows by itself (an update's progress, from the newer version found), or from one the
+	// walk must not reach (the catalogue's menu), likewise
 	for grew := true; grew; {
 		grew = false
 		for n, why := range left {
@@ -201,11 +204,25 @@ func plan(spec *design.Spec, has []string) (routes []route, left map[string]stri
 					left[n], grew = "dev mode only (entered from "+en.From+")", true
 				case strings.HasPrefix(from, "shown by the reader itself"):
 					left[n], grew = "shown by the reader itself (entered from "+en.From+")", true
+				case strings.HasPrefix(from, "never: "):
+					left[n], grew = "never: entered from "+en.From+", which the walk does not reach", true
 				}
 			}
 		}
 	}
 	return routes, left
+}
+
+// control is a screen's control by its id, nil when it has none.
+func control(spec *design.Spec, screen, id string) *design.Control {
+	if sc := spec.Screens[screen]; sc != nil {
+		for i := range sc.Controls {
+			if sc.Controls[i].ID == id {
+				return &sc.Controls[i]
+			}
+		}
+	}
+	return nil
 }
 
 // bases are the spec's entry (the library) and its page (a book's).

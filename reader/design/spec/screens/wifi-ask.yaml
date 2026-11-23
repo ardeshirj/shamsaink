@@ -4,9 +4,9 @@ templates: [wifi-ask.html]
 buttons: ring
 status: built
 purpose: "Asks before Wi-Fi is turned on, the dialog component in the middle of the screen: what it is for, then Turn on (Wi-Fi's icon) and Cancel. Nothing turns Wi-Fi on without this yes: an action that needs the network runs at once when Wi-Fi is on and asks only when it is off; Cancel changes nothing; afterwards Wi-Fi is turned off again if the reader turned it on (2026-11-20). Built and drawn (its renders checked), with no way in yet: the Developer panel's Wi-Fi switch is the yes itself (2026-11-20); Updates (step 2) is its first."
-enter: [{gesture: needs-network, from: library}, {gesture: needs-network, from: library-settings}]   # shown by the reader when an action needs the network and Wi-Fi is off; the first: Updates (step 2)
+enter: [{gesture: needs-network, from: library}, {gesture: needs-network, from: library-settings}, {gesture: needs-network, from: catalogue}]   # shown by the reader when an action needs the network and Wi-Fi is off; the first: Updates (step 2)
 controls:
   - {id: wifi-on, component: button, action: act, does: "turns Wi-Fi on as the device's own interface does, connects to a saved network, then turns it off again once done", emits: "wi-fi check: turn on", walk: "never: turns the device's Wi-Fi on"}
   - {id: wifi-cancel, component: button, action: act, does: "closes the question; Wi-Fi stays off", emits: "wi-fi check: cancelled"}
 dismiss: tap-outside
-words: [wifi-off-check, wifi-off-update, turn-on, cancel]
+words: [wifi-off-check, wifi-off-update, wifi-off-catalogue, turn-on, cancel]

@@ -2,9 +2,10 @@ name: catalogue-menu
 layer: panel
 templates: [catalogue-menu.html]
 buttons: panel
-status: planned
+status: built
+english: true   # the library: English only, its words in en.json alone
 purpose: "The choice of catalogues, under the catalogue shown: FarsiEPUB's first, then those from the file over USB, the one shown ticked; the last used is remembered. Add catalogue comes with the keyboard."
 enter: [{gesture: tap, control: catalogue-choose, from: catalogue}]
 controls:
-  - {id: catalogue-, component: menu-item, action: act, does: "shows that catalogue's books", dynamic: true}
+  - {id: catalogue-, component: menu-item, action: act, does: "shows that catalogue's main page; the one shown again: back to its main page as it was left (its page, no read)", dynamic: true}
 dismiss: tap-outside

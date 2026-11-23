@@ -7,11 +7,13 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
 	"shamsainkreader/device"
 	"shamsainkreader/library"
+	"shamsainkreader/opds"
 	"shamsainkreader/ui"
 	"shamsainkreader/update"
 )
@@ -57,8 +59,50 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	var v *ui.List
 	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
-	// build lays out the library again for the view's choices, on its first page
+	// the bar's choice: the books here ("library") or the catalogues' ("catalogues", catalogues.go); always the books
+	// here when the library comes back
+	shelf := "library"
+	cat := rd.catalogues(view.Catalogue)
+	catChoose := false  // the choice of catalogues is open under the catalogue's name
+	catSection := false // the choice of sections is open under the section's
+	catShown := ""      // the catalogue's books as last laid out (its view, printed, Loading apart): what the list shows
+	catLoading := false // Loading… shown in the head
+	defer func() {
+		if shelf == "catalogues" {
+			rd.catalogueLeave(cat)
+		}
+	}()
+	// buildCat lays out the catalogue's page, on the list's page it was on (keep) or its first
+	buildCat := func(keep bool) {
+		page := 0
+		if keep && v != nil {
+			page = v.Page()
+		}
+		head := func() *ui.Panel {
+			tb := topBar
+			tb.MenuOn = lv.MenuOn
+			return ui.CatalogueHead(tb, ui.CatalogueHeadView{Name: cat.cur().Name, Section: cat.title, RTL: rtlText(cat.title),
+				ChooseOn: catChoose, SectionOn: catSection, Loading: cat.loading}, rd.fonts, scr.W)
+		}
+		if v != nil {
+			v.Close()
+		}
+		cv := rd.catalogueView(cat)
+		catShown, catLoading = catListed(cv), cv.Loading
+		v = ui.NewCatalogue(cv, head(), rd.fonts, scr.W, scr.H)
+		v.SetPage(min(page, max(v.Pages()-1, 0)))
+		setHead = func() {
+			v.SetHead(head())
+			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
+		}
+		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
+	}
+	// build lays out the library again for the view's choices, on its first page (the catalogue's: on its page)
 	build := func() {
+		if shelf == "catalogues" {
+			buildCat(true)
+			return
+		}
 		lv.Filter, lv.Counts = filter, library.Counts(all)
 		items = items[:0]
 		for _, b := range all {
@@ -287,6 +331,75 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 		openDev()
 	}
+	// the catalogue's screen drawn again as it now is, on its page; a panel or dialog over it stays
+	catRedraw := func() {
+		buildCat(true)
+		v.Draw(rd.over)
+		if panel != nil {
+			panel.Over(rd.over)
+		}
+		scr.Show(rd.over, device.WfREAGL, false)
+	}
+	// catRefresh draws the catalogue's screen again only when what it shows changed: Wi-Fi up, or the same page read
+	// again, refresh nothing (2026-11-22: three refreshes on every opening)
+	catRefresh := func() {
+		cv := rd.catalogueView(cat)
+		switch {
+		case catListed(cv) != catShown:
+			catRedraw()
+		case cv.Loading != catLoading: // only Loading… beside the name: that line
+			catLoading = cv.Loading
+			setHead()
+			v.Draw(rd.over)
+			scr.ShowPart(rd.over, image.Rect(0, v.TopBarHeight(), scr.W, v.HeadHeight()), device.WfREAGL, false)
+		}
+	}
+	// catNet runs f once Wi-Fi is up: Wi-Fi asked for when it is off (the question in the middle of the screen, kind
+	// "catalogue-ask"), waited for when it is on or joining; false when the device has no Wi-Fi of ours
+	catNet := func(f func()) bool {
+		switch st := rd.dev.WiFiState(); {
+		case st == device.WiFiNone:
+			return false
+		case st == device.WiFiOff && !rd.dev.WiFiBusy():
+			cat.pending = f
+			showUpdate(ui.DrawWiFiAsk("wifi-off-catalogue", rd.fonts, scr.W), "catalogue-ask")
+		default:
+			cat.wifi, cat.pending = true, f
+			rd.dev.ConnectWiFi()
+		}
+		return true
+	}
+	// catRead reads the shown catalogue's page (more: its next) once Wi-Fi is up; its kept page shown meanwhile
+	catRead := func(more bool) {
+		cat.loading = true
+		if !catNet(func() { rd.catalogueRead(cat, more) }) {
+			cat.loading, cat.failed = false, cat.empty()
+		}
+	}
+	// enterCat shows the Catalogues side: the shown catalogue's kept page at once (or Loading…), then read again
+	enterCat := func() {
+		shelf, catChoose = "catalogues", false
+		cat.mu.Lock()
+		cat.onShelf = true
+		cat.mu.Unlock()
+		cat.fromKept(rd.dir)
+		cat.loading = true
+		buildCat(false)
+		v.Draw(rd.over)
+		scr.Show(rd.over, device.WfREAGL, false)
+		fmt.Printf("library: catalogues: %s (%d rows kept)\n", cat.cur().Name, len(cat.sections)+len(cat.books))
+	}
+	// leaveCat shows the books here again, scanned anew for what was downloaded
+	leaveCat := func() {
+		rd.catalogueLeave(cat)
+		shelf, catChoose = "library", false
+		all = library.Shelf(library.Scan(rd.dir), rd.dir)
+		build()
+		v.Draw(rd.over)
+		scr.Show(rd.over, device.WfREAGL, false)
+		fmt.Println("library: the books here")
+	}
+	shareShown := time.Time{} // when a download's share was last drawn
 	// the header again, and only it refreshed, if its battery, clock or headphones changed (a charger, a new minute, a
 	// wake, headphones connected or gone)
 	headChanged := func() {
@@ -318,6 +431,43 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			e = ev
 		case <-beats:
 			rd.dev.Beat()
+			continue
+		case m := <-cat.out:
+			on := shelf == "catalogues"
+			switch m.kind {
+			case "page":
+				if m.cat != cat.shown || m.level != cat.addr() {
+					continue // a catalogue or a section since left
+				}
+				cat.loading = false
+				if m.err != nil {
+					cat.failed = cat.empty() // the kept page stays shown
+				} else {
+					cat.set(m.feed, m.more)
+				}
+				if on && panel == nil {
+					catRefresh()
+				}
+			case "progress": // the row redrawn a second apart at most
+				if i := cat.row(m.entry); on && panel == nil && i >= 0 && time.Since(shareShown) > time.Second {
+					shareShown = time.Now()
+					buildCat(true)
+					v.Draw(rd.over)
+					if r := v.EntryBox(i); !r.Empty() {
+						scr.ShowPart(rd.over, r, device.WfREAGL, false)
+					}
+				}
+			case "done":
+				if m.err != nil {
+					fmt.Printf("library: %s not downloaded\n", m.entry)
+					if on {
+						buildCat(true)
+						showUpdate(ui.DrawNotice(downloadNotice(m.err), "warning-circle", rd.fonts, scr.W), "notice")
+					}
+				} else if on && panel == nil {
+					catRefresh()
+				}
+			}
 			continue
 		case m := <-upd.out:
 			switch m.kind {
@@ -361,6 +511,23 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				updateEnd("wifi-no-network", "wifi-slash")
 			default:
 				updateEnd("wifi-no-address", "wifi-slash")
+			}
+			continue
+		}
+		if e.WiFi != 0 && cat.wifi { // Wi-Fi asked for by the catalogues: on, what it was for; or the catalogue unreached
+			cat.wifi = false
+			f := cat.pending
+			cat.pending = nil
+			if e.WiFi == device.WiFiConnected {
+				if f != nil {
+					f()
+				}
+			} else {
+				fmt.Println("catalogue: no Wi-Fi:", map[bool]string{true: "no network saved", false: "no address"}[e.WiFi == device.WiFiNoNetwork])
+				cat.loading, cat.failed = false, cat.empty()
+			}
+			if shelf == "catalogues" && panel == nil {
+				catRefresh()
 			}
 			continue
 		}
@@ -422,7 +589,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, old.Min.Y, scr.W, old.Union(panel.Rect()).Max.Y), wf, false)
 			}
-		case e.Hold == device.Held && panel == nil && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
+		case e.Hold == device.Held && panel == nil && shelf == "library" && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
 			held = v.EntryAt(e.X, e.Y)
 			b := items[held]
 			showBook(ui.DrawBookMenu(b.Finished(), b.Opened, rd.fonts, scr.W), "menu", bookCase(b.Finished(), b.Opened))
@@ -477,6 +644,73 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					}
 				}
 				changed()
+			case upd.dialog == "catalogue-ask": // Turn on: the catalogues shown (if they were not) and Wi-Fi connected; Cancel nothing
+				f := cat.pending
+				cat.pending = nil
+				upd.dialog = ""
+				if id == "wifi-on" {
+					fmt.Println("catalogue: Wi-Fi turned on")
+					panel = nil
+					if shelf != "catalogues" {
+						enterCat()
+					}
+					cat.wifi, cat.pending = true, f
+					rd.dev.ConnectWiFi()
+					catRedraw() // the question gone; Loading… or the row's button until Wi-Fi is up
+				} else {
+					fmt.Println("catalogue: Wi-Fi left off")
+					cat.loading = false
+					updateClose()
+					if shelf == "catalogues" {
+						cat.failed = cat.empty()
+						catRedraw()
+					}
+				}
+			case catSection && strings.HasPrefix(id, "catalogue-top-"): // a section of the front page
+				panel, catSection = nil, false
+				j, err := strconv.Atoi(strings.TrimPrefix(id, "catalogue-top-"))
+				switch {
+				case err != nil || j >= len(cat.top()):
+					catRedraw()
+				case j == cat.under(): // the section the list is under: back to it as it was left, no read
+					page, deeper := v.Page(), len(cat.up) > 1
+					if deeper {
+						page = cat.upTo(1)
+					}
+					buildCat(false)
+					v.SetPage(min(page, max(v.Pages()-1, 0)))
+					v.Draw(rd.over)
+					scr.Show(rd.over, device.WfREAGL, false)
+					fmt.Printf("library: catalogue back to %q\n", cat.title)
+				default:
+					cat.upTo(0)
+					cat.open(j, 0)
+					fmt.Printf("library: catalogue section %q\n", cat.title)
+					catRead(false)
+					catRedraw()
+				}
+			case catChoose && id == fmt.Sprint("catalogue-", cat.shown): // the same: back to its main page as it was left
+				panel, catChoose = nil, false
+				page := v.Page()
+				if len(cat.up) > 0 {
+					page = cat.upTo(0)
+				}
+				buildCat(false)
+				v.SetPage(min(page, max(v.Pages()-1, 0)))
+				v.Draw(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
+				fmt.Printf("library: catalogue %s, its main page\n", cat.cur().Name)
+			case catChoose && strings.HasPrefix(id, "catalogue-"): // another catalogue
+				if n, err := strconv.Atoi(strings.TrimPrefix(id, "catalogue-")); err == nil && n >= 0 && n < len(cat.list) {
+					panel, catChoose = nil, false
+					cat.shown = n
+					view.Catalogue = cat.cur().URL
+					keep()
+					cat.fromKept(rd.dir)
+					catRead(false)
+					catRedraw() // the menu closed, the other catalogue's kept page (or Loading…)
+					fmt.Printf("library: catalogue %s (%d rows kept)\n", cat.cur().Name, len(cat.sections)+len(cat.books))
+				}
 			case upd.dialog == "ask": // Wi-Fi asked for: Turn on connects, then checks; Cancel or elsewhere changes nothing
 				if id == "wifi-on" {
 					fmt.Println("update: Wi-Fi turned on to check")
@@ -594,7 +828,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				held, bookPanel = -1, ""
 				panel, langOpen, devOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false, false
 				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
-				devDialog, upd.dialog = "", ""
+				devDialog, upd.dialog, catChoose, catSection = "", "", false, false
 				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
@@ -631,6 +865,47 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			v.Draw(rd.over)
 			panel.Over(rd.over)
 			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+		case head == "shelf-"+shelf: // the side shown: its name in a box under its icon, closed by the next tap (the battery's way)
+			panel = ui.DrawShelfName(shelf, v.TopBarHeight(), v.HeadBox(head), rd.fonts, scr.W)
+			v.Draw(rd.over)
+			panel.Over(rd.over)
+			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+			fmt.Printf("library: %s's name\n", shelf)
+		case head == "shelf-catalogues" && shelf == "library":
+			switch st := rd.dev.WiFiState(); {
+			case st == device.WiFiOff && !rd.dev.WiFiBusy(): // asked first: Cancel stays here
+				cat.fromKept(rd.dir)
+				cat.pending = func() { rd.catalogueRead(cat, false) }
+				showUpdate(ui.DrawWiFiAsk("wifi-off-catalogue", rd.fonts, scr.W), "catalogue-ask")
+			default:
+				enterCat()
+				catRead(false)
+				catRefresh() // the catalogue unreached at once (no Wi-Fi of ours): said
+			}
+		case head == "shelf-library" && shelf == "catalogues":
+			leaveCat()
+		case head == "catalogue-section" && len(cat.up) > 0: // the way back up and the catalogue's sections
+			var top []string
+			for _, s := range cat.top() {
+				top = append(top, s.Title)
+			}
+			catSection = true
+			setHead()
+			panel = ui.DrawCatalogueSectionMenu(top, cat.under(), v.HeadHeight(), v.HeadBox("catalogue-section"), rd.fonts, scr.W)
+			v.Draw(rd.over)
+			panel.Over(rd.over)
+			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+		case head == "catalogue-choose":
+			names := make([]string, len(cat.list))
+			for i, k := range cat.list {
+				names[i] = k.Name
+			}
+			catChoose = true
+			setHead()
+			panel = ui.DrawCatalogueMenu(names, cat.shown, v.HeadHeight(), rd.fonts, scr.W)
+			v.Draw(rd.over)
+			panel.Over(rd.over)
+			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 		case head == "topbar-menu":
 			open(true)
 		case head == "list-sort":
@@ -644,6 +919,37 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				scr.Show(rd.over, device.WfREAGL, false)
 				fmt.Printf("library: filter %s, %d rows\n", library.Filters[f], len(items))
 			}
+		case shelf == "catalogues" && v.ButtonAt(e.X, e.Y) == "catalogue-more":
+			if !cat.loading { // a page under way: nothing more
+				fmt.Println("library: more books")
+				catRead(true)
+				catRefresh() // Loading… beside the name
+			}
+		case shelf == "catalogues" && v.ButtonAt(e.X, e.Y) == "catalogue-retry":
+			fmt.Println("library: catalogue read again")
+			catRead(false)
+			catRefresh() // Loading… in place of Try again
+		case shelf == "catalogues" && v.EntryAt(e.X, e.Y) >= 0 && cat.book(v.EntryAt(e.X, e.Y)) < 0: // a section: into it
+			i := v.EntryAt(e.X, e.Y)
+			cat.open(i, v.Page())
+			fmt.Printf("library: catalogue section %q\n", cat.title)
+			catRead(false)
+			catRedraw()
+		case shelf == "catalogues" && v.EntryAt(e.X, e.Y) >= 0: // a book: Read opens it, else downloaded
+			i := cat.book(v.EntryAt(e.X, e.Y))
+			if p := rd.catalogueHere(cat, i); p != "" {
+				fmt.Printf("library: %s read from the catalogue\n", p)
+				return filepath.Join(rd.dir, filepath.FromSlash(p)), nil
+			}
+			if cat.downloading(i) {
+				break
+			}
+			b := cat.books[i]
+			fmt.Printf("library: %s asked for\n", opds.EntryID(&b))
+			catNet(func() {
+				rd.catalogueDownload(cat, b)
+				catRedraw()
+			})
 		case v.PagerAt(e.X, e.Y) == "list-prev":
 			turn(-1)
 		case v.PagerAt(e.X, e.Y) == "list-next":
@@ -662,6 +968,12 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+// catListed is what a catalogue's list shows of its view, to tell whether it changed: all but Loading, said in the head.
+func catListed(cv ui.CatalogueView) string {
+	cv.Loading = false
+	return fmt.Sprint(cv)
 }
 
 // tintBattery has the battery's box red on a colour screen when its level (per cent) is low and it is not on the charger, else back to ink.

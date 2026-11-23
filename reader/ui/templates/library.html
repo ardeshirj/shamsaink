@@ -9,7 +9,9 @@ data-shamsaink="row": not kept with the next row, as a book's heading is with it
 the share read after it in the page, put on the title's line. The page itself is always left to right, whatever the
 interface's language: each row has the direction of its own title. */ -}}
 {{template "head" "ltr"}}<style>
-ul { list-style: none; margin: 0; padding: 0; }
+/* pulled up by a row's top padding: a page after the first starts at its first line (the engine's rule for books), so
+   the first would otherwise start that much lower (2026-11-22: the rows moved 15 px up on a page turn) */
+ul { list-style: none; margin: -0.35em 0 0; padding: 0; }
 li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; }
 li[dir="rtl"] h3 { text-align: right; }

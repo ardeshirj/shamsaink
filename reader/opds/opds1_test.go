@@ -141,3 +141,20 @@ func TestLatin1(t *testing.T) {
 		t.Errorf("%v %+v", err, f)
 	}
 }
+
+// A plain Atom feed's file (Standard Ebooks' open feed of new releases): an enclosure is taken when there is no
+// acquisition link, an EPUB's only (not the Kobo edition).
+func TestEnclosure(t *testing.T) {
+	base, _ := url.Parse("https://example.org/feed")
+	f, err := ParseOPDS1(strings.NewReader(`<feed xmlns="http://www.w3.org/2005/Atom"><id>x</id><title>New</title>
+<entry><id>urn:se:1</id><title>Zeno</title>
+<link href="/a.kepub.epub" rel="enclosure" type="application/kepub+zip"/>
+<link href="/a.epub" rel="enclosure" type="application/epub+zip"/>
+<link href="/a_advanced.epub" rel="enclosure" type="application/epub+zip"/></entry></feed>`), base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l := EPUB(&f.Publications[0]); l == nil || l.Href.String() != "https://example.org/a.epub" {
+		t.Errorf("%+v", l)
+	}
+}
