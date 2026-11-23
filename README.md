@@ -180,6 +180,7 @@ library and the read-along. [`docs/DESIGN.md`](docs/DESIGN.md) has how the parts
 | [`bench/`](bench/) | One interface over the engines, to compare them on the same books |
 | [`docs/`](docs/) | [Design](docs/DESIGN.md), the [design system](docs/design/README.md), the [devices](docs/devices/README.md) (what runs where, known limits; [Kobo](docs/devices/kobo/README.md), [Kindle](docs/devices/kindle/README.md)) and the [roadmap](docs/ROADMAP.md); the [languages](docs/LANGUAGES.md) |
 | [`e2e/`](e2e/) | End-to-end scenarios run on a device |
+| [`perf/`](perf/) | Benchmarks from the tap to the ink, ShamsaInk against KOReader on the devices themselves ([How quick](#how-quick)) |
 
 ## About the name
 A *shamsa* (شمسه, "little sun") is the illuminated sunburst medallion on the opening page of a Persian manuscript,
