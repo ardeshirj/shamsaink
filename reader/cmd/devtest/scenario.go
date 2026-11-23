@@ -62,6 +62,7 @@ import (
 //	resume                    the same: the video goes on from here after the last card, what came between left out
 //	library                   the reader launched on its library
 //	leave                     the reader left from the library's menu
+//	catalogue-serve BOOK...   a catalogue of the test books named, served from this computer (catalogue.go)
 //	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go); tap-dialog also taps a
 //	                          book's menu in the library, where the reader hung it: tap-dialog library-book-menu book-finish
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
@@ -537,6 +538,11 @@ func (p *player) step(a []string) (string, error) {
 		return p.placeStep(a[1], a[2], a[3])
 	case "update-serve":
 		return p.updateServe(a[1])
+	case "catalogue-serve":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		return p.catalogueServe(a[1:])
 	case "tap-dialog":
 		return p.tapDialog(a[1], a[2])
 	}
@@ -705,7 +711,8 @@ func (d *dev) chipErrors() int {
 
 // fetch puts the file at url on the device at path (under the device's folder), checked by its SHA-256 either way: a
 // copy already there is hashed on the device and used only if it is that file (one left from before a book was
-// republished, or a reader's own copy, is not used and not overwritten); else it is downloaded here, checked, and copied.
+// republished, or a reader's own copy, is not used and not overwritten); else it is taken from this computer's cache, or
+// downloaded here and kept in it, checked, and copied.
 // A different file says so: the scenario's references, fixture and word places were made from the one it names.
 func (d *dev) fetch(url, path, sum string) (string, error) {
 	full := d.a.Dir + "/" + path
@@ -720,23 +727,32 @@ func (d *dev) fetch(url, path, sum string) (string, error) {
 		}
 		return path + " is there, the file expected", nil
 	}
-	resp, err := http.Get(url)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("%s: %s", url, resp.Status)
-	}
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	if got := fmt.Sprintf("%x", sha256.Sum256(data)); got != sum {
-		return "", changed(url, got)
+	// kept here by its SHA-256 (e2e/out/cache, not committed: the book stays out of the repository), so a run on a fresh
+	// simulated device does not download it again
+	cached := filepath.Join("e2e", "out", "cache", sum)
+	data, err := os.ReadFile(cached)
+	from := "the cache"
+	if err != nil || fmt.Sprintf("%x", sha256.Sum256(data)) != sum {
+		resp, err := http.Get(url)
+		if err != nil {
+			return "", err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != 200 {
+			return "", fmt.Errorf("%s: %s", url, resp.Status)
+		}
+		if data, err = io.ReadAll(resp.Body); err != nil {
+			return "", err
+		}
+		if got := fmt.Sprintf("%x", sha256.Sum256(data)); got != sum {
+			return "", changed(url, got)
+		}
+		os.MkdirAll(filepath.Dir(cached), 0o755)
+		os.WriteFile(cached, data, 0o644)
+		from = url
 	}
 	if _, err := d.sh("mkdir -p $(dirname "+full+") && cat > "+full, data); err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s copied (%d bytes)", path, len(data)), nil
+	return fmt.Sprintf("%s copied (%d bytes, from %s)", path, len(data), from), nil
 }

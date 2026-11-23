@@ -149,6 +149,15 @@ as untested.
    every scenario.
 5. References updated only after the maintainer has seen the changed pages.
 
+### Catalogues (OPDS), everywhere (2026-11-22)
+The parts are tested in Go on every push (`reader/opds`: feeds read, refusals, a download from a test server, a new
+edition over its file, the catalogues file, the kept page, Atom enclosures). The whole journey is
+`e2e/scenarios/catalogue.txt`, on the simulated Kobo in CI's group reading and by hand on the Kobo and the Kindle
+(`make e2e SCENARIO=e2e/scenarios/catalogue.txt`, `DEVICE=kindle`): devtest serves a catalogue of our own test books
+from this computer (`catalogue-serve`: a main page with one section, its books inside), so no site is reached and
+nothing depends on one; the catalogue opened, its section, a book downloaded and its row then Read, the catalogue chosen
+again (back to its main page, no read), and the book opened from it. Its files are put back after with the reader's.
+
 ### Updates over Wi-Fi, on the Kobo and the Kindle (2026-11-20)
 The parts are tested in Go on every push (`reader/update`: versions' order, signatures, a download from a test server,
 cut, cancelled, too big, unsigned, the install's moves and what it refuses). The whole journey on a device, by hand

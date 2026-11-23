@@ -90,7 +90,7 @@ jobs:
           - group: walk-en
             scenarios: e2e/scenarios/walk-en.txt
           - group: reading
-            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt e2e/scenarios/dark-clean.txt e2e/scenarios/finished-again.txt
+            scenarios: e2e/scenarios/readalong-granularity.txt e2e/scenarios/rtl-fa.txt e2e/scenarios/follow-language.txt e2e/scenarios/dark-clean.txt e2e/scenarios/finished-again.txt e2e/scenarios/catalogue.txt
           - group: languages
             scenarios: e2e/scenarios/languages/*.txt
           # the battery low (10%, off the charger: red in the bar on a colour screen), so nothing of it is left on the

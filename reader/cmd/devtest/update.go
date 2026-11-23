@@ -40,6 +40,20 @@ type updateServer struct {
 	files map[string][]byte
 }
 
+// listenHere listens on this computer at the address the device reaches it by: the SSH connection's other end; the
+// simulated device runs here, so for it this computer's own address.
+func (d *dev) listenHere() (net.Listener, error) {
+	if d.a.Local != "" {
+		return net.Listen("tcp", "127.0.0.1:0")
+	}
+	out, err := d.sh("echo $SSH_CLIENT", nil)
+	host := strings.Fields(string(out))
+	if err != nil || len(host) == 0 {
+		return nil, fmt.Errorf("this computer's address, as the device sees it (SSH_CLIENT): %v", err)
+	}
+	return net.Listen("tcp", net.JoinHostPort(host[0], "0"))
+}
+
 // updateServe serves the update of kind (latest or broken) and points the device at it.
 func (p *player) updateServe(kind string) (string, error) {
 	d := p.d
@@ -73,13 +87,7 @@ func (p *player) updateServe(kind string) (string, error) {
 	version := built + ".e2e"
 	u := p.upd
 	if u == nil {
-		// this computer's address as the device sees it: the SSH connection's other end
-		out, err := d.sh("echo $SSH_CLIENT", nil)
-		host := strings.Fields(string(out))
-		if err != nil || len(host) == 0 {
-			return "", fmt.Errorf("this computer's address, as the device sees it (SSH_CLIENT): %v", err)
-		}
-		l, err := net.Listen("tcp", net.JoinHostPort(host[0], "0"))
+		l, err := d.listenHere()
 		if err != nil {
 			return "", fmt.Errorf("serving the update: %v", err)
 		}

@@ -1,0 +1,28 @@
+# A catalogue (docs/DESIGN.md, "Books from catalogues") on the simulated Kobo (CI, every push: the group reading), and
+# by hand on the Kobo and the Kindle after a change to reader/opds, catalogues.go or the library's loop: `make e2e
+# SCENARIO=e2e/scenarios/catalogue.txt` (on the Kindle DEVICE=kindle). No site is reached: devtest serves a catalogue from this computer (catalogue-serve): its main page one section,
+# "Test books", holding two of our test books; it is added to the device's catalogues.json as the last catalogue shown;
+# Wi-Fi is on (SSH; the simulator's switched on), so nothing is asked. Catalogues, its section opened, a book downloaded (its row then
+# Read), the catalogue chosen again (back to its main page, no read), the section again, and the book opened from it.
+# The catalogue's files and the books downloaded are removed after; the reader's own put back.
+on: sim kobo kindle
+catalogue-serve en-basics fa-basics
+library
+tap library shelf-catalogues
+expect-in 30 library: catalogues: E2E Catalogue
+expect-in 30 catalogue: http://.*/catalog.xml read in \d+ ms \(1 sections, 0 books\)
+tap catalogue e0
+expect library: catalogue section "Test books"
+expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
+tap catalogue e1
+expect library: urn:e2e:fa-basics asked for
+expect-in 60 catalogue: urn:e2e:fa-basics downloaded in .* s: books/e2e/fa-basics.epub
+tap catalogue catalogue-choose
+tap catalogue-menu catalogue-1
+expect library: catalogue E2E Catalogue, its main page
+tap catalogue e0
+expect library: catalogue section "Test books"
+expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
+tap catalogue e1
+expect-in 30 library: books/e2e/fa-basics.epub read from the catalogue
+expect-in 30 fa-basics.epub: document \d+ page \d+ shown in .*right to left true

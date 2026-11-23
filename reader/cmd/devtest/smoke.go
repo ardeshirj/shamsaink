@@ -103,11 +103,12 @@ done
 	return nil
 }
 
-// The reader's own files (its place in each book, highlights, settings, library): saved before a scenario and put back
+// The reader's own files (its place in each book, highlights, settings, library, the catalogues and their downloads
+// record): saved before a scenario and put back
 // after, so a run starts known and leaves the device as it found it, whatever the scenario did or where it failed. A
 // copy left by a run that never put it back (devtest killed, the device restarted) is put back first.
 const (
-	stateFiles = "settings.json library.json library-view.json places highlights"
+	stateFiles = "settings.json library.json library-view.json places highlights downloads.json catalogues.json catalogues"
 	savedDir   = ".e2e-saved"
 )
 

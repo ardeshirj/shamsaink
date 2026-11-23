@@ -250,6 +250,15 @@ func (s *script) check(d *dev) error {
 			if args != 0 {
 				fail(l, "%s takes nothing", a[0])
 			}
+		case "catalogue-serve":
+			if args < 1 {
+				fail(l, "catalogue-serve BOOK...")
+			}
+			for _, b := range a[1:] {
+				if _, err := os.Stat(filepath.Join(booksDir, b, "mimetype")); err != nil {
+					fail(l, "no book %s/%s", booksDir, b)
+				}
+			}
 		case "update-serve":
 			if args != 1 || a[1] != "latest" && a[1] != "broken" {
 				fail(l, "update-serve latest|broken")

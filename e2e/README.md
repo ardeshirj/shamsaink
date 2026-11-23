@@ -40,7 +40,8 @@ group of their own, run at the same time as walk-fa, walk-en and reading: `.gith
 `head -c`, which the Kobo's BusyBox has not: on the Kobo it removes nothing (to mend before it is used again).
 
 **Books** of others are never committed. `out/sim-books/` is the simulator's `books/` folder, laid out as on the Kobo. A
-scenario fetches a public book itself (`fetch URL PATH SHA256`). **Our own test books** are committed as source,
+scenario fetches a public book itself (`fetch URL PATH SHA256`), kept on this computer by its hash in `e2e/out/cache/`
+(not committed) so a fresh simulated device does not download it again (2026-11-22). **Our own test books** are committed as source,
 `e2e/books/NAME/` (`e2e/books/README.md`: what each tests): `book NAME` builds one into an EPUB (the same bytes every
 time) and puts it on the device as `books/test/NAME.epub`, for `open books/test/NAME.epub`. Nothing to download;
 `devtest books DIR` builds them all, to open by hand.
