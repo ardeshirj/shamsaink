@@ -59,57 +59,57 @@ Kobo's own host, 13; the reader's code). From stage 5 on, in order of priority, 
 keyboard first ("Now").
 
 **5. Daily use on the Kobo** (alongside "Over Wi-Fi")
-- [ ] A night asleep on battery
-- [ ] The Kobo's second core on while the reader is used (built 2026-11-22, `reader/device/cores.go`; to try on the
+- A night asleep on battery
+- The Kobo's second core on while the reader is used (built 2026-11-22, `reader/device/cores.go`; to try on the
   Kindle, where it does nothing): off while we run, since Kobo's interface manages it and we stop that interface; now
   on at a touch, a page button or a wake, off 2 s after and before a suspend. `make perf` on the Kobo, the same build
   with `dev/one-core` and without: a turn 468 → 433 ms, an open 598 → 497, a reopen 738 → 658; the battery's draw the
   same (180 and 179 mA on average, the core on 21% of the run). Next, measured: on while read-aloud plays (its log shows
   late chunks with one core)
-- [ ] Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
-- [ ] The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
-- [ ] A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
+- Sleep while plugged in: awake behind the sleep screen, no suspend (built, to try)
+- The first page from the cache faster (*Buried Alive*, 98 MB: 3.1–3.6 s; where it goes measured first)
+- A week or two of reading: whatever hurts, the battery against KOReader's, memory over days (09: 0.1–0.2 MB more
   per book, cause not found); dark mode judged in use
-- [ ] The watchdog's rest (`DESIGN.md`, "Keeping the reader alive"): the quiet tests (idle, sleep and wake, a narration,
+- The watchdog's rest (`DESIGN.md`, "Keeping the reader alive"): the quiet tests (idle, sleep and wake, a narration,
   the library list), the reboot fallback tried, a heartbeat in the library's first scan, its battery cost, the test
   pause removed. Later: a hold to quit, a Power panel (Back to Kobo, Restart, Power off)
-- [ ] A failsafe: a crash or hang gets the device back to its own interface on its own, checked by killing it in every
+- A failsafe: a crash or hang gets the device back to its own interface on its own, checked by killing it in every
   state (a book open, asleep, narrating); the watchdog covers the hang
-- [ ] Words chosen by accident (2026-11-07: three of four holds in a day on the left edge, while going back): the holds
+- Words chosen by accident (2026-11-07: three of four holds in a day on the left edge, while going back): the holds
   and long taps logged since (`touch: hold|long tap at X,Y, N ms down`, `held at X,Y: word ..., N px from it`) read
   after a few days of use on both devices, then decided: holds selecting only on the text, not in the margins, or not
   (`holdTime` stays 1000 ms)
 
 **Over Wi-Fi** (2026-11-19, the maintainer: steps 1, 2 and 6 of "Now"; stage 7 has 3 to 5)
-- [ ] The launcher's row from the reader's folder (the first self-updating release, 0.4.0-beta, went without it; an
+- The launcher's row from the reader's folder (the first self-updating release, 0.4.0-beta, went without it; an
   update still replaces the launcher's library when it differs, loaded when Nickel next starts): (a) the launcher (`reader/kobo/launcher/plugin.cpp`) reads its row's mark (a small
   PNG) and name from `.adds/shamsaink/`, its built-in ones as fallback, so brand changes ride with the reader; after
   that the launcher changes only when Kobo's firmware forces it, and then the reader places `Kobo.tgz` and says it
   takes effect after the Kobo restarts; (b) tried: whether a Kobo firmware update removes the launcher from
   `/usr/local/Kobo/imageformats/`
-- [ ] An upgrade keeps the user's data: effectively done (`devices/install.md`: a package never holds settings, places,
+- An upgrade keeps the user's data: effectively done (`devices/install.md`: a package never holds settings, places,
   highlights, the cache or books; the first update over Wi-Fi, 2026-11-20, moved only the package's 25 files). Left:
   the cache format versioned, an old one dropped cleanly
 
 **6. The layout** (`design/system.html`)
-- [ ] Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
-- [ ] Interface language, "Follow book language" (built 2026-10-31, `DESIGN.md` "The reader's panels"): tried on the
+- Layers: the page buffers hold the engine's pixels only, the clock and highlights over them
+- Interface language, "Follow book language" (built 2026-10-31, `DESIGN.md` "The reader's panels"): tried on the
   Kobo, the Farsi wording reviewed by the maintainer
-- [ ] The interface in the other right-to-left languages (Arabic, Hebrew and more; today English laid out right to
+- The interface in the other right-to-left languages (Arabic, Hebrew and more; today English laid out right to
   left): promised as "planned" on FarsiEPUB's ShamsaInk page (2026-11-12)
-- [ ] A book with no stated direction, read right to left (`ur-basics`, 2026-11-13: its pages turn right to left but its
+- A book with no stated direction, read right to left (`ur-basics`, 2026-11-13: its pages turn right to left but its
   paragraphs are laid out left to right; `LANGUAGES.md`, "Known gaps"): the reader giving the engine `direction: rtl`
-- [ ] A highlight across a change of direction (`mixed`, chapter 1, 2026-11-13): its band also shades part of "Prince"
+- A highlight across a change of direction (`mixed`, chapter 1, 2026-11-13): its band also shades part of "Prince"
   in the English title next to it; cosmetic, left for later
-- [ ] Components: icon button, slider, tabs, list, battery
-- [ ] The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
-- [ ] The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
+- Components: icon button, slider, tabs, list, battery
+- The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
+- The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
   meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and
   its paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with covers
-- [ ] The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
+- The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
 
 **7. A library** (its text rows are in the betas)
-- [ ] Books over the air, **OPDS** (2026-11-02; step 3 of "Now" since 2026-11-19, after updates): the aim is one tap
+- Books over the air, **OPDS** (2026-11-02; step 3 of "Now" since 2026-11-19, after updates): the aim is one tap
   from a list of books to a book ready to read, no computer or cable. **FarsiEPUB's library built in** (its feed's
   address ships with the reader, nothing to type), and **other catalogues allowed** (Standard Ebooks, Gutenberg, any
   OPDS feed): added by a small file in `shamsaink/` copied over USB until there is a keyboard. In the library's header,
@@ -122,37 +122,37 @@ keyboard first ("Now").
   later download, so the library's new-edition rule applies as it is (`DESIGN.md`, "Books from catalogues"). Not used:
   a book's own `dc:identifier` (FarsiEPUB's entries' ids are not their EPUBs'). Still to check against Gutenberg's and
   Standard Ebooks' real feeds: one entry with several EPUBs (one kept per device)
-- [ ] **The keyboard, designed once as one component** (step 4, 2026-11-19): its layouts, how taps reach it (Blitz's
+- **The keyboard, designed once as one component** (step 4, 2026-11-19): its layouts, how taps reach it (Blitz's
   events, or `Panel.At` with big keys and the field drawn again from Go at each key), the keys' sizes
   (`docs/design/TODO.md`, "The keyboard"); then **its digit layout built first**, for Get a book (not a separate keypad
   to throw away). Kobo's own keyboard can't be used: it is part of Nickel, which is stopped while we run (only our
   launcher, inside Nickel, could open one, and only before the reader starts), and the Kindle and PocketBook would need
   theirs too (2026-11-12)
-- [ ] **Get a book** from FarsiEPUB by code (2026-11-12, with the keyboard's digit layout; FarsiEPUB's
+- **Get a book** from FarsiEPUB by code (2026-11-12, with the keyboard's digit layout; FarsiEPUB's
   side): a visitor's converted book, no account. On the job page they press Send to ShamsaInk and
   get 8 digits, alive 15 minutes, one use; in the library's menu, Get a book, the digits on the keyboard, then one
   request (`GET /api/v1/codes/{code}/book`): the EPUB saved into the library and opened. Refusals in plain words:
   expired (press the button again), too many tries (wait an hour), shared too widely. Wi-Fi is "Over Wi-Fi"'s, the
   download into the library the OPDS work's
-- [ ] The keyboard's **English and Farsi layouts** (step 5): the library's search, catalogues added on the device,
+- The keyboard's **English and Farsi layouts** (step 5): the library's search, catalogues added on the device,
   maybe joining a Wi-Fi network without the device's settings
-- [ ] Covers in the list, with a cache of them
+- Covers in the list, with a cache of them
 
 **8. Read-along on the Kobo** (experimental in the betas; how it plays: `DESIGN.md`, section 4, sound)
-- [ ] The hour: no drop-outs or drift over an hour, Nickel stopped
-- [ ] The screen and the narration together across the power button
-- [ ] `lead_ms` tuned by ear (250 by default); a page the narration turns counted for "Clean every N" (built, to try)
-- [ ] A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL (the
+- The hour: no drop-outs or drift over an hour, Nickel stopped
+- The screen and the narration together across the power button
+- `lead_ms` tuned by ear (250 by default); a page the narration turns counted for "Clean every N" (built, to try)
+- A narrated book anyone can try: our own public-domain text with a recorded or synthesised voice and its SMIL (the
   tests' narrated book has a tone, not a voice); FarsiEPUB's narrated books work as well
-- [ ] Headphones tried: a short list, in the release notes
-- [ ] Not there yet, said in the release notes: Opus, clips without `clipEnd`, text-to-speech, speed
+- Headphones tried: a short list, in the release notes
+- Not there yet, said in the release notes: Opus, clips without `clipEnd`, text-to-speech, speed
 
 **9. The Kindle** (in the betas since 2026-11-07, read-along on it after)
-- [ ] A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
+- A week of daily reading on it, as on the Kobo: sleep and wake, the battery over a night, a crash back to the
   Kindle's home screen on its own (the launcher's watchdog), checked by killing it with a book open and asleep
-- [ ] Its notes in `devices/kindle/` checked: the jailbreak it needs (not ours to give), the firmware tried, its limits
+- Its notes in `devices/kindle/` checked: the jailbreak it needs (not ours to give), the firmware tried, its limits
   (no page buttons, no Listen, its own Dark Mode kept apart)
-- [ ] Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along. Its sound
+- Listen on the Kindle: a notice that it is not there yet (with the dialog component), then read-along. Its sound
   route (2026-11-19, with FarsiEPUB):
   - With Amazon's software running (today's beta), through a player of the Kindle's own (Amazon's `mplay`, experiment
     12): its Bluetooth service (`acsbtfd`) drops headphones 20 minutes after they connect, and the only workaround is
@@ -164,17 +164,17 @@ keyboard first ("Now").
     book 40 minutes unbroken, past the 20-minute mark; ShamsaOS's userspace settled for the Kindle the same day
     (OpenRC in our namespace, real suspend with our Bluetooth, back to stock with no reboot). The Kobo unchanged:
     firmware 6's own BlueZ and PulseAudio. Left, in order (ShamsaOS 10's NOTES.md, "Not yet shown"):
-    - [ ] **The reader's sound to `btplayer`**, the one piece missing for Listen on the Kindle, and ShamsaInk's: S16LE
+    - **The reader's sound to `btplayer`**, the one piece missing for Listen on the Kindle, and ShamsaInk's: S16LE
       48 kHz stereo, as `reader/sink.go` writes it, SBC through `libsbc` since Bumble has no encoder; how it is handed
       over (a pipe, a socket) to design. Its plan to write first: ShamsaOS's next experiment (12; its empty
       `11-kindle-narration/` dropped and 11 given to Kobo firmware 6, 2026-11-22).
-    - [ ] Connect counts only once `btplayer` streams, as on the Kobo since 2026-11-22 (`docs/devices/kobo/README.md`,
+    - Connect counts only once `btplayer` streams, as on the Kobo since 2026-11-22 (`docs/devices/kobo/README.md`,
       "Headphones also connected to a phone"): headphones held by a phone refused ShamsaOS 10's first try too.
-    - [ ] Sleep during narration: the player re-arms powerd's timeout each minute (the power button still sleeps),
+    - Sleep during narration: the player re-arms powerd's timeout each minute (the power button still sleeps),
       fixed 2026-11-10, not yet tried: 15 min untouched past the timeout, then the power button, narration back on
       wake.
-    - [ ] Long runs: hours streaming, the battery against stock.
-    - [ ] Amazon's chip set-up (address, radio, TX power, Wi-Fi coexistence) sent by our stack: the commands captured
+    - Long runs: hours streaming, the battery against stock.
+    - Amazon's chip set-up (address, radio, TX power, Wi-Fi coexistence) sent by our stack: the commands captured
       (ShamsaOS 08), not sent yet; range and Wi-Fi may suffer without them.
   - Its size: Bumble's image is 26 MB compressed (Alpine, Python 3.12, cryptography, Bumble), ~3× the Kindle package's
     ~12.7 MB; Python's memory not measured. In order: (a) an optional "Kindle sound" add-on, offered the first time
@@ -183,50 +183,50 @@ keyboard first ("Now").
     on the Kindle proves popular, the part needed rewritten in Go inside the reader (A2DP over AVDTP and L2CAP; no Go
     library for classic Bluetooth audio known). Licences to the packages' third-party list (`reader/scripts/licenses.sh`) when shipped: Bumble
     Apache-2.0, Python PSF, `libsbc` LGPL-2.1 as a separate library
-- [ ] `install.ps1` for Windows, once it can be tried there
+- `install.ps1` for Windows, once it can be tried there
 
 **Alongside**
 - End-to-end tests (`TESTING.md`, `e2e/README.md`; on CI):
-  - [ ] Controls' effects in the spec (`emits:`, `press:`, `undo:` started 2026-11-06), scenarios moved to it
-  - [ ] Scenarios for read aloud and sleep; page-button presses in the harness; the Kindle
+  - Controls' effects in the spec (`emits:`, `press:`, `undo:` started 2026-11-06), scenarios moved to it
+  - Scenarios for read aloud and sleep; page-button presses in the harness; the Kindle
 - Upstream (any time; the maintainer posts; "Upstream to Blitz" below):
-  - [ ] go-text's justification fix
-  - [ ] Blitz: line culling; pictures sized from their headers and decoded when drawn; a right-to-left list's bullets on
+  - go-text's justification fix
+  - Blitz: line culling; pictures sized from their headers and decoded when drawn; a right-to-left list's bullets on
     its right (`blitz-rtl-markers.patch`, 2026-11-13)
-  - [ ] Parley: linebender/parley#907 (a line's trailing space at its end, Unicode's rule L1), carried as
+  - Parley: linebender/parley#907 (a line's trailing space at its end, Unicode's rule L1), carried as
     `engine/patches/parley-trailing-whitespace.patch` since 2026-11-13; the maintainer commented on it with our pages.
     Check on it now and then: once a Parley release with it (or another fix) is Blitz's, the patch and `Cargo.toml`'s
     `[patch.crates-io]` go, and `mixed`'s pages are held unchanged
-  - [ ] The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
-  - [ ] Right-to-left languages for a book with no stated direction, to Readium (an issue on readium-css first, its
+  - The stray Wi-Fi loaders, to KOReader and Plato (`devices/kobo/README.md`)
+  - Right-to-left languages for a book with no stated direction, to Readium (an issue on readium-css first, its
     "missing page-progression-direction" rule, then the toolkits): only `ar`, `fa`, `he` now, so Urdu, Pashto, Sindhi,
     Sorani, Uyghur, Yiddish, Dhivehi and Syriac open backwards; better, the tag's script (`-Arab`, `-Hebr`). Ours:
     `readsRTL` in `reader/lang.go` (experiment 15)
 
 ### Left from the first beta's list
-- [ ] History audit (the repository went public without one on record): no book, book text, drawn page, key, IP or
+- History audit (the repository went public without one on record): no book, book text, drawn page, key, IP or
   hostname anywhere in git history
-- [ ] What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
-- [ ] Release notes gathered: the known limits (the devices and their firmware, read-along's headphones, the Kobo's
+- What stays public of `CLAUDE.md`, the experiments' notes and `docs/`: decided, the rest trimmed or moved out
+- Release notes gathered: the known limits (the devices and their firmware, read-along's headphones, the Kobo's
   bugs, no Listen on the Kindle) from `devices/README.md` and each device's README, and how to report a problem
 
 ### Toward 1.0
-- [ ] The stages above finished (5 to 9, "Over Wi-Fi", Alongside), the dictionary below
-- [ ] Voice timing: every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) nothing on our side can measure;
+- The stages above finished (5 to 9, "Over Wi-Fi", Alongside), the dictionary below
+- Voice timing: every pair of headphones has its own delay (Bluetooth: 0.1–0.3 s) nothing on our side can measure;
   a stepper in the Listen tab, 50 ms steps, heard at once, remembered per Bluetooth address
-- [ ] Listen controls: volume (a gain in `sinkFormat`, a slider) and speed (a pitch-preserving stretch such as WSOLA,
+- Listen controls: volume (a gain in `sinkFormat`, a slider) and speed (a pitch-preserving stretch such as WSOLA,
   pure Go, the cues' times scaled; the Kobo's CPU measured first)
-- [ ] Read-along smoother: more headphones, the player's screens (listening, paused)
-- [ ] Listen without read-along, like an audiobook (2026-11-09): no underline or page turns, the screen asleep, the
+- Read-along smoother: more headphones, the player's screens (listening, paused)
+- Listen without read-along, like an audiobook (2026-11-09): no underline or page turns, the screen asleep, the
   place kept by the voice
-- [ ] A dictionary on a word held (2026-11-06), Farsi and English, the word panel's meaning: StarDict dictionaries, as
+- A dictionary on a word held (2026-11-06), Farsi and English, the word panel's meaning: StarDict dictionaries, as
   KOReader reads them, dropped in a folder by the reader (no licence of ours to find); an English one (WordNet's
   licence is permissive) and a gloss of old Farsi words perhaps offered on FarsiEPUB's page
-- [ ] Tested on more than ours: Farsi and English, a picture-heavy book and a scan; a scenario for each feature
-- [ ] A month of daily use without a crash or a wrong page, memory flat over days
-- [ ] More devices: another Kobo model or firmware, read-along on the Kindle; each a tested line in the notes
-- [ ] A user guide on FarsiEPUB's ShamsaInk page
-- [ ] The tag `v1.0`
+- Tested on more than ours: Farsi and English, a picture-heavy book and a scan; a scenario for each feature
+- A month of daily use without a crash or a wrong page, memory flat over days
+- More devices: another Kobo model or firmware, read-along on the Kindle; each a tested line in the notes
+- A user guide on FarsiEPUB's ShamsaInk page
+- The tag `v1.0`
 
 ## 5. Later
 ### Ideas, not yet planned
