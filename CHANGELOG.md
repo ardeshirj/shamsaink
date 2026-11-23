@@ -4,6 +4,15 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.7.0-beta (2026-11-22)
+Right-to-left books in English read more naturally.
+- **Hebrew, Arabic, Urdu and other right-to-left books:** with the menus in English (these languages have no words of
+  their own in the reader yet), the bar, the dock and the panels are now laid out left to right, as English is
+  everywhere else; before, they were mirrored, with the back arrow on the right and icons after their words. The
+  book's own parts still follow the book: its pages and page turns, the progress bar (filled from the right, its
+  chapter arrows pointing the reading way) and the order of its contents. Farsi books are unchanged: their menus are
+  in Farsi, right to left.
+
 ## 0.6.0-beta (2026-11-22)
 Books from catalogues, over Wi-Fi: no computer or cable.
 - **Catalogues** (Kobo and Kindle): the cloud in the library's bar shows FarsiEPUB's library, built in, and any other
