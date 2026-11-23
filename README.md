@@ -16,7 +16,7 @@
 <table>
 <tr>
 <th width="25%">Library<br><sub>every language, each row in its own direction</sub></th>
-<th width="25%">Farsi<br><sub>the bar and the dock open, adapting to right-to-left books</sub></th>
+<th width="25%">Farsi<br><sub>adapting to right-to-left books</sub></th>
 <th width="25%">English<br><sub>the bar and the dock open</sub></th>
 <th width="25%">Arabic<br><sub>reading: nothing but the page</sub></th>
 </tr>
