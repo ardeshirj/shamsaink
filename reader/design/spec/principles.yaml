@@ -32,6 +32,9 @@ rules:
   - name: A control says what it is
     text: "A control whose value alone does not say what it sets has its name at the start of its line, regular, in the ink's colour, the control after it with its value regular (a setting's row: Sleep after, Follow book language; a labelled dropdown: Catalogue). Neither is bold; the control's border marks what is tapped. One under a heading, or whose value says it, has no name. As Apple's settings rows, Material's list items and WCAG's labels (2.4.6, 3.3.2): a name that stays, not a placeholder (2026-11-23)."
     check: "by eye (the samples of the dropdown, stepper and toggle on the page)"
+  - name: Only what the catalogue can answer
+    text: "A catalogue's choices (Browse and filter) are only those it answers itself, in this order: its facets when it gives them (OPDS facets: it filters, counts and combines them); its sections, always (a link to another feed: a place, not a filter, so one is in force at most); its search when it declares one (OpenSearch, with the keyboard); and filters of our own from the books' details only when the whole catalogue is in hand (a feed with no next page), so their counts are true. Never a filter over the one page loaded, and never a meaning read from a section's title (Updates, Nouveautés): titles are shown as the catalogue wrote them. A catalogue with none of these has no funnel (2026-11-23, after reading our four catalogues' feeds: none has facets)."
+    check: "by eye (the planned renders of catalogue-filters)"
   - name: Two levels at most
     text: "The page, the bar and dock, one panel. No panel opens another; one may take another's place."
     check: "no goto from a panel or overlay to a panel or overlay; replace stays in one layer"

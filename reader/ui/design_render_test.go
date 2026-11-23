@@ -338,19 +338,26 @@ var designRenders = map[string][]renderCase{
 		c := NewCatalogue(CatalogueView{Name: "کتابخانه‌ی ۲", Unreachable: true}, CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "کتابخانه‌ی ۲"}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
-	}}, {"facets", en, func(f *blitz.Fonts, w, h int) rendered { // planned: the funnel, on a feed with facets
-		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true}, false, f, w, h)
+	}}, {"funnel", en, func(f *blitz.Fonts, w, h int) rendered { // planned: the funnel, nothing in force
+		return plannedCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Label: true, Funnel: true}, false, f, w, h)
+	}}, {"section-chosen", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section chosen, no facets: filled, no number
+		return plannedCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Label: true, Funnel: true, Chosen: true}, false, f, w, h)
 	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section and two facets in force: the funnel's 3
-		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true, InForce: 3}, false, f, w, h)
+		return plannedCatalogue(CatalogueHeadView{Name: "Example Catalogue", Label: true, Funnel: true, Chosen: true, InForce: 2}, false, f, w, h)
 	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // planned: no books with them
-		return plannedCatalogue(CatalogueHeadView{Name: "Standard Ebooks", Label: true, Facets: true, InForce: 3}, true, f, w, h)
+		return plannedCatalogue(CatalogueHeadView{Name: "Example Catalogue", Label: true, Funnel: true, Chosen: true, InForce: 2}, true, f, w, h)
+	}}, {"no-funnel", en, func(f *blitz.Fonts, w, h int) rendered { // planned: nothing to choose (one page, no sections): no funnel
+		return plannedCatalogue(CatalogueHeadView{Name: "FarsiEPUB", Label: true}, false, f, w, h)
 	}}},
 	"catalogue-filters": {{"browse-and-facets", en, func(f *blitz.Fonts, w, h int) rendered {
 		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Books: 214}, 0, f, w, h)
 	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered { // a choice tapped: the panel stays until the new feed's choices come
 		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Loading: true}, 0, f, w, h)
-	}}, {"browse-only", en, func(f *blitz.Fonts, w, h int) rendered { // most catalogues: sections and no facets
+	}}, {"browse-only", en, func(f *blitz.Fonts, w, h int) rendered { // sections and no facets: the title says Browse
 		return plannedFilters(FiltersView{Browse: &designBrowse}, 0, f, w, h)
+	}}, {"kind-unknown", en, func(f *blitz.Fonts, w, h int) rendered { // Ebooksgratuits' first page: its sections' links say no kind, so no ›
+		return plannedFilters(FiltersView{Browse: &FilterGroup{Choices: []FilterChoice{{Label: "All books", On: true}, {Label: "Updates"},
+			{Label: "Top rated"}, {Label: "Authors"}, {Label: "Categories"}}}, Books: 3278}, 0, f, w, h)
 	}}, {"many", en, func(f *blitz.Fonts, w, h int) rendered { // more groups than a screen: paged, its second page
 		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: append(designFacets(), designMore()...), Books: 37}, 1, f, w, h)
 	}}, {"more-language", en, func(f *blitz.Fonts, w, h int) rendered { // More… under Language: the group alone, a row each

@@ -75,10 +75,13 @@ type CatalogueHeadView struct {
 	Loading   bool   // a page is being read: Loading… at the line's end
 
 	// Planned (2026-11-23, not wired): the funnel, in place of the section's button; the button's label.
-	Label     bool // "Catalogue" in a gap of the button's top border
-	Facets    bool // the funnel at the line's end, which opens Browse and filter
+	Label  bool // "Catalogue" in a gap of the button's top border
+	Funnel bool // the funnel at the line's end, which opens Browse and filter: when the catalogue has something to
+	// choose (Only what the catalogue can answer: sections, facets, a search, or the whole catalogue on one page)
 	FiltersOn bool // that panel is open
-	InForce   int  // how many are in force, the section among them: the funnel's number
+	Chosen    bool // a section is chosen (not the catalogue's first page): the funnel filled
+	InForce   int  // how many facets are in force: the funnel's number, the section among them (none: no number, as a
+	// section alone is one place, not a count)
 }
 
 // CatalogueHead draws the catalogues' head: the bar with Catalogues chosen in place of its title, and under it the
@@ -92,12 +95,17 @@ func CatalogueHead(topBar TopBar, hv CatalogueHeadView, fonts *blitz.Fonts, w in
 		Loading, Dir string
 		InForce      string
 		Label        string
-	}{CatalogueHeadView: hv, Dir: "ltr"}
+		Filled       bool // the funnel: a section or a facet in force
+	}{CatalogueHeadView: hv, Dir: "ltr", Filled: hv.Chosen || hv.InForce > 0}
 	if hv.Label {
 		d.Label = word("catalogue-label")
 	}
 	if hv.InForce > 0 {
-		d.InForce = num(hv.InForce)
+		n := hv.InForce
+		if hv.Chosen {
+			n++
+		}
+		d.InForce = num(n)
 	}
 
 	d.Name, d.Section = cut(hv.Name, nameMax), cut(hv.Section, sectionMax)
@@ -279,10 +287,15 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 		Groups                            []group
 		Rows                              []chip
 	}{Title: word("filters-title"), Show: word("filters-done")}
+	if len(v.Groups) == 0 { // no facets: the panel is Browse alone, and says so
+		d.Title = word("filters-browse")
+	}
 	all := v.Groups
 	if v.Browse != nil {
 		b := *v.Browse
-		b.Name = word("filters-browse")
+		if len(v.Groups) > 0 { // alone, the title says Browse: no heading again
+			b.Name = word("filters-browse")
+		}
 		all = append([]FilterGroup{b}, all...)
 	}
 	var ids []string

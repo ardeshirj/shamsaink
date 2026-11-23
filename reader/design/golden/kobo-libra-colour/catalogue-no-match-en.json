@@ -1,7 +1,7 @@
 {
  "placement": "screen",
  "boxes": {
-  "catalogue-choose": [241, 222, 647, 294],
+  "catalogue-choose": [241, 222, 688, 294],
   "catalogue-clear-all": [490, 640, 774, 721],
   "catalogue-filter": [1136, 214, 1224, 302],
   "shelf-catalogues": [181, 46, 323, 122],

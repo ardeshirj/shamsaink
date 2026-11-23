@@ -1,7 +1,7 @@
 {
  "placement": "screen",
  "boxes": {
-  "catalogue-choose": [241, 222, 647, 294],
+  "catalogue-choose": [241, 222, 611, 294],
   "catalogue-filter": [1108, 214, 1196, 302],
   "catalogue-more": [471, 944, 765, 1024],
   "e0": [40, 360, 1196, 498],

@@ -32,7 +32,7 @@ ul.all + .foot { border-top: 0; }
 </style></head><body>
 {{- if eq .Part "head"}}<div class="top">{{if .Back}}{{template "iconbutton" ibtn "filters-back" "caret-left" false}}{{end}}<span class="ttl">{{.Title}}</span>{{with .Loading}}<span class="ld">{{.}}</span>{{end}}{{if .Clear}}<span class="clr" id="{{id "filters-clear"}}">{{.Clear}}</span>{{end}}{{template "iconbutton" ibtn "filters-close" "x" false}}</div>
 {{- else}}
-{{- range .Groups}}<div class="grp"><p class="h">{{.Name}}{{with .Chosen}} · <b>{{.}}</b>{{end}}</p><div class="cs">
+{{- range .Groups}}<div class="grp">{{if .Name}}<p class="h">{{.Name}}{{with .Chosen}} · <b>{{.}}</b>{{end}}</p>{{end}}<div class="cs">
 {{- range .Chips}}<span class="c{{if .On}} on{{end}}{{if .More}} more{{end}}" id="{{.ID}}"><bdi>{{.Label}}</bdi>{{with .Count}} <span class="n">{{.}}</span>{{end}}</span>{{end}}</div></div>{{end}}
 {{- with .Rows}}<ul class="all">{{range .}}<li class="{{if .On}}on{{end}}" id="{{.ID}}">{{icon "check"}}<bdi class="l">{{.Label}}</bdi>{{with .Count}}<span class="n">{{.}}</span>{{end}}</li>{{end}}</ul>{{end}}
 <div class="foot"><span class="b" id="filters-show">{{.Show}}</span></div><p class="end">&nbsp;</p>{{end}}</body></html>

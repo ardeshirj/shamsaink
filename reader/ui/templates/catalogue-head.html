@@ -4,8 +4,9 @@ section shown as a second such button (catalogue-section), which opens the way b
 sections (catalogue-section-menu, 2026-11-22: in place of a back button); and at the line's end Loading…
 while a page is read, so a read refreshes only that line, not the rows under it (2026-11-22). Where the library has its
 filters. Planned (2026-11-23, not wired): the catalogue's button alone, its name only (the section shown is in
-Browse and filter, counted on the funnel), no second; at the line's end a funnel, with how many filters are in force, which opens the catalogue's
-Browse and filter (catalogue-filters); and what the button is, "Catalogue", before it as a setting's name (the dropdown
+Browse and filter, counted on the funnel), no second; at the line's end a funnel, which opens the catalogue's Browse and filter (catalogue-filters), shown
+only when the catalogue has something to choose: filled when a section or a facet is in force, with how many when a
+facet is among them (a section alone is one place, not a count); and what the button is, "Catalogue", before it as a setting's name (the dropdown
 component's label). */ -}}
 {{template "head" ""}}<style>
 .head { display: flex; align-items: center; gap: 0.4em; margin: 0.3em 0; }
@@ -23,4 +24,4 @@ span.b.on { background: var(--ink); color: var(--paper); }
 {{template "dropdown" dd "catalogue-choose" .Name .ChooseOn .Label}}
 {{- if .Section}}<span class="b sec{{if .SectionOn}} on{{end}}" id="{{id "catalogue-section"}}"><bdi dir="{{.Dir}}"{{textlang .Section}}>{{.Section}}</bdi>{{icon "caret-down"}}</span>{{end -}}
 <span class="end">{{- if .Loading}}<span class="loading">{{.Loading}}</span>{{end}}
-{{- if .Facets}}<span class="fn{{if .FiltersOn}} open{{end}}">{{template "iconbutton" ibtn "catalogue-filter" "funnel" false}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>{{end}}</span></div></body></html>
+{{- if .Funnel}}<span class="fn{{if .FiltersOn}} open{{end}}">{{template "iconbutton" ibtn "catalogue-filter" "funnel" .Filled}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>{{end}}</span></div></body></html>
