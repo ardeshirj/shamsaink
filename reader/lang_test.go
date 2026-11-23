@@ -89,6 +89,21 @@ func TestNextLines(t *testing.T) {
 }
 
 // A book's direction: stated, else from its one language, Urdu and Yiddish included (Readium's rule has only ar, fa, he).
+// A book's row in the library and the catalogues: right to left for every language written so, not only Farsi.
+func TestWrittenRTL(t *testing.T) {
+	for _, c := range []struct {
+		lang string
+		want bool
+	}{
+		{"fa", true}, {"fa-IR", true}, {"ar", true}, {"ur", true}, {"he", true}, {"HE-il", true}, {"yi", true},
+		{"en", false}, {"en-GB", false}, {"de", false}, {"", false},
+	} {
+		if got := writtenRTL(c.lang); got != c.want {
+			t.Errorf("writtenRTL(%q) = %v, want %v", c.lang, got, c.want)
+		}
+	}
+}
+
 func TestReadsRTL(t *testing.T) {
 	for _, c := range []struct {
 		prog  manifest.ReadingProgression

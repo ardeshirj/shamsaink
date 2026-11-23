@@ -71,7 +71,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		for i, b := range items {
 			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.Opened && !b.Finished() && library.Filters[filter] != "new",
 				Finished: b.Finished(), Narrated: b.Narrated,
-				RTL: persian([]string{library.Lang(b.Book)}, false)}
+				RTL: writtenRTL(library.Lang(b.Book))}
 			switch library.Filters[filter] {
 			case "new":
 				rows[i].When = ui.AddedWhen(time.Unix(b.Added, 0), shownNow())
@@ -448,7 +448,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			case bookPanel == "menu" && id == "book-details":
 				b := items[held]
 				d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: library.Lang(b.Book), Source: b.Source,
-					File: filepath.Base(b.Path), RTL: persian([]string{library.Lang(b.Book)}, false), Narrated: b.Narrated,
+					File: filepath.Base(b.Path), RTL: writtenRTL(library.Lang(b.Book)), Narrated: b.Narrated,
 					Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies)}
 				if st, err := os.Stat(filepath.Join(rd.dir, b.Path)); err == nil {
 					d.Size = st.Size()
@@ -463,7 +463,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				fmt.Printf("library: %s details\n", b.Path)
 			case bookPanel == "menu" && id == "book-remove":
 				b := items[held]
-				showBook(ui.DrawBookRemove(b.Title, persian([]string{library.Lang(b.Book)}, false), 1+len(b.Copies), rd.fonts, scr.W), "remove", "ask")
+				showBook(ui.DrawBookRemove(b.Title, writtenRTL(library.Lang(b.Book)), 1+len(b.Copies), rd.fonts, scr.W), "remove", "ask")
 				fmt.Printf("library: %s: remove?\n", b.Path)
 			case bookPanel == "remove" && id == "book-remove-yes":
 				b := items[held]

@@ -41,6 +41,13 @@ func bookLanguage(langs []string, title string) string {
 // Yiddish book would turn its pages the wrong way.
 var rtlLanguages = []string{"ar", "fa", "per", "fas", "he", "iw", "yi", "ur", "ps", "sd", "ckb", "ug", "dv", "syr"}
 
+// writtenRTL says whether a language (BCP 47, or a primary subtag as library.Lang gives it) is written right to left:
+// a book's rows and panels in the library and the catalogues are laid out from the right for it (before 2026-11-22,
+// Farsi only: an Urdu, Arabic or Hebrew book's row was set as an English one's).
+func writtenRTL(lang string) bool {
+	return slices.Contains(rtlLanguages, strings.ToLower(strings.SplitN(strings.TrimSpace(lang), "-", 2)[0]))
+}
+
 // readsRTL says whether a book's pages turn right to left: its stated direction, else Readium's rule (one language
 // given, and written right to left) with rtlLanguages.
 func readsRTL(m manifest.Metadata) bool {
