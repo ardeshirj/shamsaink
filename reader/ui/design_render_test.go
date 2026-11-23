@@ -311,7 +311,7 @@ var designRenders = map[string][]renderCase{
 	}}, {"sections", en, func(f *blitz.Fonts, w, h int) rendered { // a catalogue's front page of menus
 		c := NewCatalogue(CatalogueView{Name: "A Library", Sections: []CatalogueSection{{Title: "All books", Count: 3278},
 			{Title: "By author"}, {Title: "By subject"}, {Title: "New this month", Count: 24}, {Title: "کتاب‌های فارسی", RTL: true, Count: 12}}},
-			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library"}, f, w), f, w, h)
+			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Funnel: true}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"authors", en, func(f *blitz.Fonts, w, h int) rendered { // a long section, one level down, a page of many
@@ -321,13 +321,13 @@ var designRenders = map[string][]renderCase{
 			secs = append(secs, CatalogueSection{Title: n, Count: 3 + i*2})
 		}
 		c := NewCatalogue(CatalogueView{Name: "A Library", Sections: secs, More: true},
-			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Section: "By author", Loading: true}, f, w), f, w, h)
+			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Funnel: true, Chosen: true, Loading: true}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
-	}}, {"long-names", en, func(f *blitz.Fonts, w, h int) rendered { // names cut: the head's line and its Loading… kept
+	}}, {"long-names", en, func(f *blitz.Fonts, w, h int) rendered { // a name cut: the head's line, its Loading… and funnel kept
 		c := NewCatalogue(CatalogueView{Name: "The Very Large Public Library of Classics", Sections: []CatalogueSection{{Title: "Collected Works", Count: 4}}},
 			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "The Very Large Public Library of Classics",
-				Section: "Short Stories, Novellas and Other Collected Writings", Loading: true}, f, w), f, w, h)
+				Funnel: true, Chosen: true, InForce: 1, Loading: true}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"unreachable", en, func(f *blitz.Fonts, w, h int) rendered {
@@ -338,32 +338,40 @@ var designRenders = map[string][]renderCase{
 		c := NewCatalogue(CatalogueView{Name: "کتابخانه‌ی ۲", Unreachable: true}, CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "کتابخانه‌ی ۲"}, f, w), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
-	}}, {"funnel", en, func(f *blitz.Fonts, w, h int) rendered { // planned: the funnel, nothing in force
-		return plannedCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Label: true, Funnel: true}, false, f, w, h)
-	}}, {"section-chosen", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section chosen, no facets: filled, no number
-		return plannedCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Label: true, Funnel: true, Chosen: true}, false, f, w, h)
-	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a section and two facets in force: the funnel's 3
-		return plannedCatalogue(CatalogueHeadView{Name: "Example Catalogue", Label: true, Funnel: true, Chosen: true, InForce: 2}, false, f, w, h)
-	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // planned: no books with them
-		return plannedCatalogue(CatalogueHeadView{Name: "Example Catalogue", Label: true, Funnel: true, Chosen: true, InForce: 2}, true, f, w, h)
-	}}, {"no-funnel", en, func(f *blitz.Fonts, w, h int) rendered { // planned: nothing to choose (one page, no sections): no funnel
-		return plannedCatalogue(CatalogueHeadView{Name: "FarsiEPUB", Label: true}, false, f, w, h)
+	}}, {"funnel", en, func(f *blitz.Fonts, w, h int) rendered { // the funnel, nothing in force
+		return funnelCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Funnel: true}, false, f, w, h)
+	}}, {"section-chosen", en, func(f *blitz.Fonts, w, h int) rendered { // a section chosen, no facets: filled, no number
+		return funnelCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Funnel: true, Chosen: true}, false, f, w, h)
+	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // a section and two facets in force: the funnel's 3
+		return funnelCatalogue(CatalogueHeadView{Name: "Example Catalogue", Funnel: true, Chosen: true, InForce: 2}, false, f, w, h)
+	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // no books with them
+		return funnelCatalogue(CatalogueHeadView{Name: "Example Catalogue", Funnel: true, Chosen: true, InForce: 2}, true, f, w, h)
+	}}, {"no-funnel", en, func(f *blitz.Fonts, w, h int) rendered { // nothing to choose (one page, no sections): no funnel
+		return funnelCatalogue(CatalogueHeadView{Name: "FarsiEPUB"}, false, f, w, h)
 	}}},
 	"catalogue-filters": {{"browse-and-facets", en, func(f *blitz.Fonts, w, h int) rendered {
-		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Books: 214}, 0, f, w, h)
+		return filtersScreen(FiltersView{Browse: &designBrowse, Groups: designFacets(), Books: 214, Clear: true}, 0, f, w, h)
 	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered { // a choice tapped: the panel stays until the new feed's choices come
-		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: designFacets(), Loading: true}, 0, f, w, h)
+		return filtersScreen(FiltersView{Browse: &designBrowse, Groups: designFacets(), Loading: true, Clear: true}, 0, f, w, h)
 	}}, {"browse-only", en, func(f *blitz.Fonts, w, h int) rendered { // sections and no facets: the title says Browse
-		return plannedFilters(FiltersView{Browse: &designBrowse}, 0, f, w, h)
+		return filtersScreen(FiltersView{Browse: &designBrowse, Clear: true}, 0, f, w, h)
 	}}, {"kind-unknown", en, func(f *blitz.Fonts, w, h int) rendered { // Ebooksgratuits' first page: its sections' links say no kind, so no ›
-		return plannedFilters(FiltersView{Browse: &FilterGroup{Choices: []FilterChoice{{Label: "All books", On: true}, {Label: "Updates"},
-			{Label: "Top rated"}, {Label: "Authors"}, {Label: "Categories"}}}, Books: 3278}, 0, f, w, h)
+		return filtersScreen(FiltersView{Browse: &FilterGroup{Choices: []FilterChoice{{Label: "All books", On: true}, {Label: "Updates"},
+			{Label: "Top rated"}, {Label: "Authors"}, {Label: "Categories"}}}, Books: 3278, Clear: true}, 0, f, w, h)
 	}}, {"many", en, func(f *blitz.Fonts, w, h int) rendered { // more groups than a screen: paged, its second page
-		return plannedFilters(FiltersView{Browse: &designBrowse, Groups: append(designFacets(), designMore()...), Books: 37}, 1, f, w, h)
+		return filtersScreen(FiltersView{Browse: &designBrowse, Groups: append(designFacets(), designMore()...), Books: 37, Clear: true}, 1, f, w, h)
 	}}, {"more-language", en, func(f *blitz.Fonts, w, h int) rendered { // More… under Language: the group alone, a row each
-		return plannedFilters(FiltersView{Open: &FilterGroup{Name: "Language", Choices: designLanguages()}, Books: 214}, 0, f, w, h)
+		return filtersScreen(FiltersView{Open: &FilterGroup{Name: "Language", Choices: designLanguages()}, Books: 214}, 0, f, w, h)
 	}}, {"more-authors", en, func(f *blitz.Fonts, w, h int) rendered { // By author ›: the section's own, paged
-		return plannedFilters(FiltersView{Open: &FilterGroup{Name: "By author", Choices: designAuthors()}}, 0, f, w, h)
+		return filtersScreen(FiltersView{Open: &FilterGroup{Name: "By author", Choices: designAuthors()}}, 0, f, w, h)
+	}}, {"test-front", en, func(f *blitz.Fonts, w, h int) rendered { // the test catalogue's (devtest catalogue-serve), for e2e/scenarios/catalogue.txt's taps
+		return filtersScreen(FiltersView{Browse: &FilterGroup{Choices: []FilterChoice{{Label: "Test books"}, {Label: "By language"}}}}, 0, f, w, h)
+	}}, {"test-books", en, func(f *blitz.Fonts, w, h int) rendered { // its Test books: Language and Narrated
+		return filtersScreen(FiltersView{Clear: true, Books: 2, Browse: &FilterGroup{Chosen: "Test books", Choices: []FilterChoice{{Label: "Test books", On: true}, {Label: "By language"}}},
+			Groups: []FilterGroup{{Name: "Language", Chosen: "All", Choices: []FilterChoice{{Label: "All", On: true}, {Label: "English", Count: 1}, {Label: "Farsi", Count: 1}}},
+				{Name: "Narrated", Chosen: "Any", Choices: []FilterChoice{{Label: "Any", On: true}, {Label: "Narrated"}}}}}, 0, f, w, h)
+	}}, {"test-language", en, func(f *blitz.Fonts, w, h int) rendered { // its By language: a section of sections
+		return filtersScreen(FiltersView{Clear: true, Open: &FilterGroup{Name: "By language", Choices: []FilterChoice{{Label: "English", Count: 1}, {Label: "Farsi", Count: 1}}}}, 0, f, w, h)
 	}}},
 	"shelf-name": {{"library", en, func(f *blitz.Fonts, w, h int) rendered {
 		tb := libraryTopBar()
@@ -373,11 +381,6 @@ var designRenders = map[string][]renderCase{
 		tb := libraryTopBar()
 		tb.Shelf = "catalogues"
 		return pr(DrawShelfName("catalogues", barHeight(f, w), DrawTopBar(tb, f, w).Box("shelf-catalogues"), f, w))
-	}}},
-	"catalogue-section-menu": {{"path", en, func(f *blitz.Fonts, w, h int) rendered { // two levels down: the way back, then the sections
-		head := CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "A Library", Section: "Hugo, Victor", SectionOn: true}, f, w)
-		return pr(DrawCatalogueSectionMenu([]string{"All books", "By author", "By subject", "New this month"}, 1,
-			head.Rect().Dy(), head.Box("catalogue-section"), f, w))
 	}}},
 	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))
@@ -639,9 +642,9 @@ func compareGoldenRGBA(t *testing.T, path, name string, img *image.RGBA, update 
 	}
 }
 
-// plannedCatalogue is a catalogue's page under a head of the planned design (2026-11-23): invented books, or none with
-// the filters in force (noMatch).
-func plannedCatalogue(hv CatalogueHeadView, noMatch bool, f *blitz.Fonts, w, h int) rendered {
+// funnelCatalogue is a catalogue's page under its head (the funnel's states, 2026-11-23): invented books, or none
+// with the facets in force (noMatch).
+func funnelCatalogue(hv CatalogueHeadView, noMatch bool, f *blitz.Fonts, w, h int) rendered {
 	books := []CatalogueBook{
 		{Title: "The Lighthouse Keeper", Author: "An Author", Share: -1},
 		{Title: "Letters from the Coast", Author: "Another Author", Share: -1},
@@ -657,8 +660,8 @@ func plannedCatalogue(hv CatalogueHeadView, noMatch bool, f *blitz.Fonts, w, h i
 	return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 }
 
-// plannedFilters is the planned Browse and filter panel under the bar, its page page.
-func plannedFilters(v FiltersView, page int, f *blitz.Fonts, w, h int) rendered {
+// filtersScreen is Browse and filter under the bar, its page page.
+func filtersScreen(v FiltersView, page int, f *blitz.Fonts, w, h int) rendered {
 	tb := libraryTopBar()
 	tb.Shelf = "catalogues"
 	l := DrawCatalogueFilters(tb, v, f, w, h)

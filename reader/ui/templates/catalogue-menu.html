@@ -1,9 +1,7 @@
 {{/* The choice of catalogues (catalogue.go, DrawCatalogueMenu): a narrow list hanging from the catalogue's button under
-the bar, at the start side, an entry a row: FarsiEPUB's first, then those added over USB, the one shown with a tick.
-The same list is the choice of sections (DrawCatalogueSectionMenu), hanging from the section's button (Margin): the
-catalogue's own sections, the one the list is under ticked. The whole row is the button. The page is cropped to the list's box. */ -}}
+the bar, at the start side, an entry a row: FarsiEPUB's first, then those added over USB, the one shown with a tick. The whole row is the button. The page is cropped to the list's box. */ -}}
 {{template "head" ""}}<style>
-ul.menu { min-width: 8em; {{.Margin}} }
+ul.menu { min-width: 8em; }
 </style></head><body>
 <ul class="menu hang" id="catalogue-list">{{range mis .Catalogues}}{{template "menuitem" .}}{{end}}
-{{- range $i, $m := mis .Top}}{{if and (eq $i 0) $.Catalogues}}{{template "menuitem" apart $m}}{{else}}{{template "menuitem" $m}}{{end}}{{end}}</ul></body></html>
+</ul></body></html>

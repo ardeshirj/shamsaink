@@ -1,9 +1,9 @@
 {
  "placement": "screen",
  "boxes": {
-  "catalogue-choose": [40, 214, 503, 286],
-  "catalogue-section": [519, 214, 1009, 286],
-  "e0": [40, 344, 1224, 482],
+  "catalogue-choose": [241, 222, 696, 294],
+  "catalogue-filter": [1136, 214, 1224, 302],
+  "e0": [40, 360, 1224, 498],
   "shelf-catalogues": [181, 46, 323, 122],
   "shelf-library": [43, 46, 182, 122],
   "topbar-battery": [1022, 40, 1114, 128],

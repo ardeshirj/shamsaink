@@ -3,7 +3,7 @@
 # go test ./design).
 groups:
   - {name: "Opening and closing", screens: [splash, loading, sleep, leaving]}
-  - {name: "Library", screens: [library, library-sort, library-book-menu, library-book-details, library-book-remove, catalogue, catalogue-menu, catalogue-section-menu, catalogue-filters, shelf-name]}
+  - {name: "Library", screens: [library, library-sort, library-book-menu, library-book-details, library-book-remove, catalogue, catalogue-menu, catalogue-filters, shelf-name]}
   - {name: "Reading", screens: [reading, dock, contents, text, highlight-menu]}
   - {name: "The bar", screens: [topbar, menu, light, sound, battery]}
   - {name: "Settings", screens: [library-settings, reading-settings, library-developer]}

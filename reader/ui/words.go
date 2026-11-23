@@ -90,6 +90,27 @@ func words1(key string, args ...any) string {
 // num is n in the interface's digits: Latin for English, Farsi (۰ to ۹) otherwise.
 func num(n int) string { return digits(fmt.Sprint(n)) }
 
+// count is how many of something (a catalogue's books) in the interface's digits, its thousands grouped from four
+// digits ("3,278", as GOV.UK writes numbers) with the interface's separator (Farsi: ٬); not for a year or a page.
+func count(n int) string {
+	s := fmt.Sprint(n)
+	if n >= 1000 {
+		sep := ","
+		if lang != "en" {
+			sep = "٬"
+		}
+		var b strings.Builder
+		for i, r := range s {
+			if i > 0 && (len(s)-i)%3 == 0 {
+				b.WriteString(sep)
+			}
+			b.WriteRune(r)
+		}
+		s = b.String()
+	}
+	return digits(s)
+}
+
 // decimal is a number written with a point ("1.16") in the interface's digits and decimal separator (Farsi: ۱٫۱۶).
 func decimal(s string) string {
 	if lang == "en" {

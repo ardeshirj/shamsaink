@@ -30,6 +30,8 @@ import (
 //	                          tap library eN waits for the row's book and holds the screens after against its direction;
 //	                          tap library eN FILE fails unless the book opened is FILE (holmes.epub): a library of many
 //	                          books never has another taken for it
+//	tap SCREEN:CASE CONTROL   the same by that one kept render of it (SCREEN-CASE-LANG), for a screen whose controls
+//	                          move with what it shows: tap catalogue-filters:test-books filter-3
 //	tap page-top              the top tenth of the page: the bar and the dock
 //	turn forward|back         a tap on the page that turns it, by the book's own direction
 //	press forward|back|power  a page button pressed and let go: the lower (forward) or the upper (back), as the reader

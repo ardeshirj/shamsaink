@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
@@ -44,14 +45,18 @@ type catalogues struct {
 	// the level shown: the catalogue's first page, or a section of it (url, title); its sections, then its books that
 	// have an EPUB, its pages read so far, and its next page's address ("" when none)
 	url, title string
+	sec        string // the address of the section the level is (its url before a facet narrowed it; "" the first page)
 	sections   []manifest.Link
 	books      []manifest.Manifest
 	next       string
-	up         []catLevel // the levels above it, the first page first: back goes to the last
-	loading    bool       // its page is being read
-	failed     bool       // it could not be reached, and nothing kept
-	wifi       bool       // waiting for Wi-Fi asked for by the catalogues
-	pending    func()     // what Wi-Fi was asked for, run once it is connected
+	facets     []opds.Facet    // the level's facets (its first page's)
+	total      int             // how many books the level has, as its feed says (0: it does not say)
+	up         []catLevel      // the levels above it, the first page first: back goes to the last
+	navs       map[string]bool // what a section's address was seen to hold: true more sections and no books
+	loading    bool            // its page is being read
+	failed     bool            // it could not be reached, and nothing kept
+	wifi       bool            // waiting for Wi-Fi asked for by the catalogues
+	pending    func()          // what Wi-Fi was asked for, run once it is connected
 
 	mu      sync.Mutex
 	shares  map[string]int // the downloads under way by entry id: per cent
@@ -61,7 +66,7 @@ type catalogues struct {
 // catalogues are the reader's, made at their first use: the list (opds.Catalogues), the last one used shown.
 func (rd *reader) catalogues(last string) *catalogues {
 	if rd.cat == nil {
-		rd.cat = &catalogues{out: make(chan catMsg, 8), shares: map[string]int{}}
+		rd.cat = &catalogues{out: make(chan catMsg, 8), shares: map[string]int{}, navs: map[string]bool{}}
 	}
 	c := rd.cat
 	c.list = opds.Catalogues(rd.dir)
@@ -77,11 +82,13 @@ func (rd *reader) catalogues(last string) *catalogues {
 
 // A level of a catalogue left for a section: what it showed, and the list's page it was on.
 type catLevel struct {
-	url, title string
-	sections   []manifest.Link
-	books      []manifest.Manifest
-	next       string
-	page       int
+	url, title, sec string
+	sections        []manifest.Link
+	books           []manifest.Manifest
+	next            string
+	facets          []opds.Facet
+	total           int
+	page            int
 }
 
 func (c *catalogues) cur() opds.Catalogue { return c.list[c.shown] }
@@ -107,9 +114,9 @@ func (c *catalogues) under() int {
 	if len(c.up) == 0 {
 		return -1
 	}
-	first := c.url
+	first := c.sec
 	if len(c.up) > 1 {
-		first = c.up[1].url
+		first = c.up[1].sec
 	}
 	for i, s := range c.top() {
 		if s.Href.String() == first {
@@ -133,22 +140,86 @@ func (c *catalogues) empty() bool { return len(c.sections) == 0 && len(c.books) 
 
 // open goes into section i of the level shown, the list having been on page: nothing in it until it is read.
 func (c *catalogues) open(i, page int) {
-	c.up = append(c.up, catLevel{url: c.url, title: c.title, sections: c.sections, books: c.books, next: c.next, page: page})
-	s := c.sections[i]
-	c.url, c.title, c.sections, c.books, c.next, c.failed = s.Href.String(), s.Title, nil, nil, "", false
+	c.openLink(c.sections[i], page)
 }
+
+// openTop goes into section j of the catalogue's front page, from wherever the level shown is.
+func (c *catalogues) openTop(j int) {
+	c.upTo(0)
+	c.url, c.sec, c.title = "", "", "" // a facet narrowing the front page is left too
+	c.openLink(c.sections[j], 0)
+}
+
+func (c *catalogues) openLink(s manifest.Link, page int) {
+	c.up = append(c.up, catLevel{url: c.url, title: c.title, sec: c.sec, sections: c.sections, books: c.books, next: c.next,
+		facets: c.facets, total: c.total, page: page})
+	c.url, c.sec, c.title, c.sections, c.books, c.next, c.facets, c.total, c.failed = s.Href.String(), s.Href.String(), s.Title, nil, nil, "", nil, 0, false
+}
+
+// narrow shows a facet's page in place of the level shown: the same place, narrowed (its facets kept until it is read).
+func (c *catalogues) narrow(href string) {
+	c.url, c.sections, c.books, c.next, c.total, c.failed = href, nil, nil, "", 0, false
+}
+
+// clear goes back to the catalogue's front page with no facet, as it was left (read again after): false when it is
+// there already.
+func (c *catalogues) clear() bool {
+	if len(c.up) == 0 && c.url == "" {
+		return false
+	}
+	c.upTo(0)
+	if c.url != "" { // the front page narrowed by a facet: its own, once read
+		c.url, c.sections, c.books, c.next, c.facets, c.total = "", nil, nil, "", nil, 0
+	}
+	c.failed = false
+	return true
+}
+
+// inForce is how many of the level's facet groups have a choice other than their first: what the funnel counts.
+func (c *catalogues) inForce() int {
+	n := 0
+	for _, f := range c.facets {
+		for i, l := range f.Links {
+			if active, _ := l.Properties["activeFacet"].(bool); active && i > 0 {
+				n++
+				break
+			}
+		}
+	}
+	return n
+}
+
+// deeper says whether a section is known to hold more sections: its link's type says so (kind=navigation), or it was
+// read before and had sections and no books. Unknown (Ebooksgratuits' plain application/atom+xml): false, no ›.
+func (c *catalogues) deeper(s manifest.Link) bool {
+	t := ""
+	if s.MediaType != nil {
+		t = s.MediaType.String()
+	}
+	switch {
+	case strings.Contains(t, "kind=navigation"):
+		return true
+	case strings.Contains(t, "kind=acquisition"):
+		return false
+	}
+	return c.navs[s.Href.String()]
+}
+
+// menu says whether the level shown is a menu: a section holding sections and no books (Browse and filter shows it as
+// its own list, the way back above it).
+func (c *catalogues) menu() bool { return len(c.up) > 0 && len(c.sections) > 0 && len(c.books) == 0 }
 
 // back goes up to the level above, as it was left: the list's page it was on.
 func (c *catalogues) back() int {
 	l := c.up[len(c.up)-1]
 	c.up = c.up[:len(c.up)-1]
-	c.url, c.title, c.sections, c.books, c.next, c.failed, c.loading = l.url, l.title, l.sections, l.books, l.next, false, false
+	c.url, c.title, c.sec, c.sections, c.books, c.next, c.facets, c.total, c.failed, c.loading = l.url, l.title, l.sec, l.sections, l.books, l.next, l.facets, l.total, false, false
 	return l.page
 }
 
 // fromKept sets the shown catalogue's books from its kept page, if any (nothing read yet).
 func (c *catalogues) fromKept(dir string) {
-	c.url, c.title, c.sections, c.books, c.next, c.up, c.failed = "", "", nil, nil, "", nil, false
+	c.url, c.title, c.sec, c.sections, c.books, c.next, c.facets, c.total, c.up, c.failed = "", "", "", nil, nil, "", nil, 0, nil, false
 	if p := opds.Kept(dir, c.cur()); p != nil {
 		if f, err := p.Feed(); err == nil {
 			c.set(f, false)
@@ -159,7 +230,11 @@ func (c *catalogues) fromKept(dir string) {
 // set takes a page of the level shown: its sections and its books with an EPUB, after those shown when more.
 func (c *catalogues) set(f *opds.Feed, more bool) {
 	if !more {
-		c.sections, c.books = nil, nil
+		c.sections, c.books, c.facets, c.total = nil, nil, f.Facets, 0
+		if n := f.Metadata.NumberOfItems; n != nil {
+			c.total = *n
+		}
+		c.navs[c.addr()] = len(f.Navigation) > 0 && len(f.Publications) == 0
 	}
 	c.sections = append(c.sections, f.Navigation...)
 	for _, m := range f.Publications {
@@ -176,7 +251,7 @@ func (c *catalogues) set(f *opds.Feed, more bool) {
 // read reads the level shown's page, or its next one (more), in the background; the catalogue's first page is kept.
 func (rd *reader) catalogueRead(c *catalogues, more bool) {
 	cat, k, level := c.shown, c.cur(), c.addr()
-	addr, keep := level, !more && len(c.up) == 0
+	addr, keep := level, !more && c.url == "" // the front page as it is, not narrowed
 	if more {
 		addr = c.next
 	}
@@ -260,6 +335,7 @@ func (rd *reader) catalogueLeave(c *catalogues) {
 // view is the shown catalogue as its screen draws it.
 func (rd *reader) catalogueView(c *catalogues) ui.CatalogueView {
 	v := ui.CatalogueView{Name: c.cur().Name, Loading: c.loading, Unreachable: c.failed, More: c.next != ""} // More stays while a page is read: nothing moves
+	v.NoMatch = !c.loading && !c.failed && c.empty() && c.inForce() > 0                                      // narrowed to nothing: said, with the way out
 	for _, s := range c.sections {
 		sec := ui.CatalogueSection{Title: s.Title, RTL: rtlText(s.Title)}
 		if n, ok := s.Properties["numberOfItems"].(int); ok {
@@ -336,4 +412,96 @@ func downloadNotice(err error) string {
 		return "catalogue-not-epub"
 	}
 	return "catalogue-download-failed" // the network, a cut, the storage: nothing was added either way
+}
+
+// headView is the catalogues' head for the level shown: the funnel when the catalogue has sections or facets (Only
+// what the catalogue can answer), filled once a section is chosen, counting the facets in force.
+func (c *catalogues) headView(chooseOn bool) ui.CatalogueHeadView {
+	return ui.CatalogueHeadView{Name: c.cur().Name, ChooseOn: chooseOn, Loading: c.loading,
+		Funnel: len(c.top()) > 0 || len(c.facets) > 0, Chosen: len(c.up) > 0, InForce: c.inForce()}
+}
+
+// A choice of Browse and filter: what its tap does, by its place among the panel's choices (filter-N).
+type filterAct struct {
+	top  int    // a section of the catalogue's front page (-1: not one)
+	sec  int    // a section of the level shown, a menu (-1: not one)
+	href string // a facet's page
+}
+
+// foldAt is how many choices of a facet group are shown before More… (2026-11-23: two lines of chips at most).
+const foldAt = 8
+
+// filtersView is Browse and filter for the level shown, and what each choice does. more: the facet group opened by
+// its More… (-1: none). The level shown a menu (sections, no books): its sections, a row each, the way back above
+// them. Else Browse (the front page's sections, the one the level is under chosen) and the level's facet groups; a
+// level below a section has its title and the way back.
+func (c *catalogues) filtersView(more int) (ui.FiltersView, []filterAct) {
+	v := ui.FiltersView{Loading: c.loading, Clear: len(c.up) > 0 || c.url != ""}
+	if !c.loading {
+		v.Books = c.total
+	}
+	var acts []filterAct
+	choice := func(l manifest.Link) ui.FilterChoice {
+		ch := ui.FilterChoice{Label: l.Title, Deeper: c.deeper(l)}
+		if n, ok := l.Properties["numberOfItems"].(int); ok {
+			ch.Count = n
+		}
+		if on, _ := l.Properties["activeFacet"].(bool); on {
+			ch.On = true
+		}
+		return ch
+	}
+	switch {
+	case more >= 0 && more < len(c.facets):
+		f := c.facets[more]
+		g := ui.FilterGroup{Name: f.Title}
+		for _, l := range f.Links {
+			g.Choices = append(g.Choices, choice(l))
+			acts = append(acts, filterAct{top: -1, sec: -1, href: l.Href.String()})
+		}
+		v.Open = &g
+	case c.menu():
+		g := ui.FilterGroup{Name: c.title}
+		for i, l := range c.sections {
+			g.Choices = append(g.Choices, choice(l))
+			acts = append(acts, filterAct{top: -1, sec: i})
+		}
+		v.Open = &g
+	default:
+		if len(c.up) > 1 { // below a section: where it is, the way back up
+			v.Title, v.Back = c.title, true
+		}
+		if top := c.top(); len(top) > 0 {
+			b := ui.FilterGroup{}
+			in := c.under()
+			for j, l := range top {
+				ch := choice(l)
+				ch.On = j == in
+				if ch.On {
+					b.Chosen = l.Title
+				}
+				b.Choices = append(b.Choices, ch)
+				acts = append(acts, filterAct{top: j, sec: -1})
+			}
+			v.Browse = &b
+		}
+		for _, f := range c.facets {
+			g := ui.FilterGroup{Name: f.Title}
+			for i, l := range f.Links {
+				ch := choice(l)
+				if ch.On {
+					g.Chosen = l.Title
+				}
+				if i < foldAt || len(f.Links) == foldAt+1 {
+					g.Choices = append(g.Choices, ch)
+					acts = append(acts, filterAct{top: -1, sec: -1, href: l.Href.String()})
+				}
+			}
+			if n := len(f.Links) - len(g.Choices); n > 0 {
+				g.Folded = n
+			}
+			v.Groups = append(v.Groups, g)
+		}
+	}
+	return v, acts
 }

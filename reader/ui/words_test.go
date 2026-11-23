@@ -80,6 +80,9 @@ func TestSetLanguage(t *testing.T) {
 	if decimal("1.16") != "۱٫۱۶" || word("px", num(60)) != "۶۰ پیکسل" {
 		t.Errorf("fa: %q %q", decimal("1.16"), word("px", num(60)))
 	}
+	if count(3278) != "۳٬۲۷۸" || count(999) != "۹۹۹" {
+		t.Errorf("fa: counts %q %q", count(3278), count(999))
+	}
 	if digits("20:48") != "۲۰:۴۸" {
 		t.Errorf("fa: the time %q", digits("20:48"))
 	}

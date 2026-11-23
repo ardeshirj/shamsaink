@@ -63,26 +63,47 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// here when the library comes back
 	shelf := "library"
 	cat := rd.catalogues(view.Catalogue)
-	catChoose := false  // the choice of catalogues is open under the catalogue's name
-	catSection := false // the choice of sections is open under the section's
-	catShown := ""      // the catalogue's books as last laid out (its view, printed, Loading apart): what the list shows
-	catLoading := false // Loading… shown in the head
+	catChoose := false // the choice of catalogues is open under the catalogue's name
+	// Browse and filter (catalogue-filters), while open: it takes the list's place under the bar
+	catFilters := false
+	catMore := -1             // its facet group opened by More… (-1: none)
+	var catActs []filterAct   // what its choices do, by their ids' numbers
+	catFrom, catPage := "", 0 // the level and the list's page it was opened on: closed with nothing changed, back to that page
+	catShown := ""            // the catalogue's books as last laid out (its view, printed, Loading apart): what the list shows
+	catLoading := false       // Loading… shown in the head
 	defer func() {
 		if shelf == "catalogues" {
 			rd.catalogueLeave(cat)
 		}
 	}()
 	// buildCat lays out the catalogue's page, on the list's page it was on (keep) or its first
-	buildCat := func(keep bool) {
+	var buildCat func(keep bool)
+	buildCat = func(keep bool) {
 		page := 0
 		if keep && v != nil {
 			page = v.Page()
 		}
+		tb := topBar
+		tb.MenuOn = lv.MenuOn
+		if catFilters {
+			fv, acts := cat.filtersView(catMore)
+			catActs = acts
+			if v != nil {
+				v.Close()
+			}
+			v = ui.DrawCatalogueFilters(tb, fv, rd.fonts, scr.W, scr.H)
+			v.SetPage(min(page, max(v.Pages()-1, 0)))
+			setHead = func() { // its head is drawn with it: drawn again whole, on its page
+				buildCat(true)
+				tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
+			}
+			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
+			return
+		}
 		head := func() *ui.Panel {
 			tb := topBar
 			tb.MenuOn = lv.MenuOn
-			return ui.CatalogueHead(tb, ui.CatalogueHeadView{Name: cat.cur().Name, Section: cat.title, RTL: rtlText(cat.title),
-				ChooseOn: catChoose, SectionOn: catSection, Loading: cat.loading}, rd.fonts, scr.W)
+			return ui.CatalogueHead(tb, cat.headView(catChoose), rd.fonts, scr.W)
 		}
 		if v != nil {
 			v.Close()
@@ -354,6 +375,18 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			scr.ShowPart(rd.over, image.Rect(0, v.TopBarHeight(), scr.W, v.HeadHeight()), device.WfREAGL, false)
 		}
 	}
+	// catClose closes Browse and filter: the list of the level it leaves, on the page it was opened on when that is the
+	// same level, else its first
+	catClose := func() {
+		catFilters, catMore = false, -1
+		buildCat(false)
+		if cat.addr() == catFrom {
+			v.SetPage(min(catPage, max(v.Pages()-1, 0)))
+		}
+		v.Draw(rd.over)
+		scr.Show(rd.over, device.WfREAGL, false)
+		fmt.Printf("library: catalogue filters closed (%d rows)\n", len(cat.sections)+len(cat.books))
+	}
 	// catNet runs f once Wi-Fi is up: Wi-Fi asked for when it is off (the question in the middle of the screen, kind
 	// "catalogue-ask"), waited for when it is on or joining; false when the device has no Wi-Fi of ours
 	catNet := func(f func()) bool {
@@ -378,7 +411,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	}
 	// enterCat shows the Catalogues side: the shown catalogue's kept page at once (or Loading…), then read again
 	enterCat := func() {
-		shelf, catChoose = "catalogues", false
+		shelf, catChoose, catFilters = "catalogues", false, false
 		cat.mu.Lock()
 		cat.onShelf = true
 		cat.mu.Unlock()
@@ -392,7 +425,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// leaveCat shows the books here again, scanned anew for what was downloaded
 	leaveCat := func() {
 		rd.catalogueLeave(cat)
-		shelf, catChoose = "library", false
+		shelf, catChoose, catFilters = "library", false, false
 		all = library.Shelf(library.Scan(rd.dir), rd.dir)
 		build()
 		v.Draw(rd.over)
@@ -446,10 +479,15 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					cat.set(m.feed, m.more)
 				}
 				if on && panel == nil {
-					catRefresh()
+					if catFilters { // the panel with the new feed's choices
+						catRedraw()
+						fmt.Printf("library: catalogue filters (%d choices)\n", len(catActs))
+					} else {
+						catRefresh()
+					}
 				}
 			case "progress": // the row redrawn a second apart at most
-				if i := cat.row(m.entry); on && panel == nil && i >= 0 && time.Since(shareShown) > time.Second {
+				if i := cat.row(m.entry); on && panel == nil && !catFilters && i >= 0 && time.Since(shareShown) > time.Second {
 					shareShown = time.Now()
 					buildCat(true)
 					v.Draw(rd.over)
@@ -666,29 +704,6 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 						catRedraw()
 					}
 				}
-			case catSection && strings.HasPrefix(id, "catalogue-top-"): // a section of the front page
-				panel, catSection = nil, false
-				j, err := strconv.Atoi(strings.TrimPrefix(id, "catalogue-top-"))
-				switch {
-				case err != nil || j >= len(cat.top()):
-					catRedraw()
-				case j == cat.under(): // the section the list is under: back to it as it was left, no read
-					page, deeper := v.Page(), len(cat.up) > 1
-					if deeper {
-						page = cat.upTo(1)
-					}
-					buildCat(false)
-					v.SetPage(min(page, max(v.Pages()-1, 0)))
-					v.Draw(rd.over)
-					scr.Show(rd.over, device.WfREAGL, false)
-					fmt.Printf("library: catalogue back to %q\n", cat.title)
-				default:
-					cat.upTo(0)
-					cat.open(j, 0)
-					fmt.Printf("library: catalogue section %q\n", cat.title)
-					catRead(false)
-					catRedraw()
-				}
 			case catChoose && id == fmt.Sprint("catalogue-", cat.shown): // the same: back to its main page as it was left
 				panel, catChoose = nil, false
 				page := v.Page()
@@ -828,7 +843,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				held, bookPanel = -1, ""
 				panel, langOpen, devOpen, lightOpen, topBar.LightOn, topBar.BatteryOn, lv.MenuOn, lv.SortOn = nil, false, false, false, false, false, false, false
 				soundOpen, phones, soundState, topBar.PhonesOn = false, "", "", false
-				devDialog, upd.dialog, catChoose, catSection = "", "", false, false
+				devDialog, upd.dialog, catChoose = "", "", false
 				setHead()
 				v.Draw(rd.over)
 				scr.ShowPart(rd.over, r, device.WfREAGL, false)
@@ -884,17 +899,68 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			}
 		case head == "shelf-library" && shelf == "catalogues":
 			leaveCat()
-		case head == "catalogue-section" && len(cat.up) > 0: // the way back up and the catalogue's sections
-			var top []string
-			for _, s := range cat.top() {
-				top = append(top, s.Title)
-			}
-			catSection = true
-			setHead()
-			panel = ui.DrawCatalogueSectionMenu(top, cat.under(), v.HeadHeight(), v.HeadBox("catalogue-section"), rd.fonts, scr.W)
+		case head == "catalogue-filter": // Browse and filter in the list's place
+			catFilters, catMore, catFrom, catPage = true, -1, cat.addr(), v.Page()
+			buildCat(false)
 			v.Draw(rd.over)
-			panel.Over(rd.over)
-			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
+			scr.Show(rd.over, device.WfREAGL, false)
+			fmt.Printf("library: catalogue filters (%d choices)\n", len(catActs))
+		case catFilters && strings.HasPrefix(head, "filters-"):
+			switch head {
+			case "filters-close":
+				catClose()
+			case "filters-back":
+				if catMore >= 0 {
+					catMore = -1
+					fmt.Println("library: catalogue filters, all groups")
+				} else if len(cat.up) > 0 {
+					cat.back()
+					fmt.Printf("library: catalogue filters, back to %q\n", cat.title)
+				}
+				buildCat(false)
+				v.Draw(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
+			case "filters-clear":
+				catMore = -1
+				if cat.clear() {
+					fmt.Println("library: catalogue filters cleared")
+					catRead(false)
+				}
+				catRedraw()
+			}
+		case catFilters && v.ButtonAt(e.X, e.Y) == "filters-show":
+			catClose()
+		case catFilters && strings.HasPrefix(v.ButtonAt(e.X, e.Y), "filter-more-"):
+			if n, err := strconv.Atoi(strings.TrimPrefix(v.ButtonAt(e.X, e.Y), "filter-more-")); err == nil && n < len(cat.facets) {
+				catMore = n
+				buildCat(false)
+				v.Draw(rd.over)
+				scr.Show(rd.over, device.WfREAGL, false)
+				fmt.Printf("library: catalogue filters, %q whole\n", cat.facets[n].Title)
+			}
+		case catFilters && strings.HasPrefix(v.ButtonAt(e.X, e.Y), "filter-"):
+			n, err := strconv.Atoi(strings.TrimPrefix(v.ButtonAt(e.X, e.Y), "filter-"))
+			if err != nil || n >= len(catActs) {
+				break
+			} // a choice's feed still under way: this one follows, the older read dropped when it comes (another level's)
+			a := catActs[n]
+			if a.top >= 0 && a.top == cat.under() && len(cat.up) == 1 && cat.url == cat.sec {
+				break // the section shown, as it is
+			}
+			switch {
+			case a.top >= 0:
+				cat.openTop(a.top)
+				fmt.Printf("library: catalogue section %q\n", cat.title)
+			case a.sec >= 0:
+				cat.open(a.sec, 0)
+				fmt.Printf("library: catalogue section %q\n", cat.title)
+			default:
+				cat.narrow(a.href)
+				fmt.Printf("library: catalogue facet %s\n", a.href)
+			}
+			catMore = -1
+			catRead(false)
+			catRedraw() // Loading… in its title until the choices come
 		case head == "catalogue-choose":
 			names := make([]string, len(cat.list))
 			for i, k := range cat.list {
@@ -925,6 +991,12 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				catRead(true)
 				catRefresh() // Loading… beside the name
 			}
+		case shelf == "catalogues" && !catFilters && v.ButtonAt(e.X, e.Y) == "catalogue-clear-all": // no books with the facets: none
+			if cat.clear() {
+				fmt.Println("library: catalogue filters cleared")
+				catRead(false)
+			}
+			catRedraw()
 		case shelf == "catalogues" && v.ButtonAt(e.X, e.Y) == "catalogue-retry":
 			fmt.Println("library: catalogue read again")
 			catRead(false)

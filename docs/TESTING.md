@@ -154,9 +154,14 @@ The parts are tested in Go on every push (`reader/opds`: feeds read, refusals, a
 edition over its file, the catalogues file, the kept page, Atom enclosures). The whole journey is
 `e2e/scenarios/catalogue.txt`, on the simulated Kobo in CI's group reading and by hand on the Kobo and the Kindle
 (`make e2e SCENARIO=e2e/scenarios/catalogue.txt`, `DEVICE=kindle`): devtest serves a catalogue of our own test books
-from this computer (`catalogue-serve`: a main page with one section, its books inside), so no site is reached and
-nothing depends on one; the catalogue opened, its section, a book downloaded and its row then Read, the catalogue chosen
-again (back to its main page, no read), and the book opened from it. Its files are put back after with the reader's.
+from this computer (`catalogue-serve`: a main page of two sections, Test books with the books and By language, a
+section of sections whose link says no kind; every page of books with two facet groups, Language and Narrated, which
+none matches), so no site is reached and nothing depends on one. Browse and filter: Test books, its Farsi facet, Show 1
+book, the book downloaded and its row then Read; a facet matching nothing, Clear filters; By language, its Farsi, back up;
+then the catalogue chosen again (back to its main page, no read), its section row, and the book opened from it. The
+panel's chips move with what it shows, so its taps name the kept render that matches the test catalogue
+(`tap catalogue-filters:test-books filter-4`: `catalogue-filters-test-books-en`, with test-front and test-language).
+Its files are put back after with the reader's.
 
 ### Updates over Wi-Fi, on the Kobo and the Kindle (2026-11-20)
 The parts are tested in Go on every push (`reader/update`: versions' order, signatures, a download from a test server,

@@ -1,0 +1,11 @@
+{
+ "placement": "screen",
+ "boxes": {
+  "filter-0": [40, 374, 1196, 481],
+  "filter-1": [40, 480, 1196, 587],
+  "filters-back": [40, 210, 128, 298],
+  "filters-clear": [932, 218, 1084, 290],
+  "filters-close": [1108, 210, 1196, 298],
+  "filters-show": [537, 617, 699, 697]
+ }
+}

@@ -8,6 +8,13 @@ import (
 // bestRenderIn is the kept render of a screen in a language ("en" or "fa") that has
 // the most buttons, with its boxes: the variant with every entry.
 func (d *dev) bestRenderIn(screen, lang string) (string, *boxes) {
+	if sc, cs, ok := strings.Cut(screen, ":"); ok { // SCREEN:CASE: that render alone (a panel whose controls move with its content)
+		base := sc + "-" + cs + "-" + lang
+		if r, err := d.boxes(base); err == nil {
+			return base, r
+		}
+		return "", nil
+	}
 	files, _ := filepath.Glob(filepath.Join("reader", "design", "golden", d.name, screen+"-*-"+lang+".json"))
 	best, name := (*boxes)(nil), ""
 	for _, f := range files {

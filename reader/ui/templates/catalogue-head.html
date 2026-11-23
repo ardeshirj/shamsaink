@@ -1,27 +1,21 @@
-{{/* The catalogues' head, under the bar (catalogue.go, CatalogueHead): where in the catalogue the list is. The catalogue
-shown, as a button that opens the choice of catalogues (catalogue-menu), its name and a caret; in a section, the
-section shown as a second such button (catalogue-section), which opens the way back up and the catalogue's own
-sections (catalogue-section-menu, 2026-11-22: in place of a back button); and at the line's end Loading…
-while a page is read, so a read refreshes only that line, not the rows under it (2026-11-22). Where the library has its
-filters. Planned (2026-11-23, not wired): the catalogue's button alone, its name only (the section shown is in
-Browse and filter, counted on the funnel), no second; at the line's end a funnel, which opens the catalogue's Browse and filter (catalogue-filters), shown
-only when the catalogue has something to choose: filled when a section or a facet is in force, with how many when a
-facet is among them (a section alone is one place, not a count); and what the button is, "Catalogue", before it as a setting's name (the dropdown
-component's label). */ -}}
+{{/* The catalogues' head, under the bar (catalogue.go, CatalogueHead): the catalogue shown, as a dropdown with its
+name ("Catalogue", the dropdown's label: a setting's name, 2026-11-23) that opens the choice of catalogues
+(catalogue-menu); at the line's end Loading… while a page is read, so a read refreshes only that line, not the rows
+under it (2026-11-22), and the funnel, which opens the catalogue's Browse and filter (catalogue-filters), shown only
+when the catalogue has something to choose: filled when a section or a facet is in force, with how many when a facet
+is among them (a section alone is one place, not a count); without it, its room kept empty, so the rows sit at the same
+height on every catalogue. Where the library has its filters. */ -}}
 {{template "head" ""}}<style>
 .head { display: flex; align-items: center; gap: 0.4em; margin: 0.3em 0; }
 .head span.b { font-weight: bold; flex: none; }
 .head span.b .i { font-size: 0.9em; }
 span.b.on { background: var(--ink); color: var(--paper); }
-/* the section shown: a second choice as the catalogue's, not bold, cut when long */
-.head span.b.sec { font-weight: normal; flex: 0 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; }
 .head .end { margin-inline-start: auto; display: flex; align-items: center; gap: 0.4em; flex: none; }
 .head .fn { position: relative; }
-.head .fn.open span.tb { background: var(--ink); color: white; border-radius: var(--radius); } /* open: inverted, as the library's sort */
 .head .fn .c { position: absolute; top: -0.2em; inset-inline-end: -0.2em; background: var(--ink); color: var(--paper); border-radius: 1em; font-size: 0.6em; min-width: 1.4em; text-align: center; line-height: 1.4em; font-family: "DejaVu Sans", sans-serif; }
 .head .loading { flex: none; font-size: 0.85em; color: #444; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
-</style></head><body><div class="head">
+</style></head><body><div class="head" id="panel-end">
 {{template "dropdown" dd "catalogue-choose" .Name .ChooseOn .Label}}
-{{- if .Section}}<span class="b sec{{if .SectionOn}} on{{end}}" id="{{id "catalogue-section"}}"><bdi dir="{{.Dir}}"{{textlang .Section}}>{{.Section}}</bdi>{{icon "caret-down"}}</span>{{end -}}
 <span class="end">{{- if .Loading}}<span class="loading">{{.Loading}}</span>{{end}}
-{{- if .Funnel}}<span class="fn{{if .FiltersOn}} open{{end}}">{{template "iconbutton" ibtn "catalogue-filter" "funnel" .Filled}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>{{end}}</span></div></body></html>
+{{- if .Funnel}}<span class="fn">{{template "iconbutton" ibtn "catalogue-filter" "funnel" .Filled}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>
+{{- else}}<span class="fn" style="visibility: hidden"><span class="tb">{{icon "funnel"}}</span></span>{{end}}</span></div></body></html>

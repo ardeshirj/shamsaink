@@ -1,11 +1,12 @@
-{{/* Planned (2026-11-23, not wired): a catalogue's Browse and filter (catalogue.go, DrawCatalogueFilters), under the
-bar and filling the screen, in two parts. Its head: the title with Clear all (when any is in force) and a close; with a
-group open, a back arrow and the group's name. Its body, paged as a list when it is long (no scrolling on e-ink): the
-catalogue's own sections as Browse (a deeper one, "By author ›", opens in place), then each group of the feed's facets
-(OPDS 1, their facetGroup; Sort first): its name and what is chosen, its choices as chips (the chosen one filled, how
-many books when the feed says), a long group's first few and More…, which opens the group in place, every choice a
-row. A tap on a choice follows its link at once: the panel stays, Loading… in its title, until the new feed's choices
-come. At the foot Show N books (Done when the feed gives no number), which closes it. */ -}}
+{{/* A catalogue's Browse and filter (catalogue.go, DrawCatalogueFilters; 2026-11-23), under the bar and filling the
+screen, in two parts. Its head: the title (Browse; Browse and filter with facets; a level's name below a section) with
+Clear all (a section or a facet in force) and a close; with a group open or below a section, a back arrow. Its body,
+paged as a list when it is long (no scrolling on e-ink): the catalogue's own sections as Browse, then each group of the
+feed's facets (OPDS 1, their facetGroup): its name and what is chosen, its choices as chips (the chosen one filled, how
+many books when the feed says), a long group's first eight and More…, which opens the group alone, every choice a row
+(as a section holding only sections is shown). A tap on a choice follows its link at once: the panel stays, Loading…
+in its title, until the new feed's choices come. At the foot Show N books (Done when the feed gives no number), which
+closes it. */ -}}
 {{template "head" ""}}<style>
 .top { display: flex; align-items: center; gap: 0.6em; margin: 0.2em 0 0.4em; }
 .top .ttl { font-weight: bold; flex: 1; }

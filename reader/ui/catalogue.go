@@ -2,8 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"html/template"
-	"image"
 	"strings"
 
 	blitz "shamsainkengine"
@@ -39,7 +37,7 @@ type CatalogueView struct {
 	Loading     bool
 	Unreachable bool
 	More        bool // the catalogue has more pages: More books under the last row
-	NoMatch     bool // planned: no books with the filters in force: that, and Clear filters
+	NoMatch     bool // no books with the facets in force: that, and Clear filters
 }
 
 type catalogueRow struct {
@@ -65,41 +63,29 @@ const (
 	goRoom   = 44 + endGap
 )
 
-// The catalogues' head under the bar: where in the catalogue the list is.
+// The catalogues' head under the bar (2026-11-23): the catalogue shown and, when it has something to choose, the
+// funnel that opens Browse and filter.
 type CatalogueHeadView struct {
-	Name      string // the catalogue's
-	Section   string // the section shown ("": the catalogue's first page)
-	RTL       bool   // the section's title reads right to left
-	ChooseOn  bool   // the choice of catalogues is open
-	SectionOn bool   // the choice of sections is open
-	Loading   bool   // a page is being read: Loading… at the line's end
-
-	// Planned (2026-11-23, not wired): the funnel, in place of the section's button; the button's label.
-	Label  bool // "Catalogue" in a gap of the button's top border
-	Funnel bool // the funnel at the line's end, which opens Browse and filter: when the catalogue has something to
-	// choose (Only what the catalogue can answer: sections, facets, a search, or the whole catalogue on one page)
-	FiltersOn bool // that panel is open
-	Chosen    bool // a section is chosen (not the catalogue's first page): the funnel filled
-	InForce   int  // how many facets are in force: the funnel's number, the section among them (none: no number, as a
+	Name     string // the catalogue's
+	ChooseOn bool   // the choice of catalogues is open
+	Loading  bool   // a page is being read: Loading… at the line's end
+	Funnel   bool   // the funnel at the line's end, which opens Browse and filter: when the catalogue has something to
+	// choose (Only what the catalogue can answer: its sections or its facets)
+	Chosen  bool // a section is chosen (not the catalogue's first page): the funnel filled
+	InForce int  // how many facets are in force: the funnel's number, the section among them (none: no number, as a
 	// section alone is one place, not a count)
 }
 
-// CatalogueHead draws the catalogues' head: the bar with Catalogues chosen in place of its title, and under it the
-// catalogue shown as a button (catalogue-choose) that opens the choice of catalogues; in a section, the section as a
-// second button (catalogue-section) that opens the choice of sections; and Loading… at the line's end while a page
-// is read.
+// CatalogueHead draws the catalogues' head: the bar with Catalogues chosen in place of its title, and under it
+// "Catalogue" and the catalogue shown as a dropdown (catalogue-choose) that opens the choice of catalogues; at the
+// line's end Loading… while a page is read, and the funnel (catalogue-filter).
 func CatalogueHead(topBar TopBar, hv CatalogueHeadView, fonts *blitz.Fonts, w int) *Panel {
 	topBar.Shelf = "catalogues"
 	d := struct {
 		CatalogueHeadView
-		Loading, Dir string
-		InForce      string
-		Label        string
-		Filled       bool // the funnel: a section or a facet in force
-	}{CatalogueHeadView: hv, Dir: "ltr", Filled: hv.Chosen || hv.InForce > 0}
-	if hv.Label {
-		d.Label = word("catalogue-label")
-	}
+		Loading, Label, InForce string
+		Filled                  bool // the funnel: a section or a facet in force
+	}{CatalogueHeadView: hv, Label: word("catalogue-label"), Filled: hv.Chosen || hv.InForce > 0}
 	if hv.InForce > 0 {
 		n := hv.InForce
 		if hv.Chosen {
@@ -108,12 +94,9 @@ func CatalogueHead(topBar TopBar, hv CatalogueHeadView, fonts *blitz.Fonts, w in
 		d.InForce = num(n)
 	}
 
-	d.Name, d.Section = cut(hv.Name, nameMax), cut(hv.Section, sectionMax)
+	d.Name = cut(hv.Name, nameMax)
 	if hv.Loading {
 		d.Loading = word("catalogue-loading")
-	}
-	if hv.RTL {
-		d.Dir = "rtl"
 	}
 	html, ids := render("catalogue-head.html", d)
 	head := drawPanel(html, ids, fonts, w, 400)
@@ -138,7 +121,10 @@ func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *L
 			r.Dir = "rtl"
 		}
 		if sec.Count > 0 {
-			r.Author = word("catalogue-count", num(sec.Count))
+			r.Author = word("catalogue-count", count(sec.Count))
+			if sec.Count == 1 {
+				r.Author = word("catalogue-count-one")
+			}
 		}
 		rows = append(rows, r)
 		fitGo = append(fitGo, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
@@ -190,45 +176,18 @@ func DrawCatalogueMenu(names []string, shown, under int, fonts *blitz.Fonts, w i
 	for i, n := range names {
 		bs = append(bs, button{ID: fmt.Sprint("catalogue-", i), Label: cut(n, entryMax), On: i == shown})
 	}
-	html, ids := render("catalogue-menu.html", struct {
-		Catalogues, Top []button
-		Margin          template.CSS
-	}{Catalogues: bs})
+	html, ids := render("catalogue-menu.html", struct{ Catalogues []button }{bs})
 	m := drawPanelIn(html, ids, "catalogue-list", fonts, w, 600) // at most: cut to the list
 	m.y0 += under
 	return m
 }
 
-// DrawCatalogueSectionMenu draws the choice of sections hanging under the catalogues' head (under px from the top),
-// under the section's button (at: its box on the screen): the catalogue's own sections (catalogue-top-0...), the one
-// the list is under ticked (in: -1 none). The levels in between are not listed (2026-11-22: at two levels they were the
-// sections again), nor the main page: the catalogue chosen again in its own menu goes back to it.
-func DrawCatalogueSectionMenu(top []string, in, under int, at image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
-	const margin = 40 // the page's margin in drawPanelIn
-	d := struct {
-		Catalogues, Top []button
-		Margin          template.CSS
-	}{Margin: template.CSS(fmt.Sprintf("margin-left: %dpx;", max(at.Min.X-margin, 0)))}
-	for i, t := range top {
-		d.Top = append(d.Top, button{ID: fmt.Sprint("catalogue-top-", i), Label: cut(t, entryMax), On: i == in})
-	}
-	if RTL() {
-		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-at.Max.X, 0)))
-	}
-	html, ids := render("catalogue-menu.html", d)
-	m := drawPanelIn(html, ids, "catalogue-list", fonts, w, 1200)
-	m.y0 += under
-	return m
-}
-
-// The longest a catalogue's name, a section's in the head and an entry of the menus may be, in letters, before they are
-// cut with an ellipsis (2026-11-22): the engine cuts no text, so a long one would run over Loading… or widen a menu
-// past the screen. The head's two together, at their longest, leave room for Loading… on the Kobo's and the Kindle's
-// widths.
+// The longest a catalogue's name in the head and an entry of the menus may be, in letters, before they are cut with
+// an ellipsis (2026-11-22): the engine cuts no text, so a long one would run over Loading… or widen a menu past the
+// screen.
 const (
-	nameMax    = 18
-	sectionMax = 22
-	entryMax   = 30
+	nameMax  = 18
+	entryMax = 30
 )
 
 // cut is s at most n letters, the last of them an ellipsis when it was longer (spaces before it dropped).
@@ -261,6 +220,9 @@ type FilterChoice struct {
 // list). Loading while a choice's feed is read; Books: how many the feed says it has with these (0: it does not say:
 // Done).
 type FiltersView struct {
+	Title   string // in place of the panel's own (Browse, Browse and filter): a level's, with the way back (Back)
+	Back    bool   // the back arrow: from a group opened, or a level below a section
+	Clear   bool   // Clear all: a section or a facet in force
 	Browse  *FilterGroup
 	Groups  []FilterGroup
 	Open    *FilterGroup
@@ -270,7 +232,7 @@ type FiltersView struct {
 
 // DrawCatalogueFilters lays out Browse and filter (planned, not wired) under the bar, filling the screen: its title
 // line (filters-clear, filters-close; with a group open, filters-back and its name), then the groups, their choices
-// filter-0, filter-1... and More… (filter-more-N), then Show N books (filters-show); paged with list-prev and
+// filter-0, filter-1... and More… (filter-more-N, N the facet group's place, Browse apart), then Show N books (filters-show); paged with list-prev and
 // list-next when they do not fit.
 func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h int) *List {
 	type chip struct {
@@ -290,6 +252,13 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 	if len(v.Groups) == 0 { // no facets: the panel is Browse alone, and says so
 		d.Title = word("filters-browse")
 	}
+	if v.Title != "" {
+		d.Title = cut(v.Title, entryMax)
+	}
+	d.Back = v.Back || v.Open != nil
+	if v.Clear {
+		d.Clear = word("filters-clear")
+	}
 	all := v.Groups
 	if v.Browse != nil {
 		b := *v.Browse
@@ -307,14 +276,14 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 		}
 		ch := chip{ID: fmt.Sprint("filter-", n), Label: label, On: c.On, More: c.Deeper}
 		if c.Count > 0 {
-			ch.Count = num(c.Count)
+			ch.Count = count(c.Count)
 		}
 		ids = append(ids, ch.ID)
 		n++
 		return ch
 	}
 	if v.Open != nil {
-		d.Title, d.Back = v.Open.Name, true
+		d.Title = cut(v.Open.Name, entryMax)
 		for _, c := range v.Open.Choices {
 			d.Rows = append(d.Rows, choice(c))
 		}
@@ -322,13 +291,10 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 		for gi, g := range all {
 			gr := group{Name: g.Name, Chosen: g.Chosen}
 			for _, c := range g.Choices {
-				if c.On && len(g.Choices) > 0 && c.Label != g.Choices[0].Label {
-					d.Clear = word("filters-clear")
-				}
 				gr.Chips = append(gr.Chips, choice(c))
 			}
 			if g.Folded > 0 {
-				m := chip{ID: fmt.Sprint("filter-more-", gi), Label: word("filters-more", num(g.Folded)), More: true}
+				m := chip{ID: fmt.Sprint("filter-more-", gi-(len(all)-len(v.Groups))), Label: word("filters-more", count(g.Folded)), More: true}
 				ids = append(ids, m.ID)
 				gr.Chips = append(gr.Chips, m)
 			}
@@ -338,7 +304,10 @@ func DrawCatalogueFilters(topBar TopBar, v FiltersView, fonts *blitz.Fonts, w, h
 	if v.Loading {
 		d.Loading = word("catalogue-loading")
 	} else if v.Books > 0 {
-		d.Show = word("filters-show", num(v.Books))
+		d.Show = word("filters-show", count(v.Books))
+		if v.Books == 1 {
+			d.Show = word("filters-show-one")
+		}
 	}
 	d.Part = "head"
 	html, hids := render("catalogue-filters.html", d)

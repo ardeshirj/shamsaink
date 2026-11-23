@@ -301,16 +301,33 @@ left as the device has it.
   when none). Plain Atom feeds are read too: an entry's EPUB enclosure is its download when it has no OPDS acquisition
   link (Standard Ebooks' open feed of new releases; their full OPDS feed needs a Patrons Circle login, not yet). Not yet:
   OPDS 2 (JSON: the Internet Archive's), logins, search, OPDS groups.
-- **The screens** (2026-11-22; the spec's `catalogue`, `catalogue-menu`, `catalogue-section-menu`, `shelf-name`, all
+- **The screens** (2026-11-22; the spec's `catalogue`, `catalogue-menu`, `catalogue-filters`, `shelf-name`, all
   English only, as the library; renders on `docs/design/system.html`; `catalogues.go` and the library's loop):
   - **The bar:** a choice of two icons in place of the title, books (Library) and a cloud (Catalogues), on every library
     screen; a tap on the side shown says its name in a box under it, as the battery's level.
-  - **The head:** the catalogue shown, a button opening the choice of catalogues (FarsiEPUB's first, then
-    `catalogues.json`'s); the catalogue chosen again goes back to its main page as it was left. In a section, a second
-    such button, the section's name, opening the catalogue's own sections (the one the list is under ticked: chosen, back
-    to it as left; another, opened). Names cut with an ellipsis (18, 22, 30 letters), so the line keeps room for
-    Loading…, at its end while a page is read: a read refreshes that line only, and the list only when what it shows
-    changed (no refresh for Wi-Fi coming up, or the same page read again).
+  - **The head:** "Catalogue" and the catalogue shown, a dropdown opening the choice of catalogues (FarsiEPUB's first,
+    then `catalogues.json`'s); the catalogue chosen again goes back to its main page as it was left. At the line's end
+    Loading… while a page is read (a read refreshes that line only, and the list only when what it shows changed: no
+    refresh for Wi-Fi coming up, or the same page read again), and the funnel, which opens Browse and filter. Names cut
+    with an ellipsis (18 and 30 letters).
+  - **Browse and filter** (2026-11-23, in place of 2026-11-22's second dropdown of sections; `catalogues.go`,
+    `filtersView`): the funnel shows only when the catalogue has something to choose, by the rule "Only what the
+    catalogue can answer" (`principles.yaml`): its sections, always, and its facets when it gives them (OPDS 1's
+    `opds:facetGroup`, `activeFacet`, `thr:count`); later its search, and our own filters only for a catalogue whole on
+    one page. Never a filter over the one page loaded (Ebooksgratuits sends 100 of 3,278), never a meaning read from a
+    section's title. Read 2026-11-23: none of FarsiEPUB's, Standard Ebooks' Atom feed, Wikisource's or Ebooksgratuits'
+    has facets, so on them it is Browse alone (FarsiEPUB's one page: no funnel). The funnel filled once a section is
+    chosen, with a number only when a facet is among what is in force (a section is one place, not a count). The panel
+    takes the list's place under the bar, paged: Browse (the front page's sections, the one the list is under chosen),
+    then each facet group as chips (eight, then More…, the group alone a row each); a tap follows the choice's link at
+    once, the panel staying with Loading… until the new feed's choices come (a newer tap wins: a read for a level since
+    left is dropped); Show N books (the feed's OpenSearch total; Done without one) or ✕ closes it, to the level's list (on
+    the page it was on, when the level is the same). A section's link often says no kind (Ebooksgratuits' are plain
+    `application/atom+xml`), so whether it holds books or more sections is known once read: › only on one declared
+    `kind=navigation` or seen to be a menu; a menu (sections, no books: Authors) is shown in the panel as its own list,
+    its title and the way back above, and a level below a section has its title and the way back too. Clear all goes
+    back to the front page as it was left, then reads it again; a facet that matches nothing leaves the list saying so,
+    with Clear filters. Counts grouped by thousands from four digits ("3,278"), "1 book" for one.
   - **The list:** sections first (a "›" at the row's end, the count when the catalogue gives it), then books, each
     ending in its button: download, its per cent, then **Read**, which opens the book (one downloaded before shows Read
     at once, by `downloads.json`); a Farsi row's button at the left, under the boxes above. **More books** under the last
@@ -318,11 +335,13 @@ left as the device has it.
     every page starts at the same height (the engine's page 1 keeps a block's margin, later pages start at a line: the
     library's list had the same 15 px jump). That the catalogue could not be reached (Try again) or has no books, in the
     middle.
-  - **Levels:** a section opened keeps the levels above it in memory, so going back is instant and offline; only a
-    catalogue's main page is kept on disk (`catalogues/FOLDER.json`), shown at once on entering, then read again.
+  - **Levels:** a section opened keeps the levels above it in memory (its facets and total too), so going back is
+    instant and offline; a facet narrows the level in place (its section is still the one the list is under); only a
+    catalogue's main page, not narrowed, is kept on disk (`catalogues/FOLDER.json`), shown at once on entering, then read again.
   - **Wi-Fi:** asked for when off (the Wi-Fi question; Cancel stays on Library); turned off again once the catalogues are
     left and no download goes on. Downloads go on on the Library side, or in a book.
-- **Tested:** `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
+- **Tested:** `TestCatalogueFilters` (Browse, ›, facets, the funnel's count, a menu, none matching, back, Clear);
+  `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
   file comes back new; the catalogues file, the kept page, enclosures); `e2e/scenarios/catalogue.txt` on the simulated
   Kobo (CI) and both devices (`docs/TESTING.md`, "Catalogues"); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on
   the Mac and, compiled for ARM (`go test -c`), on the Kobo and the Kindle (2026-11-22: 0.8 and 1.0 s).
