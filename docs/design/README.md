@@ -36,7 +36,10 @@ their own (the dock's and contents' `rtl-book`). A screen shown only in English 
 alone, in each of its states (`templates/samples.html`, English and Farsi), kept in `golden/DEVICE/components/` and
 compared like the screens; one with a template and no samples fails `TestEveryComponentIsRendered`. On the page the
 components are tiles as the screens are: what each is, the screens that use it, its samples. A screen's render of a
-design not built yet is listed in its spec's `planned:` and tagged so on the page, the rest *built*.
+design not built yet is listed in its spec's `planned:` and tagged so on the page, the rest *built*. When a planned design is built,
+its renders join the built ones (the `planned:` list goes), the screens and renders it replaces are removed in the same
+commit (a second dropdown's menu when Browse takes its place), and the built screen's renders are drawn anew: the page
+shows the reader as it is and what is planned, never an old design beside its replacement; git keeps the old ones.
 Beside each picture is a `.json` with where every button is (`placement: screen`: on the screen, panels placed as the reader places
 them, under the real bar; `relative`: on a panel hung by a row or by words), compared exactly like the picture. The device tool reads them to
 tap a control by name.

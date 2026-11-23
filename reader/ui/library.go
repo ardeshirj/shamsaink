@@ -139,7 +139,7 @@ func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w,
 // (2026-11-23, the principle "The interface's frame, the content's direction"): col is that column's width with the gap
 // before it, from the widest of them, 0 when no row has one; a right-to-left title ends before it (library.html, --col).
 func fitTitles(rows []libraryRow, end int, fonts *blitz.Fonts, w int) (col int) {
-	const margin, gap = 40, 20 // the list's margin (NewList); between the title and the share read
+	const margin, gap = 40, endGap // the list's margin (NewList); between the title and the share read, as every row's (catalogue.go)
 	full := make([][]rune, len(rows))
 	keep := make([]int, len(rows)) // letters kept, -1 for the whole title
 	for i := range rows {

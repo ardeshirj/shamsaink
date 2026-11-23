@@ -55,9 +55,15 @@ type catalogueEmpty struct {
 	Retry      *button
 }
 
-// actWidth is the room a row keeps at its end for its button: the title's padding in the template (4.6em), at the list's
-// font size.
-const actWidth = 46 * 44 / 10
+// The room a row keeps at its right for its control, the title's padding in the template at the list's font size (44 px):
+// a book's button (4em at 0.85em: 3.4em), a section's arrow (1em), each with the same gap before it, the page's side
+// margin (40 px; 2026-11-23: one distance from a title to its control in every row, the library's share read too; 20 px
+// was too close).
+const (
+	endGap   = 40
+	bookRoom = 34*44/10 + endGap
+	goRoom   = 44 + endGap
+)
 
 // The catalogues' head under the bar: where in the catalogue the list is.
 type CatalogueHeadView struct {
@@ -117,7 +123,7 @@ func CatalogueHead(topBar TopBar, hv CatalogueHeadView, fonts *blitz.Fonts, w in
 // again: catalogue-retry), and a pager.
 func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []catalogueRow
-	var fit []libraryRow
+	var fitGo, fitBook []libraryRow
 	for _, sec := range c.Sections {
 		r := catalogueRow{ID: fmt.Sprint("e", len(rows)), Title: sec.Title, Dir: "ltr", Section: true}
 		if sec.RTL {
@@ -127,7 +133,7 @@ func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *L
 			r.Author = word("catalogue-count", num(sec.Count))
 		}
 		rows = append(rows, r)
-		fit = append(fit, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
+		fitGo = append(fitGo, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
 	}
 	for _, b := range c.Books {
 		r := catalogueRow{ID: fmt.Sprint("e", len(rows)), Title: b.Title, Author: b.Author, Dir: "ltr", Here: b.Here, Read: word("catalogue-read")}
@@ -138,11 +144,12 @@ func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *L
 			r.Share = num(b.Share) + "%"
 		}
 		rows = append(rows, r)
-		fit = append(fit, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
+		fitBook = append(fitBook, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
 	}
-	fitTitles(fit, actWidth, fonts, w)
-	for i := range rows {
-		rows[i].Title = fit[i].Title
+	fitTitles(fitGo, goRoom, fonts, w)
+	fitTitles(fitBook, bookRoom, fonts, w)
+	for i, f := range append(fitGo, fitBook...) { // sections first, as the rows
+		rows[i].Title = f.Title
 	}
 	var none *catalogueEmpty
 	switch {
