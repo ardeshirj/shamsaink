@@ -15,18 +15,14 @@
 
 <table>
 <tr>
-<th width="50%">Library</th>
-<th width="50%">Farsi, right to left</th>
+<th width="25%">Library</th>
+<th width="25%">Farsi</th>
+<th width="25%">English</th>
+<th width="25%">Arabic</th>
 </tr>
 <tr>
 <td valign="top"><img src="docs/images/screen-library.png" alt="The library: Farsi, Urdu and Arabic books, each with how much is read, English books after them"></td>
 <td valign="top"><img src="docs/images/screen-farsi-dock.png" alt="A page of Buried Alive (FarsiEPUB) with the bar and the dock open, laid out right to left in Farsi"></td>
-</tr>
-<tr>
-<th width="50%">English</th>
-<th width="50%">Arabic, as you read it</th>
-</tr>
-<tr>
 <td valign="top"><img src="docs/images/screen-english.png" alt="A page of The Adventures of Sherlock Holmes (Standard Ebooks) with the bar and the dock open"></td>
 <td valign="top"><img src="docs/images/screen-arabic.png" alt="A page in Arabic with nothing else on the screen: the chapter's title and its text (our own test book)"></td>
 </tr>
