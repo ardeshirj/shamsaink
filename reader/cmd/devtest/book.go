@@ -12,7 +12,7 @@ import (
 type book struct {
 	d         *dev
 	lib       *boxes
-	lang      string // the interface as the reader logs it ("en", "fa", "en-rtl"): the renders its screens are held against
+	lang      string // the interface as the reader logs it ("en", "fa"): the renders its screens are held against
 	rtl       bool
 	doc, page int
 	file      string // the book's file name, as the opening line starts (holmes.epub)

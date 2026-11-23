@@ -268,11 +268,13 @@ func TestPanels(t *testing.T) {
 	book := TopBar{Start: "arrow-left", Title: long, Time: "20:48", Phones: true, LightOn: true, Battery: 82}
 	save("topbar-library", DrawTopBar(TopBar{Title: "Library", Time: "20:48", Battery: 82, Menu: true}, fonts, w).img)
 	save("topbar-book-ltr", DrawTopBar(book, fonts, w).img)
-	rtl := book
-	rtl.RTL, rtl.Title = true, "رود کم‌آب"
+	rtl := book // a Farsi book's bar: the interface in Farsi, mirrored (English never is)
+	rtl.Title = "رود کم‌آب"
+	SetLanguage("fa")
 	save("topbar-book-rtl", DrawTopBar(rtl, fonts, w).img)
 	rtl.Title = long
 	save("topbar-book-rtl-long", DrawTopBar(rtl, fonts, w).img)
+	SetLanguage("en")
 	for _, n := range []int{5, 100} {
 		b := book
 		b.Battery, b.PhonesOn = n, true

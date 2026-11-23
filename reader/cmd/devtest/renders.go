@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// bestRenderIn is the kept render of a screen in a language ("en", "fa", or "en-rtl" for English mirrored) that has
+// bestRenderIn is the kept render of a screen in a language ("en" or "fa") that has
 // the most buttons, with its boxes: the variant with every entry.
 func (d *dev) bestRenderIn(screen, lang string) (string, *boxes) {
 	files, _ := filepath.Glob(filepath.Join("reader", "design", "golden", d.name, screen+"-*-"+lang+".json"))

@@ -156,9 +156,12 @@ flowchart LR
   and panels in the book's language when it has a table (`ui/words/en.json`, `fa.json`: whole sentences with `%s`
   slots, a test checks the tables have the same keys), else English; the library is always English. Farsi digits,
   `dir` and `lang` on each panel, pointing icons mirrored (`.flip`). **A right-to-left book with no table** (Hebrew,
-  Arabic, Urdu, ...; 2026-11-12): the interface mirrored as a Farsi book's, its words English (`ui.SetMirrored`), each
-  string kept left to right in Unicode's isolate marks (`isolated`); its renders kept as a third language, `en-rtl`,
-  which the reader logs on opening a book and devtest holds the screens against.
+  Arabic, Urdu, ...): the interface in English, **left to right** as for any book; the book's own parts take the
+  book's direction: its pages and page turns, the dock's progress row (filled from the book's start, its chapter arrows
+  pointing to its start and end), the order of its contents. From 2026-11-12 to 11-22 the interface was English
+  mirrored, laid out as a Farsi book's (`ui.SetMirrored`, its renders a third language `en-rtl`); the maintainer,
+  2026-11-22: it read oddly (an icon after its words, the back arrow on the right), for nothing gained in English.
+  Their renders: the dock's and contents' case `rtl-book`, in English.
 
 ### The library's books: an ID each, and what is kept for it (2026-11-21)
 **Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one

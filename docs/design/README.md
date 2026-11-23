@@ -29,8 +29,9 @@ profile and language (the spec's screens each have cases in `designRenders`; a b
 with the fonts of `reader/fonts` (other fonts draw other letters), from invented books, never a real book's text.
 A case's languages follow where its screen shows (2026-11-22): **English only** for the library and its panels (with no
 book open the interface is English: the library, its menus, the catalogues); **English and Farsi** (`enFa`) for what
-also shows over a Farsi book (notices, dialogs); and with **English mirrored** too (`enFaRtl`) for what is on a book's
-page (the bar, the dock, contents). A screen shown only in English says so (`english: true` in its spec), and its words are then in `en.json` alone.
+also shows over a book (the bar, the dock, contents, notices, dialogs). English is never mirrored (2026-11-22; English
+mirrored, `en-rtl`, from 11-12): a right-to-left book in English has its own parts right to left, kept as cases of
+their own (the dock's and contents' `rtl-book`). A screen shown only in English says so (`english: true` in its spec), and its words are then in `en.json` alone.
 Beside each picture is a `.json` with where every button is (`placement: screen`: on the screen, panels placed as the reader places
 them, under the real bar; `relative`: on a panel hung by a row or by words), compared exactly like the picture. The device tool reads them to
 tap a control by name.

@@ -24,7 +24,6 @@ type TopBar struct {
 	Battery           int    // percent, drawn as a box filled to it (its button "topbar-battery" shows the number: DrawBattery); < 0 hides it
 	Menu              bool   // the menu's button "topbar-menu" at the end (the library)
 	Shelf             string // the library's bar: in place of the title, the choice of Library and Catalogues, this one chosen ("library", "catalogues"); "" for the title
-	RTL               bool
 }
 
 // DevMode is set when the reader runs in dev mode (main.go): dev/ beside it (the development tools, make kobo-dev-ssh;
@@ -75,7 +74,7 @@ func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
 		}
 	}
 	d.Time = digits(b.Time) // in the interface's digits
-	if b.RTL || RTL() {     // the interface's language mirrors the bar too
+	if RTL() {              // the interface's language mirrors the bar (Farsi; English never)
 		d.Dir = "rtl"
 	}
 	draw := func() *Panel {

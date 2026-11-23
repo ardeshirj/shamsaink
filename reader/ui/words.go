@@ -31,32 +31,20 @@ var words = func() map[string]map[string]string {
 // lang is the language of the interface: a key of words.
 var lang = "en"
 
-// mirrored: the interface drawn right to left in a language that reads left to right (SetMirrored).
-var mirrored bool
-
 // SetLanguage sets the interface's language to code (a language's primary subtag, "fa"); a language with no table of
-// words, and "", are English. The interface takes that language's direction (SetMirrored after it to mirror English).
+// words, and "", are English. The interface takes that language's direction: English is always left to right, over a
+// right-to-left book too, whose own parts (its pages, the dock's progress row, its contents) take the book's direction
+// (2026-11-22, the maintainer: English mirrored, from 2026-11-12, read oddly, for nothing gained in English).
 func SetLanguage(code string) {
 	if _, ok := words[code]; !ok {
 		code = "en"
 	}
 	lang = code
-	mirrored = false
 }
 
-// SetMirrored draws the interface right to left whatever its language: a right-to-left book (Hebrew, Urdu, ...) read
-// with the interface in English, for want of words in its own language, is laid out as a Farsi one is (the maintainer,
-// 2026-11-12), its words and digits English.
-func SetMirrored(on bool) { mirrored = on }
-
-// Interface names the interface's language and direction, for the log: "en", "fa", or "en-rtl" for English mirrored
-// (the design system's renders are kept under the same names).
-func Interface() string {
-	if mirrored && lang != "fa" {
-		return lang + "-rtl"
-	}
-	return lang
-}
+// Interface names the interface's language, for the log: "en" or "fa" (the design system's renders are kept under the
+// same names).
+func Interface() string { return lang }
 
 // Language is the interface's language now: a code of Languages.
 func Language() string { return lang }
@@ -69,25 +57,12 @@ func Languages() (codes []string) {
 	return codes
 }
 
-// RTL says whether the interface reads right to left (Farsi, or mirrored for a right-to-left book): its panels are
-// drawn mirrored.
-func RTL() bool { return lang == "fa" || mirrored }
+// RTL says whether the interface reads right to left (Farsi): its panels are drawn mirrored.
+func RTL() bool { return lang == "fa" }
 
 // word is the text of key in the interface's language, with args put into its %d and %s; a key that is not in the
 // table panics, so a typo is found by the tests.
-func word(key string, args ...any) string {
-	return isolated(words1(key, args...))
-}
-
-// isolated is s kept left to right inside a mirrored interface: in English laid out right to left, a sentence's own
-// direction stays its own (a full stop at its end, not its start), in Unicode's isolate marks (LRI ... PDI), which
-// are not drawn.
-func isolated(s string) string {
-	if mirrored && lang != "fa" && s != "" {
-		return "\u2066" + s + "\u2069"
-	}
-	return s
-}
+func word(key string, args ...any) string { return words1(key, args...) }
 
 func words1(key string, args ...any) string {
 	s, ok := words[lang][key]

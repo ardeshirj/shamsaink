@@ -16,8 +16,9 @@ FarsiEPUB's ShamsaInk page.
   line's end (Unicode's rule L1, a Parley patch: `engine/patches/parley-trailing-whitespace.patch`, 2026-11-13). A
   paragraph marked `dir="auto"` takes its direction from its first strong letter, as in a browser (`engine/src/lib.rs`,
   `OUR_UA_CSS`, 2026-11-13; before, it took the book's).
-- **The interface** has words in English and Farsi. A Farsi book's menus are in Farsi, right to left; another
-  right-to-left book's are in English laid out right to left (mirrored); every other book's in English. The library is
+- **The interface** has words in English and Farsi. A Farsi book's menus are in Farsi, right to left; every other
+  book's in English, left to right, a right-to-left book's own parts (its pages, the dock's progress row, its
+  contents) in its direction (since 2026-11-22; before, English mirrored). The library is
   always in English, each book's row laid out in its own direction (a right-to-left language's from the right,
   since 2026-11-22; before, Farsi's only). Settings → "Follow book language" off: English, left to right, everywhere.
 - **Read-along** (EPUB media overlays) does not depend on the language: words are highlighted by the SMIL's ids and
@@ -28,12 +29,12 @@ FarsiEPUB's ShamsaInk page.
 | Language | Codes (`dc:language`) | Book text in | Pages, with no stated direction | Interface | Tested |
 |---|---|---|---|---|---|
 | Farsi | `fa`, `per`, `fas` (a book with no language but a title in the Arabic script: its interface only) | Parastoo | right to left | Farsi | unit tests; kept renders of every screen in `fa`; e2e on our own `fa-basics` (`rtl-fa`: pages, contents, a highlight; `walk-fa`, `follow-language`; read-along by a tone at word, sentence and paragraph, `readalong-granularity`; simulator, Kobo, Kindle; the simulator's pages committed as pictures) |
-| Arabic | `ar` | Noto Naskh Arabic | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `ar-basics` (`languages/rtl-ar`: pages, contents, a highlight, the mirrored bar; simulator, CI's languages group) |
-| Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `ur-basics`, with **no direction stated** (`languages/rtl-ur`: pages turn right to left from the language alone) |
-| Pashto, Sindhi, Sorani Kurdish, Uyghur | `ps`, `sd`, `ckb`, `ug` | Noto Naskh Arabic | right to left | English, mirrored | unit tests (direction); fonts' coverage checked (experiment 15) |
-| Hebrew | `he`, `iw` | Frank Ruhl Libre (vowel points included) | right to left | English, mirrored | unit tests; kept renders in `en-rtl`; e2e on our own `he-basics` (`languages/rtl-he`: vowel points, the mirrored bar's back arrow) |
-| Yiddish | `yi` | Frank Ruhl Libre | right to left | English, mirrored | unit tests (direction) |
-| Dhivehi, Syriac | `dv`, `syr` | no font of ours (the book's own, else boxes) | right to left | English, mirrored | unit tests (direction) |
+| Arabic | `ar` | Noto Naskh Arabic | right to left | English | unit tests; kept renders of a right-to-left book in English (`rtl-book`); e2e on our own `ar-basics` (`languages/rtl-ar`: pages, contents, a highlight, the bar; simulator, CI's languages group) |
+| Urdu | `ur` | Noto Naskh Arabic (Naskh, not Nastaliq) | right to left | English | unit tests; kept renders of a right-to-left book in English (`rtl-book`); e2e on our own `ur-basics`, with **no direction stated** (`languages/rtl-ur`: pages turn right to left from the language alone) |
+| Pashto, Sindhi, Sorani Kurdish, Uyghur | `ps`, `sd`, `ckb`, `ug` | Noto Naskh Arabic | right to left | English | unit tests (direction); fonts' coverage checked (experiment 15) |
+| Hebrew | `he`, `iw` | Frank Ruhl Libre (vowel points included) | right to left | English | unit tests; kept renders of a right-to-left book in English (`rtl-book`); e2e on our own `he-basics` (`languages/rtl-he`: vowel points, the bar's back arrow) |
+| Yiddish | `yi` | Frank Ruhl Libre | right to left | English | unit tests (direction) |
+| Dhivehi, Syriac | `dv`, `syr` | no font of ours (the book's own, else boxes) | right to left | English | unit tests (direction) |
 | Several, Farsi among them | `fa` with others | as each language above (`lang` on the words) | the book's stated direction, else left to right | Farsi | e2e on our own `mixed` (`languages/rtl-mixed`: English, numbers, an email and a URL inside Farsi sentences; Arabic, Hebrew and Urdu words quoted; Farsi inside an English paragraph; `dir="auto"`; a highlight across a change of direction) |
 | English and other left-to-right languages | anything else | DejaVu Serif or Sans, as the book's CSS asks | left to right | English | everything else; e2e on our own `en-basics` (`walk-en`) |
 
@@ -54,7 +55,7 @@ The lists are in several places and nothing yet checks them against each other: 
 | A title's language in the library | `reader/ui/ui.go` (`textLang`: every Arabic-script title marked Farsi) |
 
 ## Known gaps
-- **Interface words** in Farsi only besides English: Arabic, Urdu and Hebrew readers get English, mirrored.
+- **Interface words** in Farsi only besides English: Arabic, Urdu and Hebrew readers get English (left to right).
 - **Urdu in Nastaliq**, what its readers expect: waits for a timing on the Kobo (the slowest script to shape, lines
   twice as tall; experiment 15).
 - **The Kindle:** the Hebrew, Arabic and Urdu books not tried on it yet (same binary and fonts as the Kobo; their scenarios are `on: kindle`).
@@ -68,4 +69,4 @@ The lists are in several places and nothing yet checks them against each other: 
 - **Found, not changed** (experiment 15): a Farsi book asking for `sans-serif` gets DejaVu Sans's Arabic letters
   before Parastoo's; the library marks every Arabic-script title as Farsi (`textLang`).
 - ~~devtest's `close` on a right-to-left book with the interface in English taps the bar's menu~~: gone by 2026-11-13,
-  `close` leaves the Hebrew, Arabic and Urdu books by the mirrored bar's back arrow.
+  `close` leaves the Hebrew, Arabic and Urdu books by the bar's back arrow.

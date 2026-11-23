@@ -1,9 +1,0 @@
-{
- "placement": "screen",
- "boxes": {
-  "clean-dark-dec": [547, 456, 621, 529],
-  "clean-dark-inc": [50, 456, 126, 529],
-  "clean-light-dec": [547, 360, 621, 433],
-  "clean-light-inc": [50, 360, 126, 433]
- }
-}

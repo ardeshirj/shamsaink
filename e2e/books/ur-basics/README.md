@@ -7,7 +7,7 @@ the CSS; only `dc:language ur`. Readium's rule for such a book knows only Arabic
 choice for the Arabic script, with Urdu's own letters (ہ ے ٹ ڈ ں).
 
 Tests (`e2e/scenarios/languages/rtl-ur.txt`): a book with no stated direction read right to left, Urdu complete in Noto
-Naskh Arabic, the interface in English mirrored (`en-rtl`), contents, pages turned, a highlight made and removed.
+Naskh Arabic, the interface in English, left to right, contents, pages turned, a highlight made and removed.
 
 **Found here (2026-11-13):** its paragraphs are laid out left to right (a short last line at the left), though its
 pages turn right to left: the engine's base direction stays left to right with none stated (`docs/LANGUAGES.md`, "Known

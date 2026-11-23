@@ -91,12 +91,10 @@ func (s *session) drawSheet() {
 		Margin: set.Margin, Dir: set.Direction[r.key]}, s.rd.fonts, s.scr.W, s.scr.H)
 }
 
-// applyLanguage sets the interface's language for this book and the settings (lang.go), and its direction: a book
-// whose pages turn right to left has the interface mirrored when it follows the book, in English when there are no
-// words in the book's language; "Follow book language" off is English left to right.
+// applyLanguage sets the interface's language for this book and the settings (lang.go): the book's when it has words
+// and the interface follows the book, else English, which is left to right whatever the book (ui.SetLanguage).
 func (s *session) applyLanguage() {
 	ui.SetLanguage(languageCode(s.set.EnglishOnly, s.langCode))
-	ui.SetMirrored(!s.set.EnglishOnly && s.r.rtl)
 }
 
 // drawTopBar draws the bar over the dock (docs/design/system.html): back to the library at its start, the
