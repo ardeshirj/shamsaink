@@ -49,6 +49,14 @@ replaced by a new edition keeps its place and highlights (`docs/DESIGN.md`, "The
 book's key was its hash, so books from before keep theirs as their ID.
 
 ## Limits and bugs
+**Headphones also connected to a phone may refuse the Kobo their music** (2026-11-22). Headphones connected to two
+devices at once refuse the music's channel (A2DP: "Connection refused" in BlueZ's log) while the phone holds it, and
+give the Kobo only the call's (HFP: mono, 16 kHz, no narration heard right); many hand it over once the phone is quiet.
+The reader asks for the music's channel again for 10 s and counts the headphones as connected only once PulseAudio
+plays to it (`bluez_sink.ADDR.a2dp_sink`), switching their card to it if PulseAudio kept the call's
+(`reader/device/headphones.go`); else Connect fails. The way round: the phone's Bluetooth off, or the headphones
+disconnected there.
+
 **A firmware update removes ShamsaInk's row** (firmware 5 and 6). The launcher is a library in Kobo's own software,
 which an update replaces; ShamsaInk's folder stays. Run the installer again (it says so).
 
@@ -186,3 +194,9 @@ Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at 
   `wlan0` up throughout. Force Wi-Fi On unticked: suspended ~20 s after the sleep screen (`success: 2`). The reader's
   battery lines (`usage:` in `reader.log`) agree: about 5% an hour in Nickel's sleep since 2026-11-11, 0.0–0.1% in
   ShamsaInk's; every night between was spent asleep in ShamsaInk. The cause: above, "Force Wi-Fi On". Kobalt removed.
+- **2026-11-22, Bluetooth headphones gave the Kobo only the call's channel.** The reader logged "headphones connecting",
+  then "not connected"; BlueZ: `avdtp_connect_cb() connect to ...: Connection refused (111)` twice, the headphones
+  (also connected to the maintainer's phone) then `Connected` with only HFP, PulseAudio's card on
+  `handsfree_head_unit`, `a2dp_sink` not available. A minute later `Device1.ConnectProfile` with A2DP's UUID was
+  accepted, but PulseAudio stayed on the call's profile until `pactl set-card-profile ... a2dp_sink`. The reader took
+  `Connected` alone for sound: now the music's sink (above, "Headphones also connected to a phone").

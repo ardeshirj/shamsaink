@@ -96,7 +96,11 @@ func (d *Device) askPhones(wait time.Duration) Phones {
 	if err != nil {
 		return Phones{On: true}
 	}
-	return Phones{On: true, Addr: soundConnected(out), Pair: pairedAudio(out)}
+	addr := soundConnected(out)
+	if addr != "" && !musicSink(wait, addr) { // only the call's channel: no sound of ours through it
+		addr = ""
+	}
+	return Phones{On: true, Addr: addr, Pair: pairedAudio(out)}
 }
 
 // simPair is the simulated headphones' address.
@@ -179,7 +183,49 @@ func (d *Device) connect(addr string) bool {
 		}
 	}
 	bluez(8*time.Second, path, "org.bluez.Device1.Connect") // it may answer "connection timeout" and connect anyway
-	return connected(8 * time.Second)
+	// The call's channel (HFP) may come up without the music's (A2DP): headphones also connected to a phone refuse it
+	// ("Connection refused") while the phone holds it, and may hand it over once the phone is quiet (2026-11-22). So
+	// the music's channel asked for by name until it is there, and the headphones count as connected only then.
+	for end := time.Now().Add(10 * time.Second); time.Now().Before(end); time.Sleep(time.Second) {
+		if connected(time.Second) {
+			return true
+		}
+		bluez(4*time.Second, path, "org.bluez.Device1.ConnectProfile", "string:"+a2dpSink)
+	}
+	return false
+}
+
+// a2dpSink is the music's profile (A2DP's Audio Sink), as BlueZ names it.
+const a2dpSink = "0000110b-0000-1000-8000-00805f9b34fb"
+
+// musicSink says whether PulseAudio plays to the headphones at addr through their music's channel (its sink
+// bluez_sink.ADDR.a2dp_sink), their card switched to it if it is offered while the call's is active: PulseAudio keeps
+// the profile it chose first, the call's when the music's came up later (2026-11-22: 16 kHz mono, the narration not
+// heard right).
+func musicSink(wait time.Duration, addr string) bool {
+	card := strings.ReplaceAll(addr, ":", "_")
+	if out, err := pactl(wait, "list", "short", "sinks"); err == nil && hasMusicSink(out, card) {
+		return true
+	}
+	if _, err := pactl(wait, "set-card-profile", "bluez_card."+card, "a2dp_sink"); err != nil {
+		return false // not offered: the music's channel not up
+	}
+	out, err := pactl(wait, "list", "short", "sinks")
+	return err == nil && hasMusicSink(out, card)
+}
+
+// hasMusicSink says whether pactl's short list of sinks has card's music sink.
+func hasMusicSink(out []byte, card string) bool {
+	return bytes.Contains(out, []byte("bluez_sink."+card+".a2dp_sink\t"))
+}
+
+// pactl runs Kobo's pactl on PulseAudio's system socket (as SoundSink), waiting at most wait.
+func pactl(wait time.Duration, args ...string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
+	c := exec.CommandContext(ctx, "pactl", args...)
+	c.Env = append(os.Environ(), "PULSE_SERVER=unix:/var/run/pulse/native")
+	return c.Output()
 }
 
 // bluetoothAsleep switches Bluetooth's part of the chip off for a suspend, as Nickel does before it sleeps (firmware 6:

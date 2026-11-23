@@ -91,3 +91,22 @@ func TestPairedAudio(t *testing.T) {
 		}
 	}
 }
+
+// PulseAudio's sinks, as pactl list short sinks prints them (the Libra Colour, 2026-11-22): the music's channel
+// counts, the call's does not, nor another pair's.
+func TestHasMusicSink(t *testing.T) {
+	const card = "00_11_22_33_44_55"
+	for _, c := range []struct {
+		name, out string
+		want      bool
+	}{
+		{"none", "", false},
+		{"the call's channel only", "1\tbluez_sink.00_11_22_33_44_55.handsfree_head_unit\tmodule-bluez5-device.c\ts16le 1ch 16000Hz\tSUSPENDED\n", false},
+		{"the music's", "3\tbluez_sink.00_11_22_33_44_55.a2dp_sink\tmodule-bluez5-device.c\ts16le 2ch 44100Hz\tIDLE\n", true},
+		{"another pair's music", "3\tbluez_sink.66_77_88_99_AA_BB.a2dp_sink\tmodule-bluez5-device.c\ts16le 2ch 44100Hz\tIDLE\n", false},
+	} {
+		if got := hasMusicSink([]byte(c.out), card); got != c.want {
+			t.Errorf("%s: %v, want %v", c.name, got, c.want)
+		}
+	}
+}
