@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -258,6 +259,10 @@ func (s *script) check(d *dev) error {
 				if _, err := os.Stat(filepath.Join(booksDir, b, "mimetype")); err != nil {
 					fail(l, "no book %s/%s", booksDir, b)
 				}
+			}
+		case "sim-wifi":
+			if st := strings.Join(a[1:], " "); !slices.Contains([]string{"on", "off", "off no-network", "off no-address"}, st) {
+				fail(l, "sim-wifi on|off|off no-network|off no-address")
 			}
 		case "update-serve":
 			if args != 1 || a[1] != "latest" && a[1] != "broken" {

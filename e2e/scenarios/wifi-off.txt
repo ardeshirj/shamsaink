@@ -1,0 +1,42 @@
+# Wi-Fi off (docs/DESIGN.md, "Updates over Wi-Fi" and "Books from catalogues"), on the simulated Kobo only: its Wi-Fi
+# set by sim-wifi, so the question before Wi-Fi is turned on (wifi-ask) and each way out of it are played, which no
+# other scenario reaches (a device's Wi-Fi is on, for SSH). Settings' Check: asked, Cancel (Settings again); asked
+# again, Turn on, no network saved: its notice, closed. The Catalogues side: asked, Cancel (the books here stay); asked,
+# Turn on, no address: the catalogue unreached; Try again: asked, Turn on, connected: the catalogue read.
+on: sim
+catalogue-serve en-basics
+sim-wifi off no-network
+library
+tap library topbar-menu
+tap menu settings
+tap library-settings update-check
+expect update: check asked for
+expect library: dialog update ask at
+tap-dialog wifi-ask wifi-cancel
+tap library-settings update-check
+expect update: check asked for
+expect library: dialog update ask at
+tap-dialog wifi-ask wifi-on
+expect update: Wi-Fi turned on to check
+expect-in 10 wi-fi: no network saved
+expect-in 10 library: dialog update notice at
+tap-dialog notice notice-close
+tap 632 1500                       # anywhere: Settings closes
+tap library shelf-catalogues
+expect library: dialog update catalogue-ask at
+tap-dialog wifi-ask wifi-cancel
+expect catalogue: Wi-Fi left off
+sim-wifi off no-address
+tap library shelf-catalogues
+expect library: dialog update catalogue-ask at
+tap-dialog wifi-ask wifi-on
+expect catalogue: Wi-Fi turned on
+expect library: catalogues: E2E Catalogue
+expect-in 10 catalogue: no Wi-Fi: no address
+sim-wifi off
+tap catalogue:unreachable catalogue-retry
+expect library: catalogue read again
+expect library: dialog update catalogue-ask at
+tap-dialog wifi-ask wifi-on
+expect catalogue: Wi-Fi turned on
+expect-in 30 catalogue: http://.*/catalog.xml read in \d+ ms

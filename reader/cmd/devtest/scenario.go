@@ -65,6 +65,8 @@ import (
 //	library                   the reader launched on its library
 //	leave                     the reader left from the library's menu
 //	catalogue-serve BOOK...   a catalogue of the test books named, served from this computer (catalogue.go)
+//	sim-wifi STATE            the simulated device's Wi-Fi from here on (device/wifi.go, simWiFi): off, "off no-network",
+//	                          "off no-address" (a connection asked for fails so), or on
 //	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go); tap-dialog also taps a
 //	                          book's dialog in the library, where the reader placed it: tap-dialog library-book-details book-finish
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
@@ -547,6 +549,16 @@ func (p *player) step(a []string) (string, error) {
 		return p.catalogueServe(a[1:])
 	case "tap-dialog":
 		return p.tapDialog(a[1], a[2])
+	case "sim-wifi":
+		if err := need(1); err != nil {
+			return "", err
+		}
+		if d.a.Local == "" {
+			return "", fmt.Errorf("sim-wifi: on the simulated device only")
+		}
+		st := strings.Join(a[1:], " ")
+		_, err := d.sh("mkdir -p "+d.a.Local+"/sim && echo '"+st+"' > "+d.a.Local+"/sim/wifi", nil)
+		return st, err
 	}
 	return "", fmt.Errorf("unknown step %q", a[0])
 }
