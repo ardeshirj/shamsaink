@@ -280,13 +280,7 @@ func (s *session) input(e device.Event) {
 func (s *session) button(b int, held bool) {
 	if held { // a hold on the page: the next or the previous chapter, with the way back the dock offers
 		if s.cv == nil && s.mn == nil && s.nav == nil && s.sheet == nil && s.list == nil && s.nar == nil {
-			c := s.r.prevChapter(s.toc)
-			if b > 0 {
-				c = s.r.nextChapter(s.toc)
-			}
-			if c >= 0 {
-				s.jump(s.toc[c].doc, s.r.entryAt(s.toc[c]))
-			}
+			s.chapter(b > 0)
 		}
 		return
 	}

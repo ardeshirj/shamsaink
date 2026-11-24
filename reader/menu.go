@@ -289,13 +289,7 @@ func (s *session) inMenu(g device.Gesture) {
 		s.scr.Show(s.rd.over, device.WfREAGL, false)
 		fmt.Printf("  contents: %d entries, %d pages, drawn in %.0f ms\n", len(s.toc), s.cv.Pages(), ms(t))
 	case id == "chapter-prev" || id == "chapter-next":
-		c := r.prevChapter(s.toc)
-		if id == "chapter-next" {
-			c = r.nextChapter(s.toc)
-		}
-		if c >= 0 {
-			s.jump(s.toc[c].doc, r.entryAt(s.toc[c]))
-		}
+		s.chapter(id == "chapter-next")
 	case id == "progress":
 		share := s.nav.Share(g.X, r.rtl)
 		doc, at := int(share*float64(len(r.spine))), 0

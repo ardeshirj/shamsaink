@@ -95,3 +95,15 @@ func (r *reading) prevChapter(es []entry) int {
 	}
 	return -1
 }
+
+// chapter goes to the next chapter, or the previous one (as prevChapter has it), if there is one: the dock's buttons and
+// a page button held.
+func (s *session) chapter(next bool) {
+	c := s.r.prevChapter(s.toc)
+	if next {
+		c = s.r.nextChapter(s.toc)
+	}
+	if c >= 0 {
+		s.jump(s.toc[c].doc, s.r.entryAt(s.toc[c]))
+	}
+}
