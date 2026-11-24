@@ -4,6 +4,15 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.9.0-beta (2026-11-24)
+The library's covers in colour on the Kobo Libra Colour.
+- **Covers in colour:** on the Kobo Libra Colour the library shows each book's cover in its own colours; a panel or a
+  dialog opened over the covers hides them cleanly, and dark mode leaves them as they are. The Kindle, with no colour,
+  shows the same covers in grey. Covers made before are made again once, in the background, the first time the
+  library is opened.
+- **The covers line up with the top bar:** the first cover starts and the last ends at the page's margins, where the
+  bar, the filters and the pager do.
+
 ## 0.8.0-beta (2026-11-24)
 The library as a shelf of covers, and a catalogue's books as covers too, with Browse and Filter.
 - **Covers:** the library shows each book as its cover, twelve a page: the book's own cover picture, made once in the
