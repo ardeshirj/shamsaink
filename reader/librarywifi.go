@@ -39,29 +39,19 @@ func (s *libraryScreen) updateClose() {
 	s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
 }
 
-// updateCheck answers Settings' Check: Wi-Fi asked for first when it is off; not on a device without updates of ours
-// (the Kindle).
+// updateCheck answers Settings' Check: once Wi-Fi is up (asked for first when it is off), the newest version asked
+// for; not on a device without updates of ours (the Kindle).
 func (s *libraryScreen) updateCheck() {
 	rd := s.rd
-	switch st := rd.dev.WiFiState(); {
-	case rd.updateDevice() == "" || st == device.WiFiNone:
+	if rd.updateDevice() == "" || rd.dev.WiFiState() == device.WiFiNone {
 		s.showUpdate(ui.DrawNotice("update-not-here", "", rd.fonts, s.scr.W), "notice")
-	case st == device.WiFiOff && !rd.dev.WiFiBusy():
-		s.showUpdate(ui.DrawWiFiAsk("wifi-off-update", rd.fonts, s.scr.W), "ask")
-	default: // on (maybe still joining): its address waited for, nothing turned on
-		s.upd.wifi = true
-		rd.dev.ConnectWiFi()
+		return
 	}
-}
-
-// updAsked answers Wi-Fi's question for Check: Turn on (on) connects, then checks; Cancel or elsewhere changes nothing.
-func (s *libraryScreen) updAsked(on bool) {
-	if on {
-		fmt.Println("update: Wi-Fi turned on to check")
-		s.upd.wifi = true
-		s.rd.dev.ConnectWiFi()
-	}
-	s.updateClose()
+	s.needNet(&netWait{owner: "update", yes: s.updateClose, no: s.updateClose,
+		then: func() { rd.updateCheck(s.upd) },
+		failed: func(r int) {
+			s.updateEnd(map[bool]string{true: "wifi-no-network", false: "wifi-no-address"}[r == device.WiFiNoNetwork], "wifi-slash")
+		}}, "wifi-off-update")
 }
 
 // updAvailable answers the dialog of a newer version (id: its button tapped; outside: a tap off it): Update downloads
@@ -116,48 +106,87 @@ func (s *libraryScreen) updMessage(m updMsg) error {
 	return nil
 }
 
-// catNet runs f once Wi-Fi is up: Wi-Fi asked for when it is off (the question in the middle of the screen, kind
-// "catalogue-ask"), waited for when it is on or joining; false when the device has no Wi-Fi of ours.
+// catNet runs f once Wi-Fi is up (asked for first when it is off: Turn on shows the Catalogues side); false when the
+// device has no Wi-Fi of ours.
 func (s *libraryScreen) catNet(f func()) bool {
-	rd, cat := s.rd, s.cat
-	switch st := rd.dev.WiFiState(); {
-	case st == device.WiFiNone:
+	cat := s.cat
+	refresh := func() { // the catalogue as it now is, unless something is open over it
+		if s.shelf == "catalogues" && s.panel == nil {
+			s.catRefresh()
+		}
+	}
+	return s.needNet(&netWait{owner: "catalogue",
+		yes: func() {
+			s.panel = nil
+			if s.shelf != "catalogues" {
+				s.enterCat()
+			}
+			s.catRedraw() // the question gone; Loading… or the row's button until Wi-Fi is up
+		},
+		no: func() {
+			cat.loading = false
+			s.updateClose()
+			if s.shelf == "catalogues" {
+				cat.failed = cat.empty()
+				s.catRedraw()
+			}
+		},
+		then: func() {
+			f()
+			refresh()
+		},
+		failed: func(r int) {
+			fmt.Println("catalogue: no Wi-Fi:", map[bool]string{true: "no network saved", false: "no address"}[r == device.WiFiNoNetwork])
+			cat.loading, cat.failed = false, cat.empty()
+			refresh()
+		}}, "wifi-off-catalogue")
+}
+
+// A wait for Wi-Fi (needNet): what is done once it is up, or when it is not.
+type netWait struct {
+	owner  string      // what asked: "update", "catalogue" (dropped when the Catalogues side is left)
+	yes    func()      // the question answered Turn on: its dialog closed, before the connection ends
+	no     func()      // the question answered Cancel (or a tap off it)
+	then   func()      // Wi-Fi up
+	failed func(r int) // not connected: why (device.WiFiNoNetwork, device.WiFiNoAddress)
+}
+
+// wifiOff says whether Wi-Fi is off with no connection under way: the question is asked first.
+func (s *libraryScreen) wifiOff() bool {
+	return s.rd.dev.WiFiState() == device.WiFiOff && !s.rd.dev.WiFiBusy()
+}
+
+// needNet waits for Wi-Fi for w: when it is off, Wi-Fi's question first (askKey: what it is for, in the middle of the
+// screen); when it is on or joining, the connection's end waited for. One connection serves every wait at once
+// (wifiEnded). False when the device has no Wi-Fi of ours.
+func (s *libraryScreen) needNet(w *netWait, askKey string) bool {
+	switch {
+	case s.rd.dev.WiFiState() == device.WiFiNone:
 		return false
-	case st == device.WiFiOff && !rd.dev.WiFiBusy():
-		cat.pending = f
-		s.showUpdate(ui.DrawWiFiAsk("wifi-off-catalogue", rd.fonts, s.scr.W), "catalogue-ask")
+	case s.wifiOff():
+		s.asking = w
+		s.showUpdate(ui.DrawWiFiAsk(askKey, s.rd.fonts, s.scr.W), "wifi-ask")
 	default:
-		cat.wifi, cat.pending = true, f
-		rd.dev.ConnectWiFi()
+		s.netWaits = append(s.netWaits, w)
+		s.rd.dev.ConnectWiFi()
 	}
 	return true
 }
 
-// catAsked answers Wi-Fi's question for the catalogues: Turn on (on) shows the catalogues (if they were not) and
-// connects, what was waiting run once it is up; Cancel changes nothing.
-func (s *libraryScreen) catAsked(on bool) {
-	cat := s.cat
-	f := cat.pending
-	cat.pending = nil
-	s.upd.dialog = ""
-	if on {
-		fmt.Println("catalogue: Wi-Fi turned on")
-		s.panel = nil
-		if s.shelf != "catalogues" {
-			s.enterCat()
-		}
-		cat.wifi, cat.pending = true, f
-		s.rd.dev.ConnectWiFi()
-		s.catRedraw() // the question gone; Loading… or the row's button until Wi-Fi is up
+// wifiAsked answers Wi-Fi's question: Turn on (on) connects, the wait then waiting for its end; Cancel, or a tap off it,
+// changes nothing.
+func (s *libraryScreen) wifiAsked(on bool) {
+	w := s.asking
+	s.asking, s.upd.dialog = nil, ""
+	if !on {
+		fmt.Println("wi-fi check: cancelled")
+		w.no()
 		return
 	}
-	fmt.Println("catalogue: Wi-Fi left off")
-	cat.loading = false
-	s.updateClose()
-	if s.shelf == "catalogues" {
-		cat.failed = cat.empty()
-		s.catRedraw()
-	}
+	fmt.Println("wi-fi check: turn on")
+	s.netWaits = append(s.netWaits, w)
+	s.rd.dev.ConnectWiFi()
+	w.yes()
 }
 
 // wifiSwitch answers the Developer panel's Wi-Fi switch (dev-wifi): on connects, with no question (the switch is the
@@ -178,37 +207,18 @@ func (s *libraryScreen) wifiSwitch() {
 	s.openDev()
 }
 
-// wifiEnded follows a connection's end (r: connected, or why not): for Check, the check or a notice; for the
-// catalogues, what was waiting or the catalogue unreached; for the Developer panel's switch, its panel again or a
-// notice.
+// wifiEnded follows a connection's end (r: connected, or why not): what waited for it (needNet: Check, the
+// catalogues), or the Developer panel's switch: its panel again or a notice.
 func (s *libraryScreen) wifiEnded(r int) {
-	rd, cat, upd := s.rd, s.cat, s.upd
-	if upd.wifi { // Wi-Fi asked for by Check: on, the check; or a notice of why not
-		upd.wifi = false
-		switch r {
-		case device.WiFiConnected:
-			rd.updateCheck(upd)
-		case device.WiFiNoNetwork:
-			s.updateEnd("wifi-no-network", "wifi-slash")
-		default:
-			s.updateEnd("wifi-no-address", "wifi-slash")
-		}
-		return
-	}
-	if cat.wifi { // Wi-Fi asked for by the catalogues: on, what it was for; or the catalogue unreached
-		cat.wifi = false
-		f := cat.pending
-		cat.pending = nil
-		if r == device.WiFiConnected {
-			if f != nil {
-				f()
+	rd := s.rd
+	if ws := s.netWaits; len(ws) > 0 { // Wi-Fi waited for: each wait served, connected or not
+		s.netWaits = nil
+		for _, w := range ws {
+			if r == device.WiFiConnected {
+				w.then()
+			} else {
+				w.failed(r)
 			}
-		} else {
-			fmt.Println("catalogue: no Wi-Fi:", map[bool]string{true: "no network saved", false: "no address"}[r == device.WiFiNoNetwork])
-			cat.loading, cat.failed = false, cat.empty()
-		}
-		if s.shelf == "catalogues" && s.panel == nil {
-			s.catRefresh()
 		}
 		return
 	}

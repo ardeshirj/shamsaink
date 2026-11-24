@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"time"
 
@@ -148,6 +149,7 @@ func (s *libraryScreen) enterCat() {
 // leaveCat shows the books here again, scanned anew for what was downloaded.
 func (s *libraryScreen) leaveCat() {
 	s.rd.catalogueLeave(s.cat)
+	s.netWaits = slices.DeleteFunc(s.netWaits, func(w *netWait) bool { return w.owner == "catalogue" }) // what it waited Wi-Fi for: dropped
 	s.shelf, s.catChoose, s.catFilters = "library", false, false
 	s.all = library.Shelf(library.Scan(s.rd.dir), s.rd.dir)
 	s.build()
@@ -156,20 +158,17 @@ func (s *libraryScreen) leaveCat() {
 	fmt.Println("library: the books here")
 }
 
-// toCatalogues answers the bar's Catalogues: Wi-Fi asked for first when it is off (Cancel stays here), else the
-// catalogues shown and read.
+// toCatalogues answers the bar's Catalogues: Wi-Fi asked for first when it is off (Turn on shows them, Cancel stays
+// here), else the catalogues shown and read.
 func (s *libraryScreen) toCatalogues() {
-	rd, cat := s.rd, s.cat
-	switch st := rd.dev.WiFiState(); {
-	case st == device.WiFiOff && !rd.dev.WiFiBusy(): // asked first: Cancel stays here
-		cat.fromKept(rd.dir)
-		cat.pending = func() { rd.catalogueRead(cat, false) }
-		s.showUpdate(ui.DrawWiFiAsk("wifi-off-catalogue", rd.fonts, s.scr.W), "catalogue-ask")
-	default:
-		s.enterCat()
+	if s.wifiOff() {
+		s.cat.fromKept(s.rd.dir)
 		s.catRead(false)
-		s.catRefresh() // the catalogue unreached at once (no Wi-Fi of ours): said
+		return
 	}
+	s.enterCat()
+	s.catRead(false)
+	s.catRefresh() // the catalogue unreached at once (no Wi-Fi of ours): said
 }
 
 // catMessage follows what the catalogues' reads and downloads say (catalogues.go): a page read, a download's share, a

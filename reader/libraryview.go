@@ -81,6 +81,8 @@ type libraryScreen struct {
 	lightOpen bool        // the panel is the Light panel (light.go)
 	soundOpen bool        // the panel is the Sound panel (sound.go)
 	sp        sliderPanel // the Light or Sound panel's state (sliderpanel.go)
+	asking    *netWait    // Wi-Fi's question open: what asked for it (librarywifi.go)
+	netWaits  []*netWait  // waiting for Wi-Fi: each served when the connection ends
 	held      int         // a book's dialog: the book (a row), and which ("details", "remove", "catalogue")
 	bookPanel string
 }

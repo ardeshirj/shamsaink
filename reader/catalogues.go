@@ -56,8 +56,6 @@ type catalogues struct {
 	up         []catLevel   // the levels above it, the first page first: back goes to the last
 	loading    bool         // its page is being read
 	failed     bool         // it could not be reached, and nothing kept
-	wifi       bool         // waiting for Wi-Fi asked for by the catalogues
-	pending    func()       // what Wi-Fi was asked for, run once it is connected
 	// Browse and filter as last drawn with its choices: shown again, Loading… in its title, while a choice's page is
 	// read (2026-11-23: the level emptied showed only Browse a moment, as if back at the start); nil once closed
 	kept *ui.FiltersView
@@ -407,7 +405,6 @@ func (rd *reader) catalogueLeave(c *catalogues) {
 	c.onShelf = false
 	release := len(c.shares) == 0
 	c.mu.Unlock()
-	c.wifi, c.pending = false, nil
 	if release && rd.dev.ReleaseWiFi() {
 		fmt.Println("catalogue: left: Wi-Fi off again")
 	}

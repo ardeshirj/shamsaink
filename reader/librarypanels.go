@@ -115,14 +115,12 @@ func (s *libraryScreen) tapPanel(e device.Event, id string) (path string, done b
 		s.bookRemoveAsk()
 	case s.bookPanel == "remove" && id == "book-remove-yes":
 		s.bookRemove()
-	case s.upd.dialog == "catalogue-ask": // Turn on: the catalogues shown (if they were not) and Wi-Fi connected; Cancel nothing
-		s.catAsked(id == "wifi-on")
+	case s.upd.dialog == "wifi-ask": // Turn on connects, then what asked for it; Cancel or elsewhere changes nothing
+		s.wifiAsked(id == "wifi-on")
 	case s.catChoose && id == fmt.Sprint("catalogue-", s.cat.shown): // the same: back to its main page as it was left
 		s.catMainPage()
 	case s.catChoose && strings.HasPrefix(id, "catalogue-"): // another catalogue
 		s.catChosen(strings.TrimPrefix(id, "catalogue-"))
-	case s.upd.dialog == "ask": // Wi-Fi asked for: Turn on connects, then checks; Cancel or elsewhere changes nothing
-		s.updAsked(id == "wifi-on")
 	case s.upd.dialog == "available": // Update downloads it; Later, or a tap elsewhere, changes nothing
 		s.updAvailable(id, !image.Pt(e.X, e.Y).In(s.panel.Rect()))
 	case s.upd.dialog == "progress": // only Cancel, while downloading; the restart has no button
