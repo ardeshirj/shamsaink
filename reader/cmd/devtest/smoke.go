@@ -492,6 +492,15 @@ func (d *dev) start() (stop func(), line string, err error) {
 		if out, _ := d.sh("pidof shamsaink || echo none", nil); strings.TrimSpace(string(out)) != "none" {
 			fmt.Println("note the reader is still running: stopping it (launch.sh starts the device's interface again)")
 			d.sh("kill $(pidof shamsaink)", nil)
+			// and the device's own interface waited for: launch.sh holds its lock until then, so the next run's start,
+			// sooner, was ignored ("already started", 2026-11-23, catalogue.txt's third run on the Kobo)
+			// (its exit, ours, not taken for a crash)
+			ok := d.crashOK
+			d.crashOK = true
+			if _, err := d.expect(d.home(), 30*time.Second); err != nil {
+				fmt.Println("note the device's own interface not back:", err)
+			}
+			d.crashOK = ok
 		}
 	}
 	shown := `library: \d+ books.*shown in`
