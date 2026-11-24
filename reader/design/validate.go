@@ -3,7 +3,9 @@ package design
 import (
 	"fmt"
 	"io/fs"
+	"maps"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -50,7 +52,7 @@ func Validate(s *Spec, src Sources) []string {
 	// what a device has and what a control requires are of the known capabilities
 	for _, d := range s.Devices {
 		for _, h := range d.Has {
-			if !contains(Capabilities, h) {
+			if !slices.Contains(Capabilities, h) {
 				f("device %s has %q, which is not a capability (%v)", d.Name, h, Capabilities)
 			}
 		}
@@ -58,7 +60,7 @@ func Validate(s *Spec, src Sources) []string {
 	for _, sc := range s.Screens {
 		for _, c := range sc.Controls {
 			for _, r := range c.Requires {
-				if !contains(Capabilities, r) {
+				if !slices.Contains(Capabilities, r) {
 					f("screen %s, control %s requires %q, which is not a capability (%v)", sc.Name, c.ID, r, Capabilities)
 				}
 			}
@@ -111,7 +113,7 @@ func Validate(s *Spec, src Sources) []string {
 			f("component %s: no refresh waveform", n)
 		}
 		for _, d := range s.Devices {
-			if c.Refresh.Waveform != "" && !contains(d.Waveforms, c.Refresh.Waveform) {
+			if c.Refresh.Waveform != "" && !slices.Contains(d.Waveforms, c.Refresh.Waveform) {
 				f("component %s: waveform %s not on %s", n, c.Refresh.Waveform, d.Name)
 			}
 		}
@@ -370,23 +372,7 @@ func pageScreen(s *Spec) string {
 	return ""
 }
 
-func sortedKeys[V any](m map[string]V) []string {
-	var ks []string
-	for k := range m {
-		ks = append(ks, k)
-	}
-	sort.Strings(ks)
-	return ks
-}
-
-func contains(a []string, s string) bool {
-	for _, x := range a {
-		if x == s {
-			return true
-		}
-	}
-	return false
-}
+func sortedKeys[V any](m map[string]V) []string { return slices.Sorted(maps.Keys(m)) }
 
 // CheckControls holds what a screen's renders drew for a device (found: the ids of every button, over all its states) against the
 // controls the spec declares for it: each declared control was drawn, and each button drawn is declared. A dynamic
@@ -435,7 +421,7 @@ func CheckControls(s *Spec, device, screen string, found []string) []string {
 		}
 	}
 	for id := range exact {
-		if !got[id] && !contains(sc.Internal, id) {
+		if !got[id] && !slices.Contains(sc.Internal, id) {
 			bad = append(bad, fmt.Sprintf("screen %s: the spec declares %q, which was not drawn", screen, id))
 		}
 	}
@@ -455,7 +441,7 @@ func CheckControls(s *Spec, device, screen string, found []string) []string {
 // hasAll says whether have holds every one of need.
 func hasAll(have, need []string) bool {
 	for _, n := range need {
-		if !contains(have, n) {
+		if !slices.Contains(have, n) {
 			return false
 		}
 	}

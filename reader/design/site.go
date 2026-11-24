@@ -354,12 +354,5 @@ var siteHTML string
 
 var siteTpl = template.Must(template.New("site").Funcs(template.FuncMap{
 	"join": strings.Join,
-	"has": func(a []string, s string) bool {
-		for _, x := range a {
-			if x == s {
-				return true
-			}
-		}
-		return false
-	},
+	"has":  slices.Contains[[]string],
 }).Parse(siteHTML))

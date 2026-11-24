@@ -603,6 +603,30 @@ func TestScreenRenders(t *testing.T) {
 }
 
 func compareGolden(t *testing.T, path, name string, img *image.Gray, update bool) {
+	keptRender(t, path, name, img, update, func(want image.Image) (string, bool) {
+		g, ok := want.(*image.Gray)
+		if !ok || g.Rect != img.Rect {
+			return fmt.Sprintf("drawn %v, kept %v", img.Rect, want.Bounds()), false
+		}
+		diff := 0
+		for y := range img.Rect.Dy() {
+			a, b := img.Pix[y*img.Stride:y*img.Stride+img.Rect.Dx()], g.Pix[y*g.Stride:y*g.Stride+g.Rect.Dx()]
+			for x := range a {
+				if a[x] != b[x] {
+					diff++
+				}
+			}
+		}
+		if diff > 0 {
+			return fmt.Sprintf("%d pixels differ from the kept render", diff), true
+		}
+		return "", false
+	})
+}
+
+// keptRender is what compareGolden and compareGoldenRGBA share: with update, img kept at path (a PNG); else the kept
+// one read and given to differs, whose message (when not "") fails the test, img written to DESIGN_OUT when dump.
+func keptRender(t *testing.T, path, name string, img image.Image, update bool, differs func(want image.Image) (msg string, dump bool)) {
 	var buf bytes.Buffer
 	png.Encode(&buf, img)
 	if update {
@@ -623,26 +647,14 @@ func compareGolden(t *testing.T, path, name string, img *image.Gray, update bool
 		t.Errorf("%s: %v", name, err)
 		return
 	}
-	g, ok := want.(*image.Gray)
-	if !ok || g.Rect != img.Rect {
-		t.Errorf("%s: drawn %v, kept %v", name, img.Rect, want.Bounds())
+	msg, dump := differs(want)
+	if msg == "" {
 		return
 	}
-	diff := 0
-	for y := range img.Rect.Dy() {
-		a, b := img.Pix[y*img.Stride:y*img.Stride+img.Rect.Dx()], g.Pix[y*g.Stride:y*g.Stride+g.Rect.Dx()]
-		for x := range a {
-			if a[x] != b[x] {
-				diff++
-			}
-		}
-	}
-	if diff > 0 {
-		t.Errorf("%s: %d pixels differ from the kept render", name, diff)
-		if out := os.Getenv("DESIGN_OUT"); out != "" {
-			os.MkdirAll(out, 0o755)
-			os.WriteFile(filepath.Join(out, name+".png"), buf.Bytes(), 0o644)
-		}
+	t.Errorf("%s: %s", name, msg)
+	if out := os.Getenv("DESIGN_OUT"); dump && out != "" {
+		os.MkdirAll(out, 0o755)
+		os.WriteFile(filepath.Join(out, name+".png"), buf.Bytes(), 0o644)
 	}
 }
 
@@ -718,35 +730,14 @@ func compareBoxes(t *testing.T, path, name string, r rendered, update bool) {
 
 // compareGoldenRGBA is compareGolden for a colour picture.
 func compareGoldenRGBA(t *testing.T, path, name string, img *image.RGBA, update bool) {
-	var buf bytes.Buffer
-	png.Encode(&buf, img)
-	if update {
-		os.MkdirAll(filepath.Dir(path), 0o755)
-		if err := os.WriteFile(path, buf.Bytes(), 0o644); err != nil {
-			t.Fatal(err)
+	keptRender(t, path, name, img, update, func(want image.Image) (string, bool) {
+		g := image.NewRGBA(want.Bounds())
+		draw.Draw(g, g.Rect, want, want.Bounds().Min, draw.Src)
+		if g.Rect != img.Rect || !bytes.Equal(g.Pix, img.Pix) {
+			return "differs from the kept render", true
 		}
-		return
-	}
-	f, err := os.Open(path)
-	if err != nil {
-		t.Errorf("%s: no kept render (GOLDEN=update keeps it): %v", name, err)
-		return
-	}
-	defer f.Close()
-	want, err := png.Decode(f)
-	if err != nil {
-		t.Errorf("%s: %v", name, err)
-		return
-	}
-	g := image.NewRGBA(want.Bounds())
-	draw.Draw(g, g.Rect, want, want.Bounds().Min, draw.Src)
-	if g.Rect != img.Rect || !bytes.Equal(g.Pix, img.Pix) {
-		t.Errorf("%s: differs from the kept render", name)
-		if out := os.Getenv("DESIGN_OUT"); out != "" {
-			os.MkdirAll(out, 0o755)
-			os.WriteFile(filepath.Join(out, name+".png"), buf.Bytes(), 0o644)
-		}
-	}
+		return "", false
+	})
 }
 
 // funnelCatalogue is a catalogue's page under its head (the funnel's states, 2026-11-23): invented books, or none
