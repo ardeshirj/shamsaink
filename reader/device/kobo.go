@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"net"
 	"os"
 	"os/exec"
 	"strconv"
@@ -188,59 +187,9 @@ func (d *Device) idles(out chan<- Event, done <-chan struct{}) (stop func()) {
 	return func() { once.Do(func() { close(quit) }) }
 }
 
-// sysfs writes v to a kernel file, as one write.
-func sysfs(path, v string) error {
-	f, err := os.OpenFile(path, os.O_WRONLY, 0)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.WriteString(v)
-	return err
-}
-
-// setLight sets the white light's level (0 to 100). The Kobo reads it back from actual_brightness; the simulated
-// device, whose files are plain ones, has it written there too.
-func setLight(level int) {
-	sysfs(hw(lightFile), strconv.Itoa(level))
-	if Sim() {
-		sysfs(hw(lightLevel), strconv.Itoa(level))
-	}
-}
-
 // lightDelay is how long the light stays on after the sleep screen is shown, so the screen settles before the light
 // goes out.
 const lightDelay = 2 * time.Second
-
-// plugged says whether the Kobo is on a charger (charging or full: anything but discharging, as KOReader reads it).
-// plugged says whether a charger is in: the battery not discharging, or a charger supply online. Found by what the
-// supplies are, not their names: firmware 6 calls the battery "battery" (4.x: bd71827_bat), and its charger supply
-// reads online 2 on a computer's USB (2026-11-12: a charging Kobo was not seen, and tried to suspend again and again).
-func plugged() bool {
-	return chargerOnline() || !batteryIs("Discharging") && batteryKnown()
-}
-
-// online says whether wlan0 is up with an IPv4 address.
-func online() bool { return address() != "" }
-
-// address is wlan0's IPv4 address while it is up, else "".
-func address() string {
-	state, _ := os.ReadFile(hw(wifiState))
-	if strings.TrimSpace(string(state)) != "up" {
-		return ""
-	}
-	i, err := net.InterfaceByName("wlan0")
-	if err != nil {
-		return ""
-	}
-	addrs, _ := i.Addrs()
-	for _, a := range addrs {
-		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil {
-			return n.IP.String()
-		}
-	}
-	return ""
-}
 
 // testWake, for the end-to-end tests only (WAKE_AFTER=SECONDS, set by a scenario's env): a suspend ends by the clock's
 // alarm that many seconds on, taken as the press that wakes the Kobo, so a sleep and its wake run with nobody there
@@ -407,8 +356,6 @@ func (d *Device) doze(pic image.Image) {
 	fmt.Printf("awake: page back in %.0f ms\n", ms(t))
 	d.Usage("wake", fmt.Sprintf(" asleep=%d wifi=%s", int(time.Now().Round(0).Sub(slept).Seconds()), map[bool]string{true: "on", false: "off"}[wifi]))
 }
-
-func ms(t time.Time) float64 { return float64(time.Since(t).Microseconds()) / 1000 }
 
 // SoundSink is the GStreamer element the narration's player ends in (reader/sink.go), and what its environment needs.
 // On the Kobo (firmware 6) PulseAudio's, in system mode: its socket named, since the reader is no PulseAudio user

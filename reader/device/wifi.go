@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -329,4 +330,26 @@ func kindleNetworks(text string) int {
 		}
 	}
 	return n
+}
+
+// online says whether wlan0 is up with an IPv4 address.
+func online() bool { return address() != "" }
+
+// address is wlan0's IPv4 address while it is up, else "".
+func address() string {
+	state, _ := os.ReadFile(hw(wifiState))
+	if strings.TrimSpace(string(state)) != "up" {
+		return ""
+	}
+	i, err := net.InterfaceByName("wlan0")
+	if err != nil {
+		return ""
+	}
+	addrs, _ := i.Addrs()
+	for _, a := range addrs {
+		if n, ok := a.(*net.IPNet); ok && n.IP.To4() != nil {
+			return n.IP.String()
+		}
+	}
+	return ""
 }

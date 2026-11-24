@@ -155,3 +155,12 @@ func readInt(path string) (int, error) {
 	}
 	return strconv.Atoi(strings.TrimSpace(string(b)))
 }
+
+// setLight sets the white light's level (0 to 100). The Kobo reads it back from actual_brightness; the simulated
+// device, whose files are plain ones, has it written there too.
+func setLight(level int) {
+	sysfs(hw(lightFile), strconv.Itoa(level))
+	if Sim() {
+		sysfs(hw(lightLevel), strconv.Itoa(level))
+	}
+}
