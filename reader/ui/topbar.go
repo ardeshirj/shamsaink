@@ -67,16 +67,13 @@ var ShelfIcons = map[string]string{"library": "books", "catalogues": "cloud-arro
 // DrawTopBar draws the bar as a panel at the top of the screen, w px wide. Its buttons are bar-start, bar-phones (if
 // there are headphones), bar-light, which is always there, and bar-menu (if the bar has the menu).
 func DrawTopBar(b TopBar, fonts *blitz.Fonts, w int) *Panel {
-	d := topBarData{TopBar: b, Dir: "ltr"}
+	d := topBarData{TopBar: b, Dir: dirOf(RTL())} // the interface's language mirrors the bar (Farsi; English never)
 	if b.Shelf != "" {
 		for _, s := range Shelves {
 			d.Shelves = append(d.Shelves, button{ID: "shelf-" + s, Icon: ShelfIcons[s], On: s == b.Shelf})
 		}
 	}
 	d.Time = digits(b.Time) // in the interface's digits
-	if RTL() {              // the interface's language mirrors the bar (Farsi; English never)
-		d.Dir = "rtl"
-	}
 	draw := func() *Panel {
 		html, ids := render("topbar.html", d)
 		return drawPanel(html, ids, fonts, w, 300) // at most: cut to its buttons
@@ -119,7 +116,5 @@ func DrawShelfName(shelf string, under int, at image.Rectangle, fonts *blitz.Fon
 		d.Margin = template.CSS(fmt.Sprintf("margin-left: %dpx; margin-right: auto;", max(at.Min.X-margin, 0)))
 	}
 	html, ids := render("shelf-name.html", d)
-	m := drawPanelIn(html, append(ids, "shelf-name"), "shelf-name", fonts, w, 900)
-	m.y0 += under
-	return m
+	return drawPanelIn(html, append(ids, "shelf-name"), "shelf-name", fonts, w, 900).SetY(under)
 }

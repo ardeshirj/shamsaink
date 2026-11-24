@@ -11,7 +11,5 @@ func DrawLight(level, warmth, warmMax int, dark bool, under int, fonts *blitz.Fo
 		LevelShare, WarmthShare float64
 		Dark                    bool
 	}{float64(level) / 100, float64(warmth) / float64(max(warmMax, 1)), dark})
-	m := drawPanel(html, ids, fonts, w, 900) // at most (Farsi's lines are taller): cut to its buttons
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 900).SetY(under) // at most (Farsi's lines are taller): cut to its buttons
 }

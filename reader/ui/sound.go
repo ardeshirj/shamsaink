@@ -18,7 +18,5 @@ func DrawSound(s Sound, under int, fonts *blitz.Fonts, w int) *Panel {
 		Sound
 		VolumeShare float64
 	}{s, float64(s.Volume) / 100})
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its buttons
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 600).SetY(under) // at most: cut to its buttons
 }

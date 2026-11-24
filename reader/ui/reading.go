@@ -159,7 +159,5 @@ func DrawReadingSettings(st ReadingSettings, under int, fonts *blitz.Fonts, w in
 		return word("every-pages", num(n))
 	}
 	html, ids := render("reading-settings.html", struct{ Light, Dark string }{every(st.CleanLight), every(st.CleanDark)})
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 600).SetY(under) // at most: cut to its last row
 }

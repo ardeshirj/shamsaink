@@ -98,10 +98,7 @@ type emptyWords struct{ Title, Hint, Folder, After string }
 func NewLibrary(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	var rows []libraryRow
 	for i, b := range books {
-		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, New: b.New, Narrated: b.Narrated, When: b.When, Dir: "ltr"}
-		if b.RTL {
-			r.Dir = "rtl"
-		}
+		r := libraryRow{ID: fmt.Sprint("e", i), Title: b.Title, Author: b.Author, New: b.New, Narrated: b.Narrated, When: b.When, Dir: dirOf(b.RTL)}
 		switch {
 		case b.When != "":
 		case b.New:
@@ -265,14 +262,9 @@ func DrawMenu(under int, which string, fonts *blitz.Fonts, w int) *Panel {
 		Dir   string
 		Which string
 		Dev   bool // dev mode, in the library: the Developer entry
-	}{"ltr", which, DevMode && which == "device"}
-	if RTL() {
-		d.Dir = "rtl"
-	}
+	}{dirOf(RTL()), which, DevMode && which == "device"}
 	html, ids := render("library-menu.html", d)
-	m := drawPanelIn(html, ids, "menu-list", fonts, w, 600) // at most: cut to the list
-	m.y0 += under
-	return m
+	return drawPanelIn(html, ids, "menu-list", fonts, w, 600).SetY(under) // at most: cut to the list
 }
 
 // LibrarySettings is what the Settings panel shows: the interface follows the book's language, the sleep timeout in
@@ -296,9 +288,7 @@ func DrawLibrarySettings(st LibrarySettings, under int, fonts *blitz.Fonts, w in
 		LibrarySettings
 		Sleep string
 	}{st, sleep})
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 600).SetY(under) // at most: cut to its last row
 }
 
 // Developer is what the Developer panel shows (dev mode only): Wi-Fi's switch (WiFiOn: on or connecting) and its line
@@ -316,18 +306,14 @@ func (d Developer) SSHOn() bool { return strings.HasPrefix(d.SSH, "SSH on") }
 // the top), in place of the menu it was opened from: "Wi-Fi" (dev-wifi) with its state, then "SSH" (dev-ssh) with its address while on.
 func DrawDeveloper(d Developer, under int, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-developer.html", d)
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its last row
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 600).SetY(under) // at most: cut to its last row
 }
 
 // DrawLibrarySort draws the sort panel directly under the head (under px from the top): how the books are sorted
 // (sort, an index of library.Sorts; buttons sort-recent and the like).
 func DrawLibrarySort(sort, under int, fonts *blitz.Fonts, w int) *Panel {
 	html, ids := render("library-sort.html", struct{ Sorts []button }{segmentsOf("sort-", library.Sorts, library.Sorts, sort)})
-	m := drawPanel(html, ids, fonts, w, 600) // at most: cut to its buttons
-	m.y0 = under
-	return m
+	return drawPanel(html, ids, fonts, w, 600).SetY(under) // at most: cut to its buttons
 }
 
 // What a book's details show: the library's record of it and its place file's.
@@ -383,10 +369,7 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 		Rows               [][2]string
 		Finished, Opened   bool
 		Picture, Words     bool
-	}{d.Title, d.Author, "ltr", rows, d.Finished, d.Opened, d.Picture, d.Words}
-	if d.RTL {
-		data.Dir = "rtl"
-	}
+	}{d.Title, d.Author, dirOf(d.RTL), rows, d.Finished, d.Opened, d.Picture, d.Words}
 	html, ids := render("library-book-details.html", data)
 	return drawPanelIn(html, ids, "book-details-box", fonts, w, 1200)
 }
@@ -444,10 +427,7 @@ func DrawBookRemove(title string, rtl bool, copies int, fonts *blitz.Fonts, w in
 	if copies > 1 {
 		note = word("remove-book-note-copies", num(copies))
 	}
-	d := struct{ Title, Dir, Note string }{title, "ltr", note}
-	if rtl {
-		d.Dir = "rtl"
-	}
+	d := struct{ Title, Dir, Note string }{title, dirOf(rtl), note}
 	html, ids := render("library-book-remove.html", d)
 	return drawPanelIn(html, ids, "book-remove-box", fonts, w, 900)
 }

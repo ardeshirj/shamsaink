@@ -16,9 +16,10 @@ type Panel struct {
 	under   int // for a stack of panels (the library's head): where the one under the first starts
 }
 
-// Rect is where the panel is on the screen.
-func (m *Panel) SetY(y int) { m.y0 = y }
+// SetY puts the panel y px from the top of the screen (drawn, it is at 0); the panel, for a caller that returns it.
+func (m *Panel) SetY(y int) *Panel { m.y0 = y; return m }
 
+// Rect is where the panel is on the screen.
 func (m *Panel) Rect() image.Rectangle { return m.img.Rect.Add(image.Pt(m.x0, m.y0)) }
 
 // Hang puts the panel by row (a box on the screen): under it if it fits above bottom (where the screen's free room

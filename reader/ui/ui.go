@@ -282,6 +282,14 @@ func textLang(s string) template.HTMLAttr {
 	return ""
 }
 
+// dirOf is the HTML direction for rtl: "rtl" or "ltr".
+func dirOf(rtl bool) string {
+	if rtl {
+		return "rtl"
+	}
+	return "ltr"
+}
+
 // textDir is the direction of a piece of text with no language of its own (a chapter's name): its first strong letter's,
 // "rtl" in a right-to-left script (Hebrew, Arabic and their neighbours), else "ltr"; with no letter (a number alone), ""
 // for none, the list's then. As HTML's dir="auto", given to the engine as a direction so the row's logical properties

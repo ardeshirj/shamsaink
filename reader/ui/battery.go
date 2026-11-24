@@ -43,7 +43,5 @@ func DrawBattery(percent int, state string, under int, batt image.Rectangle, fon
 		d.Margin = template.CSS(fmt.Sprintf("margin-left: auto; margin-right: %dpx;", max(w-margin-batt.Max.X, 0)))
 	}
 	html, ids := render("battery.html", d)
-	m := drawPanelIn(html, append(ids, "level"), "level", fonts, w, 900) // tall: a page that ends before the box does cuts its bottom edge (Farsi, with a state line)
-	m.y0 += under
-	return m
+	return drawPanelIn(html, append(ids, "level"), "level", fonts, w, 900).SetY(under) // tall: a page that ends before the box does cuts its bottom edge (Farsi, with a state line)
 }

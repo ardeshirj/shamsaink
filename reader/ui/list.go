@@ -83,14 +83,7 @@ func (v *List) drawPager(page, pages int) *Panel {
 	if v.more {
 		of += "+"
 	}
-	d := pagerData{Dir: "ltr", Count: word("page-n-of", num(page+1), of)}
-	d.CountDir = "ltr"
-	if lang != "en" {
-		d.CountDir = "rtl"
-	}
-	if v.rtl {
-		d.Dir = "rtl"
-	}
+	d := pagerData{Dir: dirOf(v.rtl), CountDir: dirOf(lang != "en"), Count: word("page-n-of", num(page+1), of)}
 	html, ids := render("pager.html", d)
 	m := drawPanel(html, ids, v.fonts, v.w, 300)
 	// no line: drawPanel's under it rubbed out

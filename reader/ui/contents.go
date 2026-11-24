@@ -29,11 +29,7 @@ type contentsData struct {
 
 // NewContents lays out the table of contents es, entry cur (-1: none) marked and its page shown first.
 func NewContents(es []Entry, cur int, rtl bool, fonts *blitz.Fonts, w, h int) *Contents {
-	dir := "ltr"
-	if rtl {
-		dir = "rtl"
-	}
-	d := contentsData{Dir: dir}
+	d := contentsData{Dir: dirOf(rtl)}
 	for i, e := range es {
 		title := e.Title
 		if title == "" {
