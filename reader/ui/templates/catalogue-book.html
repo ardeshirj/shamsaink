@@ -1,21 +1,23 @@
 {{/* A catalogue's book, its details and its one action (catalogue.go, DrawCatalogueBook; planned, 2026-11-23), opened
 by a finger held on its tile, in the middle of the screen, as the library's (library-book-details.html): the title and
-the author in the book's own direction; a row a fact the feed gives, its name at the start and its value after
-(Language, Published, Publisher, Subjects; one it does not give is left out); its summary when it has one, cut to a few
-lines; then its tile's action, the same: Download, how much has come while it downloads, Read once it is here. A tap
+the author in the book's own direction; a row a fact the feed gives, its name at the start and its value after, in
+its own direction (dir="auto"; Farsi subjects joined by «،»): Language, Published, Publisher, Subjects (one it does not
+give is left out); its summary when it has one, cut to a few lines, in its own direction (dir="auto": a feed may
+summarise a Farsi book in English, as FarsiEPUB's); then its tile's action, the same: Download, how much has come while
+it downloads, Read once it is here. A tap
 outside closes it. */ -}}
-{{template "head" "ltr"}}<style>
+{{template "head" ""}}<style>
 div.box { border: var(--line) solid var(--ink); border-radius: var(--radius); padding: 0.5em 0.8em 0.6em; }
 div.box h3 { margin: 0; font-size: 1em; }
 div.box p.a { margin: 0 0 0.4em; font-size: 0.85em; color: #444; }
 dl { display: grid; grid-template-columns: max-content 1fr; column-gap: 1em; row-gap: 0.15em; margin: 0; font-size: 0.85em; }
 dt { color: #444; }
-dd { margin: 0; overflow-wrap: anywhere; }
+dd { margin: 0; overflow-wrap: anywhere; justify-self: start; } /* a value in its own direction, next to its name */
 div.box p.sum { margin: 0.5em 0 0; font-size: 0.8em; line-height: 1.35; }
 div.box .row { margin: 0.6em 0 0; }
 div.box span.b.on { background: var(--ink); color: var(--paper); }
 </style></head><body>
 <div class="box" id="catalogue-book-box"><h3 dir="{{.Dir}}"{{textlang .Title}}>{{.Title}}</h3><p class="a" dir="{{.Dir}}"{{textlang .Author}}>{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</p>
-{{- with .Rows}}<dl>{{range .}}<dt>{{index . 0}}</dt><dd{{textlang (index . 1)}}>{{index . 1}}</dd>{{end}}</dl>{{end}}
-{{- with .Summary}}<p class="sum" dir="{{$.Dir}}"{{textlang .}}>{{.}}</p>{{end}}
+{{- with .Rows}}<dl>{{range .}}<dt>{{index . 0}}</dt><dd dir="auto"{{textlang (index . 1)}}>{{index . 1}}</dd>{{end}}</dl>{{end}}
+{{- with .Summary}}<p class="sum" dir="auto"{{textlang .}}>{{.}}</p>{{end}}
 <div class="row">{{if .Read}}<span class="b on" id="{{id "catalogue-book-read"}}">{{.Read}}</span>{{else if .Share}}<span class="b"><bdi dir="ltr">{{.Share}}</bdi></span>{{else}}{{template "button" (btni "catalogue-book-get" "download-simple" (t "catalogue-download"))}}{{end}}</div></div></body></html>

@@ -155,6 +155,15 @@ type CatalogueBookDetails struct {
 	Share         int  // downloading: how much has come; -1 not
 }
 
+// joinSubjects lists a book's subjects with the comma of their script: «،» for right-to-left ones, so a Farsi list
+// reads from the right as one, else ", ".
+func joinSubjects(ss []string) string {
+	if len(ss) > 0 && textDir(ss[0]) == "rtl" {
+		return strings.Join(ss, "، ")
+	}
+	return strings.Join(ss, ", ")
+}
+
 // The most of a summary the dialog shows, in letters, the rest cut with an ellipsis (the engine cuts no text).
 const summaryMax = 280
 
@@ -167,7 +176,7 @@ func DrawCatalogueBook(d CatalogueBookDetails, fonts *blitz.Fonts, w int) *Panel
 		lang = langName(d.Lang)
 	}
 	for _, r := range [][2]string{{word("language"), lang}, {word("published"), d.Year}, {word("publisher"), d.Publisher},
-		{word("subjects"), strings.Join(d.Subjects, ", ")}} {
+		{word("subjects"), joinSubjects(d.Subjects)}} {
 		if r[1] != "" {
 			rows = append(rows, r)
 		}

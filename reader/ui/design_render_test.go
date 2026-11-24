@@ -449,6 +449,10 @@ var designRenders = map[string][]renderCase{
 		return filtersScreen(FiltersView{Open: &FilterGroup{Name: "Language", Choices: designLanguages()}, Books: 214}, 0, f, w, h)
 	}}, {"more-authors", en, func(f *blitz.Fonts, w, h int) rendered { // By author: the section's own, paged
 		return filtersScreen(FiltersView{Open: &FilterGroup{Name: "By author", Choices: designAuthors()}}, 0, f, w, h)
+	}}, {"mixed-authors", en, func(f *blitz.Fonts, w, h int) rendered { // a feed's choices in both directions (invented names), a Farsi one picked: each its own (dir="auto")
+		cs := []FilterChoice{{Label: "Austen, Jane", Count: 3}, {Label: "هدایت، صادق", Count: 12, On: true}, {Label: "Hugo, Victor", Count: 5},
+			{Label: "نویسنده‌ای شکیبا (۱۳۰۹)", Count: 2}, {Label: "Kafka, Franz (1883)", Count: 4}}
+		return filtersScreen(FiltersView{Open: &FilterGroup{Name: "نویسندگان", Choices: cs}, Clear: true, Picked: []Picked{{Label: "هدایت، صادق"}}}, 0, f, w, h)
 	}}, {"author-chosen", en, func(f *blitz.Fonts, w, h int) rendered { // Browse, an author picked under By author: By author ticked, the author's name a chip under the title
 		b := FilterGroup{Choices: []FilterChoice{{Label: "All books"}, {Label: "Poetry"}, {Label: "Drama"},
 			{Label: "New releases"}, {Label: "By author", On: true}, {Label: "By subject"}}}
@@ -483,6 +487,14 @@ var designRenders = map[string][]renderCase{
 		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "Lettres de la côte", Author: "Une Autrice", Lang: "fr", Year: "1897",
 			Publisher: "Ebooksgratuits", Subjects: []string{"Romans", "Littérature française"}, Share: -1,
 			Summary: "Une jeune femme écrit à sa sœur, depuis un village de pêcheurs de la côte du Nord, les lettres d'un hiver entier : la mer, les phares, les gens du port et ce qu'elle apprend d'elle-même loin de la ville. Un court roman épistolaire, publié d'abord en feuilleton, puis en volume."}, f, w))
+	}}, {"farsi-full", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a right-to-left book with all a feed gives, invented words
+		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "سفر به ماه", Author: "نویسنده‌ای شکیبا", RTL: true, Lang: "fa", Year: "1921",
+			Publisher: "نشر نمونه", Subjects: []string{"داستان", "ادبیات فارسی"}, Share: -1,
+			Summary: "داستان کوتاهی دربارهٔ سفری خیالی به ماه، نوشته‌شده برای آزمودن این صفحه. چند جمله که بیش از یک خط بگیرد."}, f, w))
+	}}, {"farsi-english-summary", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a Farsi book whose feed's summary is in English (FarsiEPUB's), a Farsi name in it
+		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "سفر به ماه", Author: "نویسنده‌ای شکیبا", RTL: true, Lang: "fa", Year: "1963",
+			Publisher: "FarsiEPUB", Share: -1,
+			Summary: "A Journey to the Moon. From the 2nd printing (first edition Tehran 1310/1931, چاپخانه نمونه) (Tehran, 1963), checked line by line against the scan."}, f, w))
 	}}, {"farsi-read", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a right-to-left book, here already: Read; no publisher or summary
 		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Lang: "fa", Year: "1921", Here: true, Share: -1}, f, w))
 	}}},

@@ -15,7 +15,7 @@ does not clip text, so DrawDock cuts a long chapter title itself, as DrawTopBar 
    the device has sound: a control the device lacks is not drawn at all, see `requires` in the spec) */
 .tools .off { color: #aaa; }
 </style></head><body>
-<div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}"{{textlang .Chapter}}>{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>
+<div class="where"><span class="t" id="{{id "where-title"}}"><span id="{{id "where-title-text"}}" dir="auto"{{textlang .Chapter}}>{{.Chapter}}</span></span><span class="n">{{.Page}}</span></div>
 <div class="navrow" dir="{{.Dir}}">{{template "iconbutton" ibtn "chapter-prev" "caret-left" false}}{{template "progress" pbar "progress" .Width .Side .Ticks}}{{template "iconbutton" ibtn "chapter-next" "caret-right" false}}</div>
 <div class="where">{{if .Back}}<span class="b" id="{{id "back"}}">{{icon "arrow-counter-clockwise"}} {{.Back}}</span>{{else}}<span class="t">{{.Left}}</span>{{end}}</div>
 <div class="tools">{{template "iconbutton" ibtn "contents" "list-bullets" false}}{{template "iconbutton" ibtn "text" "text-aa" false}}{{if .Narrated}}{{template "iconbutton" ibtn "read-aloud" "play" false}}{{else}}<span class="tb off">{{icon "play"}}</span>{{end}}</div>

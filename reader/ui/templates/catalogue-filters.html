@@ -35,7 +35,7 @@ ul.all + .foot { border-top: 0; }
 {{- if eq .Part "head"}}<div class="top">{{if .Back}}{{template "iconbutton" ibtn "filters-back" "caret-left" false}}{{end}}<span class="ttl">{{.Title}}</span>{{with .Loading}}<span class="ld">{{.}}</span>{{end}}{{if .Clear}}<span class="clr" id="{{id "filters-clear"}}">{{.Clear}}</span>{{end}}{{template "iconbutton" ibtn "filters-close" "x" false}}</div>
 {{- with .Picked}}<div class="chips picked">{{range $i, $p := .}}{{if $p.Fixed}}{{template "chip" chip (printf "picked-%d" $i) $p.Label "" ""}}{{else}}{{template "chip" chip (printf "picked-%d" $i) $p.Label "" "x"}}{{end}}{{end}}</div>{{end}}
 {{- else}}
-{{- range .Groups}}<div class="grp{{if .Rows}} rows{{end}}">{{with .Name}}<p class="h">{{.}}</p>{{end}}{{if .Rows}}<ul class="all">
+{{- range .Groups}}<div class="grp{{if .Rows}} rows{{end}}">{{with .Name}}<p class="h" dir="auto">{{.}}</p>{{end}}{{if .Rows}}<ul class="all">
 {{- range .Chips}}<li class="{{if .On}}on{{end}}" id="{{.ID}}">{{icon "check"}}<bdi class="l">{{.Label}}</bdi>{{with .Count}}<span class="n">{{.}}</span>{{end}}</li>{{end}}</ul>{{else}}<div class="chips">
 {{- range .Chips}}{{template "chip" .}}{{end}}</div>{{end}}</div>{{end}}
 {{- with .Rows}}<ul class="all">{{range .}}<li class="{{if .On}}on{{end}}" id="{{.ID}}">{{icon "check"}}<bdi class="l">{{.Label}}</bdi>{{with .Count}}<span class="n">{{.}}</span>{{end}}</li>{{end}}</ul>{{end}}
