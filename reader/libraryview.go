@@ -301,7 +301,7 @@ func (s *libraryScreen) build() {
 	library.Sort(s.items, s.view.SortOf(s.filter))
 	rows := make([]ui.Book, len(s.items))
 	for i, b := range s.items {
-		rows[i] = ui.Book{Title: b.Title, Author: b.Author, Year: b.Year, Read: -1, New: !b.Opened && !b.Finished() && library.Filters[s.filter] != "new",
+		rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.Opened && !b.Finished() && library.Filters[s.filter] != "new",
 			Finished: b.Finished(), Narrated: b.Narrated,
 			RTL: writtenRTL(library.Lang(b.Book))}
 		switch library.Filters[s.filter] {

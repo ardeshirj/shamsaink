@@ -89,16 +89,12 @@ func libraryTopBar() TopBar {
 	return TopBar{Time: "20:48", Phones: renderHas("sound"), Battery: 82, Menu: true}
 }
 
-// designTiles is designBooks with the years their books would give (one without).
+// designTiles is the library's shelf as tiles: designBooks and four more new ones, so it runs to a second page of
+// twelve (four by three, 2026-11-24) and draws the pager.
 func designTiles() []Book {
 	bs := designBooks()
-	years := []string{"1851", "۱۳۹۸", "1923", "", "1888", "۱۴۰۱"}
-	for i := range bs {
-		if i < len(years) {
-			bs[i].Year = years[i]
-		} else {
-			bs[i].Year = "2026"
-		}
+	for i := range 4 {
+		bs = append(bs, Book{Title: fmt.Sprintf("Another new book %d", i), Author: "Someone Else", New: true, Read: -1})
 	}
 	return bs
 }
@@ -115,12 +111,12 @@ func tiles(bs []Book, head *Panel, page int, f *blitz.Fonts, w, h int) rendered 
 // tiles' marks, in the All filter.
 func markBooks() []Book {
 	return []Book{
-		{Title: "A Long Voyage", Author: "An Author", Year: "1851", Read: 62, Narrated: true},
-		{Title: "رود کم‌آب", Author: "مارا الیس", Year: "۱۳۹۸", Read: 100, Finished: true, RTL: true},
-		{Title: "Tales of a Small Town", Author: "Another Author", Year: "1923", New: true, Read: -1},
-		{Title: "سفر به ماه", Year: "۱۴۰۱", Read: 8, RTL: true},
+		{Title: "A Long Voyage", Author: "An Author", Read: 62, Narrated: true},
+		{Title: "رود کم‌آب", Author: "مارا الیس", Read: 100, Finished: true, RTL: true},
+		{Title: "Tales of a Small Town", Author: "Another Author", New: true, Read: -1},
+		{Title: "سفر به ماه", Read: 8, RTL: true},
 		{Title: "زنده به گور", Author: "صادق هدایت", New: true, Narrated: true, Read: -1, RTL: true},
-		{Title: "The Lighthouse Keeper", Author: "A Patient Author", Year: "1888", Read: 91},
+		{Title: "The Lighthouse Keeper", Author: "A Patient Author", Read: 91},
 	}
 }
 
@@ -500,7 +496,7 @@ var designRenders = map[string][]renderCase{
 	}}},
 	"library-book-details": {{"new", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "Tales of a Small Town", Author: "Another Author", Lang: "en", File: "tales.epub",
-			Size: 1 << 20, Read: -1, Added: designDay(2)}, f, w))
+			Size: 1 << 20, Read: -1, Added: designDay(2), Year: "1923"}, f, w))
 	}}, {"opened", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))

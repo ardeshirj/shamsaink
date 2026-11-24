@@ -9,16 +9,16 @@ import (
 	blitz "shamsainkengine"
 )
 
-// The library as tiles (2026-11-23, in place of its rows): a book a tile, three a row, two rows a page, each the shape
-// of a book (2 by 3): its cover picture shown whole when it has one (kept small when the book was added,
-// library/covers.go), else a cover of its own words (title, author, the year when it gives one) in its own direction,
+// The library as tiles (2026-11-23, in place of its rows): a book a tile, four a row, three rows a page (2026-11-24),
+// each the shape of a book (2 by 3): its cover picture shown whole when it has one (kept small when the book was added,
+// library/covers.go), else a cover of its own words (title and author; the year is in its dialog) in its own direction,
 // centred on plain paper, so a mixed shelf has no column to share. No marks on a tile: the share read, narrated, new
 // and finished are in the dialog a finger held on it opens (DrawBookDetails), and the filters.
 
 type tile struct {
-	ID, Title, Author, Year, Dir string
-	Size                         string // the library's cover of words, its title's size (titleSize); "" for a catalogue's, small
-	Pic                          bool
+	ID, Title, Author, Dir string
+	Size                   string // the library's cover of words, its title's size (titleSize); "" for a catalogue's, small
+	Pic                    bool
 	// a catalogue's book (planned, 2026-11-23): its button under the cover, eN-act: "get" (the download icon), "share"
 	// (Share, how much has come), "read" (Read, filled); "" none (the library's)
 	Act, Share, Read string
@@ -76,22 +76,23 @@ func paintPicture(img *image.Gray, r image.Rectangle, pic *image.Gray, inverted 
 
 // The library's grid, and the longest a title and an author may be on a cover, in letters: the engine cuts no text.
 const (
-	tileCols, tileRows  = 3, 2
+	tileCols, tileRows  = 4, 3 // the library's grid (2026-11-24: twelve a page, half the page turns of 3 by 2)
+	catalogueCols       = 3    // a catalogue's: wider covers of words, a button under each
 	tileTitle, tileWho  = 48, 28
 	tileMargin, tileGap = 40, 36 // the page's margin; between tiles
 	tileSlack           = 12     // the line after the last row (4 px of text), which keeps its edges (the engine's page ends at a line)
 )
 
-// NewLibraryTiles lays out the library (docs/design/system.html) as tiles under head, six a page (e0, e1... over all
+// NewLibraryTiles lays out the library (docs/design/system.html) as tiles under head, twelve a page (e0, e1... over all
 // pages, as the rows were: EntryAt and EntryBox the same), each page laid out when first shown, every page's slots
-// in the same places; a pager when there are more than six. With no books, the rows' placeholder (NewLibrary).
+// in the same places; a pager when there are more than twelve. With no books, the rows' placeholder (NewLibrary).
 func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	if len(books) == 0 {
 		return NewLibrary(nil, folder, head, fonts, w, h)
 	}
 	ts := make([]tile, len(books))
 	for i, b := range books {
-		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Year: b.Year,
+		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho),
 			Dir: dirOf(b.RTL)}
 		t.Pic = b.Cover != nil || b.CoverFile != ""
 		t.Size = titleSize(t.Title)
@@ -107,7 +108,7 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 			}
 		}
 		return pic
-	}, tileRows, head, fonts, w, h)
+	}, tileCols, tileRows, head, fonts, w, h)
 }
 
 // titleSize is the size of a cover of words' title, by its length: short ones big, as a printed cover's, long ones
@@ -122,15 +123,23 @@ func titleSize(title string) string {
 	return "l"
 }
 
+// coverFont is a cover of words' type size, in px, for a cover w px wide: 44 on a cover 354 px wide (3 by 2 on the
+// Kobo), in proportion on smaller ones (about 28 on 4 by 3's 222); the title's sizes are ems of it.
+func coverFont(w int) int { return 44 * w / 354 }
+
+// whoFont is the author's size on a cover of words, in px: 0.8 of coverFont, never under 26 (about 6 pt at 300 ppi),
+// so a small cover's author stays readable (2026-11-24).
+func whoFont(w int) int { return max(26, coverFont(w)*8/10) }
+
 // tileAct is the room under a cover for a catalogue book's button and the gap before it, in px (planned).
 const tileAct = 80
 
-// newTiles lays out tiles under head, three a row and rows rows a page, pic giving tile i's cover picture when it has
-// one. The library's (two rows) are book-shaped, 2 by 3, so a picture shows whole; with a button under each (Act: a
+// newTiles lays out tiles under head, cols a row and rows rows a page, pic giving tile i's cover picture when it has
+// one. The library's are book-shaped, 2 by 3, so a picture shows whole; with a button under each (Act: a
 // catalogue's, three rows, 2026-11-23) a tile is a cover of words alone, its column's width and the rows' height less
 // the button's room: no picture to keep the shape for, so more books a page.
-func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fonts *blitz.Fonts, w, h int) *List {
-	per := tileCols * rows
+func newTiles(ts []tile, pic func(i int) *image.Gray, cols, rows int, head *Panel, fonts *blitz.Fonts, w, h int) *List {
+	per := cols * rows
 	v := &List{head: head, fonts: fonts, w: w, h: h, docs: map[int]*blitz.Book{}}
 	pager := v.drawPager(0, 2) // its height does not depend on the count
 	lh := h - head.img.Rect.Dy() - pager.img.Rect.Dy()
@@ -141,7 +150,7 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fon
 		act = tileAct
 	}
 	cover := (lh-2*tileMargin-tileSlack-(rows-1)*tileGap)/rows - act
-	col := (w - 2*tileMargin - (tileCols-1)*tileGap) / tileCols
+	col := (w - 2*tileMargin - (cols-1)*tileGap) / cols
 	coverW := min(cover*2/3, col)  // a book's shape, 2 by 3: a cover's picture shown whole
 	cover = min(cover, coverW*3/2) // on a wide screen the width decides: the shape kept
 	align := "center"              // the library's rows in the middle of the page
@@ -164,7 +173,8 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fon
 			Cover, CoverW, Gap int
 			Room               int
 			Align              string
-		}{page(p), tileCols, cover, coverW, tileGap, room, align})
+			CoverFont, WhoFont int
+		}{page(p), cols, cover, coverW, tileGap, room, align, coverFont(coverW), whoFont(coverW)})
 		return html
 	}
 	v.paint = func(d *blitz.Book, img *image.Gray) {
@@ -190,7 +200,8 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fon
 		Cover, CoverW, Gap int
 		Room               int
 		Align              string
-	}{full, tileCols, cover, coverW, tileGap, room, align})
+		CoverFont, WhoFont int
+	}{full, cols, cover, coverW, tileGap, room, align, coverFont(coverW), whoFont(coverW)})
 	probe := blitz.New([]string{"list.html"}, readFor(html), v.opts, fonts)
 	probe.Layout(0)
 	slots, acts := make([]image.Rectangle, per), make([]image.Rectangle, per)

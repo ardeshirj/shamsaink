@@ -135,7 +135,7 @@ func NewCatalogueTiles(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h in
 		}
 		ts[i] = t
 	}
-	l := newTiles(ts, nil, catalogueRows, head, fonts, w, h)
+	l := newTiles(ts, nil, catalogueCols, catalogueRows, head, fonts, w, h)
 	if c.More { // more to read: › on the last page reads it (libraryview.go), the count says so
 		l.more = true
 		l.pager = l.drawPager(0, l.pages)

@@ -20,7 +20,6 @@ type Book struct {
 	Finished      bool        // read to the end: no bar
 	RTL           bool        // its title reads right to left
 	When          string      // a date shown at the row's end in place of the share read: when added (New), finished (Finished); "" for none
-	Year          string      // the year the book gives (its dc:date's), "" when it gives none: on a tile's cover
 	Cover         *image.Gray // its cover picture made small, nil for none: drawn in place of its words
 	CoverFile     string      // or the file that picture is kept in (library.CoverFile), read when its page is drawn
 }
@@ -326,6 +325,7 @@ type BookDetails struct {
 	Picture, Words                    bool // it has a cover picture; its cover of words chosen in its place
 	Read                              int  // percent read; -1 when not known
 	Added, LastRead                   time.Time
+	Year                              string // the year the book gives (its dc:date's), "" when none: Published
 }
 
 // DrawBookDetails draws a book's details and its actions (templates/library-book-details.html), a dialog: the caller
@@ -354,6 +354,9 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 		{word("last-read"), date(d.LastRead)},
 		{word("added"), date(d.Added)},
 		{word("language"), lang},
+	}
+	if d.Year != "" { // off the covers since 4 by 3 (2026-11-24): too small to read there
+		rows = append(rows, [2]string{word("published"), d.Year})
 	}
 	if d.Source != "" {
 		rows = append(rows, [2]string{word("source"), d.Source})

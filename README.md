@@ -21,7 +21,7 @@
 <th width="25%">Arabic<br><sub>reading: nothing but the page</sub></th>
 </tr>
 <tr>
-<td valign="top"><img src="docs/images/screen-library.png" alt="The library as a shelf of covers: Standard Ebooks' covers of The Adventures of Sherlock Holmes, Pride and Prejudice and The Time Machine beside Farsi and Arabic books shown by their title and author in their own direction"></td>
+<td valign="top"><img src="docs/images/screen-library.png" alt="The library as a shelf of covers, four a row: Standard Ebooks' covers of The Adventures of Sherlock Holmes, Pride and Prejudice and The Time Machine beside Farsi, Arabic, Hebrew, Urdu and English books shown by their title and author in their own direction"></td>
 <td valign="top"><img src="docs/images/screen-farsi-dock.png" alt="A page of Buried Alive (FarsiEPUB) with the bar and the dock open, laid out right to left in Farsi"></td>
 <td valign="top"><img src="docs/images/screen-english.png" alt="A page of The Adventures of Sherlock Holmes (Standard Ebooks) with the bar and the dock open"></td>
 <td valign="top"><img src="docs/images/screen-arabic.png" alt="A page in Arabic with nothing else on the screen: the chapter's title and its text (our own test book)"></td>

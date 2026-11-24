@@ -28,7 +28,8 @@ func coversToMake(shown []library.Item, all []library.Item, made map[string]bool
 // makeCovers makes books' small covers in turn, for a screen w wide (a tile's width, a book's shape: 2 by 3), each
 // one's hash sent on out once kept, until done or stop is closed (a book opened: the processor is the book's).
 func makeCovers(dir string, books []library.Book, w int, out chan<- string, stop <-chan struct{}) {
-	tw := (w - 2*40 - 2*36) / 3 // ui's tiles: three a row, the page's margins and the gaps between
+	tw := (w - 2*40 - 3*36) / 4 // ui's tiles: four a row, the page's margins and the gaps between (a wide row's width;
+	// a cover kept bigger from before 2026-11-24 is drawn smaller, as it is)
 	for _, b := range books {
 		select {
 		case <-stop:

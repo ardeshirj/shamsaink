@@ -134,7 +134,8 @@ func bookDetails(dir string, b library.Item, set *settings) ui.BookDetails {
 	d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: library.Lang(b.Book), Source: b.Source,
 		File: filepath.Base(b.Path), RTL: writtenRTL(library.Lang(b.Book)), Narrated: b.Narrated,
 		Picture: b.Cover != "", Words: set.Cover[b.ID] == "words",
-		Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies)}
+		Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies),
+		Year: b.Year}
 	if st, err := os.Stat(filepath.Join(dir, b.Path)); err == nil {
 		d.Size = st.Size()
 	}

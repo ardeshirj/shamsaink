@@ -164,12 +164,12 @@ flowchart LR
   Their renders: the dock's and contents' case `rtl-book`, in English.
 
 ### The library as tiles (2026-11-23)
-The library shows its books as tiles, three a row and two rows a page, in place of a row each (`reader/ui/tiles.go`,
+The library shows its books as tiles, four a row and three rows a page (3 by 2 until 2026-11-24), in place of a row each (`reader/ui/tiles.go`,
 `library-tiles.html`; the rule "A book is its own cover", `principles.yaml`). Each tile is the shape of a book (2 by
-3): its cover picture shown whole when it has one, else a cover of its own words (title, author and the year its
-`dc:date` starts with), centred in the book's direction, so a mixed shelf has no column to share. A page of tiles is
+3): its cover picture shown whole when it has one, else a cover of its own words (title and author, its type in proportion to
+the cover; the year its `dc:date` starts with is in its dialog), centred in the book's direction, so a mixed shelf has no column to share. A page of tiles is
 laid out on its own (the engine cuts pages between lines of text, which could cut a tile across two), when first
-shown; every page's six slots are in the same places, so a tap is placed without laying the page out
+shown; every page's twelve slots are in the same places, so a tap is placed without laying the page out
 (`List.pageHTML`).
 
 - **Nothing on a tile.** What a tile used to mark (the share read, narrated, new, finished) is in the dialog a finger
@@ -182,7 +182,7 @@ shown; every page's six slots are in the same places, so a tap is placed without
 - **Covers** (`reader/library/covers.go`). The scan notes each book's cover picture (`Book.Cover`: the manifest's
   `cover-image`, else the item EPUB 2's `<meta name="cover">` names; library.json's metadata version 3). Decoding one
   as it is shown costs too much on these chips (measured on the Kindle: Standard Ebooks' 1400×2100 JPEGs 420–460 ms
-  each, six a page), so each is made once into a small grey PNG, `covers/HASH.png` beside `cache/` (by the book's
+  each, twelve a page), so each is made once into a small grey PNG, `covers/HASH.png` beside `cache/` (by the book's
   hash: a new edition has its own), at the least size filling a tile (a JPEG's grey is its Y plane, read straight:
   scaling 40 ms). It is made in the background while the library is open (`reader/covers.go`: the books shown first;
   stopped when a book opens, carried on next time), each one's hash sent to the library's loop, which draws the page

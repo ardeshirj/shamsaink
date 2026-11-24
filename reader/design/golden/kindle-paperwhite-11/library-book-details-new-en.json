@@ -1,7 +1,7 @@
 {
  "placement": "relative",
  "boxes": {
-  "book-finish": [243, 577, 514, 650],
-  "book-remove": [35, 692, 398, 765]
+  "book-finish": [243, 635, 514, 708],
+  "book-remove": [35, 750, 398, 823]
  }
 }
