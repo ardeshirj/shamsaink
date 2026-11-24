@@ -1,26 +1,27 @@
-# Books and anything drawn from them stay out of git (test books are copied in locally).
+# Books and anything drawn from them stay out of git (test books are copied in locally; CLAUDE.md has the exceptions).
 *.epub
 book/
+index.html
+# Results: every folder's out/ (perf/out/ included), experiments 01–03's timings
 out/
 experiments/*/bench/
-index.html
-# Built or fetched
+
+# Built
 bin/
-patched/
-.DS_Store
-# Rust builds, and clones fetched by experiment scripts
+# ...except that Rust keeps sources for its programs in src/bin
+!**/src/bin/
 target/
-experiments/04-rust-engine/probes/blitz/
+__pycache__/
+
+# Fetched and patched by scripts (engine/fetch-blitz.sh, the experiments')
 engine/blitz/
 engine/parley/
 engine/parley.tmp/
+patched/
+experiments/04-rust-engine/probes/blitz/
 experiments/04-rust-engine/probes/cgo-probe/lib/
 experiments/04-rust-engine/probes/cgo-probe/cgo-probe-*
-# ...but Rust keeps sources for its programs in src/bin
-!**/src/bin/
+
+# Local
+.DS_Store
 .claude/settings.local.json
-
-__pycache__/
-
-# the benchmarks' results (perf/README.md)
-perf/out/
