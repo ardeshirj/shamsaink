@@ -41,7 +41,12 @@ $R "set -e; cd $NEW && tar -xzf package.tgz && rm package.tgz
 echo "$(basename "$PKG") installed on $HOST: $($R "cat $DIR/VERSION")"
 if [ "$open" = yes ]; then
   echo "the reader was open: restarting it on the new build"
-  $R 'kill $(pidof shamsaink)'
+  old=$($R 'pidof shamsaink')
+  # stopped for sure: a signal sent as the Kobo falls asleep can be lost (2026-11-23: the old build kept running), so
+  # sent again until the reader is gone
+  i=0
+  while [ $i -lt 10 ] && $R "kill $old 2>/dev/null; sleep 2; kill -0 $old 2>/dev/null"; do i=$((i + 1)); done
+  if [ $i -ge 10 ]; then echo "the reader (pid $old) would not stop: not restarted" >&2; exit 1; fi
   i=0
   while [ $i -lt 60 ]; do # Kobo's interface back (its launcher starts it as the reader ends)
     sleep 2
@@ -50,5 +55,11 @@ if [ "$open" = yes ]; then
   done
   sleep 8 # Nickel settled: the launcher stops it again
   $R "cd $DIR && nohup sh launch.sh >/dev/null 2>&1 </dev/null &"
-  echo "started again"
+  i=0
+  until new=$($R 'pidof shamsaink' 2>/dev/null) && [ -n "$new" ] && [ "$new" != "$old" ]; do
+    i=$((i + 1))
+    if [ $i -ge 30 ]; then echo "the reader did not start again: open it from More" >&2; exit 1; fi
+    sleep 1
+  done
+  echo "started again (pid $new)"
 fi
