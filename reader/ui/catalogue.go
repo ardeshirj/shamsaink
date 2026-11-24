@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"image"
 	"strings"
 
 	blitz "shamsainkengine"
@@ -191,16 +192,28 @@ func DrawCatalogueBook(d CatalogueBookDetails, fonts *blitz.Fonts, w int) *Panel
 	return drawPanelIn(html, ids, "catalogue-book-box", fonts, w, 1200)
 }
 
-// DrawCatalogueMenu draws the choice of catalogues hanging under the catalogues' head (under px from the top), at its
-// start: their names (catalogue-0, catalogue-1...), the one shown ticked.
-func DrawCatalogueMenu(names []string, shown, under int, fonts *blitz.Fonts, w int) *Panel {
+// menuGap is the room between a dropdown and the menu hung from it, in px.
+const menuGap = 8
+
+// DrawCatalogueMenu draws the choice of catalogues hanging from the catalogue's dropdown (from, on the screen): their
+// names (catalogue-0, catalogue-1...), the one shown ticked.
+func DrawCatalogueMenu(names []string, shown int, from image.Rectangle, fonts *blitz.Fonts, w int) *Panel {
 	var bs []button
 	for i, n := range names {
 		bs = append(bs, button{ID: fmt.Sprint("catalogue-", i), Label: cut(n, entryMax), On: i == shown})
 	}
 	html, ids := render("catalogue-menu.html", struct{ Catalogues []button }{bs})
 	m := drawPanelIn(html, ids, "catalogue-list", fonts, w, 600) // at most: cut to the list
-	m.y0 += under
+	// hung from the dropdown (2026-11-23): right under it, its start edge on the dropdown's (the end edge when the
+	// dropdown is on the screen's right, right to left), kept on the screen
+	m.y0 = from.Max.Y + menuGap
+	mw := m.img.Rect.Dx()
+	if from.Min.X > w/2 {
+		m.x0 = from.Max.X - mw
+	} else {
+		m.x0 = from.Min.X
+	}
+	m.x0 = max(0, min(m.x0, w-mw))
 	return m
 }
 

@@ -476,7 +476,8 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawShelfName("catalogues", barHeight(f, w), DrawTopBar(tb, f, w).Box("shelf-catalogues"), f, w))
 	}}},
 	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
-		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))
+		// hung from the dropdown itself, over the section's heading (libraryview.go)
+		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Box("catalogue-choose"), f, w))
 	}}},
 	"catalogue-book": {{"get", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a held tile, what the feed gives, Download
 		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "Lettres de la côte", Author: "Une Autrice", Lang: "fr", Year: "1897",

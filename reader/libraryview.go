@@ -1067,7 +1067,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			}
 			catChoose = true
 			setHead()
-			panel = ui.DrawCatalogueMenu(names, cat.shown, v.HeadHeight(), rd.fonts, scr.W)
+			// hung from the dropdown itself, over the section's heading under it (2026-11-23)
+			panel = ui.DrawCatalogueMenu(names, cat.shown, v.HeadBox("catalogue-choose"), rd.fonts, scr.W)
 			v.Draw(rd.over)
 			panel.Over(rd.over)
 			scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
