@@ -6,7 +6,10 @@ centred, on plain paper with an ink border. No marks on a tile (2026-11-23): wha
 dialog a finger held on it opens (library-book-details.html). The grid runs left to right, as the frame; a page short of books is filled with blank slots, so its tiles start
 at the top left, where a full page's do. */ -}}
 {{template "head" "ltr"}}<style>
-.tiles { height: {{.Room}}px; align-content: {{.Align}}; display: grid; grid-template-columns: repeat({{.Cols}}, 1fr); column-gap: {{.Gap}}px; row-gap: {{.Gap}}px; }
+/* the columns the covers' width, the room left between them (space-between): the first cover starts and the last ends
+   where the top bar does, at the page's margins (2026-11-24) */
+.tiles { height: {{.Room}}px; align-content: {{.Align}}; display: grid; grid-template-columns: repeat({{.Cols}}, {{.CoverW}}px);
+  justify-content: space-between; column-gap: {{.Gap}}px; row-gap: {{.Gap}}px; }
 .tl { display: flex; flex-direction: column; align-items: center; }
 .cover { position: relative; width: {{.CoverW}}px; height: {{.Cover}}px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 8px;
   padding: 1.45em 0.5em 1.35em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
