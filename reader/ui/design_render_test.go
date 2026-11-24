@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"image/color"
 	"image/draw"
 	"image/png"
 	"os"
@@ -20,7 +19,6 @@ import (
 	blitz "shamsainkengine"
 
 	"shamsainkreader/design"
-	"shamsainkreader/device"
 	"shamsainkreader/library"
 )
 
@@ -194,22 +192,8 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 50, Menu: true}, f, w))
 	}}, {"battery-low", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 25, Menu: true}, f, w))
-	}}, {"battery-warning", enFa, func(f *blitz.Fonts, w, h int) rendered { // red on a colour screen (Screen.SetTint): the colour picture is that
-		p := DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 12, Menu: true}, f, w)
-		r := pr(p)
-		r.rgba = image.NewRGBA(r.img.Rect)
-		box := p.Box("topbar-battery")
-		for y := r.img.Rect.Min.Y; y < r.img.Rect.Max.Y; y++ {
-			for x := r.img.Rect.Min.X; x < r.img.Rect.Max.X; x++ {
-				g := r.img.GrayAt(x, y).Y
-				cr, cg, cb := g, g, g
-				if image.Pt(x, y).In(box) {
-					cr, cg, cb = device.TintRGB(g, false)
-				}
-				r.rgba.SetRGBA(x, y, color.RGBA{cr, cg, cb, 255})
-			}
-		}
-		return r
+	}}, {"battery-warning", enFa, func(f *blitz.Fonts, w, h int) rendered { // 15% or less: the battery with its !
+		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 12, Menu: true}, f, w))
 	}}, {"battery-charging", enFa, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawTopBar(TopBar{Start: "arrow-left", Title: chapter(), Time: "20:48", Phones: renderHas("sound"), Battery: 45, Charging: true, Menu: true}, f, w))
 	}}, {"battery-open", enFa, func(f *blitz.Fonts, w, h int) rendered {

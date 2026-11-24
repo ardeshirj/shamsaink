@@ -55,11 +55,10 @@ type Screen struct {
 	W, H, line, y0 int
 	bytes          int // a pixel's: 1 (the Kindle), 4 (the Kobo: red, green, blue, transparency)
 	marker         uint32
-	tint           image.Rectangle // drawn red on a colour screen (SetTint): the battery when it is low
-	invert         bool            // every grey drawn is inverted on its way into the framebuffer: dark mode, unless the screen inverts already
-	dark           bool            // dark mode, as set (SetInvert)
-	hwInvert       bool            // the screen itself inverts every pixel: the Kindle with its own Dark Mode on (kindleInverts)
-	row            []byte          // a row inverted on its way in (ShowPart), so the framebuffer is never read back
+	invert         bool   // every grey drawn is inverted on its way into the framebuffer: dark mode, unless the screen inverts already
+	dark           bool   // dark mode, as set (SetInvert)
+	hwInvert       bool   // the screen itself inverts every pixel: the Kindle with its own Dark Mode on (kindleInverts)
+	row            []byte // a row inverted on its way in (ShowPart), so the framebuffer is never read back
 }
 
 func ioctl(fd uintptr, req uintptr, arg unsafe.Pointer) error {
@@ -110,24 +109,7 @@ func (s *Screen) SetInvert(on bool) { s.dark, s.invert = on, on != s.hwInvert }
 // outside its books.
 func (s *Screen) DeviceDark() bool { return s.hwInvert }
 
-// SetTint draws r of the screen in red from the next Show on, on a colour screen (a grey one ignores it): each ink grey
-// there becomes red, paper staying paper (white, or black in dark mode). The empty rectangle takes it off. For the
-// battery when it is low, so it follows every page, panel and refresh that covers the bar.
-func (s *Screen) SetTint(r image.Rectangle) { s.tint = r }
-
-// TintRGB is the colour of a grey g (0 ink, 255 paper) inside the tint: from paper (white, or black in dark mode) to red
-// (#d62b2b) by how much ink it has. The same for the screen and for the design's renders.
-func TintRGB(g uint8, dark bool) (r, gr, b uint8) {
-	ink := 255 - uint32(g)
-	paper := uint32(255)
-	if dark {
-		paper = 0
-	}
-	ch := func(c uint32) uint8 { return uint8((paper*(255-ink) + c*ink) / 255) }
-	return ch(0xd6), ch(0x2b), ch(0x2b)
-}
-
-// LowBattery is the share, in per cent, at which the battery in the bar turns red.
+// LowBattery is the share, in per cent, at which the battery in the bar shows its warning (battery-warning, with its !).
 const LowBattery = 15
 
 // Inverted says whether dark mode is on.
@@ -165,13 +147,7 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 			continue
 		}
 		row := unsafe.Slice((*uint32)(unsafe.Pointer(&s.mem[at])), len(src))
-		tinted := y >= s.tint.Min.Y && y < s.tint.Max.Y
 		for i, g := range src {
-			if tinted && r.Min.X+i >= s.tint.Min.X && r.Min.X+i < s.tint.Max.X {
-				r, gr, b := TintRGB(g, s.invert)
-				row[i] = 0xff000000 | uint32(b)<<16 | uint32(gr)<<8 | uint32(r) // the bytes in memory: red, green, blue, transparency
-				continue
-			}
 			if s.invert {
 				g = ^g
 			}

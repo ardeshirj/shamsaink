@@ -36,17 +36,16 @@ type session struct {
 	ahead bool       // the next page may still need drawing
 	rest  bool       // documents still to paginate
 
-	mn                        *ui.Panel       // the highlight's menu by the words, while open
-	nav, sheet                *ui.Panel       // the dock, or the Text sheet in its place, while open
-	tab                       string          // the sheet's tab: "text" or "page"
-	topBar, list              *ui.Panel       // with them the top bar, and its ≡ list (or the battery's level) while open
-	barShown                  string          // the bar's battery and clock as last drawn (barState)
-	barTint                   image.Rectangle // the battery's box when it is red (low, off the charger), else empty; on the screen only with the bar (compose)
-	kind                      string          // what the list is: "menu" (≡'s), "level" (the battery's), "light" or "sound"
-	slide                     string          // the slider a held finger moves ("light", "warmth", "volume"), "" for none
-	phones                    string          // the Sound panel's headphones, their Bluetooth address, while it is open ("" none connected)
-	soundState                string          // the Sound panel's Connect: "", "connecting" or "failed"
-	cv                        *ui.Contents    // the table of contents, while shown
+	mn                        *ui.Panel    // the highlight's menu by the words, while open
+	nav, sheet                *ui.Panel    // the dock, or the Text sheet in its place, while open
+	tab                       string       // the sheet's tab: "text" or "page"
+	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
+	barShown                  string       // the bar's battery and clock as last drawn (barState)
+	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's), "light" or "sound"
+	slide                     string       // the slider a held finger moves ("light", "warmth", "volume"), "" for none
+	phones                    string       // the Sound panel's headphones, their Bluetooth address, while it is open ("" none connected)
+	soundState                string       // the Sound panel's Connect: "", "connecting" or "failed"
+	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
 

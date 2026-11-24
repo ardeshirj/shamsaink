@@ -57,7 +57,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	phonesSeen := rd.phonesNow(set)
 	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: phonesSeen.On, Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
-	var setHead func()       // the header again from topBar, with the battery red when low
+	var setHead func()       // the header again from topBar
 	var items []library.Item // the rows
 	// the bar's choice: the books here ("library") or the catalogues' ("catalogues", catalogues.go); always the books
 	// here when the library comes back
@@ -95,9 +95,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			v.SetPage(min(page, max(v.Pages()-1, 0)))
 			setHead = func() { // its head is drawn with it: drawn again whole, on its page
 				buildCat(true)
-				tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 			}
-			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 			return
 		}
 		head := func() *ui.Panel {
@@ -114,9 +112,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		v.SetPage(min(page, max(v.Pages()-1, 0)))
 		setHead = func() {
 			v.SetHead(head())
-			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 		}
-		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 	}
 	// build lays out the library again for the view's choices, on its first page (the catalogue's: on its page)
 	build := func() {
@@ -157,9 +153,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		v = ui.NewLibraryTiles(rows, folder, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 		setHead = func() {
 			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
-			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 		}
-		tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)
 	}
 	build()
 	defer func() { v.Close() }()
@@ -1046,15 +1040,6 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 func catListed(cv ui.CatalogueView) string {
 	cv.Loading = false
 	return fmt.Sprint(cv)
-}
-
-// tintBattery has the battery's box red on a colour screen when its level (per cent) is low and it is not on the charger, else back to ink.
-func tintBattery(scr *device.Screen, box image.Rectangle, level int, onCharger bool) {
-	if !onCharger && level >= 0 && level <= device.LowBattery {
-		scr.SetTint(box)
-	} else {
-		scr.SetTint(image.Rectangle{})
-	}
 }
 
 // bookCase is which of its cases a book's menu or details is drawn in, as the kept renders name them: finished, opened
