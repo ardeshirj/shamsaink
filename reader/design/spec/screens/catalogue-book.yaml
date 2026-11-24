@@ -1,0 +1,13 @@
+name: catalogue-book
+layer: overlay
+templates: [catalogue-book.html]
+buttons: ring
+status: built
+english: true   # the library: English only, its words in en.json alone
+purpose: "A catalogue's book, its details and its one action (2026-11-23, with the books as tiles), opened by a finger held on its tile, in the middle of the screen as the library's book dialog: its title and author in the book's own direction, a row a fact the feed gives (Language, Published, Publisher, Subjects; one it does not give left out), its summary cut to a few lines, then its tile's action: Download, how much has come while it downloads, Read once it is here."
+enter: [{gesture: tap, control: e, from: catalogue}, {gesture: hold-row, from: catalogue}]
+words: [catalogue-download, published, publisher, subjects, lang-ar, lang-da, lang-de, lang-el, lang-es, lang-fi, lang-fr, lang-he, lang-hi, lang-it, lang-ja, lang-ko, lang-ku, lang-la, lang-nl, lang-no, lang-pl, lang-ps, lang-pt, lang-ru, lang-sv, lang-tr, lang-ur, lang-zh]   # the languages' names, ours (2026-11-23: Go's tables would add 2.4 MB), the library's book dialog too
+controls:
+  - {id: catalogue-book-get, component: button, action: act, does: "downloads the book into the library, as its tile's button", when: "the book is not here and not downloading"}
+  - {id: catalogue-book-read, component: button, action: act, does: "opens the book", when: "the book is here"}
+dismiss: tap-outside

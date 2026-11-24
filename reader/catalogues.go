@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html"
 	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -436,6 +438,47 @@ func (rd *reader) catalogueView(c *catalogues) ui.CatalogueView {
 	}
 	return v
 }
+
+// catalogueBook is book i's dialog (DrawCatalogueBook) as the feed gives it: its title, author, first language, year,
+// publisher, first subjects and summary (its HTML as plain text), and its action as its tile's.
+func (rd *reader) catalogueBook(c *catalogues, i int) ui.CatalogueBookDetails {
+	m := &c.books[i]
+	md := m.Metadata
+	d := ui.CatalogueBookDetails{Title: md.Title(), RTL: writtenRTL(bookLanguage(md.Languages, md.Title())), Share: -1,
+		Summary: plainText(md.Description)}
+	if len(md.Authors) > 0 {
+		d.Author = md.Authors[0].Name()
+	}
+	if len(md.Languages) > 0 {
+		d.Lang = md.Languages[0]
+	}
+	if md.Published != nil {
+		d.Year = fmt.Sprint(md.Published.Year())
+	}
+	if len(md.Publishers) > 0 {
+		d.Publisher = md.Publishers[0].Name()
+	}
+	for _, s := range md.Subjects {
+		if n := strings.TrimSpace(s.Name()); n != "" && len(d.Subjects) < 4 {
+			d.Subjects = append(d.Subjects, n)
+		}
+	}
+	id := opds.EntryID(m)
+	c.mu.Lock()
+	if s, ok := c.shares[id]; ok {
+		d.Share = s
+	}
+	c.mu.Unlock()
+	d.Here = d.Share < 0 && c.rec.Find(rd.dir, c.cur().URL, id) != ""
+	return d
+}
+
+// plainText is a feed's text with its HTML's tags taken out, its entities read, its spaces one.
+func plainText(s string) string {
+	return strings.Join(strings.Fields(html.UnescapeString(htmlTag.ReplaceAllString(s, " "))), " ")
+}
+
+var htmlTag = regexp.MustCompile(`<[^>]*>`)
 
 // rtlText says whether a title is in a right-to-left script (its first letter's): a section has no language of its own.
 func rtlText(s string) bool {

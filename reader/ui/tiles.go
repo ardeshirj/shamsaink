@@ -18,6 +18,9 @@ import (
 type tile struct {
 	ID, Title, Author, Year, Dir string
 	Pic                          bool
+	// a catalogue's book (planned, 2026-11-23): its button under the cover, eN-act: "get" (the download icon), "share"
+	// (Share, how much has come), "read" (Read, filled); "" none (the library's)
+	Act, Share, Read string
 }
 
 // readCover is a kept cover's picture (library.CoverFile), or a blank one if it cannot be read (made again later).
@@ -82,16 +85,6 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 	if len(books) == 0 {
 		return NewLibrary(nil, folder, head, fonts, w, h)
 	}
-	per := tileCols * tileRows
-	v := &List{head: head, fonts: fonts, w: w, h: h, docs: map[int]*blitz.Book{}}
-	pager := v.drawPager(0, 2) // its height does not depend on the count
-	lh := h - head.img.Rect.Dy() - pager.img.Rect.Dy()
-	v.opts = blitz.Options{Width: w, Height: lh, Margin: tileMargin, FontSize: 44}
-	v.img = image.NewGray(image.Rect(0, 0, w, lh))
-	cover := (lh - 2*tileMargin - tileSlack - (tileRows-1)*tileGap) / tileRows
-	coverW := min(cover*2/3, (w-2*tileMargin-(tileCols-1)*tileGap)/tileCols) // a book's shape, 2 by 3: a cover's picture shown whole
-	cover = min(cover, coverW*3/2)                                           // on a wide screen the width decides: the shape kept
-	room := lh - 2*tileMargin - tileSlack                                    // the grid's height: CSS puts its rows in the middle of it (align-content)
 	ts := make([]tile, len(books))
 	for i, b := range books {
 		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Year: b.Year,
@@ -102,34 +95,68 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 		t.Pic = b.Cover != nil || b.CoverFile != ""
 		ts[i] = t
 	}
+	pics := map[int]*image.Gray{} // the kept covers read, by book
+	return newTiles(ts, func(i int) *image.Gray {
+		pic := books[i].Cover
+		if pic == nil {
+			if pic = pics[i]; pic == nil {
+				pic = readCover(books[i].CoverFile)
+				pics[i] = pic
+			}
+		}
+		return pic
+	}, tileRows, head, fonts, w, h)
+}
+
+// tileAct is the room under a cover for a catalogue book's button and the gap before it, in px (planned).
+const tileAct = 80
+
+// newTiles lays out tiles under head, three a row and rows rows a page, pic giving tile i's cover picture when it has
+// one. The library's (two rows) are book-shaped, 2 by 3, so a picture shows whole; with a button under each (Act: a
+// catalogue's, three rows, 2026-11-23) a tile is a cover of words alone, its column's width and the rows' height less
+// the button's room: no picture to keep the shape for, so more books a page.
+func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fonts *blitz.Fonts, w, h int) *List {
+	per := tileCols * rows
+	v := &List{head: head, fonts: fonts, w: w, h: h, docs: map[int]*blitz.Book{}}
+	pager := v.drawPager(0, 2) // its height does not depend on the count
+	lh := h - head.img.Rect.Dy() - pager.img.Rect.Dy()
+	v.opts = blitz.Options{Width: w, Height: lh, Margin: tileMargin, FontSize: 44}
+	v.img = image.NewGray(image.Rect(0, 0, w, lh))
+	act := 0
+	if len(ts) > 0 && ts[0].Act != "" {
+		act = tileAct
+	}
+	cover := (lh-2*tileMargin-tileSlack-(rows-1)*tileGap)/rows - act
+	col := (w - 2*tileMargin - (tileCols-1)*tileGap) / tileCols
+	coverW := min(cover*2/3, col)  // a book's shape, 2 by 3: a cover's picture shown whole
+	cover = min(cover, coverW*3/2) // on a wide screen the width decides: the shape kept
+	align := "center"              // the library's rows in the middle of the page
+	if act > 0 {                   // words alone: the column's width; a catalogue's page from its top, as its list was
+		coverW = col
+		align = "start"
+	}
+	room := lh - 2*tileMargin - tileSlack // the grid's height: CSS puts its rows in the middle of it (align-content)
 	v.pageHTML = func(p int) string {
 		html, _ := render("library-tiles.html", struct {
 			Tiles              []tile
 			Cols               int
 			Cover, CoverW, Gap int
 			Room               int
-		}{ts[p*per : min(len(ts), (p+1)*per)], tileCols, cover, coverW, tileGap, room})
+			Align              string
+		}{ts[p*per : min(len(ts), (p+1)*per)], tileCols, cover, coverW, tileGap, room, align})
 		return html
 	}
-	pics := map[int]*image.Gray{} // the kept covers read, by book
 	v.paint = func(d *blitz.Book, img *image.Gray) {
 		for i, t := range ts {
 			if t.Pic {
 				if _, rs := d.Find(0, "cov-"+t.ID); len(rs) > 0 {
 					r := union(rs).Inset(2) // inside its border
-					pic := books[i].Cover
-					if pic == nil {
-						if pic = pics[i]; pic == nil {
-							pic = readCover(books[i].CoverFile)
-							pics[i] = pic
-						}
-					}
-					paintPicture(img, r, pic, v.dark != nil && v.dark())
+					paintPicture(img, r, pic(i), v.dark != nil && v.dark())
 				}
 			}
 		}
 	}
-	v.pages = (len(books) + per - 1) / per
+	v.pages = (len(ts) + per - 1) / per
 	full := make([]tile, per)
 	for i := range full {
 		full[i] = ts[0]
@@ -141,18 +168,26 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 		Cols               int
 		Cover, CoverW, Gap int
 		Room               int
-	}{full, tileCols, cover, coverW, tileGap, room})
+		Align              string
+	}{full, tileCols, cover, coverW, tileGap, room, align})
 	probe := blitz.New([]string{"list.html"}, readFor(html), v.opts, fonts)
 	probe.Layout(0)
-	slots := make([]image.Rectangle, per)
+	slots, acts := make([]image.Rectangle, per), make([]image.Rectangle, per)
 	for i := range slots {
 		_, rs := probe.Find(0, fmt.Sprint("e", i))
 		slots[i] = union(rs)
+		if act > 0 {
+			_, rs = probe.Find(0, fmt.Sprint("e", i, "-act"))
+			acts[i] = union(rs)
+		}
 	}
 	probe.Close()
-	for i := range books {
+	for i := range ts {
 		v.on = append(v.on, i/per)
 		v.at = append(v.at, slots[i%per])
+		if act > 0 {
+			v.acts = append(v.acts, acts[i%per])
+		}
 	}
 	if v.pages > 1 {
 		v.pager = v.drawPager(0, v.pages)

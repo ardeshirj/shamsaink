@@ -26,7 +26,7 @@ expect-in 30 catalogue: http://.*/books-fa.xml read in \d+ ms \(0 sections, 1 bo
 expect library: catalogue filters \(5 choices\)
 tap catalogue-filters:test-books-fa filters-show
 expect library: catalogue filters closed \(1 rows\)
-tap catalogue e0
+tap catalogue e0-act
 expect library: urn:e2e:fa-basics asked for
 expect-in 60 catalogue: urn:e2e:fa-basics downloaded in .* s: books/e2e/fa-basics.epub
 tap catalogue:funnel catalogue-filter
@@ -57,6 +57,6 @@ tap catalogue-menu catalogue-1
 expect library: catalogue E2E Catalogue, its main page
 expect library: catalogue lands on "Test books"
 expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
-tap catalogue e1
+tap catalogue e1-act
 expect-in 30 library: books/e2e/fa-basics.epub read from the catalogue
 expect-in 30 fa-basics.epub: document \d+ page \d+ shown in .*right to left true

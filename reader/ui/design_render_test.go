@@ -372,8 +372,8 @@ var designRenders = map[string][]renderCase{
 		return pr(DrawLibrarySort(slicesIndex(library.Sorts, "title"), libraryHead(f, w).img.Rect.Dy(), f, w))
 	}}},
 	"catalogue": {{"books", en, func(f *blitz.Fonts, w, h int) rendered {
-		// invented books, as the library's: one to download, one coming, one here, and a title too long for its row
-		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", More: true, Books: []CatalogueBook{
+		// invented books as tiles: one to download, one coming, one here, a title too long for its cover; more to read: a pager
+		c := NewCatalogueTiles(CatalogueView{Name: "FarsiEPUB", More: true, Books: []CatalogueBook{
 			{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Share: -1},
 			{Title: "سفر به ماه", Author: "نویسنده‌ای شکیبا", RTL: true, Share: 42},
 			{Title: "Tales of a Small Town", Author: "Another Author", Here: true, Share: -1},
@@ -381,12 +381,12 @@ var designRenders = map[string][]renderCase{
 		}}, catalogueHead(f, w, false), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
-	}}, {"pages", en, func(f *blitz.Fonts, w, h int) rendered { // more books than a page: the pager
+	}}, {"pages", en, func(f *blitz.Fonts, w, h int) rendered { // more books than a page (nine): the pager
 		var books []CatalogueBook
 		for i := range 12 {
 			books = append(books, CatalogueBook{Title: fmt.Sprintf("A catalogue's book %d", i+1), Author: "Someone", Share: -1})
 		}
-		c := NewCatalogue(CatalogueView{Name: "FarsiEPUB", Books: books}, catalogueHead(f, w, false), f, w, h)
+		c := NewCatalogueTiles(CatalogueView{Name: "FarsiEPUB", Books: books}, catalogueHead(f, w, false), f, w, h)
 		defer c.Close()
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"loading", en, func(f *blitz.Fonts, w, h int) rendered {
@@ -395,10 +395,25 @@ var designRenders = map[string][]renderCase{
 		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"landing-heading", en, func(f *blitz.Fonts, w, h int) rendered { // a front page of sections only, entered on its newest's books, the section's name under the head
 		return landingCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Browse: true, Section: "Dernières parutions"}, false, f, w, h)
+	}}, {"tiles", en, func(f *blitz.Fonts, w, h int) rendered { // its books as tiles, three by three, a cover of words and a button under each (Ebooksgratuits landed)
+		v := CatalogueView{Name: "Ebooksgratuits", More: true, Books: []CatalogueBook{
+			{Title: "Le Phare du Nord", Author: "Un Auteur", Share: -1},
+			{Title: "Lettres de la côte", Author: "Une Autrice", Share: 42},
+			{Title: "Une petite ville en hiver", Author: "Un Auteur Patient", Here: true, Share: -1},
+			{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Share: -1},
+			{Title: "Notes sur la mer et les phares de la côte du Nord", Author: "Quelqu'un", Share: -1},
+			{Title: "Contes", Share: -1},
+			{Title: "Voyage autour de ma chambre", Author: "Un Voyageur", Share: -1},
+			{Title: "Poèmes", Author: "Une Poétesse", Here: true, Share: -1},
+			{Title: "سفر به ماه", Author: "نویسنده‌ای شکیبا", RTL: true, Share: -1},
+		}}
+		c := NewCatalogueTiles(v, CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "Ebooksgratuits", Browse: true, Section: "Dernières parutions"}, f, w), f, w, h)
+		defer c.Close()
+		return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 	}}, {"landing-choose", en, func(f *blitz.Fonts, w, h int) rendered { // no section with books found on arriving: Browse
 		return landingCatalogue(CatalogueHeadView{Name: "A Library", Browse: true}, true, f, w, h)
 	}}, {"long-names", en, func(f *blitz.Fonts, w, h int) rendered { // a name cut: the head's line, its Loading… and funnel kept
-		c := NewCatalogue(CatalogueView{Name: "The Very Large Public Library of Classics", Books: []CatalogueBook{{Title: "Collected Works, Volume One", Author: "A Patient Author", Share: -1}}},
+		c := NewCatalogueTiles(CatalogueView{Name: "The Very Large Public Library of Classics", Books: []CatalogueBook{{Title: "Collected Works, Volume One", Author: "A Patient Author", Share: -1}}},
 			CatalogueHead(libraryTopBar(), CatalogueHeadView{Name: "The Very Large Public Library of Classics",
 				Browse: true, Funnel: true, Chosen: true, InForce: 1, Loading: true, Section: "Collected Works of the Northern Coast and Its Lighthouses"}, f, w), f, w, h)
 		defer c.Close()
@@ -462,6 +477,13 @@ var designRenders = map[string][]renderCase{
 	}}},
 	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))
+	}}},
+	"catalogue-book": {{"get", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a held tile, what the feed gives, Download
+		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "Lettres de la côte", Author: "Une Autrice", Lang: "fr", Year: "1897",
+			Publisher: "Ebooksgratuits", Subjects: []string{"Romans", "Littérature française"}, Share: -1,
+			Summary: "Une jeune femme écrit à sa sœur, depuis un village de pêcheurs de la côte du Nord, les lettres d'un hiver entier : la mer, les phares, les gens du port et ce qu'elle apprend d'elle-même loin de la ville. Un court roman épistolaire, publié d'abord en feuilleton, puis en volume."}, f, w))
+	}}, {"farsi-read", en, func(f *blitz.Fonts, w, h int) rendered { // planned: a right-to-left book, here already: Read; no publisher or summary
+		return rel(DrawCatalogueBook(CatalogueBookDetails{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Lang: "fa", Year: "1921", Here: true, Share: -1}, f, w))
 	}}},
 	"library-book-details": {{"new", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "Tales of a Small Town", Author: "Another Author", Lang: "en", File: "tales.epub",
@@ -739,7 +761,7 @@ func funnelCatalogue(hv CatalogueHeadView, noMatch bool, f *blitz.Fonts, w, h in
 	if noMatch {
 		v = CatalogueView{Name: hv.Name, NoMatch: true}
 	}
-	c := NewCatalogue(v, CatalogueHead(libraryTopBar(), hv, f, w), f, w, h)
+	c := NewCatalogueTiles(v, CatalogueHead(libraryTopBar(), hv, f, w), f, w, h)
 	defer c.Close()
 	return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 }
@@ -756,7 +778,7 @@ func landingCatalogue(hv CatalogueHeadView, choose bool, f *blitz.Fonts, w, h in
 	if choose {
 		v = CatalogueView{Name: hv.Name, Choose: true}
 	}
-	c := NewCatalogue(v, CatalogueHead(libraryTopBar(), hv, f, w), f, w, h)
+	c := NewCatalogueTiles(v, CatalogueHead(libraryTopBar(), hv, f, w), f, w, h)
 	defer c.Close()
 	return rendered{img: screenOf(w, h, c.Draw), boxes: c.Boxes(), placement: "screen"}
 }

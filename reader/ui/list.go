@@ -13,6 +13,7 @@ type List struct {
 	buttons map[string]listButton // buttons in the list's own content besides its rows (Track)
 	head    *Panel
 	pager   *Panel // nil: none
+	more    bool   // more pages to read than laid out (a catalogue's): the count says so, "1 of 1+"
 	rtl     bool
 	fonts   *blitz.Fonts
 	w, h    int
@@ -22,7 +23,8 @@ type List struct {
 	paged   int         // the page the pager's count is of
 	img     *image.Gray // the list's page shown
 	at      []image.Rectangle
-	on      []int // each row's page
+	acts    []image.Rectangle // each tile's button, a catalogue's (empty: none)
+	on      []int             // each row's page
 	// laid out a page at a time (the library's tiles): each page's html, its layout once it is first drawn
 	pageHTML func(page int) string
 	docs     map[int]*blitz.Book
@@ -77,7 +79,11 @@ func NewList(head *Panel, html string, n, cur int, pager, rtl bool, fonts *blitz
 
 // drawPager draws the bar for page (from 0) of pages, at the bottom of the screen, without a line.
 func (v *List) drawPager(page, pages int) *Panel {
-	d := pagerData{Dir: "ltr", Count: word("page-n-of", num(page+1), num(max(pages, 1)))}
+	of := num(max(pages, 1))
+	if v.more {
+		of += "+"
+	}
+	d := pagerData{Dir: "ltr", Count: word("page-n-of", num(page+1), of)}
 	d.CountDir = "ltr"
 	if lang != "en" {
 		d.CountDir = "rtl"
@@ -170,6 +176,17 @@ func (v *List) EntryAt(x, y int) int {
 	return -1
 }
 
+// ActAt is the tile whose button is at (x, y) on the screen, on the page shown, or -1 (a catalogue's: the button
+// acts, the rest of the tile opens the book's dialog).
+func (v *List) ActAt(x, y int) int {
+	for i, r := range v.acts {
+		if v.on[i] == v.page && !r.Empty() && image.Pt(x, y-v.head.img.Rect.Dy()).In(r.Inset(-8)) {
+			return i
+		}
+	}
+	return -1
+}
+
 // EntryBox is where row i is on the screen (on the page shown or not).
 func (v *List) EntryBox(i int) image.Rectangle {
 	return v.at[i].Add(image.Pt(0, v.head.img.Rect.Dy()))
@@ -239,6 +256,9 @@ func (v *List) Boxes() map[string]image.Rectangle {
 	for i := range v.at {
 		if v.on[i] == v.page {
 			boxes[fmt.Sprint("e", i)] = v.EntryBox(i)
+			if i < len(v.acts) {
+				boxes[fmt.Sprint("e", i, "-act")] = v.acts[i].Add(image.Pt(0, v.head.img.Rect.Dy()))
+			}
 		}
 	}
 	for id, b := range v.buttons {

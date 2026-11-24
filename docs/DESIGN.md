@@ -377,12 +377,17 @@ left as the device has it.
     (`kind=acquisition`), then the rest in order, three read at most, a section of sections left for the next; its name
     in bold under the head; the list icon left unfilled on it (filled once another place is chosen). None found, or a
     level of sections only: Choose what to browse, with Browse. Landed again on Clear all and on the catalogue chosen
-    again; a choice in Browse or Filter meanwhile stops it. Each book ends in its button: download, its per cent, then **Read**, which opens the book (one downloaded before shows Read
-    at once, by `downloads.json`); a Farsi row's button at the left, under the boxes above. **More books** under the last
-    row when the level has more pages; the rows paged as the library's, the list pulled up by a row's top padding so
-    every page starts at the same height (the engine's page 1 keeps a block's margin, later pages start at a line: the
-    library's list had the same 15 px jump). That the catalogue could not be reached (Try again) or has no books, in the
-    middle.
+    again; a choice in Browse or Filter meanwhile stops it. The books as tiles (2026-11-23, in place of rows: a mixed shelf
+    pushed a Farsi title against the button column), the library's grid (`ui/tiles.go`, `newTiles`) three by three, from
+    the page's top: a cover of each book's own words in its own direction (no pictures: the catalogues' feeds give
+    almost none, Standard Ebooks' `media:thumbnail` alone; not wanted, 2026-11-23), no book's shape to keep, so nine a
+    page; under each its button, the cover's width: download, its per cent, then **Read**, which opens the book (one
+    downloaded before shows Read at once, by `downloads.json`; `List.ActAt`). A tap on the cover, or a finger held on
+    it, opens its dialog (2026-11-23, as a store's book: a long press only a shortcut, never the only way)
+    (`catalogue-book.html`): what the feed gives (language by our own names, `langName`: Go's tables would add 2.4 MB;
+    year, publisher, subjects, the summary as plain text) and the same action. **More books** is the pager's ›: on the
+    last page it reads the level's next page and turns to it, the count saying "1 of 1+" while there is more. That the
+    catalogue could not be reached (Try again) or has no books, in the middle.
   - **Levels:** a section opened keeps the levels above it in memory (its facets and total too), so going back is
     instant and offline; a facet narrows the level in place (its section is still the one the list is under); only a
     catalogue's main page, not narrowed, is kept on disk (`catalogues/FOLDER.json`), shown at once on entering, then read again.

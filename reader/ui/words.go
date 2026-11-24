@@ -87,6 +87,23 @@ func words1(key string, args ...any) string {
 	return fmt.Sprintf(s, args...)
 }
 
+// langName is a language's name in our words (lang-fr: French) by its code's first part (pt-BR: Portuguese; 2026-11-23,
+// a short list of our own: Go's tables of every language's name would add 2.4 MB); the code itself when we have no name
+// for it, "—" when there is none.
+func langName(code string) string {
+	if code == "" {
+		return "—"
+	}
+	base := strings.ToLower(strings.FieldsFunc(code, func(r rune) bool { return r == '-' || r == '_' })[0])
+	if s, ok := words[lang]["lang-"+base]; ok {
+		return s
+	}
+	if s, ok := words["en"]["lang-"+base]; ok {
+		return s
+	}
+	return code
+}
+
 // num is n in the interface's digits: Latin for English, Farsi (۰ to ۹) otherwise.
 func num(n int) string { return digits(fmt.Sprint(n)) }
 

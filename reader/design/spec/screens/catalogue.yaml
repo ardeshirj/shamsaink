@@ -6,7 +6,7 @@ status: built
 english: true   # the library: English only, its words in en.json alone
 purpose: "The library's Catalogues side (OPDS; FarsiEPUB's built in, others from a file over USB): under the bar \"Catalogue\" and the catalogue shown, a dropdown that opens the choice of catalogues (its name only; 2026-11-23, the dropdown's label as a setting's name); at the head's end the list icon, which opens Browse (its sections; filled when one is chosen), and the funnel, which opens Filter (its facets; filled with how many are in force), each only when the catalogue has it (neither on FarsiEPUB's one page). Then its books a row each (its sections are Browse's alone: rule Books on the catalogue's screen; a first page of sections only entered on a section's books, its name in bold under the head, or, none found, Choose what to browse with Browse), as the library's, each ending in what can be done with it: a download button, its per cent while it downloads (going on when you switch away), then Read, which opens it (the book is in the Library too; one downloaded before shows Read at once). Loading… after the catalogue's name while a page is read (in one place whatever icons it has) (the last list kept and shown at once, then refreshed only if it changed), that it could not be reached with Try again, that it has no books, or, with facets in force, that none match, with Clear filters; More books under the last row when the catalogue has more pages. Wi-Fi asked for when it is off (wifi-ask), and turned off again once the catalogues are left and no download goes on; a download that failed is a notice."
 enter: [{gesture: tap, control: shelf-catalogues, from: library}]
-words: [catalogues, catalogue-count, catalogue-count-one, catalogue-loading, catalogue-unreachable, catalogue-empty, catalogue-read, catalogue-retry, catalogue-more, catalogue-label, catalogue-no-match, catalogue-clear-filters, catalogue-choose, catalogue-browse]
+words: [catalogues, catalogue-count, catalogue-count-one, catalogue-loading, catalogue-unreachable, catalogue-empty, catalogue-read, catalogue-retry, catalogue-label, catalogue-no-match, catalogue-clear-filters, catalogue-choose, catalogue-browse]
 controls:
   - {id: topbar-phones, component: icon-button, action: goto, to: sound, requires: [sound]}
   - {id: topbar-light, component: icon-button, action: goto, to: light}
@@ -15,13 +15,12 @@ controls:
   - {id: shelf-library, component: segments, action: goto, to: library}
   - {id: shelf-catalogues, component: segments, action: goto, to: shelf-name}
   - {id: catalogue-choose, component: dropdown, action: goto, to: catalogue-menu}
-  - {id: catalogue-more, component: button, action: act, does: "the catalogue's next page of books, after the last row", when: "the catalogue has more pages"}
   - {id: catalogue-retry, component: button, action: act, does: "reads the catalogue's page again", when: "it could not be reached"}
   - {id: catalogue-sections, component: icon-button, action: goto, to: catalogue-filters, when: "the catalogue has sections: Browse's page, its places as rows (2026-11-23)"}
   - {id: catalogue-filter, component: icon-button, action: goto, to: catalogue-filters, when: "the level has facets: Filter's page (Only what the catalogue can answer; later its search, or the whole catalogue on one page); none, no funnel"}
   - {id: catalogue-browse, component: button, action: goto, to: catalogue-filters, when: "a level of sections only: no section with books found on arriving, or Browse closed on a section's list"}
   - {id: catalogue-clear-all, component: button, action: act, does: "back to the catalogue's main page with no facets", when: "no books with the facets in force"}
-  - {id: list-prev, component: icon-button, action: act, does: the previous page of rows}
-  - {id: list-next, component: icon-button, action: act, does: the next page of rows}
-  - {id: e, component: list-row, action: act, does: "a book, its button: downloads it; once it is here, opens it", dynamic: true}
+  - {id: list-prev, component: icon-button, action: act, does: the previous page of books}
+  - {id: list-next, component: icon-button, action: act, does: "the next page of books; on the last, the catalogue's next page read, then turned to (its More books, 2026-11-23)"}
+  - {id: e, component: list-row, action: goto, to: catalogue-book, dynamic: true}   # a book's cover: its dialog, tapped or held (2026-11-23, as a store's book); its button under it, eN-act: downloads it, once it is here opens it
 dismiss: shelf-library   # the bar's choice, back to the books on the device

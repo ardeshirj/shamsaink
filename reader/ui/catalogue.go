@@ -32,26 +32,14 @@ type CatalogueView struct {
 	Choose      bool // planned (2026-11-23): no books found on arriving (only sections): that, and Browse, which opens Browse and filter
 }
 
-type catalogueRow struct {
-	ID, Title, Author, Dir string
-	Here                   bool
-	Share                  string // "42%", "" when not downloading
-	Read                   string
-}
-
 type catalogueEmpty struct {
 	Text, Icon string
 	Retry      *button
 }
 
-// The room a row keeps at its right for its control, the title's padding in the template at the list's font size (44 px):
-// a book's button (4em at 0.85em: 3.4em), a section's arrow (1em), each with the same gap before it, the page's side
-// margin (40 px; 2026-11-23: one distance from a title to its control in every row, the library's share read too; 20 px
-// was too close).
-const (
-	endGap   = 40
-	bookRoom = 34*44/10 + endGap
-)
+// The gap a row keeps before its control at its right, the page's side margin (40 px; 2026-11-23: one distance from a
+// title to its control in every row: the library's share read).
+const endGap = 40
 
 // The catalogues' head under the bar (2026-11-23): the catalogue shown and, when it has something to choose, the
 // funnel that opens Browse and filter.
@@ -101,30 +89,14 @@ func CatalogueHead(topBar TopBar, hv CatalogueHeadView, fonts *blitz.Fonts, w in
 	return stack(DrawTopBar(topBar, fonts, w), head)
 }
 
-// NewCatalogue lays out a catalogue's page under its head: a row a section, then a row a book (eN, sections first; a
-// book's button eN-act), More books under the last (catalogue-more) when it has more, or the line in their place (Try
-// again: catalogue-retry), and a pager.
+// NewCatalogue lays out a catalogue's page with no books (its books are tiles: NewCatalogueTiles) under its head: the
+// line in their place, that it could not be reached (Try again: catalogue-retry), that none match its facets (Clear
+// filters: catalogue-clear-all), Choose what to browse (Browse: catalogue-browse) or that it has none; nothing while
+// it is read (Loading… is in the head).
 func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *List {
-	var rows []catalogueRow
-	var fitBook []libraryRow
-	for _, b := range c.Books {
-		r := catalogueRow{ID: fmt.Sprint("e", len(rows)), Title: b.Title, Author: b.Author, Dir: "ltr", Here: b.Here, Read: word("catalogue-read")}
-		if b.RTL {
-			r.Dir = "rtl"
-		}
-		if !b.Here && b.Share >= 0 {
-			r.Share = num(b.Share) + "%"
-		}
-		rows = append(rows, r)
-		fitBook = append(fitBook, libraryRow{ID: r.ID, Title: r.Title, Dir: r.Dir})
-	}
-	fitTitles(fitBook, bookRoom, fonts, w)
-	for i, f := range fitBook {
-		rows[i].Title = f.Title
-	}
 	var none *catalogueEmpty
 	switch {
-	case len(rows) > 0, c.Loading:
+	case c.Loading:
 	case c.Unreachable:
 		none = &catalogueEmpty{Text: word("catalogue-unreachable", isolate(c.Name)), Icon: "warning-circle", Retry: &button{ID: "catalogue-retry", Label: word("catalogue-retry")}}
 	case c.NoMatch:
@@ -134,18 +106,89 @@ func NewCatalogue(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *L
 	default:
 		none = &catalogueEmpty{Text: word("catalogue-empty")}
 	}
-	var more *button
-	if c.More && len(rows) > 0 {
-		more = &button{ID: "catalogue-more", Label: word("catalogue-more")}
-	}
-	html, _ := render("catalogue.html", struct {
-		Rows  []catalogueRow
-		More  *button
-		Empty *catalogueEmpty
-	}{rows, more, none})
-	l := NewList(head, html, len(rows), -1, true, false, fonts, w, h)
-	l.Track("catalogue-more", "catalogue-retry", "catalogue-clear-all", "catalogue-browse")
+	html, _ := render("catalogue.html", struct{ Empty *catalogueEmpty }{none})
+	l := NewList(head, html, 0, -1, true, false, fonts, w, h)
+	l.Track("catalogue-retry", "catalogue-clear-all", "catalogue-browse")
 	return l
+}
+
+// catalogueRows: a catalogue's tiles, three rows a page (2026-11-23: no picture to keep a book's shape for; nine books a
+// page, a third fewer turns).
+const catalogueRows = 3
+
+// NewCatalogueTiles lays out a catalogue's books as tiles (2026-11-23, in place of rows): a cover of each book's own
+// words, its button under it (eN-act: download, how much has come, Read), nine a page; with no books, the line in
+// their place (NewCatalogue). A pager when it has more than a page, or more pages to read (› reads the next).
+func NewCatalogueTiles(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h int) *List {
+	if len(c.Books) == 0 {
+		return NewCatalogue(c, head, fonts, w, h)
+	}
+	ts := make([]tile, len(c.Books))
+	for i, b := range c.Books {
+		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Dir: "ltr", Act: "get"}
+		if b.RTL {
+			t.Dir = "rtl"
+		}
+		switch {
+		case b.Here:
+			t.Act, t.Read = "read", word("catalogue-read")
+		case b.Share >= 0:
+			t.Act, t.Share = "share", num(b.Share)+"%"
+		}
+		ts[i] = t
+	}
+	l := newTiles(ts, nil, catalogueRows, head, fonts, w, h)
+	if c.More { // more to read: › on the last page reads it (libraryview.go), the count says so
+		l.more = true
+		l.pager = l.drawPager(0, l.pages)
+	}
+	return l
+}
+
+// A catalogue's book as its dialog shows it (planned): what the feed gives ("" left out), and its tile's action.
+type CatalogueBookDetails struct {
+	Title, Author string
+	RTL           bool
+	Lang, Year    string
+	Publisher     string
+	Subjects      []string
+	Summary       string
+	Here          bool // in the library: Read
+	Share         int  // downloading: how much has come; -1 not
+}
+
+// The most of a summary the dialog shows, in letters, the rest cut with an ellipsis (the engine cuts no text).
+const summaryMax = 280
+
+// DrawCatalogueBook draws a catalogue's book's dialog (templates/catalogue-book.html; planned), w px wide at most;
+// the caller places it.
+func DrawCatalogueBook(d CatalogueBookDetails, fonts *blitz.Fonts, w int) *Panel {
+	var rows [][2]string
+	lang := ""
+	if d.Lang != "" {
+		lang = langName(d.Lang)
+	}
+	for _, r := range [][2]string{{word("language"), lang}, {word("published"), d.Year}, {word("publisher"), d.Publisher},
+		{word("subjects"), strings.Join(d.Subjects, ", ")}} {
+		if r[1] != "" {
+			rows = append(rows, r)
+		}
+	}
+	data := struct {
+		Title, Author, Dir, Summary, Read, Share string
+		Rows                                     [][2]string
+	}{Title: d.Title, Author: d.Author, Dir: "ltr", Summary: cut(d.Summary, summaryMax), Rows: rows}
+	if d.RTL {
+		data.Dir = "rtl"
+	}
+	switch {
+	case d.Here:
+		data.Read = word("catalogue-read")
+	case d.Share >= 0:
+		data.Share = num(d.Share) + "%"
+	}
+	html, ids := render("catalogue-book.html", data)
+	return drawPanelIn(html, ids, "catalogue-book-box", fonts, w, 1200)
 }
 
 // DrawCatalogueMenu draws the choice of catalogues hanging under the catalogues' head (under px from the top), at its

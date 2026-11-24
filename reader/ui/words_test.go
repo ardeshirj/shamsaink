@@ -105,3 +105,14 @@ func TestAddedWhen(t *testing.T) {
 		}
 	}
 }
+
+// A language's name by its code's first part, ours; a code we have no name for, itself.
+func TestLangName(t *testing.T) {
+	defer SetLanguage("en")
+	SetLanguage("en")
+	for code, want := range map[string]string{"fr": "French", "pt-BR": "Portuguese", "FA": "Farsi", "zh_Hant": "Chinese", "xx": "xx", "": "—"} {
+		if got := langName(code); got != want {
+			t.Errorf("%q: %q, want %q", code, got, want)
+		}
+	}
+}

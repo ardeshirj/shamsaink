@@ -351,13 +351,7 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 		}
 		return digits(t.Format("2 Jan 2006"))
 	}
-	lang := d.Lang
-	switch d.Lang {
-	case "fa", "en":
-		lang = word("lang-" + d.Lang)
-	case "":
-		lang = "—"
-	}
+	lang := langName(d.Lang)
 	read := word("not-opened")
 	switch {
 	case d.Finished:

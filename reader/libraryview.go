@@ -73,6 +73,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	catFrom, catPage := "", 0 // the level and the list's page it was opened on: closed with nothing changed, back to that page
 	catShown := ""            // the catalogue's books as last laid out (its view, printed, Loading apart): what the list shows
 	catLoading := false       // Loading… shown in the head
+	catTurn := false          // › on the last page asked for the catalogue's next page: turned to once it is read
 	defer func() {
 		if shelf == "catalogues" {
 			rd.catalogueLeave(cat)
@@ -110,7 +111,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 		cv := rd.catalogueView(cat)
 		catShown, catLoading = catListed(cv), cv.Loading
-		v = ui.NewCatalogue(cv, head(), rd.fonts, scr.W, scr.H)
+		v = ui.NewCatalogueTiles(cv, head(), rd.fonts, scr.W, scr.H)
 		v.SetPage(min(page, max(v.Pages()-1, 0)))
 		setHead = func() {
 			v.SetHead(head())
@@ -409,6 +410,24 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 		return true
 	}
+	// catBook does a catalogue's book's action, its tile's or its dialog's: its file to open when it is here (Read),
+	// else it is downloaded (nothing while it already downloads); "" when nothing is opened
+	catBook := func(i int) string {
+		if p := rd.catalogueHere(cat, i); p != "" {
+			fmt.Printf("library: %s read from the catalogue\n", p)
+			return filepath.Join(rd.dir, filepath.FromSlash(p))
+		}
+		if cat.downloading(i) {
+			return ""
+		}
+		b := cat.books[i]
+		fmt.Printf("library: %s asked for\n", opds.EntryID(&b))
+		catNet(func() {
+			rd.catalogueDownload(cat, b)
+			catRedraw()
+		})
+		return ""
+	}
 	// catRead reads the shown catalogue's page (more: its next) once Wi-Fi is up; its kept page shown meanwhile
 	catRead := func(more bool) {
 		cat.loading = true
@@ -519,9 +538,19 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					} else if catFilters { // the panel with the new feed's choices
 						catRedraw()
 						fmt.Printf("library: catalogue filters (%d choices)\n", len(catActs))
+					} else if catTurn && m.more && m.err == nil { // the next page asked for by ›: turned to at once
+						catTurn = false
+						buildCat(true)
+						v.SetPage(min(v.Page()+1, max(v.Pages()-1, 0)))
+						v.Draw(rd.over)
+						belowBar()
+						fmt.Printf("library: catalogue page %d of %d\n", v.Page()+1, v.Pages())
 					} else {
 						catRefresh()
 					}
+				}
+				if m.err != nil {
+					catTurn = false
 				}
 			case "progress": // the row redrawn a second apart at most
 				if i := cat.row(m.entry); on && panel == nil && !catFilters && i >= 0 && time.Since(shareShown) > time.Second {
@@ -664,6 +693,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				panel.Over(rd.over)
 				scr.ShowPart(rd.over, image.Rect(0, old.Min.Y, scr.W, old.Union(panel.Rect()).Max.Y), wf, false)
 			}
+		case e.Hold == device.Held && panel == nil && shelf == "catalogues" && !catFilters && v.EntryAt(e.X, e.Y) >= 0: // a catalogue's book: its dialog
+			held = v.EntryAt(e.X, e.Y)
+			showBook(ui.DrawCatalogueBook(rd.catalogueBook(cat, held), rd.fonts, scr.W), "catalogue", "book")
+			fmt.Printf("library: %s held: its details\n", opds.EntryID(&cat.books[held]))
 		case e.Hold == device.Held && panel == nil && shelf == "library" && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
 			held = v.EntryAt(e.X, e.Y)
 			b := items[held]
@@ -673,6 +706,15 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case panel != nil:
 			id := panel.At(e.X, e.Y)
 			switch {
+			case bookPanel == "catalogue" && (id == "catalogue-book-get" || id == "catalogue-book-read"): // its tile's action
+				i := held
+				r := panel.Rect()
+				panel, held, bookPanel = nil, -1, ""
+				if p := catBook(i); p != "" {
+					return p, nil
+				}
+				v.Draw(rd.over)
+				scr.ShowPart(rd.over, r, device.WfREAGL, false)
 			case bookPanel == "details" && id == "book-finish":
 				b := items[held]
 				if err := library.MarkFinished(rd.dir, b.ID); err != nil {
@@ -1042,12 +1084,6 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				scr.Show(rd.over, device.WfREAGL, false)
 				fmt.Printf("library: filter %s, %d rows\n", library.Filters[f], len(items))
 			}
-		case shelf == "catalogues" && v.ButtonAt(e.X, e.Y) == "catalogue-more":
-			if !cat.loading { // a page under way: nothing more
-				fmt.Println("library: more books")
-				catRead(true)
-				catRefresh() // Loading… beside the name
-			}
 		case shelf == "catalogues" && !catFilters && v.ButtonAt(e.X, e.Y) == "catalogue-clear-all": // no books with the facets: none
 			if cat.clear() {
 				fmt.Println("library: catalogue filters cleared")
@@ -1058,21 +1094,21 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			fmt.Println("library: catalogue read again")
 			catRead(false)
 			catRefresh() // Loading… in place of Try again
-		case shelf == "catalogues" && v.EntryAt(e.X, e.Y) >= 0: // a book: Read opens it, else downloaded
-			i := v.EntryAt(e.X, e.Y)
-			if p := rd.catalogueHere(cat, i); p != "" {
-				fmt.Printf("library: %s read from the catalogue\n", p)
-				return filepath.Join(rd.dir, filepath.FromSlash(p)), nil
+		case shelf == "catalogues" && v.ActAt(e.X, e.Y) >= 0: // a book's button: Read opens it, else downloaded
+			if p := catBook(v.ActAt(e.X, e.Y)); p != "" {
+				return p, nil
 			}
-			if cat.downloading(i) {
-				break
+		case shelf == "catalogues" && !catFilters && panel == nil && v.EntryAt(e.X, e.Y) >= 0: // its cover: its dialog (2026-11-23, as a store's book; held, the same)
+			held = v.EntryAt(e.X, e.Y)
+			showBook(ui.DrawCatalogueBook(rd.catalogueBook(cat, held), rd.fonts, scr.W), "catalogue", "book")
+			fmt.Printf("library: %s tapped: its details\n", opds.EntryID(&cat.books[held]))
+		case shelf == "catalogues" && !catFilters && v.PagerAt(e.X, e.Y) == "list-next" && v.Page() == v.Pages()-1 && cat.next != "":
+			if !cat.loading { // › on the last page: the catalogue's next page, read, then turned to (its More books, 2026-11-23)
+				catTurn = true
+				fmt.Println("library: more books")
+				catRead(true)
+				catRefresh() // Loading… beside the name
 			}
-			b := cat.books[i]
-			fmt.Printf("library: %s asked for\n", opds.EntryID(&b))
-			catNet(func() {
-				rd.catalogueDownload(cat, b)
-				catRedraw()
-			})
 		case v.PagerAt(e.X, e.Y) == "list-prev":
 			turn(-1)
 		case v.PagerAt(e.X, e.Y) == "list-next":

@@ -2,7 +2,7 @@
  "placement": "screen",
  "boxes": {
   "catalogue-choose": [241, 222, 529, 294],
-  "catalogue-retry": [512, 640, 752, 721],
+  "catalogue-retry": [512, 656, 752, 736],
   "shelf-catalogues": [181, 46, 323, 122],
   "shelf-library": [43, 46, 182, 122],
   "topbar-battery": [1022, 40, 1114, 128],
