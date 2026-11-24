@@ -338,7 +338,7 @@ func (s *session) sleep() {
 	s.barChanged() // the screen put back as it was: the bar's time, if it shows, from before the sleep
 }
 
-// sleepText draws the sleep screens of a YAML file (one or a set: ui.ParseSleeps; a couplet, a title, a quote:
+// sleepText draws the sleep screens of a YAML file (one or a set: ui.ParseSleeps; a couplet or a title:
 // ui.DrawSleep) at the screen's size, and names the picture of a picture screen.
 func (rd *reader) sleepText() device.SleepText {
 	return device.SleepText{

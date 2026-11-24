@@ -17,13 +17,13 @@ written for a later version still loads.
 
 | Field | Layout | |
 |---|---|---|
-| `layout` | all | `couplet`, `title`, `quote` or `picture`. Left out: `couplet` when there are `verses`, else `picture` when there is an `image`, else `title`. |
+| `layout` | all | `couplet`, `title` or `picture`. Left out: `couplet` when there are `verses`, else `picture` when there is an `image`, else `title`. |
 | `image` | picture | a PNG or JPEG, its path relative to the YAML file's folder: beside it (`hafez.png`) or in a folder beside it (`pictures/hafez.png`), never out of it. Fitted to the screen on white, kept in proportion; grey when it has no colour, so it follows dark mode like the page, else in colour, shown as it is |
 | `verses` | couplet | the two verses (FarsiEPUB's `vowelled` if it has one, else `text`), each shown on two lines |
 | `poet` | couplet | the poet's name |
 | `gloss` | couplet | the plain-language line; quote it in YAML when it has a colon |
-| `text` | title, quote | the title, or the quote; a newline is a line break |
-| `credit` | title, quote | the author; a quote's has a dash before it |
+| `text` | title | the text under the logo: a title, a few lines; a newline is a line break |
+| `credit` | title | the author |
 
 ```yaml
 verses:
@@ -43,7 +43,7 @@ gloss: "..."
 verses: [...]
 poet: سعدی
 ---
-layout: quote
+layout: title
 text: ...
 credit: ...
 ```
@@ -54,5 +54,6 @@ credit: ...
 - **Dark mode.** The screens are drawn grey and follow the reader's dark mode (the Light panel's switch): inverted with
   the page, white on black, the logo and signature too. Pictures are shown as they are in dark mode, never as a negative,
   and in colour on a colour screen (`Screen.ShowRGBA`).
+- **Dropped 2026-11-23: `quote`.** It was `title` with a dash before the author. A file that still says `layout: quote` is drawn as a title.
 - **Planned, not built:** `cover: true` (the open book's cover). Built 2026-11-06: `image`.
 - **Tests:** `go test -tags blitz ./ui -run "Sleep|Couplet"`; `SLEEP=dir SLEEP_YML=dir` writes the pictures of a folder of files (a set: one picture per screen, numbered); the pick among screens and the pictures: `go test ./device -run "SleepScreenSets|SleepPicture"`.

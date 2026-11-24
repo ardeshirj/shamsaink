@@ -27,11 +27,11 @@ func TestSleepScreens(t *testing.T) {
 	cases := map[string]string{
 		"couplet-hafez": "verses:\n  - اگر آن تُرکِ شیرازی به‌‌ دست‌ آرَد دلِ ما را\n  - به خال هِندویَش بَخشَم سَمَرقند و بُخارا را\npoet: حافظ\ngloss: \"شاعر می‌گوید اگر آن معشوقِ شیرازی دلم را به دست آورد، سمرقند و بخارا، دو شهر بزرگ و ثروتمند، را در برابر خال سیاه او می‌بخشم. ترک: معشوق زیباروی. خال هندو: خال سیاه.\"\n",
 		"couplet-long":  "verses:\n  - ای نام تو بهترین سر آغاز بی نام تو نامه کی کنم باز\n  - ای کارگشای هر چه هستند وی دست نگهدار هر چه هستند\npoet: نظامی\ngloss: شاعر خدا را می‌ستاید.\n",
-		"quote-fa":      "layout: quote\ntext: \"دوش دیدم که ملایک در میخانه زدند\\nگل آدم بسرشتند و به پیمانه زدند\"\ncredit: حافظ\n",
-		"quote-en":      "layout: quote\ntext: \"A reader lives a thousand lives before he dies. The man who never reads lives only one.\"\ncredit: George R. R. Martin\n",
+		"lines-fa":      "layout: title\ntext: \"دوش دیدم که ملایک در میخانه زدند\\nگل آدم بسرشتند و به پیمانه زدند\"\ncredit: حافظ\n",
+		"sentence-en":   "layout: title\ntext: \"A reader lives a thousand lives before he dies. The man who never reads lives only one.\"\ncredit: George R. R. Martin\n",
 		"title-fa":      "layout: title\ntext: رود کم‌آب\ncredit: مارا الیس\n",
 		"title-en":      "layout: title\ntext: Buried Alive\ncredit: Arnold Bennett\n",
-		"long-en":       "layout: quote\ntext: \"" + longText + "\"\ncredit: Somebody\n",
+		"long-en":       "layout: title\ntext: \"" + longText + "\"\ncredit: Somebody\n",
 	}
 	for name, y := range cases {
 		s, err := ParseSleep([]byte(y))
@@ -131,7 +131,7 @@ func TestSleepSets(t *testing.T) {
 		firstPoet string
 	}{
 		{"verses: [a, b]\npoet: one\n", 1, 0, "one"},
-		{"---\nverses: [a, b]\npoet: one\n---\nlayout: quote\ntext: q\n---   # a comment\ntext: t\n", 3, 0, "one"},
+		{"---\nverses: [a, b]\npoet: one\n---\nlayout: title\ntext: q\n---   # a comment\ntext: t\n", 3, 0, "one"},
 		{"verses: [a, b]\npoet: one\n---\nverses: [unclosed\n---\ntext: t\n", 2, 1, "one"},
 		{"# only comments\n---\n\n---\nverses: [a, b]\npoet: two\n---\n", 1, 0, "two"},
 		{"verses: [a, b]\npoet: one\r\n---\r\ntext: t\r\n", 2, 0, "one"},

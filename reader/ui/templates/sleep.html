@@ -36,6 +36,6 @@ body { padding: {{.Top}}px {{.Side}}px 0; text-align: center; }
 </style></head><body>
 <img class="logo" id="logo" src="brand/shamsaink-stack.png" width="{{.LogoW}}" height="{{.LogoH}}">
 <p class="text" id="text"{{.TextLang}}>{{.Text}}</p>
-{{if .Credit}}<p class="credit"{{.CreditLang}}>{{if eq .Layout "quote"}}— {{end}}{{.Credit}}</p>{{end}}
+{{if .Credit}}<p class="credit"{{.CreditLang}}>{{.Credit}}</p>{{end}}
 </body></html>
 {{- end}}

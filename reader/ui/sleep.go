@@ -18,7 +18,7 @@ import (
 
 // A sleep screen is a small file (YAML), drawn from templates/sleep.html at the screen's own size, so the type is the same
 // everywhere and the text is fitted to its length. Layouts: "couplet" (FarsiEPUB's sleep screens: verses, poet, gloss,
-// signature), "title" and "quote" (the opening screen's logo, a text under it), and "picture": a picture beside the file
+// signature), "title" (the opening screen's logo, a text under it, its author below), and "picture": a picture beside the file
 // (Image), shown fitted to the screen (the device loads it: device.sleepScreen).
 type Sleep struct {
 	Layout string   `yaml:"layout"`
@@ -26,7 +26,7 @@ type Sleep struct {
 	Verses []string `yaml:"verses"` // couplet: the two verses
 	Poet   string   `yaml:"poet"`
 	Gloss  string   `yaml:"gloss"`
-	Text   string   `yaml:"text"` // title, quote
+	Text   string   `yaml:"text"` // title
 	Credit string   `yaml:"credit"`
 }
 
@@ -82,7 +82,7 @@ type sleepData struct {
 	TextLang, CreditLang, PoetLang, GlossLang                 template.HTMLAttr
 }
 
-// sleepSize is the type's size for a text of n letters (title, quote): large for a few words, smaller as it grows, never
+// sleepSize is the type's size for a text of n letters (title): large for a few words, smaller as it grows, never
 // under 40 px (the reading text's size is 50). A couplet's sizes are its own (drawSleepFit).
 func sleepSize(n int) int {
 	switch {
@@ -144,7 +144,7 @@ func pngSize(name string) (float64, float64) {
 	return float64(c.Width), float64(c.Height)
 }
 
-// noWidow joins the last two words of each line of t (its paragraphs: a quote's lines are kept, white-space: pre-line)
+// noWidow joins the last two words of each line of t (its paragraphs: a title's lines are kept, white-space: pre-line)
 // with a no-break space, so the last line of a wrapped paragraph never holds one word alone: the word before it comes
 // down with it (FarsiEPUB, 2026-11-16: a gloss ended on one word). A line of one word is left as it is.
 func noWidow(t string) string {
