@@ -258,6 +258,13 @@ keyboard first ("Now").
   `fallback_fonts`), only the chosen family loaded (memory), the book's body given it, pages and the cache per font.
   Which device fonts draw Farsi right (joining, Persian digits and letters such as پ چ ژ گ) to check, and whether
   their licences allow use in place.
+- An interface adapting to the screen's size (2026-11-23, the maintainer): today every screen is laid out in pixels
+  for the two devices we support (both 300 ppi, within 2% of each other in size): the library 3 tiles by 2 whatever
+  the screen, margins, gaps and text fixed in px. On a smaller screen (a Kobo Clara, 1072×1448: covers ~25 mm wide)
+  it still works; on a larger one (Sage, Elipsa: 1440×1920, 1404×1872) six books look sparse and 4 by 3 would fit,
+  and at a lower ppi the text comes out larger. The idea: sizes in millimetres from each device's ppi (in
+  `reader/device/`), the library's columns and rows as many as fit with a cover at least ~25–30 mm wide, and the
+  other screens (panels, dock, bars) checked the same way. When a larger or lower-ppi device becomes a target.
 
 ### Upstream to Blitz (2026-10-29)
 Neither patch is planned or proposed there (roadmap #119, tracking #255 and #259), and neither is e-ink only.
