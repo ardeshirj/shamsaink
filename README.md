@@ -15,7 +15,7 @@
 
 <table>
 <tr>
-<th width="25%">Library<br><sub>every language, each book's own cover</sub></th>
+<th width="25%">Library<br><sub>covers in every language</sub></th>
 <th width="25%">Farsi<br><sub>adapting to right-to-left books</sub></th>
 <th width="25%">English<br><sub>the bar and the dock open</sub></th>
 <th width="25%">Arabic<br><sub>reading: nothing but the page</sub></th>
