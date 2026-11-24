@@ -91,10 +91,7 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 	ts := make([]tile, len(books))
 	for i, b := range books {
 		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Year: b.Year,
-			Dir: "ltr"}
-		if b.RTL {
-			t.Dir = "rtl"
-		}
+			Dir: dirOf(b.RTL)}
 		t.Pic = b.Cover != nil || b.CoverFile != ""
 		ts[i] = t
 	}

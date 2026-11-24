@@ -126,10 +126,7 @@ func NewCatalogueTiles(c CatalogueView, head *Panel, fonts *blitz.Fonts, w, h in
 	}
 	ts := make([]tile, len(c.Books))
 	for i, b := range c.Books {
-		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Dir: "ltr", Act: "get"}
-		if b.RTL {
-			t.Dir = "rtl"
-		}
+		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Dir: dirOf(b.RTL), Act: "get"}
 		switch {
 		case b.Here:
 			t.Act, t.Read = "read", word("catalogue-read")
@@ -178,10 +175,7 @@ func DrawCatalogueBook(d CatalogueBookDetails, fonts *blitz.Fonts, w int) *Panel
 	data := struct {
 		Title, Author, Dir, Summary, Read, Share string
 		Rows                                     [][2]string
-	}{Title: d.Title, Author: d.Author, Dir: "ltr", Summary: cut(d.Summary, summaryMax), Rows: rows}
-	if d.RTL {
-		data.Dir = "rtl"
-	}
+	}{Title: d.Title, Author: d.Author, Dir: dirOf(d.RTL), Summary: cut(d.Summary, summaryMax), Rows: rows}
 	switch {
 	case d.Here:
 		data.Read = word("catalogue-read")
