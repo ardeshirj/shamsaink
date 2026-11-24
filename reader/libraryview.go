@@ -61,7 +61,6 @@ type libraryScreen struct {
 	shelf string
 
 	cat        *catalogues
-	catChoose  bool        // the choice of catalogues is open under the catalogue's name
 	catFilters bool        // Browse and filter (catalogue-filters), while open: it takes the list's place under the bar
 	catBrowse  bool        // the panel is Browse's page (the list icon), else Filter's (the funnel)
 	catMore    int         // its facet group opened by More… (-1: none)
@@ -73,18 +72,14 @@ type libraryScreen struct {
 	catTurn    bool      // › on the last page asked for the catalogue's next page: turned to once it is read
 	shareShown time.Time // when a download's share was last drawn
 
-	panel     *ui.Panel   // the panel under the bar (the menu) or the filters (sort), or a dialog, while open
-	langOpen  bool        // the panel is the Settings panel, not the menu
-	devOpen   bool        // the panel is the Developer panel (dev mode; devssh.go)
-	devDialog string      // over it, a notice of its Wi-Fi switch ("notice")
-	upd       *updater    // an update asked for from Settings (updates.go), and its dialog
-	lightOpen bool        // the panel is the Light panel (light.go)
-	soundOpen bool        // the panel is the Sound panel (sound.go)
-	sp        sliderPanel // the Light or Sound panel's state (sliderpanel.go)
-	asking    *netWait    // Wi-Fi's question open: what asked for it (librarywifi.go)
-	netWaits  []*netWait  // waiting for Wi-Fi: each served when the connection ends
-	held      int         // a book's dialog: the book (a row), and which ("details", "remove", "catalogue")
-	bookPanel string
+	panel    *ui.Panel   // what is drawn over the list while something is open: kind's panel, or the dialog in its place
+	kind     string      // what is open over the list (setKind): a panel under the bar, or a book's dialog; "" none
+	dialog   string      // a dialog over it, or over the list (showDialog): "wifi-ask", an update's, "notice", "dev-notice"
+	upd      *updater    // an update asked for from Settings (updates.go)
+	sp       sliderPanel // the Light or Sound panel's state (sliderpanel.go)
+	asking   *netWait    // Wi-Fi's question open: what asked for it (librarywifi.go)
+	netWaits []*netWait  // waiting for Wi-Fi: each served when the connection ends
+	held     int         // a book's dialog: the book (a row, or a catalogue's book)
 }
 
 // choose shows the library and waits for a book to be chosen: its path, or "" when the library is left. A swipe or
@@ -167,7 +162,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		}
 		if e.Power || e.Clock || e.Sound { // a charger plugged or unplugged, a new minute, the headphones changed
 			s.headChanged()
-			if e.Sound && s.sp.soundEvent(e, s.soundOpen && s.panel != nil) { // the Sound panel, if open, as the headphones are now
+			if e.Sound && s.sp.soundEvent(e, s.kind == "sound" && s.dialog == "") { // the Sound panel, if open, as the headphones are now
 				old := s.panel.Rect()
 				s.panel = s.sp.draw(s.v.TopBarHeight())
 				s.showOver(s.down(old), device.WfREAGL)
@@ -196,7 +191,7 @@ func (s *libraryScreen) input(e device.Event) (path string, done bool) {
 		if s.panel == nil && !e.Held {
 			s.turn(e.Button)
 		}
-	case e.Hold != device.NotHeld && (s.lightOpen || s.soundOpen) && s.panel != nil: // a slider's knob held and moved
+	case e.Hold != device.NotHeld && (s.kind == "light" || s.kind == "sound") && s.dialog == "": // a slider's knob held and moved
 		if refresh, wf := s.sp.hold(s.panel, e.Gesture); refresh {
 			old := s.panel.Rect()
 			s.panel = s.sp.draw(v.TopBarHeight())

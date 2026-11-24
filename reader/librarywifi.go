@@ -17,7 +17,7 @@ import (
 // that an update was undone, over the library; Wi-Fi's question for the catalogues and a download's notice likewise.
 func (s *libraryScreen) showUpdate(p *ui.Panel, kind string) {
 	s.showDialog(p, "dialog update "+kind)
-	s.upd.dialog = kind
+	s.dialog = kind
 }
 
 // updateEnd shows an update's notice; Wi-Fi turned on for the update turned off again.
@@ -26,17 +26,21 @@ func (s *libraryScreen) updateEnd(key, icon string, note ...string) {
 	s.showUpdate(ui.DrawNotice(key, icon, s.rd.fonts, s.scr.W, note...), "notice")
 }
 
-// updateClose closes the update's dialog: back to Settings, or to the library when Settings was not open.
+// updateClose closes the dialog shown by showUpdate: back to Settings when it was asked from there; else the library,
+// what was open under the dialog (a panel, a book's dialog) closed with it, its icon in the bar as it was.
 func (s *libraryScreen) updateClose() {
-	s.upd.dialog = ""
-	if s.langOpen {
+	s.dialog = ""
+	switch s.kind {
+	case "settings":
 		s.openLang()
-		return
+	case "":
+		r := s.panel.Rect()
+		s.panel = nil
+		s.v.Draw(s.rd.over)
+		s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
+	default:
+		s.closeAll()
 	}
-	r := s.panel.Rect()
-	s.panel = nil
-	s.v.Draw(s.rd.over)
-	s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
 }
 
 // updateCheck answers Settings' Check: once Wi-Fi is up (asked for first when it is off), the newest version asked
@@ -85,7 +89,7 @@ func (s *libraryScreen) updMessage(m updMsg) error {
 			s.showUpdate(ui.DrawUpdateAvailable(m.latest.Version, rd.fonts, s.scr.W), "available")
 		}
 	case "progress": // the bar redrawn half a second apart at most, and at its end
-		if upd.dialog == "progress" && m.share != upd.shown && (m.share == 100 || time.Since(upd.shownAt) > 500*time.Millisecond) {
+		if s.dialog == "progress" && m.share != upd.shown && (m.share == 100 || time.Since(upd.shownAt) > 500*time.Millisecond) {
 			upd.shown, upd.shownAt = m.share, time.Now()
 			s.showUpdate(ui.DrawUpdateProgress(upd.latest.Version, m.share, rd.fonts, s.scr.W), "progress")
 		}
@@ -177,7 +181,7 @@ func (s *libraryScreen) needNet(w *netWait, askKey string) bool {
 // changes nothing.
 func (s *libraryScreen) wifiAsked(on bool) {
 	w := s.asking
-	s.asking, s.upd.dialog = nil, ""
+	s.asking, s.dialog = nil, ""
 	if !on {
 		fmt.Println("wi-fi check: cancelled")
 		w.no()
@@ -232,7 +236,7 @@ func (s *libraryScreen) wifiEnded(r int) {
 	default:
 		fail = "wifi-no-address"
 	}
-	if s.devOpen && s.devDialog == "" {
+	if s.kind == "developer" && s.dialog == "" {
 		if fail != "" {
 			s.showDevDialog(ui.DrawNotice(fail, "wifi-slash", rd.fonts, s.scr.W), "notice")
 		} else {

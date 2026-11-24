@@ -20,7 +20,7 @@ import (
 // renders' names) in the middle of the screen, in the place of what was open.
 func (s *libraryScreen) showBook(p *ui.Panel, kind, variant string) {
 	s.showDialog(p, fmt.Sprintf("book %s (%s)", kind, variant))
-	s.bookPanel = kind
+	s.setKind(kind)
 }
 
 // bookDialog opens the details of the book in row i, held.
@@ -43,7 +43,8 @@ func (s *libraryScreen) catBookDialog(i int, how string) {
 func (s *libraryScreen) catBookAct() string {
 	i := s.held
 	r := s.panel.Rect()
-	s.panel, s.held, s.bookPanel = nil, -1, ""
+	s.panel, s.held = nil, -1
+	s.setKind("")
 	if p := s.catBook(i); p != "" {
 		return p
 	}
@@ -120,7 +121,8 @@ func (s *libraryScreen) bookRemove() {
 func (s *libraryScreen) changed() {
 	page := s.v.Page()
 	s.all = library.Shelf(library.Scan(s.rd.dir), s.rd.dir)
-	s.panel, s.held, s.bookPanel = nil, -1, ""
+	s.panel, s.held = nil, -1
+	s.setKind("")
 	s.build()
 	s.v.SetPage(min(page, max(s.v.Pages()-1, 0)))
 	s.v.Draw(s.rd.over)

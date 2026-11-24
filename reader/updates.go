@@ -32,7 +32,6 @@ type updater struct {
 	out     chan updMsg
 	cancel  context.CancelFunc
 	latest  update.Latest // the newer release offered
-	dialog  string        // its dialog on the screen: "ask", "available", "progress", "notice" ("" none)
 	shown   int           // the share last drawn, and when
 	shownAt time.Time
 }

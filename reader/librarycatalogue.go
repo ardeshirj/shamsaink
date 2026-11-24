@@ -42,7 +42,7 @@ func (s *libraryScreen) buildCat(keep bool) {
 	head := func() *ui.Panel {
 		tb := s.topBar
 		tb.MenuOn = s.lv.MenuOn
-		return ui.CatalogueHead(tb, cat.headView(s.catChoose), rd.fonts, scr.W)
+		return ui.CatalogueHead(tb, cat.headView(s.kind == "catalogue-menu"), rd.fonts, scr.W)
 	}
 	if s.v != nil {
 		s.v.Close()
@@ -134,7 +134,7 @@ func (s *libraryScreen) catRead(more bool) {
 // enterCat shows the Catalogues side: the shown catalogue's kept page at once (or Loading…), then read again.
 func (s *libraryScreen) enterCat() {
 	cat := s.cat
-	s.shelf, s.catChoose, s.catFilters = "catalogues", false, false
+	s.shelf, s.catFilters = "catalogues", false
 	cat.mu.Lock()
 	cat.onShelf = true
 	cat.mu.Unlock()
@@ -150,7 +150,7 @@ func (s *libraryScreen) enterCat() {
 func (s *libraryScreen) leaveCat() {
 	s.rd.catalogueLeave(s.cat)
 	s.netWaits = slices.DeleteFunc(s.netWaits, func(w *netWait) bool { return w.owner == "catalogue" }) // what it waited Wi-Fi for: dropped
-	s.shelf, s.catChoose, s.catFilters = "library", false, false
+	s.shelf, s.catFilters = "library", false
 	s.all = library.Shelf(library.Scan(s.rd.dir), s.rd.dir)
 	s.build()
 	s.v.Draw(s.rd.over)
@@ -240,7 +240,8 @@ func (s *libraryScreen) catMessage(m catMsg) {
 // left (landed again on a section's books when its first page has sections only).
 func (s *libraryScreen) catMainPage() {
 	cat := s.cat
-	s.panel, s.catChoose = nil, false
+	s.panel = nil
+	s.setKind("")
 	page := s.v.Page()
 	if len(cat.up) > 0 {
 		page = cat.upTo(0)
@@ -263,7 +264,8 @@ func (s *libraryScreen) catMainPage() {
 func (s *libraryScreen) catChosen(n string) {
 	cat := s.cat
 	if i, err := strconv.Atoi(n); err == nil && i >= 0 && i < len(cat.list) {
-		s.panel, s.catChoose = nil, false
+		s.panel = nil
+		s.setKind("")
 		cat.shown = i
 		s.view.Catalogue = cat.cur().URL
 		s.keep()
@@ -281,7 +283,7 @@ func (s *libraryScreen) catOpenChoice() {
 	for i, k := range s.cat.list {
 		names[i] = k.Name
 	}
-	s.catChoose = true
+	s.setKind("catalogue-menu")
 	s.setHead()
 	s.panel = ui.DrawCatalogueMenu(names, s.cat.shown, s.v.HeadBox("catalogue-choose"), s.rd.fonts, s.scr.W)
 	s.showOver(s.down(image.Rectangle{}), device.WfREAGL)
