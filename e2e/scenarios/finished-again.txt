@@ -2,7 +2,7 @@
 # book's menu has no "Mark as not finished". Our own Farsi book (e2e/books/fa-basics), opened at the fixture's place
 # (document 3), marked finished from its menu, then tapped in Finished: it opens at document 0, page 0. Back in the
 # library it is under Reading, and opens where it was left, at its start, not again marked new. The menu's own entries are
-# in the design spec (library-book-menu); this is the journey over the book's place. The row is held and tapped at its
+# in the design spec (library-book-menu); this is the journey over the book's place. The tile is held and tapped at its
 # kept place (library-reading-en's e0): devtest has no hold by name, and its tap library eN reads the book's first line
 # itself, before the lines expected here.
 on: sim kobo kindle
@@ -12,13 +12,13 @@ tap page-top                       # the bar
 expect menu drawn in
 tap topbar topbar-start            # back to the library
 expect library: .* shown in
-hold 632 446                       # the first row held: its menu
+hold 225 620                       # the first tile held: its menu
 expect library: books/test/fa-basics.epub held: its menu
 tap-dialog library-book-menu book-finish
 expect library: books/test/fa-basics.epub marked finished
 tap library filter-finished
 expect library: filter finished, \d+ rows
-tap 632 446                        # the finished book, the first row: started again
+tap 225 620                        # the finished book, the first tile: started again
 expect library: books/test/fa-basics.epub chosen
 expect library: books/test/fa-basics.epub finished: starts again
 expect document 0 page 0 shown in
@@ -28,7 +28,7 @@ tap topbar topbar-start
 expect library: .* shown in
 tap library filter-reading
 expect library: filter reading, \d+ rows
-tap 632 446                        # read last, so the first row: where it was left, not started again
+tap 225 620                        # read last, so the first tile: where it was left, not started again
 expect library: books/test/fa-basics.epub chosen
 expect document 0 page 0 shown in
 expect-none starts again 2

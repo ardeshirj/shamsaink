@@ -134,7 +134,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		library.Sort(items, view.SortOf(filter))
 		rows := make([]ui.Book, len(items))
 		for i, b := range items {
-			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Read: -1, New: !b.Opened && !b.Finished() && library.Filters[filter] != "new",
+			rows[i] = ui.Book{Title: b.Title, Author: b.Author, Year: b.Year, Read: -1, New: !b.Opened && !b.Finished() && library.Filters[filter] != "new",
 				Finished: b.Finished(), Narrated: b.Narrated,
 				RTL: writtenRTL(library.Lang(b.Book))}
 			switch library.Filters[filter] {
@@ -154,7 +154,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		if len(all) == 0 {
 			folder = device.OnDrive(filepath.Join(rd.dir, "books"))
 		}
-		v = ui.NewLibrary(rows, folder, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
+		v = ui.NewLibraryTiles(rows, folder, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 		setHead = func() {
 			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 			tintBattery(scr, v.HeadBox("topbar-battery"), topBar.Battery, topBar.Charging || topBar.Full)

@@ -36,11 +36,13 @@ type Book struct {
 	Source   string   `json:"source"`             // its folder under books/ ("farsiepub"), "" when directly in books/
 	Added    int64    `json:"added"`              // the file's modification time, Unix seconds
 	Narrated bool     `json:"narrated,omitempty"` // it has media overlays (SMIL in its manifest)
+	Year     string   `json:"year,omitempty"`     // the year its dc:date starts with, its digits as written ("1851", "۱۳۹۸"); "" when none
 	V        int      `json:"v,omitempty"`        // metaVersion when read; older entries are read again
 }
 
-// metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too.
-const metaVersion = 1
+// metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too, 2 its year
+// (2026-11-23, the library's tiles).
+const metaVersion = 2
 
 // hashSample is how much of a book's start and end its hash reads.
 const hashSample = 64 << 10
@@ -134,7 +136,7 @@ func Scan(dir string) []Book {
 			fmt.Printf("library: %s: %v\n", b.Path, err)
 		}
 		b.Title, b.Author, b.Lang = strings.TrimSpace(m.Title), strings.TrimSpace(m.Author), strings.TrimSpace(m.Lang)
-		b.Narrated, b.V = m.Narrated, metaVersion
+		b.Narrated, b.Year, b.V = m.Narrated, year(m.Date), metaVersion
 		if b.Title == "" {
 			b.Title = tidyName(path.Base(b.Path))
 		}
@@ -148,6 +150,24 @@ func Scan(dir string) []Book {
 	return books
 }
 
+// year is the year a dc:date starts with (2026-11-23: "1851", "1851-03-01", "۱۳۹۸/۰۱/۰۱"), its four digits as written,
+// Latin or Persian; "" when it does not start with one.
+func year(date string) string {
+	r := []rune(strings.TrimSpace(date))
+	if len(r) < 4 {
+		return ""
+	}
+	for _, c := range r[:4] {
+		if !(c >= '0' && c <= '9' || c >= '۰' && c <= '۹') {
+			return ""
+		}
+	}
+	if len(r) > 4 && (r[4] >= '0' && r[4] <= '9' || r[4] >= '۰' && r[4] <= '۹') {
+		return "" // more digits: not a year
+	}
+	return string(r[:4])
+}
+
 // tidyName makes a title from a file's name: no extension, "-" and "_" as spaces, the first letter upper case.
 func tidyName(name string) string {
 	name = strings.TrimSuffix(name, filepath.Ext(name))
@@ -158,8 +178,8 @@ func tidyName(name string) string {
 
 // meta is what an EPUB's package document says of the book: Narrated when its manifest has a media overlay (SMIL).
 type meta struct {
-	Title, Author, Lang string
-	Narrated            bool
+	Title, Author, Lang, Date string
+	Narrated                  bool
 }
 
 const dcNS = "http://purl.org/dc/elements/1.1/"
@@ -244,6 +264,8 @@ func epubMeta(file string) (m meta, err error) {
 			dst = &m.Author
 		case "language":
 			dst = &m.Lang
+		case "date":
+			dst = &m.Date
 		default:
 			continue
 		}

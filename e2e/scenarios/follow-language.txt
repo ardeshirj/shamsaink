@@ -24,7 +24,7 @@ expect interface language: follows the book
 tap 1169 354                       # off again, for the book
 expect interface language: English only
 tap 632 1500                       # off the panel, under the rows: it closes
-tap 632 446                        # the same book, the first row (library-reading-en's e0)
+tap 225 620                        # the same book, the first tile (library-reading-en's e0)
 expect document \d+ page \d+ shown in
 tap page-top                       # the bar and the dock, in English
 expect menu drawn in .*, in en\)

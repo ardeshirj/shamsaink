@@ -176,3 +176,13 @@ func TestNarrated(t *testing.T) {
 		t.Errorf("%d read, %+v; want the old entry read again", reads, m["books/n.epub"])
 	}
 }
+
+// A book's year is the one its dc:date starts with, as written; nothing for a date that does not start with one.
+func TestYear(t *testing.T) {
+	for in, want := range map[string]string{"1851": "1851", "1851-03-01": "1851", " 2026-11-23T00:00:00Z": "2026",
+		"۱۳۹۸/۰۱/۰۱": "۱۳۹۸", "March 1851": "", "185": "", "18510": "", "": ""} {
+		if got := year(in); got != want {
+			t.Errorf("year(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

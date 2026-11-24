@@ -163,6 +163,22 @@ flowchart LR
   2026-11-22: it read oddly (an icon after its words, the back arrow on the right), for nothing gained in English.
   Their renders: the dock's and contents' case `rtl-book`, in English.
 
+### The library as tiles (2026-11-23)
+The library shows its books as tiles, three a row and two rows a page, in place of a row each (`reader/ui/tiles.go`,
+`library-tiles.html`; the rule "A book is its own cover", `principles.yaml`). Each cover is made of the book's own
+words, title, author and the year its `dc:date` starts with (`library.Book.Year`, its digits as written; library.json's
+entries read again once for it, metadata version 2), centred in the book's direction, so a mixed shelf has no column
+to share: the rows' right-to-left titles had to end before a share read kept in one column. The headphones sit in the
+cover's top left corner and the book's state in its top right, as one ring filled clockwise from the top: empty when
+new, a wedge when opened (at least 5%), a check when finished. A bar filled from the book's start was tried first: it
+ran from the left on one book and from the right on the next. Blitz draws neither a `conic-gradient` nor an SVG here, so
+the ring is painted by us (`paintRing`) into a box the template leaves for it, once the page is laid out. The date
+added or finished sits under the cover in New and Finished. Page edges under the cover, for a book's thickness, were
+tried and left out (2026-11-23): plain tiles read better, and a spine would have put a side back. A page of tiles is laid out on its own (the engine cuts pages between lines of text, which
+could cut a tile across two), when first shown; every page's six slots are in the same places, so a tap is placed
+without laying the page out (`List.pageHTML`). Real covers would be pictures decoded on every page, slow without
+SIMD on these chips: not drawn (if ever, a small grey thumbnail kept when the book is added, measured first).
+
 ### The library's books: an ID each, and what is kept for it (2026-11-21)
 **Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one
 book) and their hash (`library.Hash`: size, first and last 64 KB; 10 ms a book on the Kindle). A new book's ID is its

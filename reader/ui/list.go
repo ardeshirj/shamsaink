@@ -23,6 +23,11 @@ type List struct {
 	img     *image.Gray // the list's page shown
 	at      []image.Rectangle
 	on      []int // each row's page
+	// laid out a page at a time (the library's tiles): each page's html, its layout once it is first drawn
+	pageHTML func(page int) string
+	docs     map[int]*blitz.Book
+	opts     blitz.Options
+	paint    func(d *blitz.Book, img *image.Gray) // drawn by us over a page laid out a page at a time (a tile's pie)
 }
 
 // pagerData is what templates/pager.html draws: the count, in the list's direction.
@@ -94,7 +99,18 @@ func (v *List) SetPage(n int) { v.page = n }
 
 // Draw draws the view's page into the screen's page img: the header, the list's page and the pager.
 func (v *List) Draw(img *image.Gray) {
-	if v.pages > 0 {
+	if v.pageHTML != nil {
+		d := v.docs[v.page]
+		if d == nil {
+			d = blitz.New([]string{"list.html"}, readFor(v.pageHTML(v.page)), v.opts, v.fonts)
+			d.Layout(0)
+			v.docs[v.page] = d
+		}
+		d.Draw(0, v.img)
+		if v.paint != nil {
+			v.paint(d, v.img)
+		}
+	} else if v.pages > 0 {
 		v.list.Draw(v.page, v.img)
 	} else { // no rows: the engine has no page to draw
 		for i := range v.img.Pix {
@@ -161,7 +177,15 @@ func (v *List) RowsBottom() int {
 	return v.h
 }
 
-func (v *List) Close() { v.list.Close() }
+func (v *List) Close() {
+	if v.pageHTML != nil {
+		for _, d := range v.docs {
+			d.Close()
+		}
+		return
+	}
+	v.list.Close()
+}
 
 // A button in the list's own content: its page and its box on that page.
 type listButton struct {

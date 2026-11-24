@@ -91,6 +91,41 @@ func libraryTopBar() TopBar {
 	return TopBar{Time: "20:48", Phones: renderHas("sound"), Battery: 82, Menu: true}
 }
 
+// designTiles is designBooks with the years their books would give (one without).
+func designTiles() []Book {
+	bs := designBooks()
+	years := []string{"1851", "۱۳۹۸", "1923", "", "1888", "۱۴۰۱"}
+	for i := range bs {
+		if i < len(years) {
+			bs[i].Year = years[i]
+		} else {
+			bs[i].Year = "2026"
+		}
+	}
+	return bs
+}
+
+// tiles is the library's tiles under head, its page page.
+func tiles(bs []Book, head *Panel, page int, f *blitz.Fonts, w, h int) rendered {
+	l := NewLibraryTiles(bs, "", head, f, w, h)
+	defer l.Close()
+	l.SetPage(page)
+	return rendered{img: screenOf(w, h, l.Draw), boxes: l.Boxes(), placement: "screen"}
+}
+
+// markBooks is one shelf with every state a tile marks (new, reading, finished; narrated; both directions), for the
+// tiles' marks, in the All filter.
+func markBooks() []Book {
+	return []Book{
+		{Title: "A Long Voyage", Author: "An Author", Year: "1851", Read: 62, Narrated: true},
+		{Title: "رود کم‌آب", Author: "مارا الیس", Year: "۱۳۹۸", Read: 100, Finished: true, RTL: true},
+		{Title: "Tales of a Small Town", Author: "Another Author", Year: "1923", New: true, Read: -1},
+		{Title: "سفر به ماه", Year: "۱۴۰۱", Read: 8, RTL: true},
+		{Title: "زنده به گور", Author: "صادق هدایت", New: true, Narrated: true, Read: -1, RTL: true},
+		{Title: "The Lighthouse Keeper", Author: "A Patient Author", Year: "1888", Read: 91},
+	}
+}
+
 func libraryHead(f *blitz.Fonts, w int) *Panel {
 	return LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
 }
@@ -246,31 +281,42 @@ var designRenders = map[string][]renderCase{
 	}}},
 	"menu": {{"book", enFa, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "reading", f, w)) }},
 		{"library", en, func(f *blitz.Fonts, w, h int) rendered { return pr(DrawMenu(barHeight(f, w), "device", f, w)) }}},
-	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered {
-		lib := NewLibrary(designBooks(), "shamsaink/books", libraryHead(f, w), f, w, h)
-		defer lib.Close()
-		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
+	"library": {{"reading", en, func(f *blitz.Fonts, w, h int) rendered { // a mixed shelf: progress, finished, narrated, no author, no year, long titles
+		return tiles(designTiles(), libraryHead(f, w), 0, f, w, h)
 	}}, {"empty", en, func(f *blitz.Fonts, w, h int) rendered { // no books at all
 		lib := NewLibrary(nil, ".adds/shamsaink/books", libraryHead(f, w), f, w, h)
 		defer lib.Close()
 		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
 	}}, {"guide", en, func(f *blitz.Fonts, w, h int) rendered {
 		// the getting-started guide's picture (reader/welcome/en.md): two real books (titles and authors only), all
-		// chosen so the rows and the counts agree, cut to the rows (below them the page is empty)
+		// chosen so the tiles and the counts agree, cut under their row (below it the page is empty)
 		books := []Book{
 			{Title: "Moby-Dick", Author: "Herman Melville", Read: 35},
 			{Title: "زنده به گور", Author: "صادق هدایت", Read: 62, Narrated: true, RTL: true},
 		}
 		head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{2, 0, 0, 2}, Filter: 3}, f, w)
-		lib := NewLibrary(books, "shamsaink/books", head, f, w, h)
+		lib := NewLibraryTiles(books, "shamsaink/books", head, f, w, h)
 		defer lib.Close()
-		img := screenOf(w, h, lib.Draw).SubImage(image.Rect(0, 0, w, 740)).(*image.Gray)
+		img := screenOf(w, h, lib.Draw).SubImage(image.Rect(0, 0, w, lib.EntryBox(0).Max.Y+24)).(*image.Gray)
 		return rendered{img: img, boxes: lib.Boxes(), placement: "screen"}
-	}}, {"empty-filter", en, func(f *blitz.Fonts, w, h int) rendered { // none in this filter, some in others
-		lib := NewLibrary(nil, "", libraryHead(f, w), f, w, h)
-		defer lib.Close()
-		return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
-	}}},
+	}}, {"page-2", en, func(f *blitz.Fonts, w, h int) rendered { // its second page: new books
+		return tiles(designTiles(), libraryHead(f, w), 1, f, w, h)
+	}}, {"new", en, func(f *blitz.Fonts, w, h int) rendered { // the New filter: when each was added, under it
+		var bs []Book
+		for _, b := range designTiles() {
+			b.When, b.New = "12 Nov", false
+			bs = append(bs, b)
+		}
+		return tiles(bs, LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}, Filter: 1}, f, w), 0, f, w, h)
+	}}, {"marks", en, func(f *blitz.Fonts, w, h int) rendered { // every mark: new, reading (8 to 91%), finished, narrated
+		head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 2, 1, 6}, Filter: 3}, f, w)
+		return tiles(markBooks(), head, 0, f, w, h)
+	}},
+		{"empty-filter", en, func(f *blitz.Fonts, w, h int) rendered { // none in this filter, some in others
+			lib := NewLibrary(nil, "", libraryHead(f, w), f, w, h)
+			defer lib.Close()
+			return rendered{img: screenOf(w, h, lib.Draw), boxes: lib.Boxes(), placement: "screen"}
+		}}},
 	"library-settings": {{"follow", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawLibrarySettings(LibrarySettings{Follow: true, SleepMin: 10, HasButtons: renderHas("buttons"), Version: "v0.0.1"}, barHeight(f, w), f, w))
 	}},

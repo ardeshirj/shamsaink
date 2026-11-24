@@ -125,8 +125,8 @@ func TestLibraryBeforeIDs(t *testing.T) {
 	copyFile(t, dir, "books/a.epub", "books/f/a.epub")
 	h, _ := Hash(filepath.Join(dir, "books", "a.epub"))
 	old := []map[string]any{
-		{"path": "books/a.epub", "key": h, "title": "A", "added": 5, "v": 1},
-		{"path": "books/f/a.epub", "key": h, "title": "A", "added": 6, "v": 1},
+		{"path": "books/a.epub", "key": h, "title": "A", "added": 5, "v": metaVersion},
+		{"path": "books/f/a.epub", "key": h, "title": "A", "added": 6, "v": metaVersion},
 	}
 	b, _ := json.Marshal(old)
 	os.WriteFile(filepath.Join(dir, "library.json"), b, 0o644)

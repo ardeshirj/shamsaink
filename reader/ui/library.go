@@ -20,6 +20,7 @@ type Book struct {
 	Finished      bool   // read to the end: no bar
 	RTL           bool   // its title reads right to left
 	When          string // a date shown at the row's end in place of the share read: when added (New), finished (Finished); "" for none
+	Year          string // the year the book gives (its dc:date's), "" when it gives none: on a tile's cover (planned)
 }
 
 // The library's rows, for templates/library.html.
