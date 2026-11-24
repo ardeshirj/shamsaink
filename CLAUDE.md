@@ -220,6 +220,10 @@ work goes where it belongs as it is decided.
   domain under CC0 (standardebooks.org, "Standard Ebooks and the public domain", checked 2026-11-21). CC0 waives no
   trademark rights; none claimed on their site, but pages of the text are shown, not their cover or logo, so nothing
   reads as their endorsement. The EPUBs themselves and their text stay out of the repository.
+  **Their covers too (the maintainer, 2026-11-23),** in the README's library screenshot: their site dedicates cover art to
+  the public domain with the rest ("including markup, cover art, and everything in between", checked 2026-11-23) and
+  claims no trademark or credit; the paintings under them are "believed to be in the U.S. public domain". A line under
+  the screenshot says whose covers they are.
 - **The devices by their own names** (the maintainer, 2026-11-22): in what readers see (the README, the docs, the charts,
   the CHANGELOG), "the Kindle" and "Kindle's reader", "the Kindle's own software", as "Kobo's reader"; not "Amazon's".
   Amazon stays only where the company itself is meant (its tools by name, a licence).
