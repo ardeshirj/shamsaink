@@ -180,12 +180,8 @@ func (s *session) inMenu(g device.Gesture) {
 	r := s.r
 	if s.list != nil { // the bar's ≡ list: its entries, else a tap anywhere closes it
 		id := ""
-		if !g.Swipe {
+		if !g.Swipe || s.kind == "light" || s.kind == "sound" { // a slider's knob dragged: the value where the finger was lifted
 			id = s.list.At(g.X, g.Y)
-		} else if s.kind == "light" || s.kind == "sound" { // a slider's knob dragged: the value where the finger was lifted
-			if id = s.list.At(g.X, g.Y); !sliders[id] {
-				id = ""
-			}
 		}
 		if s.kind == "menu" && id == "reading-settings" { // the Reading settings panel in the menu's place
 			old := s.list.Rect()
@@ -200,37 +196,18 @@ func (s *session) inMenu(g device.Gesture) {
 			s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
 			return
 		}
-		if s.kind == "sound" && id != "" { // the volume changed, or Connect tapped; the panel stays open
-			if id == "disconnect" {
-				s.rd.disconnectTap(s.phones)
-				return
-			}
-			if id == "connect" && s.rd.connectTap(s.set) {
-				s.soundState = "connecting"
-				old := s.list.Rect()
-				s.list = s.drawSliders()
-				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
-				return
-			}
-			if s.phones != "" && s.panelTap(id, g.X+g.DX) {
-				old := s.list.Rect()
-				s.list = s.drawSliders()
-				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
-			}
-			return
-		}
-		if s.kind == "light" && id != "" { // the light changed, or the screen cleaned; the panel stays open
-			changed, clean := s.rd.lightTap(s.set, s.list, id, g.X+g.DX)
+		if (s.kind == "light" || s.kind == "sound") && id != "" { // the light, the volume or Connect; the panel stays open
+			redraw, clean := s.sp.tap(s.list, id, g)
 			switch {
 			case clean:
-				if id == "dark" { // the switch drawn as it is now
-					s.list = s.rd.drawLight(s.topBar.Rect().Dy())
+				if redraw { // dark mode's switch drawn as it is now
+					s.list = s.sp.draw(s.topBar.Rect().Dy())
 				}
 				s.turns = 0
 				s.showPage(device.WfGC16, true)
-			case changed:
+			case redraw:
 				old := s.list.Rect()
-				s.list = s.rd.drawLight(s.topBar.Rect().Dy())
+				s.list = s.sp.draw(s.topBar.Rect().Dy())
 				s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
 			}
 			return
@@ -263,8 +240,8 @@ func (s *session) inMenu(g device.Gesture) {
 		s.drawTopBar() // the battery inverted while its level is open
 		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 	case id == "topbar-light": // the Light panel under the bar, the sun filled
-		if _, _, ok := s.dev.Light(); ok {
-			s.list, s.kind = s.rd.drawLight(s.topBar.Rect().Dy()), "light"
+		if s.sp.openLight() {
+			s.list, s.kind = s.sp.draw(s.topBar.Rect().Dy()), "light"
 			s.drawTopBar()
 			s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 		}
@@ -274,9 +251,8 @@ func (s *session) inMenu(g device.Gesture) {
 		s.drawTopBar()
 		s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 	case id == "topbar-phones": // the Sound panel under the bar, the headphones filled
-		if p := s.rd.phonesNow(s.set); p.On {
-			s.phones, s.soundState = p.Addr, ""
-			s.list, s.kind = s.rd.drawSound(s.set, s.phones, "", s.topBar.Rect().Dy()), "sound"
+		if s.sp.openSound() {
+			s.list, s.kind = s.sp.draw(s.topBar.Rect().Dy()), "sound"
 			s.drawTopBar()
 			s.refresh(s.list.Rect().Union(s.topBar.Rect()), device.WfREAGL)
 		}

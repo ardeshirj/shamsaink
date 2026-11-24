@@ -42,9 +42,7 @@ type session struct {
 	topBar, list              *ui.Panel    // with them the top bar, and its ≡ list (or the battery's level) while open
 	barShown                  string       // the bar's battery and clock as last drawn (barState)
 	kind                      string       // what the list is: "menu" (≡'s), "level" (the battery's), "light" or "sound"
-	slide                     string       // the slider a held finger moves ("light", "warmth", "volume"), "" for none
-	phones                    string       // the Sound panel's headphones, their Bluetooth address, while it is open ("" none connected)
-	soundState                string       // the Sound panel's Connect: "", "connecting" or "failed"
+	sp                        sliderPanel  // the Light or Sound panel's state, while the list is one (kind "light" or "sound")
 	cv                        *ui.Contents // the table of contents, while shown
 	toc                       []entry
 	backDoc, backAt, backPage int // the place before the last jump, and its page then
@@ -83,6 +81,11 @@ func (rd *reader) read(m map[string]string, t time.Time) error {
 func (rd *reader) open(path string, t time.Time) (*session, error) {
 	s := &session{rd: rd, dev: rd.dev, scr: rd.dev.Screen, set: loadSettings(rd.dir), t: t, backDoc: -1, unmark: -1}
 	s.o = s.set.options(s.scr.W, s.scr.H)
+	s.sp = sliderPanel{rd: rd, set: s.set, volume: func(v int) {
+		if s.snd != nil {
+			s.snd.setVolume(v)
+		}
+	}}
 	var err error
 	if s.events, err = rd.inputs(); err != nil {
 		return nil, err
@@ -247,8 +250,10 @@ func (s *session) input(e device.Event) {
 		s.sleep()
 	case e.Power || e.Clock || e.Sound:
 		s.barChanged()
-		if e.Sound {
-			s.soundChanged(e)
+		if e.Sound && s.sp.soundEvent(e, s.list != nil && s.kind == "sound") { // the Sound panel, if open, as the headphones are now
+			old := s.list.Rect()
+			s.list = s.sp.draw(s.topBar.Rect().Dy())
+			s.refresh(old.Union(s.list.Rect()), device.WfREAGL)
 		}
 	case s.nar != nil:
 		// reading aloud: a touch stops it
@@ -259,9 +264,9 @@ func (s *session) input(e device.Event) {
 	case s.cv != nil:
 		s.inContents(e.Gesture)
 	case e.Hold != device.NotHeld && s.list != nil && (s.kind == "light" || s.kind == "sound"): // a slider's knob held and moved
-		if refresh, wf := slidePanel(s.list, &s.slide, e.Gesture, s.panelTap); refresh {
+		if refresh, wf := s.sp.hold(s.list, e.Gesture); refresh {
 			old := s.list.Rect()
-			s.list = s.drawSliders()
+			s.list = s.sp.draw(s.topBar.Rect().Dy())
 			s.refresh(old.Union(s.list.Rect()), wf)
 		}
 	case e.Hold != device.NotHeld:
