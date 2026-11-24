@@ -17,6 +17,7 @@ import (
 
 type tile struct {
 	ID, Title, Author, Year, Dir string
+	Size                         string // the library's cover of words, its title's size (titleSize); "" for a catalogue's, small
 	Pic                          bool
 	// a catalogue's book (planned, 2026-11-23): its button under the cover, eN-act: "get" (the download icon), "share"
 	// (Share, how much has come), "read" (Read, filled); "" none (the library's)
@@ -93,6 +94,7 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 		t := tile{ID: fmt.Sprint("e", i), Title: cut(b.Title, tileTitle), Author: cut(b.Author, tileWho), Year: b.Year,
 			Dir: dirOf(b.RTL)}
 		t.Pic = b.Cover != nil || b.CoverFile != ""
+		t.Size = titleSize(t.Title)
 		ts[i] = t
 	}
 	pics := map[int]*image.Gray{} // the kept covers read, by book
@@ -106,6 +108,18 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 		}
 		return pic
 	}, tileRows, head, fonts, w, h)
+}
+
+// titleSize is the size of a cover of words' title, by its length: short ones big, as a printed cover's, long ones
+// smaller so they fit the cover.
+func titleSize(title string) string {
+	switch n := len([]rune(title)); {
+	case n <= 16:
+		return "s"
+	case n <= 30:
+		return "m"
+	}
+	return "l"
 }
 
 // tileAct is the room under a cover for a catalogue book's button and the gap before it, in px (planned).
