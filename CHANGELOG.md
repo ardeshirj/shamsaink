@@ -4,6 +4,31 @@ ShamsaInk's versions, newest first. A version is a git tag `vX.Y.Z`; pushing one
 packages and puts them on GitHub's Releases page. A version's section here is its release's notes. How versions are numbered and released
 is at the end, under "Versions and releases".
 
+## 0.8.0-beta (2026-11-24)
+The library as a shelf of covers, and a catalogue's books as covers too, with Browse and Filter.
+- **Covers:** the library shows each book as its cover, twelve a page: the book's own cover picture, made once in the
+  background the first time the library sees it, or, for a book with none, a cover of its own words, the title as
+  large as a printed cover's and the author under it, in a frame. Nothing else is on a tile.
+- **A book's dialog:** a finger held on a book opens one dialog in place of its menu and its details: its language,
+  when it was published, its size, how far you have read it, with Mark as finished or Mark as new, its cover as its
+  picture or its words, and Remove (asked first).
+- **A catalogue's books as covers:** nine a page, each with its button under it (download, how much has come, then
+  Read). A tap on a cover opens the book's dialog: its language, year, publisher, subjects and summary, and the same
+  button. More books: › on the list's last page.
+- **Browse and Filter** in a catalogue: the list icon shows its sections as rows, one place at a time, a section of
+  sections with its way back; the funnel, only where the catalogue offers filters, shows them as chips, those in force
+  under the title with an × each, and Clear all. The menu of catalogues hangs from its dropdown.
+- **Text in its own direction:** a chapter's name in the contents reads from its own start (a Farsi name in an English
+  book); a catalogue's summary or a book's details that do not say their language follow their own letters
+  (FarsiEPUB's English summaries of Farsi books no longer run right to left).
+- **Low battery:** the battery's warning icon alone, the same on every device; the red on the Kobo's colour screen is
+  gone (it once turned a word on the page red).
+- **Sleep screens:** the quote layout is gone; a file that asks for it is drawn as a title.
+- **Fixes:** a page with a few books starts them at the top left, where taps reach them (they sat in the middle, their
+  tap areas at the top). In a book, a finger that slips while pressing a button of the Light or Sound panel leaves the
+  panel open, as the library already did. A catalogue's page asked for while Check for updates also waited for Wi-Fi
+  is now read. Closing a dialog over a panel no longer leaves that panel's icon filled in the bar.
+
 ## 0.7.0-beta (2026-11-22)
 Right-to-left books in English read more naturally.
 - **Hebrew, Arabic, Urdu and other right-to-left books:** with the menus in English (these languages have no words of
