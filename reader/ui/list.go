@@ -5,6 +5,8 @@ import (
 	"image"
 
 	blitz "shamsainkengine"
+
+	"shamsainkreader/device"
 )
 
 // A paged list as shown: a header given by the caller, the rows under it laid out and paginated by the engine (right
@@ -31,7 +33,17 @@ type List struct {
 	opts     blitz.Options
 	paint    func(d *blitz.Book, img *image.Gray) // drawn by us over a page laid out a page at a time (a tile's ring, cover)
 	dark     func() bool                          // whether dark mode is on, asked as each page is drawn (SetDark)
+	colour   bool                                 // a colour screen: the pictures painted give their colours (SetColour)
+	patches  []device.Patch                       // the colours of the pictures on the page last drawn, where they are on the screen
 }
+
+// SetColour says the screen shows colour (the Kobo Libra Colour), so the pictures painted on the list's pages (the
+// library's covers) give their colours too (Patches), 2026-11-24.
+func (v *List) SetColour(on bool) { v.colour = on }
+
+// Patches are the colours of the pictures on the page last drawn (Draw), each where it is on the screen, for
+// Screen.ShowPatched: none on a grey screen, or a page with no picture kept in colour.
+func (v *List) Patches() []device.Patch { return v.patches }
 
 // SetDark gives the list how to know whether dark mode is on (the screen's Inverted), for the pictures it paints (a
 // book's cover): the screen inverts every grey in dark mode, so a picture is painted inverted and is seen as it is, in
@@ -112,8 +124,12 @@ func (v *List) Draw(img *image.Gray) {
 			v.docs[v.page] = d
 		}
 		d.Draw(0, v.img)
+		v.patches = nil
 		if v.paint != nil {
 			v.paint(d, v.img)
+		}
+		for i := range v.patches { // on the screen: under the head
+			v.patches[i].R = v.patches[i].R.Add(image.Pt(0, v.head.img.Rect.Dy()))
 		}
 	} else if v.pages > 0 {
 		v.list.Draw(v.page, v.img)

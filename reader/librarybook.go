@@ -49,7 +49,7 @@ func (s *libraryScreen) catBookAct() string {
 		return p
 	}
 	s.v.Draw(s.rd.over)
-	s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
+	s.show(r, device.WfREAGL, false)
 	return ""
 }
 
@@ -126,7 +126,7 @@ func (s *libraryScreen) changed() {
 	s.build()
 	s.v.SetPage(min(page, max(s.v.Pages()-1, 0)))
 	s.v.Draw(s.rd.over)
-	s.scr.Show(s.rd.over, device.WfREAGL, false)
+	s.showAll(device.WfREAGL, false)
 }
 
 // bookDetails is what a book's dialog shows of it (ui.DrawBookDetails).

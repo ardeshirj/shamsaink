@@ -86,7 +86,8 @@ func Remove(dir string, b Book) error {
 		filepath.Join(dir, "highlights", b.ID+".json.bad"),
 		filepath.Join(dir, "highlights", b.ID+".unplaced.json"),
 		filepath.Join(dir, "cache", b.Hash+".cache"),
-		CoverFile(dir, b.Hash))
+		CoverFile(dir, b.Hash),
+		oldCoverFile(dir, b.Hash))
 }
 
 // removeAll removes the files, those already gone ignored; the first other error is returned.

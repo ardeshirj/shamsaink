@@ -182,7 +182,7 @@ func (s *libraryScreen) tapOpen(e device.Event, id string) (path string, done, o
 		s.panel = ui.DrawLibrarySettings(settingsView(set, rd.dev), s.v.TopBarHeight(), rd.fonts, scr.W)
 		s.v.Draw(rd.over)
 		s.panel.Over(rd.over)
-		scr.Show(rd.over, device.WfREAGL, false)
+		s.showAll(device.WfREAGL, false)
 	case s.kind == "settings" && id == "buttons-reverse":
 		set.ReverseButtons = !set.ReverseButtons
 		set.save(rd.dir)
@@ -207,7 +207,7 @@ func (s *libraryScreen) tapOpen(e device.Event, id string) (path string, done, o
 		s.keep()
 		s.build() // the head drawn with the panel still open
 		s.open(false)
-		scr.Show(rd.over, device.WfREAGL, false)
+		s.showAll(device.WfREAGL, false)
 	case (s.kind == "light" || s.kind == "sound") && id != "": // the light, the volume or Connect; the panel stays open
 		if redraw, clean := s.sp.tap(s.panel, id, e.Gesture); redraw || clean {
 			old := s.panel.Rect()
@@ -215,7 +215,7 @@ func (s *libraryScreen) tapOpen(e device.Event, id string) (path string, done, o
 			if clean {
 				s.v.Draw(rd.over)
 				s.panel.Over(rd.over)
-				scr.Show(rd.over, device.WfGC16, true)
+				s.showAll(device.WfGC16, true)
 			} else {
 				s.showOver(image.Rect(0, old.Min.Y, scr.W, s.down(old).Max.Y), device.WfREAGL)
 			}

@@ -37,7 +37,7 @@ func (s *libraryScreen) updateClose() {
 		r := s.panel.Rect()
 		s.panel = nil
 		s.v.Draw(s.rd.over)
-		s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
+		s.show(r, device.WfREAGL, false)
 	default:
 		s.closeAll()
 	}

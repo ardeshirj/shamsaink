@@ -59,7 +59,7 @@ func (s *libraryScreen) buildCat(keep bool) {
 // belowBar refreshes the screen under the top bar: the catalogue's head and list, or Browse and filter, change there
 // alone, the bar left as it is (the maintainer, 2026-11-23: no flash over it at each choice).
 func (s *libraryScreen) belowBar() {
-	s.scr.ShowPart(s.rd.over, image.Rect(0, s.v.TopBarHeight(), s.scr.W, s.scr.H), device.WfREAGL, false)
+	s.show(image.Rect(0, s.v.TopBarHeight(), s.scr.W, s.scr.H), device.WfREAGL, false)
 }
 
 // catRedraw draws the catalogue's screen again as it now is, on its page; a panel or dialog over it stays.
@@ -68,7 +68,7 @@ func (s *libraryScreen) catRedraw() {
 	s.v.Draw(s.rd.over)
 	if s.panel != nil { // a menu over the bar: the whole screen
 		s.panel.Over(s.rd.over)
-		s.scr.Show(s.rd.over, device.WfREAGL, false)
+		s.showAll(device.WfREAGL, false)
 		return
 	}
 	s.belowBar()
@@ -85,7 +85,7 @@ func (s *libraryScreen) catRefresh() {
 		s.catLoading = cv.Loading
 		s.setHead()
 		s.v.Draw(s.rd.over)
-		s.scr.ShowPart(s.rd.over, image.Rect(0, s.v.TopBarHeight(), s.scr.W, s.v.HeadHeight()), device.WfREAGL, false)
+		s.show(image.Rect(0, s.v.TopBarHeight(), s.scr.W, s.v.HeadHeight()), device.WfREAGL, false)
 	}
 }
 
@@ -142,7 +142,7 @@ func (s *libraryScreen) enterCat() {
 	cat.loading = true
 	s.buildCat(false)
 	s.v.Draw(s.rd.over)
-	s.scr.Show(s.rd.over, device.WfREAGL, false)
+	s.showAll(device.WfREAGL, false)
 	fmt.Printf("library: catalogues: %s (%d rows kept)\n", cat.cur().Name, len(cat.sections)+len(cat.books))
 }
 
@@ -154,7 +154,7 @@ func (s *libraryScreen) leaveCat() {
 	s.all = library.Shelf(library.Scan(s.rd.dir), s.rd.dir)
 	s.build()
 	s.v.Draw(s.rd.over)
-	s.scr.Show(s.rd.over, device.WfREAGL, false)
+	s.showAll(device.WfREAGL, false)
 	fmt.Println("library: the books here")
 }
 
@@ -220,7 +220,7 @@ func (s *libraryScreen) catMessage(m catMsg) {
 			s.buildCat(true)
 			s.v.Draw(s.rd.over)
 			if r := s.v.EntryBox(i); !r.Empty() {
-				s.scr.ShowPart(s.rd.over, r, device.WfREAGL, false)
+				s.show(r, device.WfREAGL, false)
 			}
 		}
 	case "done":
@@ -256,7 +256,7 @@ func (s *libraryScreen) catMainPage() {
 	s.buildCat(false)
 	s.v.SetPage(min(page, max(s.v.Pages()-1, 0)))
 	s.v.Draw(s.rd.over)
-	s.scr.Show(s.rd.over, device.WfREAGL, false)
+	s.showAll(device.WfREAGL, false)
 	fmt.Printf("library: catalogue %s, its main page\n", cat.cur().Name)
 }
 

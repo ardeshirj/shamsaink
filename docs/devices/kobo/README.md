@@ -200,3 +200,7 @@ Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at 
   `handsfree_head_unit`, `a2dp_sink` not available. A minute later `Device1.ConnectProfile` with A2DP's UUID was
   accepted, but PulseAudio stayed on the call's profile until `pactl set-card-profile ... a2dp_sink`. The reader took
   `Connected` alone for sound: now the music's sink (above, "Headphones also connected to a phone").
+- **2026-11-24, the library's covers in colour** (experiment 19; `docs/DESIGN.md`, "Covers"). The one difference
+  from the Kindle in the library, which has no colour: the same kept file (raw RGB), shown in colour here and in grey
+  there. Made in the background in 0.3–0.4 s a Standard Ebooks cover (0.6 s in the experiment, before a JPEG's
+  colours were read straight from its planes); seen in colour in the framebuffer, the old grey PNGs replaced.

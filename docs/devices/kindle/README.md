@@ -136,3 +136,7 @@ Newest last; each a dated entry. The bugs above are the settled ones.
   update over Wi-Fi (`make update-e2e DEVICE=kindle`): 13.6 MB downloaded and installed in 13 s (the Kobo: 5 s; `/mnt/us`
   is slow), and the running reader, its file moved into `previous/` under it, still drew and exited cleanly: no
   SIGBUS from FUSE (that came from replacing the file, not moving it).
+- 2026-11-24: **the library's covers stay grey here** (no colour screen), kept in the same file as the Kobo's, raw RGB
+  (`docs/DESIGN.md`, "Covers"), and shown as their grey. Made in the background in 0.6–0.9 s a Standard Ebooks cover;
+  twelve read in 280 ms cold from `/mnt/us`, 50 ms warm: about what the grey PNGs before took to read and decode
+  (10–25 ms each).

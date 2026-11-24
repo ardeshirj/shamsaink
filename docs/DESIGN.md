@@ -182,9 +182,10 @@ shown; every page's twelve slots are in the same places, so a tap is placed with
 - **Covers** (`reader/library/covers.go`). The scan notes each book's cover picture (`Book.Cover`: the manifest's
   `cover-image`, else the item EPUB 2's `<meta name="cover">` names; library.json's metadata version 3). Decoding one
   as it is shown costs too much on these chips (measured on the Kindle: Standard Ebooks' 1400×2100 JPEGs 420–460 ms
-  each, twelve a page), so each is made once into a small grey PNG, `covers/HASH.png` beside `cache/` (by the book's
-  hash: a new edition has its own), at the least size filling a tile (a JPEG's grey is its Y plane, read straight:
-  scaling 40 ms). It is made in the background while the library is open (`reader/librarycovers.go`: the books shown first;
+  each, twelve a page), so each is made once into a small picture, `covers/HASH.rgb` beside `cache/` (by the book's
+  hash: a new edition has its own), at the least size filling a tile, kept in colour as raw pixels (since 2026-11-24,
+  experiment 19: 8 bytes of width and height, then three bytes a pixel; read in 6–8 ms on the Kobo, quicker than the
+  grey PNG kept before, for about 320 KB a book; a PNG kept before is made again, then removed). It is made in the background while the library is open (`reader/librarycovers.go`: the books shown first;
   stopped when a book opens, carried on next time), each one's hash sent to the library's loop, which draws the page
   again once all its covers are in (one refresh, not one a tile). Measured on the Kindle: 70–840 ms a cover, 11 covers
   in 4.4 s; a kept one is read in 10–25 ms. Written whole (a hidden name, then renamed); removing a book removes it.
@@ -195,6 +196,14 @@ shown; every page's twelve slots are in the same places, so a tap is placed with
   so the tiles paint it inverted in dark mode (`List.SetDark`, asked as each page is drawn) and the screen's
   inversion shows it as it is. No exception in the screen's copy loop (the low battery's red, the one before, went
   the same day: its warning icon says it on every device).
+- **In colour on a colour screen** (2026-11-24, experiment 19; the Kobo Libra Colour, `Device.Colour`). The library's
+  page is still drawn grey, the covers painted into it as before; the tiles also give each cover's colours, and where
+  on the screen (`List.Patches`), and every refresh of the library goes through `Screen.ShowPatched`, which writes a
+  cover's colours wherever the page still holds the grey that cover was painted with. So a panel or a dialog over a
+  cover hides it without the library knowing what lies over what, and dark mode leaves the colours as they are (the
+  page's greys inverted, the colours not, as the sleep screens' pictures). Measured on the Kobo: a whole page 40 ms
+  slower than in grey (539 against 499 ms, GC16), a panel over the covers no slower (~390 ms). A grey screen is given
+  no colours: the Kindle's covers are their grey, from the same file.
 
 ### The library's books: an ID each, and what is kept for it (2026-11-21)
 **Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one

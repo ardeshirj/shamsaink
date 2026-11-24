@@ -3,10 +3,11 @@ package ui
 import (
 	"fmt"
 	"image"
-	"image/png"
-	"os"
 
 	blitz "shamsainkengine"
+
+	"shamsainkreader/device"
+	"shamsainkreader/library"
 )
 
 // The library as tiles (2026-11-23, in place of its rows): a book a tile, four a row, three rows a page (2026-11-24),
@@ -27,27 +28,33 @@ type tile struct {
 	Blank bool
 }
 
+// A picture is a cover as painted on a tile: its grey, and its colours when they are kept (nil: grey alone).
+type picture struct {
+	grey   *image.Gray
+	colour *library.Cover
+}
+
 // readCover is a kept cover's picture (library.CoverFile), or a blank one if it cannot be read (made again later).
-func readCover(file string) *image.Gray {
-	if f, err := os.Open(file); err == nil {
-		defer f.Close()
-		if p, err := png.Decode(f); err == nil {
-			if g, ok := p.(*image.Gray); ok {
-				return g
-			}
-		}
+func readCover(file string) picture {
+	if c, err := library.ReadCover(file); err == nil {
+		return picture{c.Grey(), &c}
 	}
 	g := image.NewGray(image.Rect(0, 0, 2, 3))
 	for i := range g.Pix {
 		g.Pix[i] = 255
 	}
-	return g
+	return picture{grey: g}
 }
 
 // paintPicture draws pic into r of img, filling it (cut evenly at the sides that are too long), each pixel the mean
-// of those under it; inverted in dark mode (List.SetDark).
-func paintPicture(img *image.Gray, r image.Rectangle, pic *image.Gray, inverted bool) {
-	pb := pic.Rect
+// of those under it; inverted in dark mode (List.SetDark). With colour (a colour screen, List.SetColour) and pic's
+// colours, it is also the patch that shows them there (device.Patch), the same pixels in colour, never inverted.
+func paintPicture(img *image.Gray, r image.Rectangle, pic picture, inverted, colour bool) *device.Patch {
+	pb := pic.grey.Rect
+	var patch *device.Patch
+	if colour && pic.colour != nil && pic.colour.W == pb.Dx() && pic.colour.H == pb.Dy() {
+		patch = &device.Patch{R: r, RGB: make([]byte, r.Dx()*r.Dy()*3), Grey: make([]byte, r.Dx()*r.Dy())}
+	}
 	// the part of the picture with r's shape
 	cw, ch := pb.Dx(), pb.Dx()*r.Dy()/r.Dx()
 	if ch > pb.Dy() {
@@ -58,10 +65,14 @@ func paintPicture(img *image.Gray, r image.Rectangle, pic *image.Gray, inverted 
 		sy0, sy1 := y0+y*ch/r.Dy(), y0+max((y+1)*ch/r.Dy(), y*ch/r.Dy()+1)
 		for x := 0; x < r.Dx(); x++ {
 			sx0, sx1 := x0+x*cw/r.Dx(), x0+max((x+1)*cw/r.Dx(), x*cw/r.Dx()+1)
-			var s, n int
+			var s, sr, sg, sb, n int
 			for yy := sy0; yy < sy1; yy++ {
 				for xx := sx0; xx < sx1; xx++ {
-					s += int(pic.Pix[pic.PixOffset(xx, yy)])
+					s += int(pic.grey.Pix[pic.grey.PixOffset(xx, yy)])
+					if patch != nil {
+						c := pic.colour.RGB[(yy*pic.colour.W+xx)*3:]
+						sr, sg, sb = sr+int(c[0]), sg+int(c[1]), sb+int(c[2])
+					}
 					n++
 				}
 			}
@@ -70,8 +81,14 @@ func paintPicture(img *image.Gray, r image.Rectangle, pic *image.Gray, inverted 
 				g = 255 - g
 			}
 			img.Pix[img.PixOffset(r.Min.X+x, r.Min.Y+y)] = g
+			if patch != nil {
+				i := y*r.Dx() + x
+				patch.Grey[i] = g
+				patch.RGB[i*3], patch.RGB[i*3+1], patch.RGB[i*3+2] = uint8(sr/n), uint8(sg/n), uint8(sb/n)
+			}
 		}
 	}
+	return patch
 }
 
 // The library's grid, and the longest a title and an author may be on a cover, in letters: the engine cuts no text.
@@ -98,14 +115,20 @@ func NewLibraryTiles(books []Book, folder string, head *Panel, fonts *blitz.Font
 		t.Size = titleSize(t.Title)
 		ts[i] = t
 	}
-	pics := map[int]*image.Gray{} // the kept covers read, by book
-	return newTiles(ts, func(i int) *image.Gray {
-		pic := books[i].Cover
-		if pic == nil {
-			if pic = pics[i]; pic == nil {
-				pic = readCover(books[i].CoverFile)
-				pics[i] = pic
-			}
+	// the kept covers read, by book: the page shown's only (a page's are read again when it is shown again, ~0.1 s; a
+	// colour cover takes 430 KB once read, too much to keep a whole library's)
+	pics, picsOf := map[int]picture{}, -1
+	return newTiles(ts, func(i int) picture {
+		if books[i].Cover != nil {
+			return picture{grey: books[i].Cover}
+		}
+		if p := i / (tileCols * tileRows); p != picsOf {
+			pics, picsOf = map[int]picture{}, p
+		}
+		pic, ok := pics[i]
+		if !ok {
+			pic = readCover(books[i].CoverFile)
+			pics[i] = pic
 		}
 		return pic
 	}, tileCols, tileRows, head, fonts, w, h)
@@ -138,7 +161,7 @@ const tileAct = 80
 // one. The library's are book-shaped, 2 by 3, so a picture shows whole; with a button under each (Act: a
 // catalogue's, three rows, 2026-11-23) a tile is a cover of words alone, its column's width and the rows' height less
 // the button's room: no picture to keep the shape for, so more books a page.
-func newTiles(ts []tile, pic func(i int) *image.Gray, cols, rows int, head *Panel, fonts *blitz.Fonts, w, h int) *List {
+func newTiles(ts []tile, pic func(i int) picture, cols, rows int, head *Panel, fonts *blitz.Fonts, w, h int) *List {
 	per := cols * rows
 	v := &List{head: head, fonts: fonts, w: w, h: h, docs: map[int]*blitz.Book{}}
 	pager := v.drawPager(0, 2) // its height does not depend on the count
@@ -182,7 +205,9 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, cols, rows int, head *Pane
 			if t.Pic {
 				if _, rs := d.Find(0, "cov-"+t.ID); len(rs) > 0 {
 					r := union(rs).Inset(2) // inside its border
-					paintPicture(img, r, pic(i), v.dark != nil && v.dark())
+					if p := paintPicture(img, r, pic(i), v.dark != nil && v.dark(), v.colour); p != nil {
+						v.patches = append(v.patches, *p)
+					}
 				}
 			}
 		}

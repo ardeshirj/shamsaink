@@ -43,6 +43,7 @@ func (rd *reader) browse(t time.Time) error {
 type libraryScreen struct {
 	rd     *reader
 	scr    *device.Screen
+	colour bool // a colour screen: the covers shown in colour (show)
 	splash *ui.Opening
 	events <-chan device.Event
 	set    *settings
@@ -90,7 +91,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	own := time.Now()       // the library's own time: scanned, laid out and drawn (t: since the reader or the book's leaving)
 	library.Welcome(rd.dir) // the first start: the getting-started guide into the books
 	s := &libraryScreen{rd: rd, scr: rd.dev.Screen, splash: splash, set: loadSettings(rd.dir), shelf: "library",
-		catMore: -1, held: -1, upd: newUpdater()}
+		catMore: -1, held: -1, upd: newUpdater(), colour: rd.dev.Colour()}
 	s.all = library.Shelf(library.Scan(rd.dir), rd.dir)
 	s.made = library.CoversMade(rd.dir)
 	s.view, _ = library.LoadView(rd.dir)
@@ -112,7 +113,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	fmt.Printf("library: scanned, laid out and drawn in %.0f ms; the opening screen kept %.0f ms more\n", ms(own),
 		max(float64(time.Until(rd.splashUntil).Milliseconds()), 0))
 	time.Sleep(time.Until(rd.splashUntil)) // the opening screen seen for SplashFor at the start (nothing later)
-	s.scr.Show(rd.over, device.WfGC16, true)
+	s.showAll(device.WfGC16, true)
 	fmt.Printf("library: %d books, %d rows, %d pages, shown in %.0f ms\n", len(s.all), len(s.items), s.v.Pages(), ms(t))
 	if u := update.Reached(rd.dir); u != "" { // a new version's first start reached the library: launch.sh keeps it
 		fmt.Printf("update: %s reached the library: kept\n", u)
@@ -247,7 +248,7 @@ func (s *libraryScreen) input(e device.Event) (path string, done bool) {
 			s.keep()
 			s.build()
 			s.v.Draw(rd.over)
-			s.scr.Show(rd.over, device.WfREAGL, false)
+			s.showAll(device.WfREAGL, false)
 			fmt.Printf("library: filter %s, %d rows\n", library.Filters[f], len(s.items))
 		}
 	case s.shelf == "catalogues" && !s.catFilters && v.ButtonAt(e.X, e.Y) == "catalogue-clear-all": // no books with the facets: none
@@ -326,6 +327,7 @@ func (s *libraryScreen) build() {
 	}
 	s.v = ui.NewLibraryTiles(rows, folder, ui.LibraryHead(s.topBar, s.lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
 	s.v.SetDark(scr.Inverted)
+	s.v.SetColour(s.colour)
 	s.setHead = func() {
 		s.v.SetHead(ui.LibraryHead(s.topBar, s.lv, rd.fonts, scr.W))
 	}
@@ -336,7 +338,7 @@ func (s *libraryScreen) turn(by int) {
 	if n := s.v.Page() + by; n >= 0 && n < s.v.Pages() {
 		s.v.SetPage(n)
 		s.v.Draw(s.rd.over)
-		s.scr.Show(s.rd.over, device.WfREAGL, false)
+		s.showAll(device.WfREAGL, false)
 	}
 }
 
@@ -381,7 +383,7 @@ func (s *libraryScreen) coverMade(h string) {
 		s.build()
 		s.v.SetPage(min(page, s.v.Pages()-1))
 		s.v.Draw(s.rd.over)
-		s.scr.Show(s.rd.over, device.WfGC16, false)
+		s.showAll(device.WfGC16, false)
 		fmt.Printf("library: page %d drawn again with its covers\n", page+1)
 	}
 }
@@ -392,7 +394,23 @@ func (s *libraryScreen) showOver(r image.Rectangle, wf uint32) {
 	if s.panel != nil {
 		s.panel.Over(s.rd.over)
 	}
-	s.scr.ShowPart(s.rd.over, r, wf, false)
+	s.show(r, wf, false)
+}
+
+// show refreshes r of the screen with the page drawn (rd.over), the covers on it in colour on a colour screen where
+// nothing is drawn over them (List.Patches, Screen.ShowPatched; 2026-11-24, experiment 19). Every refresh of the
+// library goes through it or showAll.
+func (s *libraryScreen) show(r image.Rectangle, wf uint32, flash bool) {
+	var ps []device.Patch
+	if s.v != nil {
+		ps = s.v.Patches()
+	}
+	s.scr.ShowPatched(s.rd.over, r, wf, flash, ps)
+}
+
+// showAll is show for the whole screen.
+func (s *libraryScreen) showAll(wf uint32, flash bool) {
+	s.show(image.Rect(0, 0, s.scr.W, s.scr.H), wf, flash)
 }
 
 // down is the screen from its top to the open panel's bottom, or old's when lower (a panel under the bar, changed or

@@ -117,6 +117,20 @@ func (s *Screen) Inverted() bool { return s.dark }
 
 // ShowPart is Show for a part of the screen only: the rows of r from p (p is the whole screen's).
 func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, flash bool) {
+	s.ShowPatched(p, r, waveform, flash, nil)
+}
+
+// A Patch is a picture in colour on a page drawn grey (a book's cover in the library, 2026-11-24): where the page
+// still has the grey it was painted with (nothing drawn over it since: a panel, a dialog), the screen shows its colours.
+type Patch struct {
+	R    image.Rectangle // where it is on the screen
+	RGB  []byte          // its colours, three bytes a pixel (red, green, blue), R's rows in turn
+	Grey []byte          // the grey it was painted into the page with, a byte a pixel (inverted in dark mode)
+}
+
+// ShowPatched is ShowPart with the patches' colours, on a colour screen (four bytes a pixel), never inverted: a
+// picture is shown as it is in dark mode too, as ShowRGBA's. On a grey screen the page's grey alone.
+func (s *Screen) ShowPatched(p *image.Gray, r image.Rectangle, waveform uint32, flash bool, patches []Patch) {
 	// REAGL is a full update on the Kobo's driver and blinks the area it covers: for a part of the screen (a panel
 	// opening, a switch, a bar's icon) the partial GL16 is used instead, so only what changed is touched and nothing
 	// flashes. A whole screen (a page turn) keeps REAGL; a flash is asked for by the caller, and is for what changes
@@ -152,6 +166,19 @@ func (s *Screen) ShowPart(p *image.Gray, r image.Rectangle, waveform uint32, fla
 				g = ^g
 			}
 			row[i] = 0xff000000 | uint32(g)*0x010101
+		}
+		for _, c := range patches {
+			if y < c.R.Min.Y || y >= c.R.Max.Y {
+				continue
+			}
+			x0, x1 := max(r.Min.X, c.R.Min.X), min(r.Max.X, c.R.Max.X)
+			ci, from := (y-c.R.Min.Y)*c.R.Dx()-c.R.Min.X, y*p.Stride
+			for x := x0; x < x1; x++ {
+				if p.Pix[from+x] == c.Grey[ci+x] {
+					k := (ci + x) * 3
+					row[x-r.Min.X] = 0xff000000 | uint32(c.RGB[k+2])<<16 | uint32(c.RGB[k+1])<<8 | uint32(c.RGB[k])
+				}
+			}
 		}
 	}
 	s.send(r, waveform, flash)
