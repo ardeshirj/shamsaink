@@ -21,6 +21,9 @@ type tile struct {
 	// a catalogue's book (planned, 2026-11-23): its button under the cover, eN-act: "get" (the download icon), "share"
 	// (Share, how much has come), "read" (Read, filled); "" none (the library's)
 	Act, Share, Read string
+	// Blank: an empty slot filling a page's last row and rows, so a page of one book has the grid of a full page,
+	// its tiles from the top left and in the places tapped (the slots, from a full page)
+	Blank bool
 }
 
 // readCover is a kept cover's picture (library.CoverFile), or a blank one if it cannot be read (made again later).
@@ -136,6 +139,13 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fon
 		align = "start"
 	}
 	room := lh - 2*tileMargin - tileSlack // the grid's height: CSS puts its rows in the middle of it (align-content)
+	page := func(p int) []tile {          // page p's tiles, blanks after them up to a full page
+		pt := append([]tile{}, ts[p*per:min(len(ts), (p+1)*per)]...)
+		for len(pt) < per {
+			pt = append(pt, tile{Blank: true})
+		}
+		return pt
+	}
 	v.pageHTML = func(p int) string {
 		html, _ := render("library-tiles.html", struct {
 			Tiles              []tile
@@ -143,7 +153,7 @@ func newTiles(ts []tile, pic func(i int) *image.Gray, rows int, head *Panel, fon
 			Cover, CoverW, Gap int
 			Room               int
 			Align              string
-		}{ts[p*per : min(len(ts), (p+1)*per)], tileCols, cover, coverW, tileGap, room, align})
+		}{page(p), tileCols, cover, coverW, tileGap, room, align})
 		return html
 	}
 	v.paint = func(d *blitz.Book, img *image.Gray) {

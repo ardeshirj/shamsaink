@@ -3,7 +3,8 @@ laid out whole (a page of its own, so no tile is cut across two). Each tile book
 centred in its column: its cover picture shown whole (painted by tiles.go into the box left for it), else a cover of
 the book's own words in its own direction (title bold, a short rule, the author, the year at the foot when the book
 gives one), centred, on plain paper with an ink border. No marks on a tile (2026-11-23): what it is and where the reader is with it are in the
-dialog a finger held on it opens (library-book-details.html). The grid runs left to right, as the frame. */ -}}
+dialog a finger held on it opens (library-book-details.html). The grid runs left to right, as the frame; a page short of books is filled with blank slots, so its tiles start
+at the top left, where a full page's do. */ -}}
 {{template "head" "ltr"}}<style>
 .tiles { height: {{.Room}}px; align-content: {{.Align}}; display: grid; grid-template-columns: repeat({{.Cols}}, 1fr); column-gap: {{.Gap}}px; row-gap: {{.Gap}}px; }
 .tl { display: flex; flex-direction: column; align-items: center; }
@@ -15,6 +16,7 @@ dialog a finger held on it opens (library-book-details.html). The grid runs left
 .cover .tl-a { font-size: 0.6em; line-height: 1.3; color: #333; }
 .cover .tl-y { position: absolute; left: 0; right: 0; bottom: 0.55em; font-size: 0.52em; color: #444; font-family: "DejaVu Sans", Vazirmatn, sans-serif; }
 .cover.pic { padding: 0; }
+.cover.blank { border: 0; } /* an empty slot: a page's tiles keep a full page's places (tiles.go) */
 /* a catalogue's book (planned, 2026-11-23): its button under the cover, the cover's width, as the rows' was: the
    download icon, how much has come, then Read, filled (as Apple Books' store grid) */
 .tl .act { margin-top: 16px; display: flex; align-items: center; justify-content: center; width: {{.CoverW}}px; height: 64px;
@@ -24,7 +26,7 @@ dialog a finger held on it opens (library-book-details.html). The grid runs left
 .tl .act .i { font-size: 1.15em; }
 .tl-end { margin: 0; color: white; font-size: 4px; line-height: 1; } /* a line of text after the last row: the engine's page ends at a line, so its edges are kept */
 </style></head><body><div class="tiles">
-{{- range .Tiles}}<div class="tl" id="{{.ID}}"><div class="cover{{if .Pic}} pic{{end}}" dir="{{.Dir}}"{{textlang .Title}}{{if .Pic}} id="cov-{{.ID}}"{{end}}>
+{{- range .Tiles}}{{if .Blank}}<div class="tl"><div class="cover blank"></div></div>{{continue}}{{end}}<div class="tl" id="{{.ID}}"><div class="cover{{if .Pic}} pic{{end}}" dir="{{.Dir}}"{{textlang .Title}}{{if .Pic}} id="cov-{{.ID}}"{{end}}>
 {{- if not .Pic}}<span class="tl-t">{{.Title}}</span>{{if .Author}}<span class="tl-rule"></span><span class="tl-a">{{.Author}}</span>{{end}}
 {{- with .Year}}<span class="tl-y">{{.}}</span>{{end}}{{end}}</div>
 {{- if .Act}}<span class="act{{if eq .Act "read"}} read{{end}}" id="{{.ID}}-act">{{if eq .Act "read"}}{{.Read}}{{else if eq .Act "share"}}<bdi dir="ltr">{{.Share}}</bdi>{{else}}{{icon "download-simple"}}{{end}}</span>{{end}}</div>
