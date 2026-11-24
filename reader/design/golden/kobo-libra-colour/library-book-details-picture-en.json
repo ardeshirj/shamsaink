@@ -1,0 +1,10 @@
+{
+ "placement": "relative",
+ "boxes": {
+  "book-finish": [243, 739, 514, 812],
+  "book-new": [554, 739, 754, 812],
+  "book-remove": [35, 854, 398, 927],
+  "cover-picture": [246, 638, 436, 713],
+  "cover-words": [436, 638, 618, 713]
+ }
+}

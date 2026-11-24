@@ -475,6 +475,9 @@ var designRenders = map[string][]renderCase{
 			Size: 1 << 20, Read: -1, Added: designDay(2)}, f, w))
 	}}, {"opened", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
+			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
+	}}, {"picture", en, func(f *blitz.Fonts, w, h int) rendered { // a book with a cover picture: Cover, Picture or Words (no test book has one: not walked)
+		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
 			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30), Picture: true}, f, w))
 	}}, {"finished", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Lang: "fa", File: "rud.epub",

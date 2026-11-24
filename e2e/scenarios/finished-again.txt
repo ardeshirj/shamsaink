@@ -14,7 +14,7 @@ tap topbar topbar-start            # back to the library
 expect library: .* shown in
 hold 225 620                       # the first tile held: its details and actions
 expect library: books/test/fa-basics.epub held: its details
-tap-dialog library-book-details book-finish
+tap-dialog library-book-details:opened book-finish
 expect library: books/test/fa-basics.epub marked finished
 tap library filter-finished
 expect library: filter finished, \d+ rows
