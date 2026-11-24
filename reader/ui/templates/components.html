@@ -68,5 +68,10 @@ on its right (principles: The interface's frame, the content's direction); the l
 chosen, before it on its line as a setting's name: the label regular in the ink's colour, the value then regular too, as a
 setting's value (rules: A control says what it is). Given when the value alone does not say it (a catalogue's name), left
 out when a heading or the row's name already does. */}}
+{{/* A chip (from chip; 2026-11-23): one choice of a group, as Browse and filter's: its label, how many books small after
+it, filled when chosen (On), dashed for More… (More); removable (X), a choice in force shown on its own, outlined with an x
+at its end: a tap removes it. */}}
+{{define "chip"}}<span class="chip{{if .On}} on{{end}}{{if .More}} more{{end}}{{if .X}} x{{end}}" id="{{.ID}}"><bdi>{{.Label}}</bdi>{{with .Count}} <span class="n">{{.}}</span>{{end}}{{if .X}}{{icon "x"}}{{end}}</span>{{end}}
+
 {{define "dropdown"}}{{if .Label}}<span class="ddw"><span class="lgt">{{.Label}}</span>{{template "ddbox" .}}</span>{{else}}{{template "ddbox" .}}{{end}}{{end}}
 {{define "ddbox"}}<span class="b dd{{if .On}} on{{end}}" id="{{.ID}}"><bdi{{with .Dir}} dir="{{.}}"{{end}}>{{.Value}}</bdi>{{icon "caret-down"}}</span>{{end}}

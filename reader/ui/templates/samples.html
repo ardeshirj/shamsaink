@@ -23,4 +23,6 @@ by the reader. */ -}}
 {{- else if eq .Name "list-row"}}<div class="sample wide" id="sample">{{range $i, $r := index $.R "rows"}}{{template "listrow" lrow (printf "e%d" $i) $r.Title $r.Pad (and (eq $c "current") (eq $i 1))}}{{end}}</div>
 {{- else if eq .Name "dropdown"}}<div class="sample" id="sample">
   {{- if eq $c "plain"}}{{template "dropdown" dd "dd" (index $.S "dd-short") false}}{{else if eq $c "open"}}{{template "dropdown" dd "dd" (index $.S "dd-short") true}}{{else if eq $c "labelled"}}{{template "dropdown" dd "dd" (index $.S "dd-value") false (index $.S "dd-label")}}{{else if eq $c "labelled-open"}}{{template "dropdown" dd "dd" (index $.S "dd-value") true (index $.S "dd-label")}}{{else}}{{template "dropdown" dd "dd" (index $.S "dd-long") false (index $.S "dd-label")}}{{end}}</div>
+{{- else if eq .Name "chip"}}<div class="sample" id="sample">
+  {{- if eq $c "plain"}}{{template "chip" chip "c" (index $.S "chip") (index $.S "chip-n") ""}}{{else if eq $c "chosen"}}{{template "chip" chip "c" (index $.S "chip") (index $.S "chip-n") "on"}}{{else if eq $c "more"}}{{template "chip" chip "c" (index $.S "chip-more") "" "more"}}{{else}}{{template "chip" chip "c" (index $.S "chip") "" "x"}}{{end}}</div>
 {{- end}}</body></html>

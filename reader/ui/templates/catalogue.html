@@ -1,11 +1,10 @@
-{{/* A catalogue's page (catalogue.go, NewCatalogue): its sections, then its books, a row each in its title's direction,
-as the library's rows. A section's row: its title, how many books under it when the catalogue says, and a "›" at its
-end. A book's: its title, the author or an empty line, and at the row's right (every row's, a Farsi title's too: the
+{{/* A catalogue's page (catalogue.go, NewCatalogue): its books, a row each in its title's direction, as the library's
+rows (its sections are Browse's alone since 2026-11-23: rule "Books on the catalogue's screen"). A book's: its title, the author or an empty line, and at the row's right (every row's, a Farsi title's too: the
 frame is the interface's, 2026-11-23, the principle "The interface's frame, the content's direction") what can be done
 with it: a download button (its icon), while it downloads how much has come (per
 cent, framed), and once it is here Read, which opens it. Under the last row, when the catalogue has more pages, a
 button for more books. With no rows, one line in their place: that the catalogue could not be reached with a button to
-try again, or that it has no books (Loading… is in the head). The page itself is always left to right, as the
+try again, that it has no books, or, a level of sections only, Choose what to browse with Browse (Loading… is in the head). The page itself is always left to right, as the
 library's; the line in place of the rows has the interface's direction. */ -}}
 {{template "head" "ltr"}}<style>
 /* pulled up by a row's top padding: a page after the first starts at its first line (the engine's rule for books), so
@@ -13,9 +12,8 @@ library's; the line in place of the rows has the interface's direction. */ -}}
 ul { list-style: none; margin: -0.35em 0 0; padding: 0; }
 li { position: relative; padding: 0.35em 0 0.45em; border-bottom: 2px solid #999; }
 /* the room for the row's control at its right, with one gap before it in every row, the page's side margin (40 px): a
-   book's button (3.4em), a section's arrow (1em); catalogue.go's bookRoom and goRoom */
+   book's button (3.4em); catalogue.go's bookRoom */
 h3 { margin: 0; font-size: 1em; font-weight: normal; line-height: 0; padding-right: calc(3.4em + 40px); }
-li.sec h3 { padding-right: calc(1em + 40px); }
 li[dir="rtl"] h3 { text-align: right; }
 h3 .t { line-height: 1.25; }
 li[dir="rtl"] h3 .t, li[dir="rtl"] h3 .a { line-height: 1.35; }
@@ -25,21 +23,14 @@ h3 .a { font-size: 0.85em; line-height: 1.2; color: #444; }
 li .act { position: absolute; top: 50%; right: 0; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; width: 4em; height: 1.7em; box-sizing: border-box; border: var(--line) solid var(--ink); border-radius: var(--radius); font-family: Vazirmatn, "DejaVu Sans", sans-serif; font-size: 0.85em; }
 li .act.read { background: var(--ink); color: var(--paper); }
 li .act .i { font-size: 1.15em; }
-/* a section's row: a "›" where a book's button is, no frame, pointing right in every row (the frame's direction, not
-   the title's: not mirrored in a right-to-left row) */
-li .act .flip { transform: none; }
-/* a section's count, in the interface's words and direction, on the row's side */
-h3 .a.n { display: block; }
-li[dir="rtl"] h3 .a.n { text-align: right; }
-li .act.go { border: 0; justify-content: flex-end; direction: ltr; } /* at the row's very edge, the right */
 .more { display: flex; justify-content: center; margin: 0.8em 0 0; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
 .empty { margin: 4em 1.5em 0; text-align: center; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
 .empty p { margin: 0 0 0.8em; }
 .end { margin: 0; line-height: 1; } /* a line after a button: the engine's page ends at its last line of text, cutting a box after it */
 .empty .ic { display: flex; align-items: center; justify-content: center; gap: 0.4em; }
 </style></head><body><ul>
-{{- range .Rows}}<li id="{{.ID}}"{{if .Section}} class="sec"{{end}} dir="{{.Dir}}"{{textlang .Title}}>
-<h3 data-shamsaink="row"><span class="t">{{.Title}}</span><br>{{if and .Section .Author}}<span class="a n" dir="{{if rtlui}}rtl{{else}}ltr{{end}}">{{.Author}}</span>{{else}}<span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span>{{end}}</h3>
-{{if .Section}}<span class="act go" id="{{.ID}}-go">{{icon "caret-right"}}</span>{{else}}<span class="act{{if .Here}} read{{end}}" id="{{.ID}}-act">{{if .Here}}{{.Read}}{{else if .Share}}<bdi dir="ltr">{{.Share}}</bdi>{{else}}{{icon "download-simple"}}{{end}}</span>{{end}}</li>{{end}}</ul>
+{{- range .Rows}}<li id="{{.ID}}" dir="{{.Dir}}"{{textlang .Title}}>
+<h3 data-shamsaink="row"><span class="t">{{.Title}}</span><br><span class="a">{{if .Author}}{{.Author}}{{else}}&nbsp;{{end}}</span></h3>
+<span class="act{{if .Here}} read{{end}}" id="{{.ID}}-act">{{if .Here}}{{.Read}}{{else if .Share}}<bdi dir="ltr">{{.Share}}</bdi>{{else}}{{icon "download-simple"}}{{end}}</span></li>{{end}}</ul>
 {{- if .More}}<div class="more">{{template "button" .More}}</div><p class="end">&nbsp;</p>{{end}}
 {{- with .Empty}}<div class="empty" dir="{{if rtlui}}rtl{{else}}ltr{{end}}">{{if .Icon}}<p class="ic">{{icon .Icon}}<span>{{.Text}}</span></p>{{else}}<p>{{.Text}}</p>{{end}}{{with .Retry}}{{template "button" .}}<p class="end">&nbsp;</p>{{end}}</div>{{end}}</body></html>

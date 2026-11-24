@@ -4,9 +4,11 @@
 # sections, "Test books" holding two of our test books and "By language" (a link of no kind, a section of sections);
 # every page of books has two facet groups, Language and Narrated (which no book is); it is added to the device's
 # catalogues.json as the last catalogue shown; Wi-Fi is on (SSH; the simulator's switched on), so nothing is asked.
-# Browse and filter (the funnel): Test books, then its Farsi facet, Show 1 book, the book downloaded (its row then
-# Read); a facet that matches nothing, closed, Clear filters; By language, its Farsi, back up; then the catalogue
-# chosen again (back to its main page, no read), its Test books row, and the book opened from it. The catalogue's files
+# Entered, it lands on Test books (its main page holds sections only; Test books' link says it holds books); Filter
+# (the funnel): its Farsi facet, Show 1 book, the book downloaded (its row then Read); a facet that matches nothing,
+# closed, Clear filters (landed again); Browse (the list icon): By language, its list, its Farsi, closing it on its book
+# (2026-11-23: Browse and Filter each behind its own icon, the main screen for books alone); then the catalogue chosen
+# again (landed again on Test books), and the book opened from it. The catalogue's files
 # and the books downloaded are removed after; the reader's own put back.
 on: sim kobo kindle
 catalogue-serve en-basics fa-basics
@@ -14,33 +16,34 @@ library
 tap library shelf-catalogues
 expect-in 30 library: catalogues: E2E Catalogue
 expect-in 30 catalogue: http://.*/catalog.xml read in \d+ ms \(2 sections, 0 books\)
-tap catalogue:sections catalogue-filter
-expect library: catalogue filters \(2 choices\)
-tap catalogue-filters:test-front filter-0
-expect library: catalogue section "Test books"
+expect library: catalogue lands on "Test books"
 expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
-expect library: catalogue filters \(7 choices\)
-tap catalogue-filters:test-books filter-4
+tap catalogue:funnel catalogue-filter
+expect library: catalogue filters \(5 choices\)
+tap catalogue-filters:test-books filter-2
 expect library: catalogue facet http://.*/books-fa.xml
 expect-in 30 catalogue: http://.*/books-fa.xml read in \d+ ms \(0 sections, 1 books\)
-expect library: catalogue filters \(7 choices\)
-tap catalogue-filters:test-books filters-show
+expect library: catalogue filters \(5 choices\)
+tap catalogue-filters:test-books-fa filters-show
 expect library: catalogue filters closed \(1 rows\)
 tap catalogue e0
 expect library: urn:e2e:fa-basics asked for
 expect-in 60 catalogue: urn:e2e:fa-basics downloaded in .* s: books/e2e/fa-basics.epub
-tap catalogue:sections catalogue-filter
-expect library: catalogue filters \(7 choices\)
-tap catalogue-filters:test-books filter-6
+tap catalogue:funnel catalogue-filter
+expect library: catalogue filters \(5 choices\)
+tap catalogue-filters:test-books-fa filter-4
 expect library: catalogue facet http://.*/none.xml
 expect-in 30 catalogue: http://.*/none.xml read in \d+ ms \(0 sections, 0 books\)
-expect library: catalogue filters \(7 choices\)
+expect library: catalogue filters \(5 choices\)
 tap catalogue-filters:test-books filters-close
 expect library: catalogue filters closed \(0 rows\)
 tap catalogue:no-match catalogue-clear-all
 expect library: catalogue filters cleared
 expect-in 30 catalogue: http://.*/catalog.xml read in \d+ ms \(2 sections, 0 books\)
-tap catalogue:sections catalogue-filter
+expect library: catalogue lands on "Test books"
+expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
+tap catalogue:landing-heading catalogue-sections
+expect library: catalogue filters \(2 choices\)
 tap catalogue-filters:test-front filter-1
 expect library: catalogue section "By language"
 expect-in 30 catalogue: http://.*/langs.xml read in \d+ ms \(2 sections, 0 books\)
@@ -48,16 +51,11 @@ expect library: catalogue filters \(2 choices\)
 tap catalogue-filters:test-language filter-1
 expect library: catalogue section "Farsi"
 expect-in 30 catalogue: http://.*/books-fa.xml read in \d+ ms \(0 sections, 1 books\)
-expect library: catalogue filters \(7 choices\)
-tap catalogue-filters:test-language filters-back
-expect library: catalogue filters, back to "By language"
-tap catalogue-filters:test-language filters-close
-expect library: catalogue filters closed \(2 rows\)
+expect library: catalogue filters closed \(1 rows\)
 tap catalogue catalogue-choose
 tap catalogue-menu catalogue-1
 expect library: catalogue E2E Catalogue, its main page
-tap catalogue e0
-expect library: catalogue section "Test books"
+expect library: catalogue lands on "Test books"
 expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
 tap catalogue e1
 expect-in 30 library: books/e2e/fa-basics.epub read from the catalogue

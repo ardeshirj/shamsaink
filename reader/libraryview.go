@@ -67,6 +67,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	catChoose := false // the choice of catalogues is open under the catalogue's name
 	// Browse and filter (catalogue-filters), while open: it takes the list's place under the bar
 	catFilters := false
+	catBrowse := false        // the panel is Browse's page (the list icon), else Filter's (the funnel)
 	catMore := -1             // its facet group opened by More… (-1: none)
 	var catActs []filterAct   // what its choices do, by their ids' numbers
 	catFrom, catPage := "", 0 // the level and the list's page it was opened on: closed with nothing changed, back to that page
@@ -87,7 +88,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		tb := topBar
 		tb.MenuOn = lv.MenuOn
 		if catFilters {
-			fv, acts := cat.filtersView(catMore)
+			fv, acts := cat.filtersView(catMore, catBrowse)
 			catActs = acts
 			if v != nil {
 				v.Close()
@@ -352,13 +353,20 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		openDev()
 	}
 	// the catalogue's screen drawn again as it now is, on its page; a panel or dialog over it stays
+	// belowBar refreshes the screen under the top bar: the catalogue's head and list, or Browse and filter, change there
+	// alone, the bar left as it is (the maintainer, 2026-11-23: no flash over it at each choice)
+	belowBar := func() {
+		scr.ShowPart(rd.over, image.Rect(0, v.TopBarHeight(), scr.W, scr.H), device.WfREAGL, false)
+	}
 	catRedraw := func() {
 		buildCat(true)
 		v.Draw(rd.over)
-		if panel != nil {
+		if panel != nil { // a menu over the bar: the whole screen
 			panel.Over(rd.over)
+			scr.Show(rd.over, device.WfREAGL, false)
+			return
 		}
-		scr.Show(rd.over, device.WfREAGL, false)
+		belowBar()
 	}
 	// catRefresh draws the catalogue's screen again only when what it shows changed: Wi-Fi up, or the same page read
 	// again, refresh nothing (2026-11-22: three refreshes on every opening)
@@ -377,13 +385,13 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	// catClose closes Browse and filter: the list of the level it leaves, on the page it was opened on when that is the
 	// same level, else its first
 	catClose := func() {
-		catFilters, catMore = false, -1
+		catFilters, catMore, cat.kept = false, -1, nil
 		buildCat(false)
 		if cat.addr() == catFrom {
 			v.SetPage(min(catPage, max(v.Pages()-1, 0)))
 		}
 		v.Draw(rd.over)
-		scr.Show(rd.over, device.WfREAGL, false)
+		belowBar()
 		fmt.Printf("library: catalogue filters closed (%d rows)\n", len(cat.sections)+len(cat.books))
 	}
 	// catNet runs f once Wi-Fi is up: Wi-Fi asked for when it is off (the question in the middle of the screen, kind
@@ -498,8 +506,17 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				} else {
 					cat.set(m.feed, m.more)
 				}
+				if catFilters { // Browse or Filter open: what is chosen there wins over landing
+					cat.land = nil
+				} else if j, ok := cat.landNext(); ok { // a first page of sections only: a section's books shown instead
+					cat.openTop(j)
+					fmt.Printf("library: catalogue lands on %q\n", cat.title)
+					catRead(false)
+				}
 				if on && panel == nil {
-					if catFilters { // the panel with the new feed's choices
+					if catFilters && catBrowse && !cat.menu() { // a place with books chosen in Browse: its books, as a menu's
+						catClose()
+					} else if catFilters { // the panel with the new feed's choices
 						catRedraw()
 						fmt.Printf("library: catalogue filters (%d choices)\n", len(catActs))
 					} else {
@@ -733,6 +750,13 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				if len(cat.up) > 0 {
 					page = cat.upTo(0)
 				}
+				cat.land, cat.landAt = nil, ""
+				if j, ok := cat.landNext(); ok { // a first page of sections only: landed again on a section's books
+					cat.openTop(j)
+					page = 0
+					fmt.Printf("library: catalogue lands on %q\n", cat.title)
+					catRead(false)
+				}
 				buildCat(false)
 				v.SetPage(min(page, max(v.Pages()-1, 0)))
 				v.Draw(rd.over)
@@ -922,12 +946,22 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			}
 		case head == "shelf-library" && shelf == "catalogues":
 			leaveCat()
-		case head == "catalogue-filter": // Browse and filter in the list's place
-			catFilters, catMore, catFrom, catPage = true, -1, cat.addr(), v.Page()
+		case head == "catalogue-filter" || head == "catalogue-sections" || // Filter's page, or Browse's, in the list's place
+			shelf == "catalogues" && !catFilters && v.ButtonAt(e.X, e.Y) == "catalogue-browse": // Browse, from Choose what to browse
+			cat.land = nil
+			catFilters, catBrowse, catMore, catFrom, catPage, cat.kept = true, head != "catalogue-filter", -1, cat.addr(), v.Page(), nil
 			buildCat(false)
 			v.Draw(rd.over)
-			scr.Show(rd.over, device.WfREAGL, false)
+			belowBar()
 			fmt.Printf("library: catalogue filters (%d choices)\n", len(catActs))
+		case catFilters && strings.HasPrefix(head, "picked-"): // a facet's x under the title: its group's first choice
+			if n, err := strconv.Atoi(strings.TrimPrefix(head, "picked-")); err == nil && n < len(cat.unpick) && cat.unpick[n] != "" {
+				cat.narrow(cat.unpick[n])
+				fmt.Printf("library: catalogue facet removed: %s\n", cat.unpick[n])
+				catMore = -1
+				catRead(false)
+				catRedraw() // Loading… in its title until the choices come
+			}
 		case catFilters && strings.HasPrefix(head, "filters-"):
 			switch head {
 			case "filters-close":
@@ -942,10 +976,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				}
 				buildCat(false)
 				v.Draw(rd.over)
-				scr.Show(rd.over, device.WfREAGL, false)
+				belowBar()
 			case "filters-clear":
 				catMore = -1
-				if cat.clear() {
+				if catBrowse && cat.clear() || !catBrowse && cat.clearFacets() {
 					fmt.Println("library: catalogue filters cleared")
 					catRead(false)
 				}
@@ -958,14 +992,14 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 				catMore = n
 				buildCat(false)
 				v.Draw(rd.over)
-				scr.Show(rd.over, device.WfREAGL, false)
+				belowBar()
 				fmt.Printf("library: catalogue filters, %q whole\n", cat.facets[n].Title)
 			}
 		case catFilters && strings.HasPrefix(v.ButtonAt(e.X, e.Y), "filter-"):
 			n, err := strconv.Atoi(strings.TrimPrefix(v.ButtonAt(e.X, e.Y), "filter-"))
 			if err != nil || n >= len(catActs) {
 				break
-			} // a choice's feed still under way: this one follows, the older read dropped when it comes (another level's)
+			} // a choice's page still read: no choices (the last shown, kept with Loading…), so nothing taken
 			a := catActs[n]
 			if a.top >= 0 && a.top == cat.under() && len(cat.up) == 1 && cat.url == cat.sec {
 				break // the section shown, as it is
@@ -1024,14 +1058,8 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			fmt.Println("library: catalogue read again")
 			catRead(false)
 			catRefresh() // Loading… in place of Try again
-		case shelf == "catalogues" && v.EntryAt(e.X, e.Y) >= 0 && cat.book(v.EntryAt(e.X, e.Y)) < 0: // a section: into it
-			i := v.EntryAt(e.X, e.Y)
-			cat.open(i, v.Page())
-			fmt.Printf("library: catalogue section %q\n", cat.title)
-			catRead(false)
-			catRedraw()
 		case shelf == "catalogues" && v.EntryAt(e.X, e.Y) >= 0: // a book: Read opens it, else downloaded
-			i := cat.book(v.EntryAt(e.X, e.Y))
+			i := v.EntryAt(e.X, e.Y)
 			if p := rd.catalogueHere(cat, i); p != "" {
 				fmt.Printf("library: %s read from the catalogue\n", p)
 				return filepath.Join(rd.dir, filepath.FromSlash(p)), nil

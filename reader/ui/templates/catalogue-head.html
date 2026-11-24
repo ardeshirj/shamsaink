@@ -1,10 +1,11 @@
 {{/* The catalogues' head, under the bar (catalogue.go, CatalogueHead): the catalogue shown, as a dropdown with its
 name ("Catalogue", the dropdown's label: a setting's name, 2026-11-23) that opens the choice of catalogues
-(catalogue-menu); at the line's end Loading… while a page is read, so a read refreshes only that line, not the rows
-under it (2026-11-22), and the funnel, which opens the catalogue's Browse and filter (catalogue-filters), shown only
-when the catalogue has something to choose: filled when a section or a facet is in force, with how many when a facet
-is among them (a section alone is one place, not a count); without it, its room kept empty, so the rows sit at the same
-height on every catalogue. Where the library has its filters. */ -}}
+(catalogue-menu); after it Loading… while a page is read (2026-11-23: in one place whatever icons a catalogue has), so a
+read refreshes only that line, not the rows under it (2026-11-22); at the line's end the funnel (Filter, the level's facets; filled with how many are in force) and, always at
+the line's very end, the list icon (Browse, the catalogue's sections; filled once one is chosen), each only when the
+catalogue has it (2026-11-23: the one nearly every catalogue has never moves); with neither, an icon's room kept empty,
+so the rows sit at the same height on every catalogue. Under the line, the section the books come from, its name in
+bold, a heading, not a control (rule "Books on the catalogue's screen"). Where the library has its filters. */ -}}
 {{template "head" ""}}<style>
 .head { display: flex; align-items: center; gap: 0.4em; margin: 0.3em 0; }
 .head span.b { font-weight: bold; flex: none; }
@@ -13,9 +14,13 @@ span.b.on { background: var(--ink); color: var(--paper); }
 .head .end { margin-inline-start: auto; display: flex; align-items: center; gap: 0.4em; flex: none; }
 .head .fn { position: relative; }
 .head .fn .c { position: absolute; top: -0.2em; inset-inline-end: -0.2em; background: var(--ink); color: var(--paper); border-radius: 1em; font-size: 0.6em; min-width: 1.4em; text-align: center; line-height: 1.4em; font-family: "DejaVu Sans", sans-serif; }
+.sec { margin: 0.1em 0 0.5em; font-weight: bold; }
 .head .loading { flex: none; font-size: 0.85em; color: #444; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
-</style></head><body><div class="head" id="panel-end">
+</style></head><body><div id="panel-end"><div class="head">
 {{template "dropdown" dd "catalogue-choose" .Name .ChooseOn .Label}}
-<span class="end">{{- if .Loading}}<span class="loading">{{.Loading}}</span>{{end}}
-{{- if .Funnel}}<span class="fn">{{template "iconbutton" ibtn "catalogue-filter" "funnel" .Filled}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>
-{{- else}}<span class="fn" style="visibility: hidden"><span class="tb">{{icon "funnel"}}</span></span>{{end}}</span></div></body></html>
+{{- if .Loading}}<span class="loading">{{.Loading}}</span>{{end}}
+<span class="end">
+{{- if .Funnel}}<span class="fn">{{template "iconbutton" ibtn "catalogue-filter" "funnel" .Filled}}{{with .InForce}}<span class="c">{{.}}</span>{{end}}</span>{{end}}
+{{- if .Browse}}{{template "iconbutton" ibtn "catalogue-sections" "list-bullets" .Chosen}}{{end}}
+{{- if not (or .Browse .Funnel)}}<span class="fn" style="visibility: hidden"><span class="tb">{{icon "funnel"}}</span></span>{{end}}</span></div>
+{{- with .Section}}<div class="sec"><bdi>{{.}}</bdi></div>{{end}}</div></body></html>

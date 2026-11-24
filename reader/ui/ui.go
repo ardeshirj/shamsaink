@@ -73,6 +73,12 @@ func pointing(name string) bool {
 // An icon button, as the templates draw it; On: drawn filled; Flip: mirrored in right to left (an arrow that points).
 // A dropdown (components.html "dropdown", from dd): the value chosen, its own direction ("" the page's), open, and its
 // label ("" none).
+// A chip: one choice of a group (components.html, "chip").
+type chip struct {
+	ID, Label, Count string
+	On, More, X      bool
+}
+
 type dropdown struct {
 	ID, Value, Dir, Label string
 	On                    bool
@@ -192,6 +198,9 @@ func uiFuncs(ids *[]string) template.FuncMap {
 				ms = append(ms, menuItem{ID: add(b.ID), Label: b.Label, Tick: true, On: b.On})
 			}
 			return ms
+		},
+		"chip": func(id, label, count, state string) chip { // state: "" plain, "on" chosen, "more" More…, "x" removable
+			return chip{ID: add(id), Label: label, Count: count, On: state == "on", More: state == "more", X: state == "x"}
 		},
 		"dd": func(id, value string, on bool, label ...string) dropdown { // label: what is chosen, before it
 			d := dropdown{ID: add(id), Value: value, On: on}

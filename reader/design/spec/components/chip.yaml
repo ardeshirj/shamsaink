@@ -1,0 +1,9 @@
+name: chip
+purpose: "One choice of a group, rounded (a catalogue's sections and facets in Browse and filter, 2026-11-23): its label, how many books small after it when the catalogue says; filled when chosen, dashed for More… (the rest of a long group). Removable: a choice in force shown on its own, outlined, an x at its end; a tap removes it (as Material's input chips, GOV.UK's selected filters)."
+role: button
+template: chip
+helper: chip         # chip "id" label count state ("", on, more, x)
+states: [off, on, more, removable]
+rtl: mirrors on its own (the x at the other end)
+refresh: {waveform: DU, region: own-box}
+order: [plain, chosen, more, removable]

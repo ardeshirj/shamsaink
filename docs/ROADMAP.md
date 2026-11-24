@@ -119,9 +119,12 @@ keyboard first ("Now").
   a two-part choice (Library | Catalogues, 2026-11-20; On this Kobo | FarsiEPUB before), not a setting; the list, and
   downloads into the library. **Built 2026-11-22: reading catalogues and downloading into the library** (`DESIGN.md`,
   "Books from catalogues"; tried on both devices). **The screens built and wired 2026-11-22** (sections, two
-  dropdowns, downloads and Read; tried on both devices, a scenario in CI). **Browse and filter built 2026-11-23**
-  (the funnel in place of the second dropdown: sections and OPDS facets, "Only what the catalogue can answer"; not yet
-  tried on the devices). Next: OPDS groups, search and logins (with the keyboard), our own filters for a catalogue whole
+  dropdowns, downloads and Read; tried on both devices, a scenario in CI). **Browse, Filter and books first built 2026-11-23**
+  (in place of the second dropdown; "Only what the catalogue can answer", "A place is a row, a filter a chip", "Books on
+  the catalogue's screen": the list icon opens Browse, the sections as ticked rows; the funnel opens Filter, the OPDS
+  facets as chips, what is in force under the title, removable; the main screen books alone, a first page of sections
+  only landing on a section's books; tried on the Kobo by hand, the scenario rewritten and not yet run; the Kindle not
+  yet). Next: OPDS groups, search and logins (with the keyboard), our own filters for a catalogue whole
   on one page (Wikisource's) if wanted, OPDS 2 after Readium's rework.
   FarsiEPUB's feed is live (OPDS 1.2, since 2026-11-20); go-toolkit only recognises OPDS (experiment 18), so the
   parser is ours. Narrated books, large and hard to copy by hand, gain the most. **New editions, settled 2026-11-22:**

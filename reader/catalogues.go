@@ -49,14 +49,23 @@ type catalogues struct {
 	sections   []manifest.Link
 	books      []manifest.Manifest
 	next       string
-	facets     []opds.Facet    // the level's facets (its first page's)
-	total      int             // how many books the level has, as its feed says (0: it does not say)
-	up         []catLevel      // the levels above it, the first page first: back goes to the last
-	navs       map[string]bool // what a section's address was seen to hold: true more sections and no books
-	loading    bool            // its page is being read
-	failed     bool            // it could not be reached, and nothing kept
-	wifi       bool            // waiting for Wi-Fi asked for by the catalogues
-	pending    func()          // what Wi-Fi was asked for, run once it is connected
+	facets     []opds.Facet // the level's facets (its first page's)
+	total      int          // how many books the level has, as its feed says (0: it does not say)
+	up         []catLevel   // the levels above it, the first page first: back goes to the last
+	loading    bool         // its page is being read
+	failed     bool         // it could not be reached, and nothing kept
+	wifi       bool         // waiting for Wi-Fi asked for by the catalogues
+	pending    func()       // what Wi-Fi was asked for, run once it is connected
+	// Browse and filter as last drawn with its choices: shown again, Loading… in its title, while a choice's page is
+	// read (2026-11-23: the level emptied showed only Browse a moment, as if back at the start); nil once closed
+	kept *ui.FiltersView
+	// the row of what is in force's chips, by their places (picked-N): the link that removes each, its group's first
+	// choice ("" the section's: no x); none while a choice's page is read
+	unpick []string
+	// landing (2026-11-23, Books on the catalogue's screen): a first page of sections only, its sections tried for books
+	// in turn (land: those left, by place), the one read for it at landAt; nil once books are found or none is left
+	land   []int
+	landAt string
 
 	mu      sync.Mutex
 	shares  map[string]int // the downloads under way by entry id: per cent
@@ -66,7 +75,7 @@ type catalogues struct {
 // catalogues are the reader's, made at their first use: the list (opds.Catalogues), the last one used shown.
 func (rd *reader) catalogues(last string) *catalogues {
 	if rd.cat == nil {
-		rd.cat = &catalogues{out: make(chan catMsg, 8), shares: map[string]int{}, navs: map[string]bool{}}
+		rd.cat = &catalogues{out: make(chan catMsg, 8), shares: map[string]int{}}
 	}
 	c := rd.cat
 	c.list = opds.Catalogues(rd.dir)
@@ -161,6 +170,16 @@ func (c *catalogues) narrow(href string) {
 	c.url, c.sections, c.books, c.next, c.total, c.failed = href, nil, nil, "", 0, false
 }
 
+// clearFacets takes the level's facets off, its section kept (Filter's Clear all): its own page read again; false
+// when none narrows it.
+func (c *catalogues) clearFacets() bool {
+	if c.url == c.sec {
+		return false
+	}
+	c.url, c.sections, c.books, c.next, c.total, c.failed = c.sec, nil, nil, "", 0, false
+	return true
+}
+
 // clear goes back to the catalogue's front page with no facet, as it was left (read again after): false when it is
 // there already.
 func (c *catalogues) clear() bool {
@@ -168,11 +187,27 @@ func (c *catalogues) clear() bool {
 		return false
 	}
 	c.upTo(0)
-	if c.url != "" { // the front page narrowed by a facet: its own, once read
+	c.land, c.landAt = nil, "" // landed anew, as when the catalogue was entered
+	if c.url != "" {           // the front page narrowed by a facet: its own, once read
 		c.url, c.sections, c.books, c.next, c.facets, c.total = "", nil, nil, "", nil, 0
 	}
 	c.failed = false
 	return true
+}
+
+// chosen says whether a facet's link is in force: as the catalogue marks it (activeFacet); when it marks none on the
+// level, the one followed last, the page shown being its page, and no other (an earlier one may have been dropped by
+// the catalogue's links: not shown rather than shown wrong; 2026-11-23, the maintainer's choice of three).
+func (c *catalogues) chosen(l manifest.Link) bool {
+	for _, f := range c.facets {
+		for _, m := range f.Links {
+			if on, _ := m.Properties["activeFacet"].(bool); on {
+				on, _ := l.Properties["activeFacet"].(bool)
+				return on
+			}
+		}
+	}
+	return c.url != "" && c.url != c.sec && l.Href.String() == c.url
 }
 
 // inForce is how many of the level's facet groups have a choice other than their first: what the funnel counts.
@@ -180,29 +215,13 @@ func (c *catalogues) inForce() int {
 	n := 0
 	for _, f := range c.facets {
 		for i, l := range f.Links {
-			if active, _ := l.Properties["activeFacet"].(bool); active && i > 0 {
+			if c.chosen(l) && i > 0 {
 				n++
 				break
 			}
 		}
 	}
 	return n
-}
-
-// deeper says whether a section is known to hold more sections: its link's type says so (kind=navigation), or it was
-// read before and had sections and no books. Unknown (Ebooksgratuits' plain application/atom+xml): false, no ›.
-func (c *catalogues) deeper(s manifest.Link) bool {
-	t := ""
-	if s.MediaType != nil {
-		t = s.MediaType.String()
-	}
-	switch {
-	case strings.Contains(t, "kind=navigation"):
-		return true
-	case strings.Contains(t, "kind=acquisition"):
-		return false
-	}
-	return c.navs[s.Href.String()]
 }
 
 // menu says whether the level shown is a menu: a section holding sections and no books (Browse and filter shows it as
@@ -217,8 +236,69 @@ func (c *catalogues) back() int {
 	return l.page
 }
 
+// landNext says which of the front page's sections to read next for books, once a page is read: on a first page of
+// sections only, the one it marks newest (OPDS's sort/new), then featured, recommended or popular, then those whose link
+// says they hold books (kind=acquisition), then the rest in their order, three at most; after one of them is read, the
+// next when it held no books (it is left, back to the first page), none once it held some, or when none is left (the
+// first page stays: Choose what to browse), or when the reader went elsewhere meanwhile.
+func (c *catalogues) landNext() (int, bool) {
+	switch {
+	case c.land == nil && c.landAt == "" && len(c.up) == 0 && c.url == "" && len(c.books) == 0 && len(c.sections) > 0:
+		c.land = landOrder(c.sections)
+	case c.land != nil && c.landAt != "" && c.addr() == c.landAt && len(c.up) == 1:
+		if len(c.books) > 0 {
+			c.land = nil
+			return 0, false
+		}
+		c.upTo(0)
+	default:
+		c.land = nil
+		return 0, false
+	}
+	if len(c.land) == 0 {
+		c.land = nil
+		return 0, false
+	}
+	j := c.land[0]
+	c.land = c.land[1:]
+	c.landAt = c.sections[j].Href.String()
+	return j, true
+}
+
+// landOrder is the order a first page's sections are tried in for books (landNext), three at most.
+func landOrder(secs []manifest.Link) []int {
+	rank := func(l manifest.Link) int {
+		t := ""
+		if l.MediaType != nil {
+			t = l.MediaType.String()
+		}
+		for _, r := range l.Rels {
+			switch r {
+			case "http://opds-spec.org/sort/new":
+				return 0
+			case "http://opds-spec.org/featured", "http://opds-spec.org/recommended", "http://opds-spec.org/sort/popular":
+				return 1
+			}
+		}
+		if strings.Contains(t, "kind=acquisition") {
+			return 2
+		}
+		return 3
+	}
+	var order []int
+	for r := 0; r <= 3 && len(order) < 3; r++ {
+		for i, s := range secs {
+			if rank(s) == r && len(order) < 3 {
+				order = append(order, i)
+			}
+		}
+	}
+	return order
+}
+
 // fromKept sets the shown catalogue's books from its kept page, if any (nothing read yet).
 func (c *catalogues) fromKept(dir string) {
+	c.land, c.landAt = nil, "" // landed anew once its first page is read
 	c.url, c.title, c.sec, c.sections, c.books, c.next, c.facets, c.total, c.up, c.failed = "", "", "", nil, nil, "", nil, 0, nil, false
 	if p := opds.Kept(dir, c.cur()); p != nil {
 		if f, err := p.Feed(); err == nil {
@@ -234,7 +314,6 @@ func (c *catalogues) set(f *opds.Feed, more bool) {
 		if n := f.Metadata.NumberOfItems; n != nil {
 			c.total = *n
 		}
-		c.navs[c.addr()] = len(f.Navigation) > 0 && len(f.Publications) == 0
 	}
 	c.sections = append(c.sections, f.Navigation...)
 	for _, m := range f.Publications {
@@ -336,13 +415,9 @@ func (rd *reader) catalogueLeave(c *catalogues) {
 func (rd *reader) catalogueView(c *catalogues) ui.CatalogueView {
 	v := ui.CatalogueView{Name: c.cur().Name, Loading: c.loading, Unreachable: c.failed, More: c.next != ""} // More stays while a page is read: nothing moves
 	v.NoMatch = !c.loading && !c.failed && c.empty() && c.inForce() > 0                                      // narrowed to nothing: said, with the way out
-	for _, s := range c.sections {
-		sec := ui.CatalogueSection{Title: s.Title, RTL: rtlText(s.Title)}
-		if n, ok := s.Properties["numberOfItems"].(int); ok {
-			sec.Count = n
-		}
-		v.Sections = append(v.Sections, sec)
-	}
+	// sections are Browse's alone (2026-11-23, Books on the catalogue's screen): a level of sections and no books, none
+	// found on landing, says Choose what to browse, with Browse
+	v.Choose = !c.loading && !c.failed && len(c.books) == 0 && len(c.sections) > 0 && c.land == nil
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for i := range c.books {
@@ -375,14 +450,6 @@ func rtlText(s string) bool {
 	return false
 }
 
-// book is the book of row i (sections first), -1 when the row is a section.
-func (c *catalogues) book(i int) int {
-	if i < len(c.sections) {
-		return -1
-	}
-	return i - len(c.sections)
-}
-
 // here is the file of a book downloaded before (relative to the reader's folder), "" when it is not here.
 func (rd *reader) catalogueHere(c *catalogues, i int) string {
 	return c.rec.Find(rd.dir, c.cur().URL, opds.EntryID(&c.books[i]))
@@ -396,11 +463,11 @@ func (c *catalogues) downloading(i int) bool {
 	return ok
 }
 
-// row is the level shown's row of a book's entry (sections first), -1 when it has none.
+// row is the level shown's row of a book's entry (the rows are its books alone), -1 when it has none.
 func (c *catalogues) row(entry string) int {
 	for i := range c.books {
 		if opds.EntryID(&c.books[i]) == entry {
-			return len(c.sections) + i
+			return i
 		}
 	}
 	return -1
@@ -418,7 +485,9 @@ func downloadNotice(err error) string {
 // what the catalogue can answer), filled once a section is chosen, counting the facets in force.
 func (c *catalogues) headView(chooseOn bool) ui.CatalogueHeadView {
 	return ui.CatalogueHeadView{Name: c.cur().Name, ChooseOn: chooseOn, Loading: c.loading,
-		Funnel: len(c.top()) > 0 || len(c.facets) > 0, Chosen: len(c.up) > 0, InForce: c.inForce()}
+		Browse: len(c.top()) > 0, Funnel: len(c.facets) > 0, InForce: c.inForce(), Section: c.title,
+		// the list icon filled once a place is chosen: not the one landed on (always so on a catalogue of sections only)
+		Chosen: len(c.up) > 0 && !(len(c.up) == 1 && c.sec == c.landAt && c.land == nil)}
 }
 
 // A choice of Browse and filter: what its tap does, by its place among the panel's choices (filter-N).
@@ -435,24 +504,35 @@ const foldAt = 8
 // its More… (-1: none). The level shown a menu (sections, no books): its sections, a row each, the way back above
 // them. Else Browse (the front page's sections, the one the level is under chosen) and the level's facet groups; a
 // level below a section has its title and the way back.
-func (c *catalogues) filtersView(more int) (ui.FiltersView, []filterAct) {
+//
+// browse: Browse's page (the list icon): the catalogue's places, its front page's sections as rows (a section of
+// sections its own list), the final pick below one as a chip; else Filter's (the funnel): the level's facets, what is
+// in force as chips under the title, removable (2026-11-23: a place is a row, a filter a chip, each behind its own icon).
+func (c *catalogues) filtersView(more int, browse bool) (ui.FiltersView, []filterAct) {
+	if c.loading && c.kept != nil { // the choices as they were, none taken until the new ones come
+		v := *c.kept
+		v.Loading, v.Books = true, 0
+		c.unpick = nil
+		return v, nil
+	}
 	v := ui.FiltersView{Loading: c.loading, Clear: len(c.up) > 0 || c.url != ""}
+	if !browse {
+		v.Clear = c.url != c.sec // a facet narrows the level
+	}
 	if !c.loading {
 		v.Books = c.total
 	}
 	var acts []filterAct
 	choice := func(l manifest.Link) ui.FilterChoice {
-		ch := ui.FilterChoice{Label: l.Title, Deeper: c.deeper(l)}
+		ch := ui.FilterChoice{Label: l.Title}
 		if n, ok := l.Properties["numberOfItems"].(int); ok {
 			ch.Count = n
 		}
-		if on, _ := l.Properties["activeFacet"].(bool); on {
-			ch.On = true
-		}
+		ch.On = c.chosen(l)
 		return ch
 	}
 	switch {
-	case more >= 0 && more < len(c.facets):
+	case !browse && more >= 0 && more < len(c.facets):
 		f := c.facets[more]
 		g := ui.FilterGroup{Name: f.Title}
 		for _, l := range f.Links {
@@ -460,38 +540,46 @@ func (c *catalogues) filtersView(more int) (ui.FiltersView, []filterAct) {
 			acts = append(acts, filterAct{top: -1, sec: -1, href: l.Href.String()})
 		}
 		v.Open = &g
-	case c.menu():
+	case browse && c.menu():
 		g := ui.FilterGroup{Name: c.title}
 		for i, l := range c.sections {
 			g.Choices = append(g.Choices, choice(l))
 			acts = append(acts, filterAct{top: -1, sec: i})
 		}
 		v.Open = &g
-	default:
-		if len(c.up) > 1 { // below a section: where it is, the way back up
-			v.Title, v.Back = c.title, true
-		}
+	case browse:
 		if top := c.top(); len(top) > 0 {
 			b := ui.FilterGroup{}
 			in := c.under()
 			for j, l := range top {
 				ch := choice(l)
 				ch.On = j == in
-				if ch.On {
-					b.Chosen = l.Title
-				}
 				b.Choices = append(b.Choices, ch)
 				acts = append(acts, filterAct{top: j, sec: -1})
 			}
 			v.Browse = &b
 		}
+		// where the books come from, below a front page's section (Austen under Authors; that one ticked already)
+		c.unpick = nil
+		if len(c.up) > 1 {
+			v.Picked = append(v.Picked, ui.Picked{Label: c.title, Fixed: true})
+			c.unpick = append(c.unpick, "")
+		}
+	default:
+		// what is in force under the title: each facet other than its group's first, its x back to that first
+		c.unpick = nil
+		for _, f := range c.facets {
+			for i, l := range f.Links {
+				if i > 0 && c.chosen(l) {
+					v.Picked = append(v.Picked, ui.Picked{Label: l.Title})
+					c.unpick = append(c.unpick, f.Links[0].Href.String())
+				}
+			}
+		}
 		for _, f := range c.facets {
 			g := ui.FilterGroup{Name: f.Title}
 			for i, l := range f.Links {
 				ch := choice(l)
-				if ch.On {
-					g.Chosen = l.Title
-				}
 				if i < foldAt || len(f.Links) == foldAt+1 {
 					g.Choices = append(g.Choices, ch)
 					acts = append(acts, filterAct{top: -1, sec: -1, href: l.Href.String()})
@@ -502,6 +590,9 @@ func (c *catalogues) filtersView(more int) (ui.FiltersView, []filterAct) {
 			}
 			v.Groups = append(v.Groups, g)
 		}
+	}
+	if !c.loading {
+		c.kept = &v
 	}
 	return v, acts
 }

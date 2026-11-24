@@ -1,9 +1,10 @@
 {
  "placement": "screen",
  "boxes": {
-  "catalogue-choose": [241, 222, 611, 294],
-  "catalogue-filter": [1136, 214, 1224, 302],
+  "catalogue-choose": [241, 222, 688, 294],
+  "catalogue-filter": [1032, 214, 1120, 302],
   "catalogue-more": [485, 944, 779, 1024],
+  "catalogue-sections": [1136, 214, 1224, 302],
   "e0": [40, 360, 1224, 498],
   "e1": [40, 497, 1224, 635],
   "e2": [40, 634, 1224, 772],

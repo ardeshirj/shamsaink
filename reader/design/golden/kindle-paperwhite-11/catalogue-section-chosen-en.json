@@ -2,8 +2,8 @@
  "placement": "screen",
  "boxes": {
   "catalogue-choose": [241, 222, 611, 294],
-  "catalogue-filter": [1108, 214, 1196, 302],
   "catalogue-more": [471, 944, 765, 1024],
+  "catalogue-sections": [1108, 214, 1196, 302],
   "e0": [40, 360, 1196, 498],
   "e1": [40, 497, 1196, 635],
   "e2": [40, 634, 1196, 772],

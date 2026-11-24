@@ -118,3 +118,16 @@ div.slider { margin: 0.5em 0; }
 
 /* a setting's grey second line, under its name: what it does (2026-11-22) */
 div.set .name .sub, .slider .sname .sub { display: block; font-size: 0.75em; color: #444; line-height: 1.3; }
+
+/* a chip (2026-11-23, from Browse and filter's): one choice of a group, rounded; filled when chosen, dashed for More…,
+how many books after its label small; removable (a choice in force shown on its own): outlined, an x at its end */
+/* in the text's flow, each chip a whole in its line (inline-block): the list's pages end between lines, so a flex row's
+chips, their borders outside their lines, were cut at a page's end (2026-11-23) */
+.chips { display: block; margin-block-end: -0.45em; }
+span.chip { display: inline-block; vertical-align: middle; margin-inline-end: 0.45em; margin-block-end: 0.45em; border: var(--line) solid var(--ink); border-radius: 1em; padding: 0.15em 0.75em; font-size: 0.9em; }
+span.chip.on { background: var(--ink); color: var(--paper); }
+span.chip .n { font-size: 0.75em; color: #555; }
+span.chip.on .n { color: var(--paper); }
+span.chip.more { border-style: dashed; }
+span.chip.x { display: inline-flex; align-items: center; gap: 0.35em; padding-inline-end: 0.45em; }
+span.chip.x .i { font-size: 0.85em; }

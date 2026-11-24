@@ -339,30 +339,45 @@ left as the device has it.
   - **The bar:** a choice of two icons in place of the title, books (Library) and a cloud (Catalogues), on every library
     screen; a tap on the side shown says its name in a box under it, as the battery's level.
   - **The head:** "Catalogue" and the catalogue shown, a dropdown opening the choice of catalogues (FarsiEPUB's first,
-    then `catalogues.json`'s); the catalogue chosen again goes back to its main page as it was left. At the line's end
-    Loading… while a page is read (a read refreshes that line only, and the list only when what it shows changed: no
-    refresh for Wi-Fi coming up, or the same page read again), and the funnel, which opens Browse and filter. Names cut
-    with an ellipsis (18 and 30 letters).
-  - **Browse and filter** (2026-11-23, in place of 2026-11-22's second dropdown of sections; `catalogues.go`,
-    `filtersView`): the funnel shows only when the catalogue has something to choose, by the rule "Only what the
-    catalogue can answer" (`principles.yaml`): its sections, always, and its facets when it gives them (OPDS 1's
+    then `catalogues.json`'s); the catalogue chosen again goes back to its main page as it was left (landed again). After the name
+    Loading… while a page is read, in one place whatever icons a catalogue has (a read refreshes that line only, and the
+    list only when what it shows changed: no refresh for Wi-Fi coming up, or the same page read again); at the line's
+    end the funnel, which opens Filter, and last the list icon, which opens Browse. Names cut with an ellipsis (18 and
+    30 letters).
+  - **Browse and Filter** (2026-11-23, in place of 2026-11-22's second dropdown of sections; `catalogues.go`,
+    `filtersView`), one panel with two pages, each behind its own icon (2026-11-23, after a genre picked undid an
+    author: sections drawn as filters read as filters that combine): the list icon (list-bullets, as a book's Contents)
+    opens Browse, the catalogue's places as rows, ticked, one at a time, a section of sections its own list, and
+    closes on a place's books once read; the funnel opens Filter, the level's facets as chips. Each shows only when the
+    catalogue has it, by the rule "Only what the catalogue can answer" (`principles.yaml`): its sections, and its facets when it gives them (OPDS 1's
     `opds:facetGroup`, `activeFacet`, `thr:count`); later its search, and our own filters only for a catalogue whole on
     one page. Never a filter over the one page loaded (Ebooksgratuits sends 100 of 3,278), never a meaning read from a
     section's title. Read 2026-11-23: none of FarsiEPUB's, Standard Ebooks' Atom feed, Wikisource's or Ebooksgratuits'
-    has facets, so on them it is Browse alone (FarsiEPUB's one page: no funnel). The funnel filled once a section is
-    chosen, with a number only when a facet is among what is in force (a section is one place, not a count). The panel
+    has facets, so on them it is the list icon alone (FarsiEPUB's one page: neither). The list icon filled once a section
+    is chosen; the funnel filled with how many facets are in force. Filter's Clear all takes the facets off and keeps
+    the section (`clearFacets`); Browse's goes back to the front page. Several
+    groups combine as the catalogue's links do (each facet's link carries the others it keeps); what is chosen is what
+    the catalogue marks (`activeFacet`), and on a level where it marks none, the facet followed last alone, its page
+    being the one shown: an earlier one, perhaps dropped by the catalogue's links, is not shown rather than shown wrong
+    (`chosen`, 2026-11-23; `TestCatalogueFacetsChosen`). The panel
     takes the list's place under the bar, paged: Browse (the front page's sections, the one the list is under chosen),
-    then each facet group as chips (eight, then More…, the group alone a row each); a tap follows the choice's link at
-    once, the panel staying with Loading… until the new feed's choices come (a newer tap wins: a read for a level since
-    left is dropped); Show N books (the feed's OpenSearch total; Done without one) or ✕ closes it, to the level's list (on
+    then each facet group as chips (eight, then More…, the group alone a row each); Browse's sections as rows, ticked, one place at a time, the facets as chips, filters that combine (rule "A place is a row, a filter a chip"); under the title, on every page, what is in force a chip each: below a front page's section its final pick (no x), then each facet chosen with an x back to its group's first choice (`unpick`); a tap follows the choice's link at
+    once, the panel staying as it was, Loading… in its title, until the new feed's choices come (its choices not taken
+    meanwhile; Close, Clear all and the back arrow are; 2026-11-23: drawn from the level emptied, it showed Browse alone
+    a moment); Show N books (the feed's OpenSearch total; Done without one) or ✕ closes it, to the level's list (on
     the page it was on, when the level is the same). A section's link often says no kind (Ebooksgratuits' are plain
-    `application/atom+xml`), so whether it holds books or more sections is known once read: › only on one declared
-    `kind=navigation` or seen to be a menu; a menu (sections, no books: Authors) is shown in the panel as its own list,
-    its title and the way back above, and a level below a section has its title and the way back too. Clear all goes
+    `application/atom+xml`), so whether it holds books or more sections is known only once read: no chip is marked
+    for it (a › shown once a section had been visited read as "visited", 2026-11-23); a menu (sections, no books: Authors) is shown in the panel as its own list,
+    its title and the way back above, and a level below a section has no way back of its own: Browse's heading names the final pick (Austen, not Authors), and its section's chip, filled, opens that list again (2026-11-23). Clear all goes
     back to the front page as it was left, then reads it again; a facet that matches nothing leaves the list saying so,
     with Clear filters. Counts grouped by thousands from four digits ("3,278"), "1 book" for one.
-  - **The list:** sections first (a "›" at the row's end, the count when the catalogue gives it), then books, each
-    ending in its button: download, its per cent, then **Read**, which opens the book (one downloaded before shows Read
+  - **The list:** books alone (2026-11-23, rule "Books on the catalogue's screen"; sections are Browse's). Entered, a
+    catalogue whose first page holds sections only lands on a section's books (`landNext`, `landOrder`): the one it
+    marks newest (OPDS's `sort/new`), then featured, recommended or popular, then those whose link says they hold books
+    (`kind=acquisition`), then the rest in order, three read at most, a section of sections left for the next; its name
+    in bold under the head; the list icon left unfilled on it (filled once another place is chosen). None found, or a
+    level of sections only: Choose what to browse, with Browse. Landed again on Clear all and on the catalogue chosen
+    again; a choice in Browse or Filter meanwhile stops it. Each book ends in its button: download, its per cent, then **Read**, which opens the book (one downloaded before shows Read
     at once, by `downloads.json`); a Farsi row's button at the left, under the boxes above. **More books** under the last
     row when the level has more pages; the rows paged as the library's, the list pulled up by a row's top padding so
     every page starts at the same height (the engine's page 1 keeps a block's margin, later pages start at a line: the
@@ -373,7 +388,7 @@ left as the device has it.
     catalogue's main page, not narrowed, is kept on disk (`catalogues/FOLDER.json`), shown at once on entering, then read again.
   - **Wi-Fi:** asked for when off (the Wi-Fi question; Cancel stays on Library); turned off again once the catalogues are
     left and no download goes on. Downloads go on on the Library side, or in a book.
-- **Tested:** `TestCatalogueFilters` (Browse, ›, facets, the funnel's count, a menu, none matching, back, Clear);
+- **Tested:** `TestCatalogueFilters` (Browse, facets, the funnel's count, a menu, none matching, back, Clear);
   `go test ./opds` (a local server: every refusal leaves nothing, an edition goes over its file, a removed
   file comes back new; the catalogues file, the kept page, enclosures); `e2e/scenarios/catalogue.txt` on the simulated
   Kobo (CI) and both devices (`docs/TESTING.md`, "Catalogues"); `OPDS_LIVE=1` reads farsiepub.org and downloads its first book into a scratch library, run on

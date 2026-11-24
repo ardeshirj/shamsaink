@@ -28,14 +28,15 @@ var componentRenders = map[string][]string{
 	"bar":         {"share"},
 	"list-row":    {"off", "current"},
 	"dropdown":    {"plain", "open", "labelled", "labelled-open", "long"},
+	"chip":        {"plain", "chosen", "more", "removable"},
 }
 
 // sampleText is what the samples say that is no word of the reader's in both languages: the library's are English only
 // (a catalogue, Settings' lines), and the values are invented. In Farsi, Farsi.
 var sampleText = map[string]map[string]string{
-	"en": {"dd-label": "Catalogue", "dd-value": "Standard Ebooks", "dd-short": "FarsiEPUB", "dd-long": "The Very Large Pu…",
+	"en": {"dd-label": "Catalogue", "dd-value": "Standard Ebooks", "dd-short": "FarsiEPUB", "dd-long": "The Very Large Pu…", "chip": "French", "chip-n": "214", "chip-more": "More… (23)",
 		"step-about": "Minutes untouched before the reader sleeps", "bar-share": "42", "bar-side": "left", "switch-about": "Menus in a book's language; off: always English"},
-	"fa": {"dd-label": "کاتالوگ", "dd-value": "کتاب‌های فارسی", "dd-short": "فارسی", "dd-long": "کتابخانه‌ی بسیار بزرگ آثار…",
+	"fa": {"dd-label": "کاتالوگ", "dd-value": "کتاب‌های فارسی", "dd-short": "فارسی", "dd-long": "کتابخانه‌ی بسیار بزرگ آثار…", "chip": "فارسی", "chip-n": "۲۱۴", "chip-more": "بیشتر… (۲۳)",
 		"step-about": "چند دقیقه دست‌نخورده، پیش از آن‌که دستگاه بخوابد", "bar-share": "42", "bar-side": "right", "switch-about": "منوها به زبان کتاب؛ خاموش: همیشه انگلیسی"},
 }
 
