@@ -357,7 +357,7 @@ func (d *Device) doze(pic image.Image) {
 	d.Usage("wake", fmt.Sprintf(" asleep=%d wifi=%s", int(time.Now().Round(0).Sub(slept).Seconds()), map[bool]string{true: "on", false: "off"}[wifi]))
 }
 
-// SoundSink is the GStreamer element the narration's player ends in (reader/sink.go), and what its environment needs.
+// SoundSink is the GStreamer element the narration's player ends in (reader/booksink.go), and what its environment needs.
 // On the Kobo (firmware 6) PulseAudio's, in system mode: its socket named, since the reader is no PulseAudio user
 // (2026-11-11: a test tone and the player's own line heard through Bluetooth headphones); the headphones' sink is the
 // default once they connect (Kobo's module-switch-on-connect). 4.x's was MediaTek's mtkbtmwrpcaudiosink.

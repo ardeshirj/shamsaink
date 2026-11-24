@@ -119,7 +119,7 @@ sequenceDiagram
 The narration reaches the next page when a narrated element's first line is on it, or, for a sentence or paragraph
 that runs onto it (narration by sentence or paragraph, as IDPF's Moby-Dick), when the voice reaches the element's first
 line there (2026-11-08): the engine gives every line of the element with its page (`find_lines_all`), and the moment is
-the element's share of its time as its lines' share of its width (`underline`, `pageTurn` in `reader/narration.go`).
+the element's share of its time as its lines' share of its width (`underline`, `pageTurn` in `reader/booknarration.go`).
 Until then the page turned with the next element only, its end spoken over the old page.
 
 ### The reader's panels
@@ -184,7 +184,7 @@ shown; every page's twelve slots are in the same places, so a tap is placed with
   as it is shown costs too much on these chips (measured on the Kindle: Standard Ebooks' 1400×2100 JPEGs 420–460 ms
   each, twelve a page), so each is made once into a small grey PNG, `covers/HASH.png` beside `cache/` (by the book's
   hash: a new edition has its own), at the least size filling a tile (a JPEG's grey is its Y plane, read straight:
-  scaling 40 ms). It is made in the background while the library is open (`reader/covers.go`: the books shown first;
+  scaling 40 ms). It is made in the background while the library is open (`reader/librarycovers.go`: the books shown first;
   stopped when a book opens, carried on next time), each one's hash sent to the library's loop, which draws the page
   again once all its covers are in (one refresh, not one a tile). Measured on the Kindle: 70–840 ms a cover, 11 covers
   in 4.4 s; a kept one is read in 10–25 ms. Written whole (a hidden name, then renamed); removing a book removes it.
@@ -261,7 +261,7 @@ flowchart LR
 | Wi-Fi | on demand, asked first ("Wi-Fi on demand" below; `device/wifi.go`) | ours, over Kobo's `wpa_supplicant` and `dhcpcd`; Amazon's `wirelessEnable` through `lipc` (Kindle) |
 | sleep | the same sleep screen everywhere (`device/sleep.go`). Kobo: ours, the power button and idle time, Wi-Fi down, suspend (`device/kobo.go`). Kindle: `powerd`'s; the reader draws its sleep screen on `goingToScreenSaver` and the page on `outOfScreenSaver`, the book kept open (`device/kindle.go`) | ours (Kobo); Amazon's, answered (Kindle) |
 | power | the charger plugged or not: the kernel's power_supply uevents over netlink (`device/power.go`); the bar redrawn if shown | the kernel's |
-| sound | narration's audio, decoded in the background (symphonia: MP3, AAC LC in MP4). Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` over BlueZ, kept open a session (`sink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations; the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound. Kindle: Amazon's `mplay`, our decoded parts from RAM (12; `narration.go`). Not yet: Opus (EPUB 3.3 asks for it; symphonia 0.5 has none), a clip with no `clipEnd` (left out and counted in the log) | ours, over the devices' own |
+| sound | narration's audio, decoded in the background (symphonia: MP3, AAC LC in MP4). Kobo: one `gst-launch-1.0` into PulseAudio's `pulsesink` over BlueZ, kept open a session (`reader/booksink.go`): raw 48 kHz stereo through a pipe cut to one page, silence between narrations; the narration's clock is what the pipe has taken, so a stalled link stalls the underline, and the event loop never waits on sound. Kindle: Amazon's `mplay`, our decoded parts from RAM (12; `reader/booknarration.go`). Not yet: Opus (EPUB 3.3 asks for it; symphonia 0.5 has none), a clip with no `clipEnd` (left out and counted in the log) | ours, over the devices' own |
 
 ### Where the device-specific code lives (2026-11-06)
 **Nothing outside `reader/device/` asks which device it is on:** the book, the library, the panels and the settings are
@@ -450,7 +450,7 @@ flowchart LR
 
 | Part | What it does | Where |
 |---|---|---|
-| heartbeat | each event loop that waits for events also waits for a tick (`Device.Beats`, every 5 s) and answers it with `Device.Beat`: the counter goes up by one in `/tmp/shamsaink-alive`. A loop that is stuck stops answering. A ticker in a goroutine would keep ticking while the loop is stuck, so the loop itself answers | `reader/device/heartbeat.go`; the loops in `session.go` (`next`) and `libraryview.go` |
+| heartbeat | each event loop that waits for events also waits for a tick (`Device.Beats`, every 5 s) and answers it with `Device.Beat`: the counter goes up by one in `/tmp/shamsaink-alive`. A loop that is stuck stops answering. A ticker in a goroutine would keep ticking while the loop is stuck, so the loop itself answers | `reader/device/heartbeat.go`; the loops in `reader/booksession.go` (`next`) and `libraryview.go` |
 | sleep | the sleep screen waits on purpose, so before it starts the file says `sleep`, and the watcher stands down; a beat on waking ends it | `Device.Doze` |
 | watcher | a shell function started in the background before the reader: every 10 s it reads the file; the same value twice in a row, or no file (the launcher removes it before the reader starts), is a freeze; it logs why, sends SIGQUIT (Go prints every goroutine's stack to `reader.log`: what the reader was stuck on), waits 3 s, sends SIGKILL; then waits up to 5 s and, if the reader is still there (a thread stuck in the kernel, such as the screen's driver), runs `sync` and `reboot` | `reader/kobo/launch.sh`, `watch` |
 | the way back | the reader is the launcher's last command: when it dies, the launcher's exit trap starts Nickel again (a reboot instead when Bluetooth has run: 13's NOTES.md) | `launch.sh`, `leave` |

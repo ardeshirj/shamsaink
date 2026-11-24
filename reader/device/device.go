@@ -186,7 +186,7 @@ func OnDrive(path string) string {
 // SetReverseButtons swaps the page buttons: the lower goes back and the upper forward.
 func (d *Device) SetReverseButtons(on bool) { d.reverse.Store(on) }
 
-// CanPlay says whether the reader has a player for this device's sound: the Kobo's (its Bluetooth sink, sink.go); not
+// CanPlay says whether the reader has a player for this device's sound: the Kobo's (its Bluetooth sink, reader/booksink.go); not
 // yet the Kindle's (Amazon's mplay, experiment 12: to build), where Listen shows a notice instead.
 func (d *Device) CanPlay() bool { return d.Kind != Kindle }
 

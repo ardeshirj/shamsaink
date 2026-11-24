@@ -5,7 +5,7 @@ import (
 	"shamsainkreader/ui"
 )
 
-// sliderPanel is the Light or the Sound panel under the bar (light.go, sound.go): which is open, the Sound panel's
+// sliderPanel is the Light or the Sound panel under the bar (panellight.go, panelsound.go): which is open, the Sound panel's
 // headphones and Connect, the slider a held finger moves, and what a touch on it does. One for the library and one for
 // a book, so the two answer a touch alike; each draws and refreshes the screen its own way.
 type sliderPanel struct {

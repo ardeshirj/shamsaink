@@ -1,6 +1,6 @@
 #!/bin/sh
 # For development, never in a release: the Kindle's SSH server, switched on or off from the reader's Developer panel,
-# "SSH (development)" (dev mode: dev/ beside the reader; reader/devssh.go), as the Kobo's (reader/kobo/dev/ssh.sh, whose
+# "SSH (development)" (dev mode: dev/ beside the reader; reader/librarydevssh.go), as the Kobo's (reader/kobo/dev/ssh.sh, whose
 # notes hold here too). The same Dropbear, static ARMv7 (make kobo-dropbear), beside this script: port 2222, root, keys
 # only (-s). So KOReader is not needed for SSH (until 2026-11-12 `ssh kindle` was KOReader's own server).
 # What the Kindle adds: its firewall drops what comes in (INPUT's policy DROP), so the port is opened while the server

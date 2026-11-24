@@ -24,7 +24,7 @@ import (
 
 // Read-along (plan, stage 8): the book's narration played to the Bluetooth headphones paired in Kobo's own settings,
 // each word underlined when the narrator reaches it (experiments 09, 12 and 13). The sound goes through Kobo's own
-// player, one gst-launch-1.0 into the device's sink (PulseAudio on firmware 6) kept open for the session (sink.go), fed raw sound through a
+// player, one gst-launch-1.0 into the device's sink (PulseAudio on firmware 6) kept open for the session (booksink.go), fed raw sound through a
 // pipe: each part of the narration is decoded by the engine into RAM while the one before it plays, and the pipe
 // takes it as the sink plays it, so the narration's clock is what the pipe has taken (see anchor), not a timer of ours.
 
@@ -404,9 +404,9 @@ func (s *session) readAloud(from *blitz.Word) {
 		}
 		s.snd = snd
 	}
-	s.snd.setVolume(s.set.volumeFor(s.dev.Headphones())) // the pair's own volume (sound.go)
+	s.snd.setVolume(s.set.volumeFor(s.dev.Headphones())) // the pair's own volume (panelsound.go)
 	lead := time.Duration(s.set.LeadMs) * time.Millisecond
-	if !device.Sim() { // Kobo's player, its buffer larger than the one lead_ms was set with (sink.go)
+	if !device.Sim() { // Kobo's player, its buffer larger than the one lead_ms was set with (booksink.go)
 		lead += sinkLater
 	}
 	nar := newNarrator(s.narration, first, r.read, lead)
@@ -414,7 +414,7 @@ func (s *session) readAloud(from *blitz.Word) {
 	s.nar = nar
 	s.dev.Active()
 	s.snd.play(nar)
-	if !s.snd.settled.Load() { // the player still waking (sink.go): the first word underlined at once, so the press is seen
+	if !s.snd.settled.Load() { // the player still waking (booksink.go): the first word underlined at once, so the press is seen
 		s.underline(nar.cues[0]) // to be answered; the voice follows
 	}
 	fmt.Printf("read aloud from word %d (document %d): started after %.0f ms, %d parts\n",

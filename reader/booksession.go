@@ -32,7 +32,7 @@ type session struct {
 	word *time.Timer // the narration's next word due
 
 	shown *drawn     // the page shown
-	lay   pageLayers // what goes over it (layers.go)
+	lay   pageLayers // what goes over it (booklayers.go)
 	ahead bool       // the next page may still need drawing
 	rest  bool       // documents still to paginate
 

@@ -164,7 +164,7 @@ Newest last, dated, with how sure we are; the settled ones are above. 4.x's: at 
   for development, and the installer's 5/6 path (`Kobo.tgz`).
 - **2026-11-11, Bluetooth and sound on 6.0.** BlueZ's own `bluetoothd` (`org.bluez` on the system bus) where 4.x had
   `mtkbtd`, and PulseAudio in system mode (`/var/run/pulse/native`) where 4.x had MediaTek's sink: the reader plays into
-  `pulsesink` (`Device.SoundSink`), with 4.x's 500 ms buffer kept (`reader/sink.go`). A pair counts as connected when
+  `pulsesink` (`Device.SoundSink`), with 4.x's 500 ms buffer kept (`reader/booksink.go`). A pair counts as connected when
   `Device1.Connected` is true on a device with an `audio-` icon: the transport (`fdN`) is made only once sound flows
   (measured: Connected and PulseAudio's sink after 1.0 s, no transport in 35 s). Connect: the adapter switched on if
   off (`Adapter1.Powered`), then `Device1.Connect` (about 1 s). Read-along on *Buried Alive* heard, each word underlined.

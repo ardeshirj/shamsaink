@@ -43,11 +43,11 @@ type settings struct {
 	// and one for dark, where ghosting shows most (0: never). A choice of cleanSteps, set in the Reading settings.
 	CleanLight int `json:"clean_light"`
 	CleanDark  int `json:"clean_dark"`
-	// The front light (light.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
+	// The front light (panellight.go), as last set in the reader's Light panel: its level (0 to 100) and warmth (0 to 10);
 	// none until it is set there, and then the light is left as Kobo's interface had it.
 	Light  *int `json:"light,omitempty"`
 	Warmth *int `json:"warmth,omitempty"`
-	// The narration's volume (sound.go), per cent (minVolume to 100), by the headphones' Bluetooth address, as set in the
+	// The narration's volume (panelsound.go), per cent (minVolume to 100), by the headphones' Bluetooth address, as set in the
 	// Sound panel; 100 for a pair never set.
 	Volume map[string]int `json:"volume,omitempty"`
 	// The headphones connected last (their Bluetooth address): the pair the Sound panel's Connect connects.

@@ -175,7 +175,7 @@ keyboard first ("Now").
     (OpenRC in our namespace, real suspend with our Bluetooth, back to stock with no reboot). The Kobo unchanged:
     firmware 6's own BlueZ and PulseAudio. Left, in order (ShamsaOS 10's NOTES.md, "Not yet shown"):
     - **The reader's sound to `btplayer`**, the one piece missing for Listen on the Kindle, and ShamsaInk's: S16LE
-      48 kHz stereo, as `reader/sink.go` writes it, SBC through `libsbc` since Bumble has no encoder; how it is handed
+      48 kHz stereo, as `reader/booksink.go` writes it, SBC through `libsbc` since Bumble has no encoder; how it is handed
       over (a pipe, a socket) to design. Its plan to write first: ShamsaOS's next experiment (12; its empty
       `11-kindle-narration/` dropped and 11 given to Kobo firmware 6, 2026-11-22).
     - Connect counts only once `btplayer` streams, as on the Kobo since 2026-11-22 (`docs/devices/kobo/README.md`,

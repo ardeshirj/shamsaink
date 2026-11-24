@@ -1,6 +1,6 @@
 #!/bin/sh
 # For development, never in a release: an SSH server switched on or off from the reader's Developer panel, "SSH
-# (development)" (dev mode: dev/ beside the reader; reader/devssh.go). The server outlives the reader, so it serves for
+# (development)" (dev mode: dev/ beside the reader; reader/librarydevssh.go). The server outlives the reader, so it serves for
 # Kobo's own interface too. Our own Dropbear, static (build-dropbear.sh), beside this script: port 2222, root, keys only (-s). The keys: authorized_keys beside this script
 # (make kobo-dev-ssh KOBO_KEY=...), copied to RAM with the modes Dropbear insists on: it checks the file and every
 # folder above it (the storage is vfat, every file looks writable to all; /tmp is writable by all, so the copy is in

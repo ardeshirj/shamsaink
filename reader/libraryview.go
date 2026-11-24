@@ -49,7 +49,7 @@ type libraryScreen struct {
 
 	all     []library.Item  // the books here
 	items   []library.Item  // the rows
-	made    map[string]bool // the books whose small cover is kept (covers.go)
+	made    map[string]bool // the books whose small cover is kept (library/covers.go)
 	view    library.View    // what is chosen, kept (library/shelf.go)
 	filter  int
 	lv      ui.LibraryView
@@ -76,7 +76,7 @@ type libraryScreen struct {
 	kind     string      // what is open over the list (setKind): a panel under the bar, or a book's dialog; "" none
 	dialog   string      // a dialog over it, or over the list (showDialog): "wifi-ask", an update's, "notice", "dev-notice"
 	upd      *updater    // an update asked for from Settings (updates.go)
-	sp       sliderPanel // the Light or Sound panel's state (sliderpanel.go)
+	sp       sliderPanel // the Light or Sound panel's state (panelsliders.go)
 	asking   *netWait    // Wi-Fi's question open: what asked for it (librarywifi.go)
 	netWaits []*netWait  // waiting for Wi-Fi: each served when the connection ends
 	held     int         // a book's dialog: the book (a row, or a catalogue's book)
@@ -118,7 +118,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		fmt.Printf("update: %s reached the library: kept\n", u)
 	}
 	undone := update.Undone(rd.dir) // the launcher put the previous version back: said once the loop runs
-	// the covers not yet made, in the background while the library is open: the books shown first (covers.go)
+	// the covers not yet made, in the background while the library is open: the books shown first (librarycovers.go)
 	coversOut, coversStop := make(chan string), make(chan struct{})
 	defer close(coversStop)
 	go makeCovers(rd.dir, coversToMake(s.items, s.all, s.made), s.scr.W, coversOut, coversStop)

@@ -168,7 +168,8 @@ work goes where it belongs as it is decided.
   event loop): point them out when they would pay off for the work coming next, the gain and the risk, and build them
   on a yes, behaviour and pages checked unchanged on a device. Code goes into packages once there is enough of it
   (the library's data is `reader/library` since 2026-10-31, the screen still in `main`; highlights and narration stay
-  in `main` for now).
+  in `main` for now). In `reader/` (2026-11-24) a file's prefix says which screen it serves: `library*.go` the library,
+  `book*.go` a book open, `panel*.go` the bar's panels both share; the rest the reader as a whole.
 - **The reader's panels are HTML components, in modern CSS** (the maintainer, 2026-10-29): Blitz is a modern
   engine, so flex, grid, gap, custom properties and logical properties are welcome. Each panel is a template in
   `reader/ui/templates/` (drawn by the Go package `reader/ui`) built from the pieces in `components.html` (button,

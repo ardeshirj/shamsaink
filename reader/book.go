@@ -192,7 +192,7 @@ func (r *reading) relayout(o blitz.Options) {
 	if hasWord {
 		for p := 0; p < last-first; p++ { // the last page whose first word is not past the place's word
 			if w, ok := firstWord(r.book.Words(first + p)); ok {
-				if before(word, w) { // highlights.go's: {block, byte} in document order
+				if before(word, w) { // bookhighlights.go's: {block, byte} in document order
 					break
 				}
 				at = p

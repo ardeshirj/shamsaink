@@ -101,7 +101,7 @@ What we do: `make kindle-reader-install` stops an open reader first.
 
 **`mplay` cannot play from a pipe.**
 - What: fed a named pipe, it exits normally and nothing is heard.
-- What we do: each part of the narration decoded to a raw file in RAM, one `mplay` each (`reader/narration.go`).
+- What we do: each part of the narration decoded to a raw file in RAM, one `mplay` each (`reader/booknarration.go`).
 - Found: experiment 12.
 
 **`/mnt/us` is slow (FUSE).**

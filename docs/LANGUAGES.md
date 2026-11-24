@@ -49,7 +49,7 @@ The lists are in several places and nothing yet checks them against each other: 
 | What | Where |
 |---|---|
 | The interface's words | `reader/ui/words/en.json`, `fa.json` (`reader/ui/words.go`: `SetLanguage`, `SetMirrored`, `RTL`) |
-| The interface for a book | `reader/lang.go` (`languageCode`, `bookLanguage`), `reader/menu.go` (`applyLanguage`); the library: `reader/libraryview.go` |
+| The interface for a book | `reader/lang.go` (`languageCode`, `bookLanguage`), `reader/bookmenu.go` (`applyLanguage`); the library: `reader/libraryview.go` |
 | Which book is Farsi | `reader/book.go` (`persian`), `reader/library/shelf.go` (`LangCode`, `Lang`) |
 | Pages' direction | `reader/lang.go` (`rtlLanguages`, `readsRTL`): adds `ur ps sd ckb ug yi dv syr` and Farsi's old codes to Readium's `ar fa he` |
 | A script's font first | `engine/src/lib.rs` (`BookScript::from_lang`: `he iw yi` Hebrew, `ar ur ps sd ckb ug` Arabic; `fallback_fonts`, `font_context`) |

@@ -9,7 +9,7 @@
 //	                                        exits when the library is left (the launchers: reader/kobo, reader/kindle)
 //
 // DIR: $SHAMSAINK_DIR, or the folder the program is in. DIR/dev there, or $SHAMSAINK_DEV set: dev mode: a Developer entry
-// in the library's menu (devssh.go); SHAMSAINK_DEV=0 keeps it off, dev/ or not.
+// in the library's menu (librarydevssh.go); SHAMSAINK_DEV=0 keeps it off, dev/ or not.
 package main
 
 import (
@@ -42,7 +42,7 @@ var (
 var version = "dev"
 
 // What stays between books: the screen, the fallback fonts, the three pages' buffers (the engine's pixels only) and
-// one for the screen put together, a page and what is over it (layers.go).
+// one for the screen put together, a page and what is over it (booklayers.go).
 type reader struct {
 	dev   *device.Device
 	fonts *blitz.Fonts
@@ -121,7 +121,7 @@ func main() {
 	rd.dev.Screen.SetInvert(dark)
 	rd.dev.SetReverseButtons(set.ReverseButtons)
 	rd.dev.SetSleepAfter(time.Duration(set.SleepMin) * time.Minute)
-	if set.Light != nil && set.Warmth != nil { // the reader's own light (light.go)
+	if set.Light != nil && set.Warmth != nil { // the reader's own light (panellight.go)
 		rd.dev.SetLight(*set.Light)
 		rd.dev.SetWarmth(*set.Warmth)
 	}
