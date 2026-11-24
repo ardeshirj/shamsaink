@@ -54,8 +54,8 @@ expect-in 30 catalogue: http://.*/books-fa.xml read in \d+ ms \(0 sections, 1 bo
 expect library: catalogue filters closed \(1 rows\)
 tap catalogue catalogue-choose
 tap catalogue-menu catalogue-1
-expect library: catalogue E2E Catalogue, its main page
 expect library: catalogue lands on "Test books"
+expect library: catalogue E2E Catalogue, its main page
 expect-in 30 catalogue: http://.*/books.xml read in \d+ ms \(0 sections, 2 books\)
 tap catalogue e1-act
 expect-in 30 library: books/e2e/fa-basics.epub read from the catalogue

@@ -432,8 +432,8 @@ var designRenders = map[string][]renderCase{
 		return funnelCatalogue(CatalogueHeadView{Name: "Ebooksgratuits", Browse: true, Chosen: true}, false, f, w, h)
 	}}, {"filtered", en, func(f *blitz.Fonts, w, h int) rendered { // a section and two facets in force: the list icon filled, the funnel's 2
 		return funnelCatalogue(CatalogueHeadView{Name: "Example Catalogue", Browse: true, Funnel: true, Chosen: true, InForce: 2}, false, f, w, h)
-	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // no books with them
-		return funnelCatalogue(CatalogueHeadView{Name: "Example Catalogue", Browse: true, Funnel: true, Chosen: true, InForce: 2}, true, f, w, h)
+	}}, {"no-match", en, func(f *blitz.Fonts, w, h int) rendered { // no books with them, on the section landed on (its heading, as always once landed)
+		return funnelCatalogue(CatalogueHeadView{Name: "Example Catalogue", Browse: true, Funnel: true, InForce: 2, Section: "New releases"}, true, f, w, h)
 	}}, {"no-funnel", en, func(f *blitz.Fonts, w, h int) rendered { // nothing to choose (one page, no sections): neither icon
 		return funnelCatalogue(CatalogueHeadView{Name: "FarsiEPUB"}, false, f, w, h)
 	}}},
