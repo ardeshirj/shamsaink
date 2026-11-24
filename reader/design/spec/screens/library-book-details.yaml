@@ -3,7 +3,12 @@ layer: overlay
 templates: [library-book-details.html]
 buttons: ring
 status: built
-purpose: "A book's facts, read only, in the menu's place; any tap closes it."
-enter: [{gesture: tap, control: book-details, from: library-book-menu}]
-controls: []
+purpose: "A book's details and actions, opened by a finger held on its cover, in the middle of the screen (2026-11-23, in place of a menu then its details): its title and author, its facts, first the share read and whether it is narrated (a tile marks neither); for a book with a cover picture, Cover: Picture or Words (its cover of words in place of a picture that is no proper cover, kept by the book's ID); then Mark as: Finished, New (one name for both, each button with its icon) and Remove book, each when it applies."
+enter: [{gesture: hold-row, from: library}]
+controls:
+  - {id: cover-picture, component: segments, action: act, does: "shows the book's cover picture on its tile", when: "the book has a cover picture", emits: "library: .* cover: picture"}
+  - {id: cover-words, component: segments, action: act, does: "shows the book's cover of words on its tile in place of its picture", when: "the book has a cover picture", emits: "library: .* cover: words"}
+  - {id: book-finish, component: button, action: act, does: marks the book finished, when: "the book is not finished", emits: "library: .* marked finished", walk: "never: a finished book leaves the Reading list, so its dialog is not a hold away (a scenario)"}
+  - {id: book-new, component: button, action: act, does: "forgets the place, keeps the highlights", when: "the book was opened", emits: "library: .* marked new", walk: "never: forgets the place, so the book opens at its start"}
+  - {id: book-remove, component: button, action: replace, to: library-book-remove}
 dismiss: tap-outside

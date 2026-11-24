@@ -48,6 +48,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	scr := rd.dev.Screen
 	library.Welcome(rd.dir) // the first start: the getting-started guide into the books
 	all := library.Shelf(library.Scan(rd.dir), rd.dir)
+	made := library.CoversMade(rd.dir) // the books whose small cover is kept (covers.go)
 	view, _ := library.LoadView(rd.dir)
 	filter := library.StartFilter(view, library.Counts(all))
 	lv := ui.LibraryView{}
@@ -57,7 +58,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 	phonesSeen := rd.phonesNow(set)
 	topBar := ui.TopBar{Time: shownNow().Format("03:04"), Phones: phonesSeen.On, Battery: rd.dev.Battery(), Charging: rd.dev.Charging(), Full: rd.dev.Full(), Menu: true}
 	var v *ui.List
-	var setHead func()       // the header again from topBar
+	var setHead func()       // the header again from topBar, with the battery red when low
 	var items []library.Item // the rows
 	// the bar's choice: the books here ("library") or the catalogues' ("catalogues", catalogues.go); always the books
 	// here when the library comes back
@@ -142,6 +143,9 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			if b.Opened && b.Share >= 0 {
 				rows[i].Read = int(b.Share*100 + 0.5)
 			}
+			if b.Cover != "" && made[b.Hash] && set.Cover[b.ID] != "words" {
+				rows[i].CoverFile = library.CoverFile(rd.dir, b.Hash)
+			}
 		}
 		if v != nil {
 			v.Close()
@@ -151,6 +155,7 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 			folder = device.OnDrive(filepath.Join(rd.dir, "books"))
 		}
 		v = ui.NewLibraryTiles(rows, folder, ui.LibraryHead(topBar, lv, rd.fonts, scr.W), rd.fonts, scr.W, scr.H)
+		v.SetDark(scr.Inverted)
 		setHead = func() {
 			v.SetHead(ui.LibraryHead(topBar, lv, rd.fonts, scr.W))
 		}
@@ -167,6 +172,10 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		fmt.Printf("update: %s reached the library: kept\n", u)
 	}
 	undone := update.Undone(rd.dir) // the launcher put the previous version back: said once the loop runs
+	// the covers not yet made, in the background while the library is open: the books shown first (covers.go)
+	coversOut, coversStop := make(chan string), make(chan struct{})
+	defer close(coversStop)
+	go makeCovers(rd.dir, coversToMake(items, all, made), scr.W, coversOut, coversStop)
 
 	events, err := rd.inputs()
 	if err != nil {
@@ -224,17 +233,13 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		scr.ShowPart(rd.over, image.Rect(0, 0, scr.W, panel.Rect().Max.Y), device.WfREAGL, false)
 	}
 	// a book's menu, its details or the question before it is removed, by the row held (library/changes.go)
-	held, bookPanel := -1, "" // the row, and which of them ("menu", "details", "remove")
+	held, bookPanel := -1, "" // the book, and which of them ("details", "remove")
 	showBook := func(p *ui.Panel, kind, variant string) {
 		r := image.Rectangle{}
 		if panel != nil {
 			r = panel.Rect()
 		}
-		if kind == "remove" { // a dialog: in the middle of the screen, as every dialog
-			p.SetY((scr.H - p.Rect().Dy()) / 2)
-		} else {
-			p.Hang(v.EntryBox(held), v.HeadHeight(), v.RowsBottom())
-		}
+		p.SetY((scr.H - p.Rect().Dy()) / 2) // a dialog: in the middle of the screen, as every dialog
 		// where it hangs and which of its cases (the kept renders' names): devtest's walk finds its buttons
 		fmt.Printf("library: book %s (%s) at %d,%d\n", kind, variant, p.Rect().Min.X, p.Rect().Min.Y)
 		panel, bookPanel = p, kind
@@ -459,6 +464,27 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case <-beats:
 			rd.dev.Beat()
 			continue
+		case h := <-coversOut:
+			made[h] = true
+			// the page shown drawn again once none of its covers is still to come; any other, as it is next laid out
+			if shelf != "library" || panel != nil || v == nil {
+				continue
+			}
+			page, here, waiting := v.Page(), false, false
+			for i, it := range items {
+				if v.PageOf(i) == page {
+					here = here || it.Hash == h
+					waiting = waiting || it.Cover != "" && !made[it.Hash]
+				}
+			}
+			if here && !waiting {
+				build()
+				v.SetPage(min(page, v.Pages()-1))
+				v.Draw(rd.over)
+				scr.Show(rd.over, device.WfGC16, false)
+				fmt.Printf("library: page %d drawn again with its covers\n", page+1)
+			}
+			continue
 		case m := <-cat.out:
 			on := shelf == "catalogues"
 			switch m.kind {
@@ -624,43 +650,43 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 		case e.Hold == device.Held && panel == nil && shelf == "library" && v.EntryAt(e.X, e.Y) >= 0: // a book's menu
 			held = v.EntryAt(e.X, e.Y)
 			b := items[held]
-			showBook(ui.DrawBookMenu(b.Finished(), b.Opened, rd.fonts, scr.W), "menu", bookCase(b.Finished(), b.Opened))
-			fmt.Printf("library: %s held: its menu\n", b.Path)
+			showBook(ui.DrawBookDetails(bookDetails(rd.dir, b, set), rd.fonts, scr.W), "details", bookCase(b.Finished(), b.Opened))
+			fmt.Printf("library: %s held: its details\n", b.Path)
 		case e.Hold != device.NotHeld:
 		case panel != nil:
 			id := panel.At(e.X, e.Y)
 			switch {
-			case bookPanel == "menu" && id == "book-finish":
+			case bookPanel == "details" && id == "book-finish":
 				b := items[held]
 				if err := library.MarkFinished(rd.dir, b.ID); err != nil {
 					fmt.Fprintln(os.Stderr, "shamsaink: mark:", err)
 				}
 				fmt.Printf("library: %s marked finished\n", b.Path)
 				changed()
-			case bookPanel == "menu" && id == "book-new":
+			case bookPanel == "details" && id == "book-new":
 				b := items[held]
 				if err := library.MarkNew(rd.dir, b.ID); err != nil {
 					fmt.Fprintln(os.Stderr, "shamsaink: mark new:", err)
 				}
 				fmt.Printf("library: %s marked new\n", b.Path)
 				changed()
-			case bookPanel == "menu" && id == "book-details":
+			case bookPanel == "details" && (id == "cover-picture" || id == "cover-words"): // its cover: picture or words, kept by its ID
 				b := items[held]
-				d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: library.Lang(b.Book), Source: b.Source,
-					File: filepath.Base(b.Path), RTL: writtenRTL(library.Lang(b.Book)), Narrated: b.Narrated,
-					Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies)}
-				if st, err := os.Stat(filepath.Join(rd.dir, b.Path)); err == nil {
-					d.Size = st.Size()
+				if set.Cover == nil {
+					set.Cover = map[string]string{}
 				}
-				if b.Opened {
-					d.LastRead = b.When
-					if b.Share >= 0 {
-						d.Read = int(b.Share*100 + 0.5)
-					}
+				if id == "cover-words" {
+					set.Cover[b.ID] = "words"
+				} else {
+					delete(set.Cover, b.ID)
 				}
-				showBook(ui.DrawBookDetails(d, rd.fonts, scr.W), "details", bookCase(false, b.Opened))
-				fmt.Printf("library: %s details\n", b.Path)
-			case bookPanel == "menu" && id == "book-remove":
+				set.save(rd.dir)
+				page := v.Page()
+				build() // the tile behind, as it will be when the dialog closes
+				v.SetPage(min(page, max(v.Pages()-1, 0)))
+				showBook(ui.DrawBookDetails(bookDetails(rd.dir, b, set), rd.fonts, scr.W), "details", bookCase(b.Finished(), b.Opened))
+				fmt.Printf("library: %s cover: %s\n", b.Path, strings.TrimPrefix(id, "cover-"))
+			case bookPanel == "details" && id == "book-remove":
 				b := items[held]
 				showBook(ui.DrawBookRemove(b.Title, writtenRTL(library.Lang(b.Book)), 1+len(b.Copies), rd.fonts, scr.W), "remove", "ask")
 				fmt.Printf("library: %s: remove?\n", b.Path)
@@ -670,8 +696,11 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 					fmt.Fprintln(os.Stderr, "shamsaink: remove:", err)
 				} else {
 					fmt.Printf("library: %s removed\n", b.Path)
-					if _, ok := set.Direction[b.ID]; ok { // the page direction set for it
+					_, dir := set.Direction[b.ID]
+					_, cover := set.Cover[b.ID]
+					if dir || cover { // the page direction and the cover chosen for it
 						delete(set.Direction, b.ID)
+						delete(set.Cover, b.ID)
 						set.save(rd.dir)
 					}
 				}
@@ -1040,6 +1069,24 @@ func (rd *reader) choose(t time.Time, splash *ui.Opening) (string, error) {
 func catListed(cv ui.CatalogueView) string {
 	cv.Loading = false
 	return fmt.Sprint(cv)
+}
+
+// bookDetails is what a book's dialog shows of it (ui.DrawBookDetails).
+func bookDetails(dir string, b library.Item, set *settings) ui.BookDetails {
+	d := ui.BookDetails{Title: b.Title, Author: b.Author, Lang: library.Lang(b.Book), Source: b.Source,
+		File: filepath.Base(b.Path), RTL: writtenRTL(library.Lang(b.Book)), Narrated: b.Narrated,
+		Picture: b.Cover != "", Words: set.Cover[b.ID] == "words",
+		Opened: b.Opened, Finished: b.Finished(), Read: -1, Added: time.Unix(b.Added, 0), Copies: 1 + len(b.Copies)}
+	if st, err := os.Stat(filepath.Join(dir, b.Path)); err == nil {
+		d.Size = st.Size()
+	}
+	if b.Opened {
+		d.LastRead = b.When
+		if b.Share >= 0 {
+			d.Read = int(b.Share*100 + 0.5)
+		}
+	}
+	return d
 }
 
 // bookCase is which of its cases a book's menu or details is drawn in, as the kept renders name them: finished, opened

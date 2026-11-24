@@ -124,6 +124,59 @@ func markBooks() []Book {
 	}
 }
 
+// coverArt is a cover picture of our own, drawn from html (a book's cover is never committed: CLAUDE.md), 600 by 900.
+func coverArt(f *blitz.Fonts, html string) *image.Gray {
+	const w, h = 600, 900
+	page := `<html><head><style>body { margin: 0; } .c { width: 600px; height: 900px; display: flex; flex-direction: column;
+align-items: center; justify-content: center; text-align: center; font-family: "DejaVu Serif", serif; position: relative; }
+.end { position: absolute; bottom: 0; left: 0; font-size: 20px; line-height: 1; }</style></head><body>` +
+		strings.Replace(html, "</div></div>", `</div><span class="end">.</span></div>`, 1) + `</body></html>`
+	b := blitz.New([]string{"cover.html"}, readFor(page), blitz.Options{Width: w, Height: h, FontSize: 44}, f)
+	defer b.Close()
+	b.Layout(0)
+	img := image.NewGray(image.Rect(0, 0, w, h))
+	b.Draw(0, img)
+	return img
+}
+
+// coverBooks is markBooks with three of them given picture covers of our own, the rest their words.
+func coverBooks(f *blitz.Fonts) []Book {
+	bs := markBooks()
+	bs[0].Cover = coverArt(f, `<div class="c" style="background: #1e1e1e; color: white;">
+<div style="width: 300px; height: 300px; border: 10px solid white; border-radius: 50%; margin-bottom: 70px;"></div>
+<div style="font-size: 76px; letter-spacing: 6px;">A LONG<br>VOYAGE</div><div style="font-size: 36px; margin-top: 40px;">AN AUTHOR</div></div>`)
+	bs[3].Cover = coverArt(f, `<div class="c" style="background: #5a5a5a; color: white;">
+<div style="width: 220px; height: 220px; background: #e8e8e8; border-radius: 50%; margin-bottom: 90px;"></div>
+<div style="font-size: 96px; font-family: Vazirmatn, sans-serif; font-weight: bold;" lang="fa" dir="rtl">سفر به ماه</div></div>`)
+	bs[5].Cover = coverArt(f, `<div class="c" style="background: #d8d8d8; color: #111; justify-content: flex-start;">
+<div style="height: 330px; width: 100%; background: #9a9a9a;"></div><div style="height: 40px; width: 100%; background: #4a4a4a;"></div>
+<div style="font-size: 70px; margin-top: 110px; font-style: italic;">The Lighthouse<br>Keeper</div><div style="font-size: 34px; margin-top: 50px;">A PATIENT AUTHOR</div></div>`)
+	return bs
+}
+
+// darkened is img as the screen shows it in dark mode: every grey inverted (a List's pictures were painted inverted
+// for it, List.SetDark).
+func darkened(img *image.Gray) *image.Gray {
+	for i, p := range img.Pix {
+		img.Pix[i] = 255 - p
+	}
+	return img
+}
+
+func coverTiles(dark bool) func(f *blitz.Fonts, w, h int) rendered {
+	return func(f *blitz.Fonts, w, h int) rendered {
+		head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 2, 1, 6}, Filter: 3}, f, w)
+		l := NewLibraryTiles(coverBooks(f), "", head, f, w, h)
+		defer l.Close()
+		l.SetDark(func() bool { return dark })
+		img := screenOf(w, h, l.Draw)
+		if dark {
+			img = darkened(img)
+		}
+		return rendered{img: img, boxes: l.Boxes(), placement: "screen"}
+	}
+}
+
 func libraryHead(f *blitz.Fonts, w int) *Panel {
 	return LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 6, 1, 10}}, f, w)
 }
@@ -296,6 +349,8 @@ var designRenders = map[string][]renderCase{
 		head := LibraryHead(libraryTopBar(), LibraryView{Counts: [4]int{4, 2, 1, 6}, Filter: 3}, f, w)
 		return tiles(markBooks(), head, 0, f, w, h)
 	}},
+		{"covers", en, coverTiles(false)},     // planned: picture covers beside covers of words, the marks on a disc of paper
+		{"covers-dark", en, coverTiles(true)}, // planned: the same in dark mode, the pictures left as they are
 		{"empty-filter", en, func(f *blitz.Fonts, w, h int) rendered { // none in this filter, some in others
 			lib := NewLibrary(nil, "", libraryHead(f, w), f, w, h)
 			defer lib.Close()
@@ -415,12 +470,15 @@ var designRenders = map[string][]renderCase{
 	"catalogue-menu": {{"two", en, func(f *blitz.Fonts, w, h int) rendered {
 		return pr(DrawCatalogueMenu([]string{"FarsiEPUB", "Project Gutenberg"}, 0, catalogueHead(f, w, true).Rect().Dy(), f, w))
 	}}},
-	"library-book-menu": {{"new", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, false, f, w)) }},
-		{"opened", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(false, true, f, w)) }},
-		{"finished", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookMenu(true, true, f, w)) }}},
-	"library-book-details": {{"opened", en, func(f *blitz.Fonts, w, h int) rendered {
+	"library-book-details": {{"new", en, func(f *blitz.Fonts, w, h int) rendered {
+		return rel(DrawBookDetails(BookDetails{Title: "Tales of a Small Town", Author: "Another Author", Lang: "en", File: "tales.epub",
+			Size: 1 << 20, Read: -1, Added: designDay(2)}, f, w))
+	}}, {"opened", en, func(f *blitz.Fonts, w, h int) rendered {
 		return rel(DrawBookDetails(BookDetails{Title: "A Long Voyage", Author: "An Author", Lang: "en", Source: "a folder", File: "a-long-voyage.epub",
-			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30)}, f, w))
+			Size: 3 << 20, Narrated: true, Opened: true, Read: 42, Added: designDay(2), LastRead: designDay(30), Picture: true}, f, w))
+	}}, {"finished", en, func(f *blitz.Fonts, w, h int) rendered {
+		return rel(DrawBookDetails(BookDetails{Title: "رود کم‌آب", Author: "مارا الیس", RTL: true, Lang: "fa", File: "rud.epub",
+			Size: 2 << 20, Opened: true, Finished: true, Read: 100, Added: designDay(2), LastRead: designDay(30)}, f, w))
 	}}},
 	"library-book-remove": {{"ask", en, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawBookRemove("A Long Voyage", false, 1, f, w)) }}},
 	"notice": {{"listen", enFa, func(f *blitz.Fonts, w, h int) rendered { return rel(DrawNotice("listen-not-here", "", f, w)) }},

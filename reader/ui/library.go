@@ -14,13 +14,15 @@ import (
 // A book's row in the library, as the reader knows it.
 type Book struct {
 	Title, Author string
-	Read          int    // percent read; -1 when not known
-	New           bool   // never opened: "new" shown (not in the New filter, where every book is)
-	Narrated      bool   // it has narration (media overlays): a headphones mark after its title
-	Finished      bool   // read to the end: no bar
-	RTL           bool   // its title reads right to left
-	When          string // a date shown at the row's end in place of the share read: when added (New), finished (Finished); "" for none
-	Year          string // the year the book gives (its dc:date's), "" when it gives none: on a tile's cover (planned)
+	Read          int         // percent read; -1 when not known
+	New           bool        // never opened: "new" shown (not in the New filter, where every book is)
+	Narrated      bool        // it has narration (media overlays): a headphones mark after its title
+	Finished      bool        // read to the end: no bar
+	RTL           bool        // its title reads right to left
+	When          string      // a date shown at the row's end in place of the share read: when added (New), finished (Finished); "" for none
+	Year          string      // the year the book gives (its dc:date's), "" when it gives none: on a tile's cover
+	Cover         *image.Gray // its cover picture made small, nil for none: drawn in place of its words
+	CoverFile     string      // or the file that picture is kept in (library.CoverFile), read when its page is drawn
 }
 
 // The library's rows, for templates/library.html.
@@ -328,14 +330,6 @@ func DrawLibrarySort(sort, under int, fonts *blitz.Fonts, w int) *Panel {
 	return m
 }
 
-// DrawBookMenu draws a book's menu (templates/library-book-menu.html), for the row of a book held in the library: Mark as
-// finished unless it is (book-finish); Mark as new when it was opened (book-new);
-// Details (book-details) and Remove book (book-remove). Hang puts it by the row.
-func DrawBookMenu(finished, opened bool, fonts *blitz.Fonts, w int) *Panel {
-	html, ids := render("library-book-menu.html", struct{ Finished, Opened bool }{finished, opened})
-	return drawPanelIn(html, ids, "book-menu", fonts, w, 600) // at most: cut to the list
-}
-
 // What a book's details show: the library's record of it and its place file's.
 type BookDetails struct {
 	Title, Author, Lang, Source, File string
@@ -343,11 +337,13 @@ type BookDetails struct {
 	Size                              int64 // bytes
 	Copies                            int   // its files (identical copies, one book); 1 or 0: one
 	Narrated, Opened, Finished        bool
-	Read                              int // percent read; -1 when not known
+	Picture, Words                    bool // it has a cover picture; its cover of words chosen in its place
+	Read                              int  // percent read; -1 when not known
 	Added, LastRead                   time.Time
 }
 
-// DrawBookDetails draws a book's details (templates/library-book-details.html), with no buttons: any tap closes it.
+// DrawBookDetails draws a book's details and its actions (templates/library-book-details.html), a dialog: the caller
+// places it in the middle of the screen; a tap outside closes it.
 func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 	date := func(t time.Time) string {
 		if t.IsZero() {
@@ -372,12 +368,12 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 		read = "—"
 	}
 	yes := map[bool]string{true: word("yes"), false: word("no")}
-	rows := [][2]string{
+	rows := [][2]string{ // first what a tile no longer marks (2026-11-23): the share read, narrated
 		{word("read-share"), read},
+		{word("narrated"), yes[d.Narrated]},
 		{word("last-read"), date(d.LastRead)},
 		{word("added"), date(d.Added)},
 		{word("language"), lang},
-		{word("narrated"), yes[d.Narrated]},
 	}
 	if d.Source != "" {
 		rows = append(rows, [2]string{word("source"), d.Source})
@@ -391,7 +387,9 @@ func DrawBookDetails(d BookDetails, fonts *blitz.Fonts, w int) *Panel {
 	data := struct {
 		Title, Author, Dir string
 		Rows               [][2]string
-	}{d.Title, d.Author, "ltr", rows}
+		Finished, Opened   bool
+		Picture, Words     bool
+	}{d.Title, d.Author, "ltr", rows, d.Finished, d.Opened, d.Picture, d.Words}
 	if d.RTL {
 		data.Dir = "rtl"
 	}

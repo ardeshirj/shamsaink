@@ -83,7 +83,7 @@ func TestRemoveBook(t *testing.T) {
 	var kept []string
 	for _, k := range []string{a.ID, c.ID} {
 		for _, f := range []string{"places/" + k + ".place", "places/" + k + ".mark", "highlights/" + k + ".json",
-			"highlights/" + k + ".json.bad", "highlights/" + k + ".unplaced.json", "cache/" + k + ".cache"} {
+			"highlights/" + k + ".json.bad", "highlights/" + k + ".unplaced.json", "cache/" + k + ".cache", "covers/" + k + ".png"} {
 			files.Write(filepath.Join(dir, f), []byte("x"))
 			kept = append(kept, f)
 		}
@@ -93,7 +93,7 @@ func TestRemoveBook(t *testing.T) {
 	}
 	for i, f := range kept {
 		_, err := os.Stat(filepath.Join(dir, f))
-		if gone := err != nil; gone != (i >= 6) {
+		if gone := err != nil; gone != (i >= 7) { // the other book's (a's) seven kept
 			t.Errorf("%s: gone %v", f, gone)
 		}
 	}

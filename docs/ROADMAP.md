@@ -105,9 +105,7 @@ keyboard first ("Now").
 - The dock (status and battery, place, Close, Contents, Mark, Light, Text, Listen), in place of today's menu
 - The screens not built, each specified when built: the glance (a held margin), the word panel (a held word:
   meaning, four colours, a note, Listen from here; replaces the highlight's menu), footnotes in place, listening and
-  its paused player, Sound (the headphones), landscape (two pages), the keyboard, the library with real covers (its
-  tiles since 2026-11-23 are covers made of the book's words; pictures only if a thumbnail kept at adding the book
-  measures fast enough on the devices)
+  its paused player, Sound (the headphones), landscape (two pages), the keyboard
 - The sleep screen's choice: the book's cover or the page (the format's `cover: true`, `SLEEP-SCREEN-FORMAT.md`)
 - Settings on a page of their own, in sections, if the panels outgrow a panel (2026-11-22, the maintainer: each
   setting now has a grey line saying what it does, so Settings is about 570 px tall on the Kobo; to look at again as

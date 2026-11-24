@@ -1,32 +1,23 @@
 {{/* The library as tiles (tiles.go, NewLibraryTiles; 2026-11-23, in place of its rows): a page of tiles, Cols a row,
-laid out whole (a page of its own, so no tile is cut across two). Each tile a cover of the book's own words in its own
-direction (title bold, a short rule, the author, the year at the foot when the book gives one), centred, on plain paper
-with an ink border. In the frame's corners whatever the book's direction: the headphones top left (narrated); top right
-the book's state as one ring, empty when new, a wedge filled clockwise when opened (painted by tiles.go into the box
-left for it: Blitz draws no conic-gradient or SVG here), a ringed check when finished. Under the cover the date added
-or finished in the New and Finished filters. The grid runs left to right, as the frame. */ -}}
+laid out whole (a page of its own, so no tile is cut across two). Each tile book-shaped (2 by 3, CoverW by Cover),
+centred in its column: its cover picture shown whole (painted by tiles.go into the box left for it), else a cover of
+the book's own words in its own direction (title bold, a short rule, the author, the year at the foot when the book
+gives one), centred, on plain paper with an ink border. No marks on a tile (2026-11-23): what it is and where the reader is with it are in the
+dialog a finger held on it opens (library-book-details.html). The grid runs left to right, as the frame. */ -}}
 {{template "head" "ltr"}}<style>
-.tiles { display: grid; grid-template-columns: repeat({{.Cols}}, 1fr); column-gap: {{.Gap}}px; row-gap: {{.Gap}}px; }
-.tl { display: flex; flex-direction: column; }
-.cover { position: relative; height: {{.Cover}}px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 8px;
+.tiles { height: {{.Room}}px; align-content: center; display: grid; grid-template-columns: repeat({{.Cols}}, 1fr); column-gap: {{.Gap}}px; row-gap: {{.Gap}}px; }
+.tl { display: flex; flex-direction: column; align-items: center; }
+.cover { position: relative; width: {{.CoverW}}px; height: {{.Cover}}px; box-sizing: border-box; border: 2px solid var(--ink); border-radius: 8px;
   padding: 1.45em 0.5em 1.35em; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
 .cover .tl-t { font-size: 0.72em; font-weight: bold; line-height: 1.25; }
 .cover[dir="rtl"] .tl-t { line-height: 1.4; }
 .cover .tl-rule { width: 1.6em; border-top: 2px solid var(--ink); margin: 0.5em 0; }
 .cover .tl-a { font-size: 0.6em; line-height: 1.3; color: #333; }
 .cover .tl-y { position: absolute; left: 0; right: 0; bottom: 0.55em; font-size: 0.52em; color: #444; font-family: "DejaVu Sans", Vazirmatn, sans-serif; }
-.cover .tl-nar { position: absolute; top: 0.4em; left: 0.45em; font-size: 0.8em; }
-.cover .tl-st { position: absolute; top: 0.45em; right: 0.45em; line-height: 1; }
-.tl-ring { display: block; width: 0.95em; height: 0.95em; }
-.cover .tl-st .i { display: block; font-size: 1.12em; line-height: 1; margin: -0.08em; } /* the check's glyph has room around it: as big as the ring */
-.tl-u { height: 44px; display: flex; align-items: center; justify-content: center; }
-.tl-end { margin: 0; color: white; } /* a line of text after the last row: the engine's page ends at a line, so its edges are kept */
-.tl-when { font-size: 0.55em; color: #444; font-family: Vazirmatn, "DejaVu Sans", sans-serif; }
+.cover.pic { padding: 0; }
+.tl-end { margin: 0; color: white; font-size: 4px; line-height: 1; } /* a line of text after the last row: the engine's page ends at a line, so its edges are kept */
 </style></head><body><div class="tiles">
-{{- range .Tiles}}<div class="tl" id="{{.ID}}"><div class="cover" dir="{{.Dir}}"{{textlang .Title}}>
-{{- if .Narrated}}<span class="tl-nar">{{icon "headphones"}}</span>{{end}}<span class="tl-st" dir="ltr">
-{{- if .Finished}}{{iconfill "check-circle"}}{{else if .Ring}}<span class="tl-ring" id="ring-{{.ID}}"></span>{{end}}</span>
-<span class="tl-t">{{.Title}}</span>{{if .Author}}<span class="tl-rule"></span><span class="tl-a">{{.Author}}</span>{{end}}
-{{- with .Year}}<span class="tl-y">{{.}}</span>{{end}}</div>
-<div class="tl-u">{{with .When}}<span class="tl-when"><bdi dir="ltr">{{.}}</bdi></span>{{end}}</div></div>
+{{- range .Tiles}}<div class="tl" id="{{.ID}}"><div class="cover{{if .Pic}} pic{{end}}" dir="{{.Dir}}"{{textlang .Title}}{{if .Pic}} id="cov-{{.ID}}"{{end}}>
+{{- if not .Pic}}<span class="tl-t">{{.Title}}</span>{{if .Author}}<span class="tl-rule"></span><span class="tl-a">{{.Author}}</span>{{end}}
+{{- with .Year}}<span class="tl-y">{{.}}</span>{{end}}{{end}}</div></div>
 {{- end}}</div><p class="tl-end">.</p></body></html>

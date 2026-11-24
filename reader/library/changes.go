@@ -71,8 +71,8 @@ func MarkNew(dir, id string) error {
 }
 
 // Remove deletes a book's files (every copy) and everything kept for it: its place, mark, highlights (and a copy of
-// them that did not parse, and those a new edition no longer had) and cache; the reader's settings for it are the
-// caller's. library.json drops it at the next scan.
+// them that did not parse, and those a new edition no longer had), cache and small cover; the reader's settings for it
+// are the caller's. library.json drops it at the next scan.
 func Remove(dir string, b Book) error {
 	for _, p := range append([]string{b.Path}, b.Copies...) {
 		if err := removeAll(filepath.Join(dir, p)); err != nil {
@@ -85,7 +85,8 @@ func Remove(dir string, b Book) error {
 		filepath.Join(dir, "highlights", b.ID+".json"),
 		filepath.Join(dir, "highlights", b.ID+".json.bad"),
 		filepath.Join(dir, "highlights", b.ID+".unplaced.json"),
-		filepath.Join(dir, "cache", b.Hash+".cache"))
+		filepath.Join(dir, "cache", b.Hash+".cache"),
+		CoverFile(dir, b.Hash))
 }
 
 // removeAll removes the files, those already gone ignored; the first other error is returned.

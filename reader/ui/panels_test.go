@@ -140,11 +140,9 @@ func TestPanels(t *testing.T) {
 				}
 			}
 		}
-		for _, name := range []string{"menu", "menu-finished", "menu-new", "details", "remove"} {
+		for _, name := range []string{"details", "remove"} {
 			var p *Panel
 			switch name {
-			case "menu", "menu-finished", "menu-new":
-				p = DrawBookMenu(name == "menu-finished", name != "menu-new", fonts, w)
 			case "details":
 				p = DrawBookDetails(BookDetails{Title: books[row].Title, Author: books[row].Author, RTL: books[row].RTL, Lang: "fa",
 					Source: "farsiepub", File: "a-long-file-name_of-a-book-ocr.epub", Size: 3 << 20, Narrated: true, Opened: true, Read: 42,
@@ -152,13 +150,13 @@ func TestPanels(t *testing.T) {
 			case "remove":
 				p = DrawBookRemove(books[row].Title, books[row].RTL, 1, fonts, w)
 			}
-			p.Hang(lib.EntryBox(row), lib.HeadHeight(), lib.RowsBottom())
+			p.SetY((h - p.Rect().Dy()) / 2) // a dialog: in the middle of the screen, as libraryview places it
 			img := image.NewGray(image.Rect(0, 0, w, h))
 			lib.Draw(img)
 			p.Over(img)
 			save(fmt.Sprintf("library-book-%s-row%d", name, row), img)
-			if r := p.Rect(); r.Max.Y > lib.RowsBottom() || r.Min.Y < lib.HeadHeight() || r.Overlaps(lib.EntryBox(row)) {
-				t.Errorf("book %s by row %d: at %v, the row at %v", name, row, r, lib.EntryBox(row))
+			if r := p.Rect(); r.Max.Y > lib.RowsBottom() || r.Min.Y < lib.HeadHeight() {
+				t.Errorf("book %s by row %d: at %v, off the list's room", name, row, r)
 			}
 		}
 		lib.Close()
@@ -399,7 +397,7 @@ func TestPanelEdges(t *testing.T) {
 		"highlight-menu": DrawHighlightMenu(false, true, fonts, w), "dock": DrawDock(p, fonts, w, h), "contents": v.head, "topbar": topBar,
 		"library-head": LibraryHead(TopBar{Time: "20:48", Battery: 50, Menu: true}, LibraryView{Counts: [4]int{1, 2, 3, 6}, SortOn: true}, fonts, w),
 		"library-menu": DrawMenu(160, "device", fonts, w), "book-menu": DrawMenu(160, "reading", fonts, w),
-		"library-sort": DrawLibrarySort(0, 320, fonts, w), "library-book-menu": DrawBookMenu(false, true, fonts, w),
+		"library-sort":        DrawLibrarySort(0, 320, fonts, w),
 		"library-book-remove": DrawBookRemove("A title", false, 1, fonts, w)} {
 		for id, r := range m.buttons {
 			if last, ok := listRows[name]; ok && id != last { // a list's rows: grey lines between them, its border under the last
@@ -431,7 +429,7 @@ func TestPanelEdges(t *testing.T) {
 }
 
 // The panels that are a list whose rows are its buttons, by their last row's id.
-var listRows = map[string]string{"library-book-menu": "book-remove", "highlight-menu": "hl-listen"}
+var listRows = map[string]string{"highlight-menu": "hl-listen"}
 
 // The buttons that are an icon alone (no border), besides the bar's.
 var iconButtons = map[string]bool{"list-sort": true, "contents-close": true, "chapter-prev": true, "chapter-next": true, "contents": true, "text": true,

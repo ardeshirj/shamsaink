@@ -27,8 +27,14 @@ type List struct {
 	pageHTML func(page int) string
 	docs     map[int]*blitz.Book
 	opts     blitz.Options
-	paint    func(d *blitz.Book, img *image.Gray) // drawn by us over a page laid out a page at a time (a tile's pie)
+	paint    func(d *blitz.Book, img *image.Gray) // drawn by us over a page laid out a page at a time (a tile's ring, cover)
+	dark     func() bool                          // whether dark mode is on, asked as each page is drawn (SetDark)
 }
+
+// SetDark gives the list how to know whether dark mode is on (the screen's Inverted), for the pictures it paints (a
+// book's cover): the screen inverts every grey in dark mode, so a picture is painted inverted and is seen as it is, in
+// either mode (2026-11-23).
+func (v *List) SetDark(on func() bool) { v.dark = on }
 
 // pagerData is what templates/pager.html draws: the count, in the list's direction.
 type pagerData struct {
@@ -168,6 +174,9 @@ func (v *List) EntryAt(x, y int) int {
 func (v *List) EntryBox(i int) image.Rectangle {
 	return v.at[i].Add(image.Pt(0, v.head.img.Rect.Dy()))
 }
+
+// PageOf is the page entry i is on.
+func (v *List) PageOf(i int) int { return v.on[i] }
 
 // RowsBottom is where the rows' room ends on the screen: the pager's top, else the screen's bottom.
 func (v *List) RowsBottom() int {

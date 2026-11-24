@@ -25,6 +25,7 @@ type settings struct {
 	Margin     int               `json:"margin"`              // px
 	LeadMs     int               `json:"lead_ms"`             // read-along: the words underlined this much after the sound starts, for the headphones' own delay
 	Direction  map[string]string `json:"direction,omitempty"` // by book (its ID in the library): "rtl" or "ltr"
+	Cover      map[string]string `json:"cover,omitempty"`     // by book (its ID): "words" for its cover of words in place of its picture (its dialog, 2026-11-23)
 	// The interface's language (lang.go): the menus follow the book's language unless this is set ("Follow book language"
 	// off: English everywhere). Stored as the opposite so that a file from before it, without the key, follows the book.
 	EnglishOnly bool `json:"english_only,omitempty"`

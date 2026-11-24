@@ -165,19 +165,36 @@ flowchart LR
 
 ### The library as tiles (2026-11-23)
 The library shows its books as tiles, three a row and two rows a page, in place of a row each (`reader/ui/tiles.go`,
-`library-tiles.html`; the rule "A book is its own cover", `principles.yaml`). Each cover is made of the book's own
-words, title, author and the year its `dc:date` starts with (`library.Book.Year`, its digits as written; library.json's
-entries read again once for it, metadata version 2), centred in the book's direction, so a mixed shelf has no column
-to share: the rows' right-to-left titles had to end before a share read kept in one column. The headphones sit in the
-cover's top left corner and the book's state in its top right, as one ring filled clockwise from the top: empty when
-new, a wedge when opened (at least 5%), a check when finished. A bar filled from the book's start was tried first: it
-ran from the left on one book and from the right on the next. Blitz draws neither a `conic-gradient` nor an SVG here, so
-the ring is painted by us (`paintRing`) into a box the template leaves for it, once the page is laid out. The date
-added or finished sits under the cover in New and Finished. Page edges under the cover, for a book's thickness, were
-tried and left out (2026-11-23): plain tiles read better, and a spine would have put a side back. A page of tiles is laid out on its own (the engine cuts pages between lines of text, which
-could cut a tile across two), when first shown; every page's six slots are in the same places, so a tap is placed
-without laying the page out (`List.pageHTML`). Real covers would be pictures decoded on every page, slow without
-SIMD on these chips: not drawn (if ever, a small grey thumbnail kept when the book is added, measured first).
+`library-tiles.html`; the rule "A book is its own cover", `principles.yaml`). Each tile is the shape of a book (2 by
+3): its cover picture shown whole when it has one, else a cover of its own words (title, author and the year its
+`dc:date` starts with), centred in the book's direction, so a mixed shelf has no column to share. A page of tiles is
+laid out on its own (the engine cuts pages between lines of text, which could cut a tile across two), when first
+shown; every page's six slots are in the same places, so a tap is placed without laying the page out
+(`List.pageHTML`).
+
+- **Nothing on a tile.** What a tile used to mark (the share read, narrated, new, finished) is in the dialog a finger
+  held on it opens (`library-book-details.html`, in place of a menu and then a details panel): the book's facts,
+  those first; Cover: Picture or Words; Mark as: Finished, New; Remove book. Tried on the Kindle and left out on the
+  way (2026-11-23): a bar under the cover (it ran from the left on one book, the right on the next), then a ring
+  filled clockwise (painted by us: Blitz draws neither a `conic-gradient` nor an SVG here), page edges for a book's
+  thickness, the marks in a strip over the cover or a footer under it, and on the picture with a halo of paper. The
+  covers read cleaner bare.
+- **Covers** (`reader/library/covers.go`). The scan notes each book's cover picture (`Book.Cover`: the manifest's
+  `cover-image`, else the item EPUB 2's `<meta name="cover">` names; library.json's metadata version 3). Decoding one
+  as it is shown costs too much on these chips (measured on the Kindle: Standard Ebooks' 1400×2100 JPEGs 420–460 ms
+  each, six a page), so each is made once into a small grey PNG, `covers/HASH.png` beside `cache/` (by the book's
+  hash: a new edition has its own), at the least size filling a tile (a JPEG's grey is its Y plane, read straight:
+  scaling 40 ms). It is made in the background while the library is open (`reader/covers.go`: the books shown first;
+  stopped when a book opens, carried on next time), each one's hash sent to the library's loop, which draws the page
+  again once all its covers are in (one refresh, not one a tile). Measured on the Kindle: 70–840 ms a cover, 11 covers
+  in 4.4 s; a kept one is read in 10–25 ms. Written whole (a hidden name, then renamed); removing a book removes it.
+- **Picture or words is the reader's choice, per book** (`settings.json`'s `cover`, by the book's ID, as its page
+  direction): a picture that is no proper cover (a banner, a square, a tiny one) is switched to words from the book's
+  dialog. No rule hides some pictures: a reader would not see why one book shows its picture and another not.
+- **Dark mode** inverts every grey as the screen is written (`device.Screen`); a cover would come out as a negative,
+  so the tiles paint it inverted in dark mode (`List.SetDark`, asked as each page is drawn) and the screen's
+  inversion shows it as it is. No exception in the screen's copy loop (the low battery's red, the one before, went
+  the same day: its warning icon says it on every device).
 
 ### The library's books: an ID each, and what is kept for it (2026-11-21)
 **Each book has an ID that never changes,** in `library.json` with its metadata, its files (identical copies are one

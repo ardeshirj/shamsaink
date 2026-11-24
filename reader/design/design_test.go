@@ -55,9 +55,9 @@ func TestValidateCatches(t *testing.T) {
 		{"panel from panel", func(s *Spec) {
 			s.Screens["light"].Controls = append(s.Screens["light"].Controls, Control{ID: "x", Component: "button", Action: "goto", To: "light"})
 		}, "a panel from a panel"},
-		{"replace across layers", func(s *Spec) { s.Screens["library-book-menu"].Controls[2].To = "library-sort" }, "another layer"},
+		{"replace across layers", func(s *Spec) { s.Screens["library-book-details"].Controls[4].To = "library-sort" }, "another layer"},
 		{"replace into nothing", func(s *Spec) { s.Screens["menu"].Controls[0].To = "nowhere" }, "no screen"},
-		{"nothing enters", func(s *Spec) { s.Screens["library-book-menu"].Enter = nil }, "nothing enters it"},
+		{"nothing enters", func(s *Spec) { s.Screens["library-book-details"].Enter = nil }, "nothing enters it"},
 		{"unknown capability on a control", func(s *Spec) { s.Screens["dock"].Controls[6].Requires = []string{"teleport"} }, "not a capability"},
 		{"unknown capability on a device", func(s *Spec) { s.Devices[0].Has = append(s.Devices[0].Has, "teleport") }, "not a capability"},
 		{"word", func(s *Spec) { s.Screens["light"].Words = append(s.Screens["light"].Words, "no-such-word") }, "no-such-word"},

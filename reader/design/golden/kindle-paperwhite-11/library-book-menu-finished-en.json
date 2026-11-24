@@ -1,8 +1,0 @@
-{
- "placement": "relative",
- "boxes": {
-  "book-details": [3, 93, 388, 185],
-  "book-new": [3, 3, 388, 93],
-  "book-remove": [3, 185, 388, 278]
- }
-}

@@ -66,7 +66,7 @@ import (
 //	leave                     the reader left from the library's menu
 //	catalogue-serve BOOK...   a catalogue of the test books named, served from this computer (catalogue.go)
 //	update-serve latest|broken, tap-dialog SCREEN CONTROL: updates over Wi-Fi (update.go); tap-dialog also taps a
-//	                          book's menu in the library, where the reader hung it: tap-dialog library-book-menu book-finish
+//	                          book's dialog in the library, where the reader placed it: tap-dialog library-book-details book-finish
 //	expect-nickel SECONDS     waits (SSH may drop and come back) for Kobo's interface, the reader gone: the reader closed
 //	time NAME STEP..., mem NAME, cold PATH, place PATH DOC PAGE: timing a step from the tap to the ink, memory, a first
 //	                          open, a place (timing.go); on the devices only

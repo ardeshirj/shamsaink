@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -37,12 +38,13 @@ type Book struct {
 	Added    int64    `json:"added"`              // the file's modification time, Unix seconds
 	Narrated bool     `json:"narrated,omitempty"` // it has media overlays (SMIL in its manifest)
 	Year     string   `json:"year,omitempty"`     // the year its dc:date starts with, its digits as written ("1851", "۱۳۹۸"); "" when none
+	Cover    string   `json:"cover,omitempty"`    // its cover picture's path inside the EPUB, "" when it names none (covers.go)
 	V        int      `json:"v,omitempty"`        // metaVersion when read; older entries are read again
 }
 
 // metaVersion is what an entry of library.json was read with: 1 since a book's narration is read too, 2 its year
-// (2026-11-23, the library's tiles).
-const metaVersion = 2
+// (2026-11-23, the library's tiles), 3 its cover picture (2026-11-23).
+const metaVersion = 3
 
 // hashSample is how much of a book's start and end its hash reads.
 const hashSample = 64 << 10
@@ -136,7 +138,7 @@ func Scan(dir string) []Book {
 			fmt.Printf("library: %s: %v\n", b.Path, err)
 		}
 		b.Title, b.Author, b.Lang = strings.TrimSpace(m.Title), strings.TrimSpace(m.Author), strings.TrimSpace(m.Lang)
-		b.Narrated, b.Year, b.V = m.Narrated, year(m.Date), metaVersion
+		b.Narrated, b.Year, b.Cover, b.V = m.Narrated, year(m.Date), m.Cover, metaVersion
 		if b.Title == "" {
 			b.Title = tidyName(path.Base(b.Path))
 		}
@@ -179,6 +181,7 @@ func tidyName(name string) string {
 // meta is what an EPUB's package document says of the book: Narrated when its manifest has a media overlay (SMIL).
 type meta struct {
 	Title, Author, Lang, Date string
+	Cover                     string // the cover picture's path in the EPUB: the manifest's cover-image (EPUB 3), else the item <meta name="cover"> names (EPUB 2), if a picture
 	Narrated                  bool
 }
 
@@ -233,6 +236,13 @@ func epubMeta(file string) (m meta, err error) {
 	d = xml.NewDecoder(strings.NewReader(string(pkg)))
 	d.Strict = false
 	d.CharsetReader = func(_ string, r io.Reader) (io.Reader, error) { return r, nil }
+	coverID, pictures := "", map[string]string{} // EPUB 2's cover: an item's id, the pictures' hrefs by id
+	inEPUB := func(href string) string {
+		if h, err := url.PathUnescape(href); err == nil {
+			href = h
+		}
+		return path.Join(path.Dir(path.Clean(root)), href)
+	}
 	for {
 		tok, err := d.Token()
 		if err != nil {
@@ -242,14 +252,49 @@ func epubMeta(file string) (m meta, err error) {
 			return m, err
 		}
 		if ee, ok := tok.(xml.EndElement); ok && ee.Name.Local == "manifest" {
+			if m.Cover == "" && pictures[coverID] != "" {
+				m.Cover = inEPUB(pictures[coverID])
+			}
 			return m, nil // the metadata comes before it
 		}
 		se, ok := tok.(xml.StartElement)
 		if ok && se.Name.Local == "item" {
+			var id, href, mt, props string
 			for _, a := range se.Attr {
-				if a.Name.Local == "media-type" && a.Value == "application/smil+xml" {
-					m.Narrated = true
+				switch a.Name.Local {
+				case "id":
+					id = a.Value
+				case "href":
+					href = a.Value
+				case "media-type":
+					mt = a.Value
+				case "properties":
+					props = a.Value
 				}
+			}
+			if mt == "application/smil+xml" {
+				m.Narrated = true
+			}
+			if strings.HasPrefix(mt, "image/") {
+				pictures[id] = href
+				if m.Cover == "" && slices.Contains(strings.Fields(props), "cover-image") {
+					m.Cover = inEPUB(href)
+				}
+			}
+			continue
+		}
+		if ok && se.Name.Local == "meta" && se.Name.Space != dcNS {
+			var name, content string
+			for _, a := range se.Attr {
+				switch a.Name.Local {
+				case "name":
+					name = a.Value
+				case "content":
+					content = a.Value
+				}
+			}
+			if name == "cover" {
+				coverID = content
 			}
 			continue
 		}

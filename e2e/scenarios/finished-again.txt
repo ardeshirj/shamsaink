@@ -1,8 +1,8 @@
 # A finished book opened from the library starts again (the maintainer, 2026-11-22): at its start, then in Reading; the
-# book's menu has no "Mark as not finished". Our own Farsi book (e2e/books/fa-basics), opened at the fixture's place
-# (document 3), marked finished from its menu, then tapped in Finished: it opens at document 0, page 0. Back in the
-# library it is under Reading, and opens where it was left, at its start, not again marked new. The menu's own entries are
-# in the design spec (library-book-menu); this is the journey over the book's place. The tile is held and tapped at its
+# book's dialog has no "Mark as not finished". Our own Farsi book (e2e/books/fa-basics), opened at the fixture's place
+# (document 3), marked finished from its dialog, then tapped in Finished: it opens at document 0, page 0. Back in the
+# library it is under Reading, and opens where it was left, at its start, not again marked new. The dialog's own buttons are
+# in the design spec (library-book-details); this is the journey over the book's place. The tile is held and tapped at its
 # kept place (library-reading-en's e0): devtest has no hold by name, and its tap library eN reads the book's first line
 # itself, before the lines expected here.
 on: sim kobo kindle
@@ -12,9 +12,9 @@ tap page-top                       # the bar
 expect menu drawn in
 tap topbar topbar-start            # back to the library
 expect library: .* shown in
-hold 225 620                       # the first tile held: its menu
-expect library: books/test/fa-basics.epub held: its menu
-tap-dialog library-book-menu book-finish
+hold 225 620                       # the first tile held: its details and actions
+expect library: books/test/fa-basics.epub held: its details
+tap-dialog library-book-details book-finish
 expect library: books/test/fa-basics.epub marked finished
 tap library filter-finished
 expect library: filter finished, \d+ rows
