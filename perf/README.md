@@ -3,7 +3,8 @@
 What a reader feels, timed on the devices themselves with no one at them: starting the app, opening a book the first
 time, a page turn, reopening, memory. ShamsaInk and KOReader, on the Kobo Libra Colour and the Kindle Paperwhite 11.
 Started from experiment 17 (`experiments/17-reader-benchmark/`, 2026-11-21: its protocol, and the first results with
-the devices' own readers); the steps and rules are the same.
+the devices' own readers); the steps and rules are the same. The layout engines alone (layout and drawing times,
+pages against Chromium and crengine) are timed in `bench/` (`bench/README.md`).
 
 ```
 make perf                      # the Kobo: both readers, light mode in full, dark mode's page turns (about 45 min)
